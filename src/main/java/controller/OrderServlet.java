@@ -77,6 +77,27 @@ public class OrderServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        String action = request.getParameter("action");
+        
+        if(action != null && action.equalsIgnoreCase("updateStatus")){
+            try {
+                int orderID = Integer.parseInt(request.getParameter("orderID"));
+                
+                String status = request.getParameter("status");
+                OrderDAO dao = new OrderDAO();
+                boolean result = dao.updateOrderStatus(orderID, status);
+                
+                if(result){
+                    response.sendRedirect(request.getContextPath() + 
+                            "/order?action=detail&id" + orderID);
+                }else{
+                    response.sendRedirect(request.getContextPath() +
+                            "/order?action=detail&id" + orderID + "&error=update");
+                }
+            } catch (Exception e) {
+                response.sendRedirect(request.getContextPath() + "/order");
+            }
+        }
     }
 
     /**

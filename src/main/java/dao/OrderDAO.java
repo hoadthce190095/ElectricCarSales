@@ -364,4 +364,23 @@ public class OrderDAO extends DBContext {
 
         return list;
     }
+
+    public boolean updateOrderStatus(int orderID, String status) {
+        String sql = "UPDATE Orders "
+                + "SET OrderStatus = ? "
+                + "WHERE OrderID = ?";
+        try {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, status);
+            ps.setInt(2, orderID);
+
+            int affectedRows = ps.executeUpdate();
+            ps.close();
+            return affectedRows > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 }
