@@ -4,6 +4,7 @@
  */
 package controller;
 
+import dao.EmployeeDAO;
 import dao.OrderDAO;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -47,11 +48,16 @@ public class OrderServlet extends HttpServlet {
             try {
                 int orderID = Integer.parseInt(request.getParameter("id"));
                 Orders order = dao.getOrderByID(orderID);
+
                 if (order != null) {
                     List<OrderDetail> detailList = dao.getOrderDetailByID(orderID);
 
+                    EmployeeDAO employeeDAO = new EmployeeDAO();
+                    request.setAttribute("employeeList", employeeDAO.getSaleEmployee());
+
                     request.setAttribute("order", order);
                     request.setAttribute("detailList", detailList);
+
                     request.getRequestDispatcher("/order-detail.jsp").forward(request, response);
 
                 } else {
@@ -78,21 +84,40 @@ public class OrderServlet extends HttpServlet {
             throws ServletException, IOException {
 
         String action = request.getParameter("action");
-        
-        if(action != null && action.equalsIgnoreCase("updateStatus")){
+        if (action != null && action.equalsIgnoreCase("assignEmployee")) {
             try {
                 int orderID = Integer.parseInt(request.getParameter("orderID"));
-                
+                int employeeID = Integer.parseInt(request.getParameter("employeeID"));
+
+                OrderDAO dao = new OrderDAO();
+                boolean result = dao.updateOrderEmployee(orderID, employeeID);
+
+                if (result) {
+                    response.sendRedirect(request.getContextPath()
+                            + "/order?action=detail&id=" + orderID);
+                } else {
+                    response.sendRedirect(request.getContextPath()
+                            + "/order?action=detail&id=" + orderID
+                            + "&error=assign");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                response.sendRedirect(request.getContextPath() + "/order");
+            }
+        } else if (action != null && action.equalsIgnoreCase("updateStatus")) {
+            try {
+                int orderID = Integer.parseInt(request.getParameter("orderID"));
+
                 String status = request.getParameter("status");
                 OrderDAO dao = new OrderDAO();
                 boolean result = dao.updateOrderStatus(orderID, status);
-                
-                if(result){
-                    response.sendRedirect(request.getContextPath() + 
-                            "/order?action=detail&id=" + orderID);
-                }else{
-                    response.sendRedirect(request.getContextPath() +
-                            "/order?action=detail&id=" + orderID + "&error=update");
+
+                if (result) {
+                    response.sendRedirect(request.getContextPath()
+                            + "/order?action=detail&id=" + orderID);
+                } else {
+                    response.sendRedirect(request.getContextPath()
+                            + "/order?action=detail&id=" + orderID + "&error=update");
                 }
             } catch (Exception e) {
                 response.sendRedirect(request.getContextPath() + "/order");

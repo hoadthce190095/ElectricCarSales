@@ -70,7 +70,7 @@
                         </tr>
 
                         <tr>
-                            <td>Car ID<</td>
+                            <td>Car ID</td>
                             <td>${carID}</td>
                         </tr>
 

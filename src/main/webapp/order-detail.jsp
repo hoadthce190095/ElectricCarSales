@@ -1,3 +1,9 @@
+
+<%-- 
+    Document   : order-success
+    Created on : Sep 12, 2026, 11:36:24 AM
+    Author     : Hoa Hà
+--%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 
@@ -7,23 +13,31 @@
     <head>
         <meta charset="UTF-8">
         <title>Order Detail</title>
+
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
               rel="stylesheet">
     </head>
 
     <body>
+
         <div class="container mt-5">
+
             <h2 class="mb-4">Order Detail</h2>
 
             <!-- Order Information -->
             <div class="card mb-4">
+
                 <div class="card-header">
                     <strong>Order Information</strong>
                 </div>
 
                 <div class="card-body">
+
                     <div class="row">
+
+                        <!-- LEFT -->
                         <div class="col-md-6">
+
                             <p>
                                 <strong>Order ID:</strong>
                                 ${order.orderID}
@@ -46,6 +60,8 @@
 
                         </div>
 
+
+                        <!-- RIGHT -->
                         <div class="col-md-6">
 
                             <p>
@@ -58,68 +74,225 @@
                                 ${order.orderDate}
                             </p>
 
-                            <p> 
-                                <strong>Status:</strong> 
 
-                                <span class="badge bg-warning text-dark"> 
-                                    ${order.orderStatus} 
-                                </span> 
+                            <!-- STATUS -->
+                            <p>
+                                <strong>Status:</strong>
 
+                                <span class="badge bg-warning text-dark">
+                                    ${order.orderStatus}
+                                </span>
                             </p>
 
-                            <!-- Update Order Status -->
-                            <form action="${pageContext.request.contextPath}/order"
-                                  method="post">
 
-                                <input type="hidden"
-                                       name="action"
-                                       value="updateStatus">
+                            <!-- EMPLOYEE ASSIGNMENT -->
+                            <div class="mt-3">
 
-                                <input type="hidden"
-                                       name="orderID"
-                                       value="${order.orderID}">
+                                <p>
+                                    <strong>Current Employee:</strong>
 
-                                <div class="mb-3">
+                                    <c:choose>
 
-                                    <label class="form-label">
-                                        <strong>Update Status:</strong>
-                                    </label>
+                                        <c:when test="${not empty order.employeeName}">
+                                            ${order.employeeName}
+                                        </c:when>
 
-                                    <select name="status" class="form-select">
+                                        <c:otherwise>
 
-                                        <option value="PENDING"
-                                                ${order.orderStatus == 'PENDING' ? 'selected' : ''}>
-                                            PENDING
-                                        </option>
+                                            <span class="text-danger">
+                                                Not assigned
+                                            </span>
 
-                                        <option value="CONFIRMED"
-                                                ${order.orderStatus == 'CONFIRMED' ? 'selected' : ''}>
-                                            CONFIRMED
-                                        </option>
+                                        </c:otherwise>
 
-                                        <option value="COMPLETED"
-                                                ${order.orderStatus == 'COMPLETED' ? 'selected' : ''}>
-                                            COMPLETED
-                                        </option>
+                                    </c:choose>
 
-                                        <option value="CANCELLED"
-                                                ${order.orderStatus == 'CANCELLED' ? 'selected' : ''}>
-                                            CANCELLED
-                                        </option>
+                                </p>
 
-                                    </select>
 
-                                </div>
+                                <form action="${pageContext.request.contextPath}/order"
+                                      method="post">
 
-                                <button type="submit" class="btn btn-success">
-                                    Update Status
-                                </button>
+                                    <input type="hidden"
+                                           name="action"
+                                           value="assignEmployee">
 
-                            </form>
+                                    <input type="hidden"
+                                           name="orderID"
+                                           value="${order.orderID}">
 
-                            <p>
-                                <strong>Total Amount:</strong>
+
+                                    <div class="mb-2">
+
+                                        <label class="form-label">
+
+                                            <strong>
+                                                Select Sales Employee:
+                                            </strong>
+
+                                        </label>
+
+
+                                        <select name="employeeID"
+                                                class="form-select"
+                                                required>
+
+                                            <option value="">
+                                                -- Select Employee --
+                                            </option>
+
+
+                                            <c:forEach var="employee"
+                                                       items="${employeeList}">
+
+                                                <option value="${employee.employeeID}"
+                                                        ${employee.employeeID == order.employeeID
+                                                          ? 'selected' : ''}>
+
+                                                    ${employee.fullName}
+                                                    - ${employee.phone}
+
+                                                </option>
+
+                                            </c:forEach>
+
+                                        </select>
+
+                                    </div>
+
+
+                                    <button type="submit"
+                                            class="btn btn-primary">
+
+                                        Assign Employee
+
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+
+                            <!-- UPDATE STATUS -->
+                            <div class="mt-4">
+
+                                <form action="${pageContext.request.contextPath}/order"
+                                      method="post">
+
+                                    <input type="hidden"
+                                           name="action"
+                                           value="updateStatus">
+
+                                    <input type="hidden"
+                                           name="orderID"
+                                           value="${order.orderID}">
+
+
+                                    <div class="mb-3">
+
+                                        <label class="form-label">
+
+                                            <strong>
+                                                Update Status:
+                                            </strong>
+
+                                        </label>
+
+
+                                        <select name="status"
+                                                class="form-select">
+
+
+                                            <!-- PENDING -->
+
+                                            <c:if test="${order.orderStatus == 'PENDING'}">
+
+                                                <option value="PENDING"
+                                                        selected>
+                                                    PENDING
+                                                </option>
+
+                                                <option value="CONFIRMED">
+                                                    CONFIRMED
+                                                </option>
+
+                                                <option value="CANCELLED">
+                                                    CANCELLED
+                                                </option>
+
+                                            </c:if>
+
+
+                                            <!-- CONFIRMED -->
+
+                                            <c:if test="${order.orderStatus == 'CONFIRMED'}">
+
+                                                <option value="CONFIRMED"
+                                                        selected>
+                                                    CONFIRMED
+                                                </option>
+
+                                                <option value="COMPLETED">
+                                                    COMPLETED
+                                                </option>
+
+                                                <option value="CANCELLED">
+                                                    CANCELLED
+                                                </option>
+
+                                            </c:if>
+
+
+                                            <!-- COMPLETED -->
+
+                                            <c:if test="${order.orderStatus == 'COMPLETED'}">
+
+                                                <option value="COMPLETED"
+                                                        selected>
+                                                    COMPLETED
+                                                </option>
+
+                                            </c:if>
+
+
+                                            <!-- CANCELLED -->
+
+                                            <c:if test="${order.orderStatus == 'CANCELLED'}">
+
+                                                <option value="CANCELLED"
+                                                        selected>
+                                                    CANCELLED
+                                                </option>
+
+                                            </c:if>
+
+                                        </select>
+
+                                    </div>
+
+
+                                    <button type="submit"
+                                            class="btn btn-success">
+
+                                        Update Status
+
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+
+                            <!-- TOTAL -->
+
+                            <p class="mt-3">
+
+                                <strong>
+                                    Total Amount:
+                                </strong>
+
                                 ${order.totalAmount}
+
                             </p>
 
                         </div>
@@ -131,17 +304,23 @@
             </div>
 
 
-            <div class="card">
+            <!-- VEHICLE INFORMATION -->
+
+            <div class="card mb-4">
 
                 <div class="card-header">
 
-                    <strong>Vehicle Information</strong>
+                    <strong>
+                        Vehicle Information
+                    </strong>
 
                 </div>
 
+
                 <div class="card-body">
 
-                    <c:forEach var="detail" items="${detailList}">
+                    <c:forEach var="detail"
+                               items="${detailList}">
 
                         <table class="table table-bordered">
 
@@ -217,7 +396,9 @@
             </div>
 
 
-            <div class="mt-4">
+            <!-- BACK -->
+
+            <div class="mt-4 mb-5">
 
                 <a href="${pageContext.request.contextPath}/order"
                    class="btn btn-secondary">

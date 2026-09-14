@@ -104,7 +104,7 @@ public class OrderDAO extends DBContext {
 
             //Update car status
             String updateSQL = "UPDATE Cars "
-                    + "SET CarStatus = 'SOLD' "
+                    + "SET CarStatus = 'RESERVED' "
                     + "WHERE CarID = ? "
                     + "AND CarStatus = 'AVAILABLE'";
 
@@ -183,21 +183,25 @@ public class OrderDAO extends DBContext {
     public List<Orders> getAllOrders() {
         List<Orders> list = new ArrayList<>();
 
-        String sql = "SELECT "
-                + "o.OrderID, "
-                + "o.CustomerID, "
-                + "c.FullName, "
-                + "c.Phone, "
-                + "c.Email, "
-                + "c.Address, "
-                + "o.OrderDate, "
-                + "o.OrderStatus, "
-                + "o.TotalAmount, "
-                + "o.Note "
-                + "FROM Orders o "
-                + "JOIN Customers c "
-                + "ON o.CustomerID = c.CustomerID "
-                + "ORDER BY o.OrderID ASC";
+String sql = "SELECT "
+        + "o.OrderID, "
+        + "o.CustomerID, "
+        + "o.EmployeeID, "
+        + "c.FullName, "
+        + "c.Phone, "
+        + "c.Email, "
+        + "c.Address, "
+        + "o.OrderDate, "
+        + "o.OrderStatus, "
+        + "o.TotalAmount, "
+        + "o.Note, "
+        + "e.FullName AS EmployeeName "
+        + "FROM Orders o "
+        + "JOIN Customers c "
+        + "ON o.CustomerID = c.CustomerID "
+        + "LEFT JOIN Employees e "
+        + "ON o.EmployeeID = e.EmployeeID "
+        + "ORDER BY o.OrderID DESC";
 
         try {
             PreparedStatement ps = conn.prepareStatement(sql);
@@ -217,6 +221,8 @@ public class OrderDAO extends DBContext {
                 order.setTotalAmount(rs.getDouble("TotalAmount"));
                 order.setNote(rs.getString("Note"));
 
+                order.setEmployeeID(rs.getInt("EmployeeID"));
+                order.setEmployeeName(rs.getString("EmployeeName"));
                 list.add(order);
             }
 
@@ -231,21 +237,25 @@ public class OrderDAO extends DBContext {
     public Orders getOrderByID(int orderID) {
         Orders order = null;
 
-        String sql = "SELECT "
-                + "o.OrderID, "
-                + "o.CustomerID, "
-                + "c.FullName, "
-                + "c.Phone, "
-                + "c.Email, "
-                + "c.Address, "
-                + "o.OrderDate, "
-                + "o.OrderStatus, "
-                + "o.TotalAmount, "
-                + "o.Note "
-                + "FROM Orders o "
-                + "JOIN Customers c "
-                + "ON o.CustomerID = c.CustomerID "
-                + "WHERE o.OrderID = ?";
+String sql = "SELECT "
+        + "o.OrderID, "
+        + "o.CustomerID, "
+        + "o.EmployeeID, "
+        + "c.FullName, "
+        + "c.Phone, "
+        + "c.Email, "
+        + "c.Address, "
+        + "o.OrderDate, "
+        + "o.OrderStatus, "
+        + "o.TotalAmount, "
+        + "o.Note, "
+        + "e.FullName AS EmployeeName "
+        + "FROM Orders o "
+        + "JOIN Customers c "
+        + "ON o.CustomerID = c.CustomerID "
+        + "LEFT JOIN Employees e "
+        + "ON o.EmployeeID = e.EmployeeID "
+        + "WHERE o.OrderID = ?";
 
         try {
             PreparedStatement ps = conn.prepareStatement(sql);
@@ -266,6 +276,9 @@ public class OrderDAO extends DBContext {
                 order.setOrderStatus(rs.getString("OrderStatus"));
                 order.setTotalAmount(rs.getDouble("TotalAmount"));
                 order.setNote(rs.getString("Note"));
+
+                order.setEmployeeID(rs.getInt("EmployeeID"));
+                order.setEmployeeName(rs.getString("EmployeeName"));
 
             }
             rs.close();
@@ -379,22 +392,55 @@ public class OrderDAO extends DBContext {
             ResultSet rsOrder = psOrder.executeQuery();
 
             if (!rsOrder.next()) {
+                rsOrder.close();
+                psOrder.close();
                 conn.rollback();
                 conn.setAutoCommit(true);
                 return false;
             }
+
             String currentStatus = rsOrder.getString("OrderStatus");
             rsOrder.close();
             psOrder.close();
 
-            // Do not change completed or cancelled order
-            if ("COMPLETED".equalsIgnoreCase(currentStatus)
-                    || "CANCELLED".equalsIgnoreCase(currentStatus)) {
+            //Check vaild status transition
+            boolean vaildTransition = false;
+            if ("PENDING".equalsIgnoreCase(currentStatus)) {
+                if ("CONFIRMED".equalsIgnoreCase(status)
+                        || "CANCELLED".equalsIgnoreCase(status)) {
+                    vaildTransition = true;
+                }
+            } else if ("CONFIRMED".equalsIgnoreCase(currentStatus)) {
+                if ("COMPLETED".equalsIgnoreCase(status)
+                        || "CANCELLED".equalsIgnoreCase(status)) {
+                    vaildTransition = true;
+                }
+            }
+            //cannot change COMFIRMED or CANCELLED
+            if (!vaildTransition) {
                 conn.rollback();
                 conn.setAutoCommit(true);
                 return false;
             }
-            // If cancel order -> return car to AVAILABLE
+
+            // if order completed Car become SOLD
+            if ("COMPLETED".equalsIgnoreCase(status)) {
+                String updateCarSQL
+                        = "UPDATE Cars "
+                        + "SET CarStatus = 'SOLD' "
+                        + "WHERE CarID IN ("
+                        + "    SELECT CarID "
+                        + "    FROM OrderDetails "
+                        + "    WHERE OrderID = ?"
+                        + ")"
+                        + "AND CarStatus = 'RESERVED'";
+                PreparedStatement psCar = conn.prepareStatement(updateCarSQL);
+                psCar.setInt(1, orderID);
+                psCar.executeUpdate();
+                psCar.close();
+            }
+
+            //if order is cancelled Car become Available
             if ("CANCELLED".equalsIgnoreCase(status)) {
                 String updateCarSQL
                         = "UPDATE Cars "
@@ -403,14 +449,15 @@ public class OrderDAO extends DBContext {
                         + "    SELECT CarID "
                         + "    FROM OrderDetails "
                         + "    WHERE OrderID = ?"
-                        + ")";
+                        + ") "
+                        + "AND CarStatus = 'RESERVED'";
                 PreparedStatement psCar = conn.prepareStatement(updateCarSQL);
                 psCar.setInt(1, orderID);
                 psCar.executeUpdate();
                 psCar.close();
             }
 
-            //Update order status
+            //Update OrderStatus
             String updateOrderSQL = "UPDATE Orders "
                     + "SET OrderStatus = ? "
                     + "WHERE OrderID = ?";
@@ -431,7 +478,7 @@ public class OrderDAO extends DBContext {
             conn.commit();
             conn.setAutoCommit(true);
             return true;
-            
+
         } catch (Exception e) {
             try {
                 conn.rollback();
@@ -441,7 +488,28 @@ public class OrderDAO extends DBContext {
             }
             e.printStackTrace();
             return false;
-        }       
+        }
     }
 
+    public boolean updateOrderEmployee(int orderID, int employeeID){
+        
+        String sql = "UPDATE Orders "
+            + "SET EmployeeID = ? "
+            + "WHERE OrderID = ?";
+            
+        try {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, employeeID);
+            ps.setInt(2, orderID);
+            
+            int affectedRows = ps.executeUpdate();
+            ps.close();
+            return affectedRows > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            
+        }
+        return false;
+    }
+    
 }

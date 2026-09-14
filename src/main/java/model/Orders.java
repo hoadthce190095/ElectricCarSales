@@ -21,6 +21,8 @@ public class Orders {
     private String orderStatus;
     private double totalAmount;
     private String note;
+    private Integer employeeID;
+    private String employeeName;
 
     public Orders() {
     }
@@ -116,6 +118,22 @@ public class Orders {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public Integer getEmployeeID() {
+        return employeeID;
+    }
+
+    public void setEmployeeID(Integer employeeID) {
+        this.employeeID = employeeID;
+    }
+
+    public String getEmployeeName() {
+        return employeeName;
+    }
+
+    public void setEmployeeName(String employeeName) {
+        this.employeeName = employeeName;
     }
 
     
