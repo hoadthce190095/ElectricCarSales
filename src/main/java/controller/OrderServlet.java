@@ -89,10 +89,10 @@ public class OrderServlet extends HttpServlet {
                 
                 if(result){
                     response.sendRedirect(request.getContextPath() + 
-                            "/order?action=detail&id" + orderID);
+                            "/order?action=detail&id=" + orderID);
                 }else{
                     response.sendRedirect(request.getContextPath() +
-                            "/order?action=detail&id" + orderID + "&error=update");
+                            "/order?action=detail&id=" + orderID + "&error=update");
                 }
             } catch (Exception e) {
                 response.sendRedirect(request.getContextPath() + "/order");

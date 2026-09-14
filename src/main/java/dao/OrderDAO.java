@@ -366,21 +366,82 @@ public class OrderDAO extends DBContext {
     }
 
     public boolean updateOrderStatus(int orderID, String status) {
-        String sql = "UPDATE Orders "
-                + "SET OrderStatus = ? "
-                + "WHERE OrderID = ?";
-        try {
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setString(1, status);
-            ps.setInt(2, orderID);
 
-            int affectedRows = ps.executeUpdate();
-            ps.close();
-            return affectedRows > 0;
+        try {
+            conn.setAutoCommit(false);
+            //Get current order status
+            String checkOrderSQL = "SELECT OrderStatus "
+                    + "FROM Orders "
+                    + "WHERE OrderID = ?";
+
+            PreparedStatement psOrder = conn.prepareStatement(checkOrderSQL);
+            psOrder.setInt(1, orderID);
+            ResultSet rsOrder = psOrder.executeQuery();
+
+            if (!rsOrder.next()) {
+                conn.rollback();
+                conn.setAutoCommit(true);
+                return false;
+            }
+            String currentStatus = rsOrder.getString("OrderStatus");
+            rsOrder.close();
+            psOrder.close();
+
+            // Do not change completed or cancelled order
+            if ("COMPLETED".equalsIgnoreCase(currentStatus)
+                    || "CANCELLED".equalsIgnoreCase(currentStatus)) {
+                conn.rollback();
+                conn.setAutoCommit(true);
+                return false;
+            }
+            // If cancel order -> return car to AVAILABLE
+            if ("CANCELLED".equalsIgnoreCase(status)) {
+                String updateCarSQL
+                        = "UPDATE Cars "
+                        + "SET CarStatus = 'AVAILABLE' "
+                        + "WHERE CarID IN ("
+                        + "    SELECT CarID "
+                        + "    FROM OrderDetails "
+                        + "    WHERE OrderID = ?"
+                        + ")";
+                PreparedStatement psCar = conn.prepareStatement(updateCarSQL);
+                psCar.setInt(1, orderID);
+                psCar.executeUpdate();
+                psCar.close();
+            }
+
+            //Update order status
+            String updateOrderSQL = "UPDATE Orders "
+                    + "SET OrderStatus = ? "
+                    + "WHERE OrderID = ?";
+
+            PreparedStatement psUpdate = conn.prepareStatement(updateOrderSQL);
+            psUpdate.setString(1, status);
+            psUpdate.setInt(2, orderID);
+
+            int affectedRows = psUpdate.executeUpdate();
+            psUpdate.close();
+
+            if (affectedRows == 0) {
+                conn.rollback();
+                conn.setAutoCommit(true);
+                return false;
+            }
+            // Save all changes
+            conn.commit();
+            conn.setAutoCommit(true);
+            return true;
+            
         } catch (Exception e) {
+            try {
+                conn.rollback();
+                conn.setAutoCommit(true);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
             e.printStackTrace();
-        }
-        return false;
+            return false;
+        }       
     }
 
 }
