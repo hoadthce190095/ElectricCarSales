@@ -11,10 +11,6 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author Vo Hoang Tu - CE000000 - 13/5/2026
- */
 public class DBContext {
     protected Connection conn = null;
 
