@@ -1,0 +1,219 @@
+﻿* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #ffffff;
+    color: #222;
+    font-size: 14px;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+button,
+input {
+    font-family: inherit;
+}
+
+.site-container {
+    width: 100%;
+    max-width: 970px;
+    margin: 0 auto;
+}
+
+
+/* ================= TOP BAR ================= */
+
+.top-bar {
+    height: 36px;
+    background: #080808;
+    color: white;
+}
+
+.top-bar-content {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 5px;
+}
+
+.top-slogan {
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.social-links {
+    display: flex;
+    gap: 6px;
+}
+
+.social-links a {
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #31599a;
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.social-links a:last-child {
+    background: #df1717;
+}
+
+
+/* ================= HEADER ================= */
+
+.main-header {
+    background: white;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.navbar-container {
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 5px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    min-width: 300px;
+}
+
+.brand-logo-placeholder {
+    width: 55px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    font-weight: bold;
+    color: #182a3c;
+}
+
+.brand-text {
+    margin-left: 8px;
+}
+
+.brand-name {
+    font-size: 20px;
+    color: #263442;
+    letter-spacing: 0.5px;
+}
+
+.brand-subtitle {
+    font-size: 10px;
+    color: #777;
+    margin-top: 2px;
+}
+
+.main-navigation {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+.nav-item {
+    position: relative;
+    font-size: 12px;
+    color: #333;
+    padding: 25px 0;
+    white-space: nowrap;
+}
+
+.nav-item:hover {
+    color: #123e70;
+}
+
+.nav-item.active::after {
+    content: "";
+    position: absolute;
+    bottom: 15px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #111;
+}
+
+.dropdown-link .arrow {
+    font-size: 12px;
+    margin-left: 3px;
+}
+
+.dealer-button {
+    background: #153e70;
+    color: white;
+    padding: 9px 13px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.dealer-button:hover {
+    background: #0d2d54;
+    color: white;
+}
+
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 900px) {
+
+    .navbar-container {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .main-navigation {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px;
+    }
+
+    .nav-item {
+        padding: 8px 0;
+    }
+
+    .nav-item.active::after {
+        bottom: 2px;
+    }
+}
+
+@media (max-width: 600px) {
+
+    .site-container {
+        width: 94%;
+    }
+
+    .brand {
+        min-width: auto;
+    }
+
+    .brand-name {
+        font-size: 16px;
+    }
+
+    .main-navigation {
+        gap: 10px;
+    }
+
+    .nav-item {
+        font-size: 10px;
+    }
+}

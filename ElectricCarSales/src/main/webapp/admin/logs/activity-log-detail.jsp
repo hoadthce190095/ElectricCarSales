@@ -1,0 +1,1 @@
+﻿<%-- Admin activity log detail --%>

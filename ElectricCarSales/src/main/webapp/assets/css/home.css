@@ -1,0 +1,491 @@
+﻿/* =========================================================
+   SEARCH STRIP
+========================================================= */
+
+.search-strip {
+    height: 45px;
+    background: #f1f1f1;
+    border-bottom: 1px solid #e3e3e3;
+}
+
+.search-container {
+    height: 100%;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.top-search {
+    display: flex;
+    width: 190px;
+    height: 32px;
+}
+
+.top-search input {
+    flex: 1;
+    border: 1px solid #d5d5d5;
+    padding: 0 10px;
+    font-size: 12px;
+    outline: none;
+}
+
+.top-search button {
+    width: 46px;
+    border: none;
+    background: #1d527f;
+    color: white;
+}
+
+
+/* =========================================================
+   MAIN LAYOUT
+========================================================= */
+
+.main-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 225px;
+    gap: 25px;
+    padding-top: 32px;
+}
+
+.home-content {
+    min-width: 0;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.hero-carousel {
+    width: 100%;
+    overflow: hidden;
+}
+
+.hero-placeholder {
+    height: 365px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background:
+            linear-gradient(
+                    135deg,
+                    #dceaf7 0%,
+                    #72a7d9 45%,
+                    #154e87 100%
+            );
+
+    position: relative;
+}
+
+.hero-placeholder::before {
+    content: "YOUR BANNER IMAGE";
+    position: absolute;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 2px;
+}
+
+.hero-placeholder-2 {
+    background:
+            linear-gradient(
+                    135deg,
+                    #eeeeee,
+                    #7e9aaa,
+                    #17384d
+            );
+}
+
+.hero-placeholder-3 {
+    background:
+            linear-gradient(
+                    135deg,
+                    #d9d9d9,
+                    #4d5964,
+                    #101820
+            );
+}
+
+.hero-text {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    color: white;
+}
+
+.hero-title {
+    font-size: 34px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.hero-subtitle {
+    font-size: 18px;
+    margin-top: 10px;
+}
+
+.hero-price {
+    margin-top: 15px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+
+/* =========================================================
+   SECTION
+========================================================= */
+
+.home-section {
+    margin-top: 35px;
+}
+
+.section-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.section-heading span {
+    height: 1px;
+    background: #999;
+    flex: 1;
+}
+
+.section-heading h2 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: normal;
+    color: #111;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   QUICK SERVICES
+========================================================= */
+
+.quick-services {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.quick-service {
+    text-align: center;
+    transition: 0.2s ease;
+}
+
+.quick-service:hover {
+    transform: translateY(-3px);
+}
+
+.service-icon {
+    width: 65px;
+    height: 65px;
+    margin: 0 auto 12px;
+
+    border: 2px solid #222;
+    border-radius: 8px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 28px;
+}
+
+.service-title {
+    font-size: 13px;
+    font-weight: bold;
+    color: #111;
+}
+
+
+/* =========================================================
+   VEHICLE GRID
+========================================================= */
+
+.vehicle-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+}
+
+.vehicle-card {
+    border: 1px solid #dedede;
+    background: white;
+    padding: 10px 8px 15px;
+    text-align: center;
+    transition: all 0.25s ease;
+}
+
+.vehicle-card:hover {
+    border-color: #174b78;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.vehicle-image {
+    height: 125px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-placeholder {
+    width: 90%;
+    height: 90px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: linear-gradient(
+            135deg,
+            #eeeeee,
+            #d5d5d5
+    );
+
+    color: #999;
+    font-size: 12px;
+    letter-spacing: 2px;
+}
+
+.vehicle-card h3 {
+    margin: 8px 0 8px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #111;
+}
+
+.vehicle-card p {
+    margin: 0;
+    font-size: 11px;
+    color: #777;
+}
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.home-sidebar {
+    border-left: 1px solid #e2e2e2;
+    padding-left: 25px;
+}
+
+.sidebar-block {
+    margin-bottom: 25px;
+}
+
+.sidebar-title {
+    background: #e8e8e8;
+    padding: 11px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 12px;
+}
+
+
+/* SEARCH */
+
+.sidebar-search {
+    height: 33px;
+    display: flex;
+}
+
+.sidebar-search input {
+    flex: 1;
+    border: 1px solid #ddd;
+    padding: 0 10px;
+    outline: none;
+    font-size: 12px;
+}
+
+.sidebar-search button {
+    width: 35px;
+    background: white;
+    border: 1px solid #ddd;
+}
+
+
+/* HOTLINE */
+
+.hotline-box {
+    background: #050505;
+    color: white;
+    text-align: center;
+    padding: 25px 10px;
+}
+
+.hotline-number {
+    font-size: 19px;
+    margin-bottom: 15px;
+}
+
+.hotline-title {
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+
+.hotline-box p {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+
+/* CONTACT */
+
+.contact-box {
+    background: #f6f6f6;
+    padding: 10px;
+}
+
+.contact-box ul {
+    margin: 0;
+    padding-left: 17px;
+}
+
+.contact-box li {
+    color: #777;
+    font-size: 11px;
+    line-height: 1.7;
+    margin-bottom: 5px;
+}
+
+
+/* QUICK REGISTER */
+
+.quick-register {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.quick-register input {
+    height: 34px;
+    border: 1px solid #ddd;
+    padding: 0 10px;
+    font-size: 11px;
+    outline: none;
+}
+
+.quick-register button {
+    height: 36px;
+    background: #050505;
+    color: white;
+    border: none;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+
+/* =========================================================
+   FLOATING BUTTONS
+========================================================= */
+
+.floating-contact {
+    position: fixed;
+    left: 15px;
+    bottom: 20px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    z-index: 999;
+}
+
+.floating-button {
+    width: 42px;
+    height: 42px;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: white;
+    font-weight: bold;
+
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.2);
+}
+
+.floating-button:hover {
+    color: white;
+    transform: scale(1.08);
+}
+
+.zalo {
+    background: #168bea;
+}
+
+.phone {
+    background: #ed2024;
+    font-size: 20px;
+}
+
+.share {
+    background: #8b43df;
+    font-size: 18px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .main-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .home-sidebar {
+        border-left: none;
+        padding-left: 0;
+    }
+
+    .hero-placeholder {
+        height: 320px;
+    }
+}
+
+
+@media (max-width: 650px) {
+
+    .quick-services {
+        grid-template-columns: repeat(2, 1fr);
+        row-gap: 25px;
+    }
+
+    .vehicle-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .hero-placeholder {
+        height: 240px;
+    }
+
+    .hero-title {
+        font-size: 25px;
+    }
+
+    .section-heading h2 {
+        font-size: 16px;
+    }
+}
+
+
+@media (max-width: 400px) {
+
+    .vehicle-grid {
+        grid-template-columns: 1fr;
+    }
+}
