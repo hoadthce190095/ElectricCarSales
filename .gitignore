@@ -1,0 +1,15 @@
+.codex-input/
+.codex-tools/
+out/
+ElectricCarSales/target/
+ElectricCarSales/src/main/resources/db.properties
+*.log
+deliverables/
+
+# Local IDE configuration and generated build files
+.idea/
+target/
+*.class
+*.war
+.env
+.env.*
