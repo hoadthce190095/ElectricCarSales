@@ -54,7 +54,7 @@ jdbc:sqlserver://localhost:1433;databaseName=ElectricCarSalesDB;encrypt=true;tru
 Windows Authentication đã được kiểm tra với cấu hình cục bộ. File `ElectricCarSales/src/main/resources/db.properties` là cấu hình riêng mà bạn có thể đổi sang SQL login; bản ZIP/WAR chia sẻ không chứa file này. Để dùng Windows Authentication, trong cấu hình chạy Tomcat thêm **VM options**:
 
 ```text
--Djava.library.path=D:\SWP391-ElectricCars\.codex-tools\jdbc-auth
+-Djava.library.path=D:\SWP391-ElectricCars\tool\jdbc-auth
 ```
 
 Thư mục trên chứa `mssql-jdbc_auth-13.4.0.x64.dll`, tải từ artifact Microsoft trên Maven Central, đã đối chiếu checksum và xác minh chữ ký **Microsoft Corporation** hợp lệ. Driver dùng DLL để xác thực bằng tài khoản Windows của tiến trình Java; có thể chỉ định thư mục DLL qua `java.library.path` theo [hướng dẫn Microsoft Learn về JDBC integrated authentication](https://learn.microsoft.com/en-us/sql/connect/jdbc/building-the-connection-url?view=sql-server-ver17#connecting-with-integrated-authentication-on-windows).
@@ -73,7 +73,7 @@ Nếu chạy bằng cấu hình Tomcat của IntelliJ, thêm VM option `-Dapp.ad
 .\docs\Tao-Admin.ps1
 ```
 
-Script hỏi mật khẩu hai lần với nội dung được che; nhập 10–128 ký tự. Tên đăng nhập mặc định là `admin`; có thể đổi bằng `-Username ten_dang_nhap`. Script dùng lớp `BootstrapAdmin` từ bản WAR đã build, cấu hình DB cục bộ hoặc biến `DB_*` hiện có, và DLL Windows Authentication khi có trong `.codex-tools/jdbc-auth`. Mật khẩu chỉ được truyền tạm qua môi trường tiến trình Java, không được in hay ghi vào file; các biến môi trường trước đó được khôi phục sau khi chạy. Khi thấy `Created initial Admin: admin`, mở [giao diện đăng nhập](http://localhost:8080/ElectricCarSales/tan.html) và dùng mật khẩu vừa tự nhập. Không cần gửi mật khẩu trong chat.
+Script hỏi mật khẩu hai lần với nội dung được che; nhập 10–128 ký tự. Tên đăng nhập mặc định là `admin`; có thể đổi bằng `-Username ten_dang_nhap`. Script dùng lớp `BootstrapAdmin` từ bản WAR đã build, cấu hình DB cục bộ hoặc biến `DB_*` hiện có, và DLL Windows Authentication khi có trong `tool/jdbc-auth`. Mật khẩu chỉ được truyền tạm qua môi trường tiến trình Java, không được in hay ghi vào file; các biến môi trường trước đó được khôi phục sau khi chạy. Khi thấy `Created initial Admin: admin`, mở [giao diện đăng nhập](http://localhost:8080/ElectricCarSales/tan.html) và dùng mật khẩu vừa tự nhập. Không cần gửi mật khẩu trong chat.
 
 Nếu chưa có bản build, chạy Maven `verify` trước. Script tự tìm JDK 24 từ `JAVA_HOME` hoặc đường dẫn JDK hiện tại; máy khác có thể chỉ định `-JavaHome 'C:\duong-dan\jdk-24'`. Nếu PowerShell báo script bị chặn, có thể chạy một lần bằng `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\docs\Tao-Admin.ps1`; lệnh này không đổi execution policy được lưu trên máy.
 

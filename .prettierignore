@@ -1,6 +1,6 @@
 .idea/
 .git/
-.codex-tools/
+tool/
 .codex-input/
 deliverables/
 out/
