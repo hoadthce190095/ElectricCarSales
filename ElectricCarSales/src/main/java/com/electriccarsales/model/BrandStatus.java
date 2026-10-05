@@ -14,7 +14,7 @@ public class BrandStatus {
     }
 
     public int getBrandStatusID() {
-        return brandStatusID;
+     return brandStatusID;
     }
 
     public void setBrandStatusID(int brandStatusID) {
