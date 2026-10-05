@@ -15,15 +15,17 @@ public class BrandStatusDAO extends DBContext {
         String sql = "SELECT * FROM BrandStatuses";
 
         try{
-            PreparedStatement ps = conn.prepareStatement(sql);
+        PreparedStatement ps = conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
             while(rs.next()){
                 BrandStatus status = new BrandStatus();
-                status.setBrandStatusID(rs.getInt("brandStatusID"));
-                status.setStatusName(rs.getString("statusName"));
+                status.setBrandStatusID(rs.getInt("BrandStatusID"));
+                status.setStatusName(rs.getString("StatusName"));
 
                 list.add(status);
             }
+            rs.close();
+            ps.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -40,22 +42,23 @@ public class BrandStatusDAO extends DBContext {
 
             if(rs.next()){
                 BrandStatus status = new BrandStatus();
-                status.setBrandStatusID(rs.getInt("brandStatusID"));
-                status.setStatusName(rs.getString("statusName"));
+                status.setBrandStatusID(rs.getInt("BrandStatusID"));
+                status.setStatusName(rs.getString("StatusName"));
 
                 return status;
             }
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         return null;
     }
 
-    public static void main(String[] args) {
-        BrandStatusDAO dao = new BrandStatusDAO();
-        BrandStatus status = dao.getById(1);
-
-            System.out.println(status);
-
-    }
+//    public static void main(String[] args) {
+//        BrandStatusDAO dao = new BrandStatusDAO();
+//        BrandStatus status = dao.getById(1);
+//
+//            System.out.println(status);
+//
+//    }
 }
