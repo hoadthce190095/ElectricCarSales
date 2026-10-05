@@ -45,11 +45,4 @@ public class SpecificationDAO extends DBContext {
         return list;
     }
 
-//    public static void main(String[] args) {
-//        SpecificationDAO dao = new SpecificationDAO();
-//        List<Specification> list = dao.getAll();
-//        for(Specification spec : list){
-//            System.out.println(spec);
-//        }
-//    }
 }
