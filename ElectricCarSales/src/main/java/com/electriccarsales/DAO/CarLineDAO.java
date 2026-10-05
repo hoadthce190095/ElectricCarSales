@@ -36,12 +36,12 @@ public class CarLineDAO extends DBContext {
         return list;
     }
 
-    public static void main(String[] args) {
-        CarLineDAO carLineDAO = new CarLineDAO();
-        List<CarLine> list = carLineDAO.getAll();
-        for (CarLine carLine : list) {
-
-            System.out.println(carLine);
-        }
-    }
+//    public static void main(String[] args) {
+//        CarLineDAO carLineDAO = new CarLineDAO();
+//        List<CarLine> list = carLineDAO.getAll();
+//        for (CarLine carLine : list) {
+//
+//            System.out.println(carLine);
+//        }
+//    }
 }
