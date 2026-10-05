@@ -1,0 +1,8 @@
+.idea/
+.git/
+.codex-tools/
+.codex-input/
+deliverables/
+out/
+ElectricCarSales/target/
+ElectricCarSales/src/main/resources/db.properties
