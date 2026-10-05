@@ -35,11 +35,5 @@ public class CarModelDAO extends DBContext {
         return list;
     }
 
-//    public static void main(String[] args) {
-//        CarModelDAO carModelDAO = new CarModelDAO();
-//        List<CarModel> carModels = carModelDAO.getAll();
-//        for(CarModel carModel : carModels){
-//            System.out.println(carModel);
-//        }
-//    }
+
 }

@@ -34,11 +34,5 @@ public class ColorDAO extends DBContext {
         return list;
     }
 
-    public static void main(String[] args) {
-        ColorDAO dao = new ColorDAO();
-        List<Color> list = dao.getAll();
-        for(Color c : list){
-            System.out.println(c);
-        }
-    }
+
 }

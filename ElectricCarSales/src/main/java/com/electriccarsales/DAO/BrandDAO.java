@@ -36,11 +36,5 @@ public class BrandDAO extends DBContext {
         return list;
     }
 
-//    public static void main(String[] args) {
-//        BrandDAO brandDAO = new BrandDAO();
-//        List<Brand> list = brandDAO.getAll();
-//        for (Brand brand : list) {
-//            System.out.println(brand);
-//        }
-//    }
+
 }

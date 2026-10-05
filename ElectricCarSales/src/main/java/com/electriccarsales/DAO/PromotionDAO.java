@@ -39,11 +39,4 @@ public class PromotionDAO extends DBContext {
         return list;
     }
 
-    public static void main(String[] args) {
-        PromotionDAO pdao = new PromotionDAO();
-        List<Promotion> list = pdao.getAll();
-        for(Promotion p : list){
-            System.out.println(p);
-        }
-    }
 }

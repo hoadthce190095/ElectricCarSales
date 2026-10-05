@@ -54,11 +54,5 @@ public class BrandStatusDAO extends DBContext {
         return null;
     }
 
-//    public static void main(String[] args) {
-//        BrandStatusDAO dao = new BrandStatusDAO();
-//        BrandStatus status = dao.getById(1);
-//
-//            System.out.println(status);
-//
-//    }
+
 }

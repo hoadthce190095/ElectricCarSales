@@ -35,11 +35,4 @@ public class CarVersionDAO extends DBContext {
         return  list;
     }
 
-    public static void main(String[] args) {
-        CarVersionDAO dao = new CarVersionDAO();
-        List<CarVersion> list = dao.getAll();
-        for (CarVersion carV : list) {
-            System.out.println(carV);
-        }
-    }
 }
