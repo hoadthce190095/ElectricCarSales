@@ -36,5 +36,4 @@ public class CarLineDAO extends DBContext {
         return list;
     }
 
-
 }

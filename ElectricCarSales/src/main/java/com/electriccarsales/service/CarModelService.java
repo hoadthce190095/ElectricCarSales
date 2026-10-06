@@ -1,0 +1,19 @@
+package com.electriccarsales.service;
+
+import com.electriccarsales.DAO.CarModelDAO;
+import com.electriccarsales.model.CarModel;
+
+import java.util.List;
+
+public class CarModelService {
+    private CarModelDAO carModelDAO;
+
+    public CarModelService() {
+        carModelDAO = new CarModelDAO();
+    }
+
+    public List<CarModel> getAllCarModels() {
+        return carModelDAO.getAll();
+    }
+
+}
