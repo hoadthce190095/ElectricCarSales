@@ -6,7 +6,7 @@ public class InventoryTransaction {
     private int inventoryTransactionID;
     private int carID;
     private int employeeID;
-    private Integer supplierID; // Dùng Integer (đối tượng) thay vì int (nguyên thủy) để có thể lưu giá trị null từ Database
+    private Integer supplierID;
     private String transactionType;
     private Timestamp transactionDate;
     private String note;
