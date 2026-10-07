@@ -3,29 +3,37 @@ package com.electriccarsales.model;
 import java.sql.Timestamp;
 
 public class InventoryTransaction {
-    private int transactionID;
+    private int inventoryTransactionID;
     private int carID;
+    private int employeeID;
+    private Integer supplierID; // Dùng Integer (đối tượng) thay vì int (nguyên thủy) để có thể lưu giá trị null từ Database
     private String transactionType;
     private Timestamp transactionDate;
-    private int employeeID;
-    private String notes;
+    private String note;
 
     public InventoryTransaction() {}
 
-    public InventoryTransaction(int transactionID, int carID, String transactionType, Timestamp transactionDate, int employeeID, String notes) {
-        this.transactionID = transactionID;
+    public InventoryTransaction(int inventoryTransactionID, int carID, int employeeID, Integer supplierID, String transactionType, Timestamp transactionDate, String note) {
+        this.inventoryTransactionID = inventoryTransactionID;
         this.carID = carID;
+        this.employeeID = employeeID;
+        this.supplierID = supplierID;
         this.transactionType = transactionType;
         this.transactionDate = transactionDate;
-        this.employeeID = employeeID;
-        this.notes = notes;
+        this.note = note;
     }
 
-    public int getTransactionID() { return transactionID; }
-    public void setTransactionID(int transactionID) { this.transactionID = transactionID; }
+    public int getInventoryTransactionID() { return inventoryTransactionID; }
+    public void setInventoryTransactionID(int inventoryTransactionID) { this.inventoryTransactionID = inventoryTransactionID; }
 
     public int getCarID() { return carID; }
     public void setCarID(int carID) { this.carID = carID; }
+
+    public int getEmployeeID() { return employeeID; }
+    public void setEmployeeID(int employeeID) { this.employeeID = employeeID; }
+
+    public Integer getSupplierID() { return supplierID; }
+    public void setSupplierID(Integer supplierID) { this.supplierID = supplierID; }
 
     public String getTransactionType() { return transactionType; }
     public void setTransactionType(String transactionType) { this.transactionType = transactionType; }
@@ -33,9 +41,6 @@ public class InventoryTransaction {
     public Timestamp getTransactionDate() { return transactionDate; }
     public void setTransactionDate(Timestamp transactionDate) { this.transactionDate = transactionDate; }
 
-    public int getEmployeeID() { return employeeID; }
-    public void setEmployeeID(int employeeID) { this.employeeID = employeeID; }
-
-    public String getNotes() { return notes; }
-    public void setNotes(String notes) { this.notes = notes; }
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
 }
