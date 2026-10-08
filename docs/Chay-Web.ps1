@@ -4,7 +4,7 @@
 param(
     [string]$TomcatHome = 'D:\apache-tomcat-10.1.60-windows-x64\apache-tomcat-10.1.60',
     [string]$JavaHome = 'C:\Program Files\Java\jdk-24\New Folder',
-    [ValidateRange(1024, 65535)][int]$Port = 8080,
+    [ValidateRange(1024, 65535)][int]$Port = 8081,
     [switch]$Build
 )
 Set-StrictMode -Version Latest
@@ -50,7 +50,7 @@ if ($Build -or -not (Test-Path -LiteralPath (Join-Path $webRoot 'WEB-INF/classes
         $env:JAVA_HOME = $previousJavaHome
     }
 }
-$serverBase = Join-Path $projectRoot ".codex-tools/tomcat-local-$Port"
+$serverBase = Join-Path $projectRoot "tool/tomcat-local-$Port"
 $statePath = Join-Path $serverBase 'server.json'
 $webBaseUrl = "http://localhost:$Port/ElectricCarSales/"
 $healthBaseUrl = "http://127.0.0.1:$Port/ElectricCarSales/"
@@ -67,7 +67,7 @@ if ($null -ne $listener) {
             return
         }
     }
-    throw "Cong $Port da duoc dung. Dung web IntelliJ dang chay hoac them -Port 8081."
+    throw "Cong $Port da duoc dung. Dung server dang dung cong nay hoac them -Port 8082."
 }
 foreach ($folder in @('conf', 'conf/Catalina/localhost', 'logs', 'temp', 'work', 'webapps')) {
     New-Item -ItemType Directory -Path (Join-Path $serverBase $folder) -Force | Out-Null
@@ -98,7 +98,7 @@ $arguments = @('--enable-native-access=ALL-UNNAMED', '-Dapp.adminSetup.enabled=t
     "`"-Djava.io.tmpdir=$(Join-Path $serverBase 'temp')`"",
     '-Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager',
     "`"-Djava.util.logging.config.file=$(Join-Path $serverBase 'conf/logging.properties')`"")
-$authDirectory = Join-Path $projectRoot '.codex-tools/jdbc-auth'
+$authDirectory = Join-Path $projectRoot 'tool/jdbc-auth'
 if (Test-Path -LiteralPath (Join-Path $authDirectory 'mssql-jdbc_auth-13.4.0.x64.dll')) {
     $arguments += "`"-Djava.library.path=$authDirectory`""
 }

@@ -48,12 +48,14 @@ VF 3 chọn **Eco Tiêu chuẩn 2**. VF 6 Plus chọn **Tiêu chuẩn 2**. VF 7 
 
 Tên xe, kích thước, pin, công suất, số ghế, quãng đường công bố, màu và ảnh là thông tin sản phẩm có nguồn VinFast. **30 xe kho có mã `DEMO-...`, VIN bắt đầu `DEMO`, số động cơ, mã lô và năm ghi trong kho là dữ liệu giả lập phục vụ học tập.** Đây không phải VIN hay tồn kho thật của hãng.
 
-Khách hàng, nhân viên, đơn hàng, hóa đơn và thanh toán được thêm ở script demo báo cáo là dữ liệu giả lập của showroom trong bài. Không được trình bày các số liệu này là doanh số thật của VinFast.
+Khách hàng, nhân viên, đơn hàng, hóa đơn, thanh toán, trả góp và khuyến mãi trong phần báo cáo DEMO của `ElectricCarSalesDB.sql` là dữ liệu giả lập của showroom trong bài. Không được trình bày các số liệu này là doanh số thật của VinFast.
 
 ## Chạy script
 
-1. Mở database phù hợp trong SQL Server; dùng database demo riêng nếu đang có dữ liệu kinh doanh thực.
-2. Chạy `database/02-vinfast-catalogue.sql` sau `00-create-database.sql` và `01-tan-modules.sql`.
-3. Chạy script dữ liệu báo cáo demo theo hướng dẫn của dự án.
+Trong SQL Server, chạy duy nhất `ElectricCarSalesDB.sql` ở thư mục gốc cho cả database mới và database đã có. Script thực hiện theo thứ tự:
 
-Script 02 chỉ thêm bản ghi còn thiếu và có transaction. Chạy lại không thêm trùng mã xe. Script không sửa hoặc xóa danh mục/giao dịch hiện có. Mỗi variant Eco/Plus có `ModelID` riêng vì bảng `Specifications` chỉ cho một dòng thông số trên một `ModelID`.
+1. Tạo `ElectricCarSalesDB` nếu thiếu và bổ sung schema chung của cả nhóm.
+2. Nạp danh mục VinFast cùng 30 xe kho DEMO vào database đó.
+3. Nạp bộ báo cáo giả lập gồm 9 đơn cùng thanh toán, trả góp và khuyến mãi. Nếu đã có đơn hàng, thanh toán hoặc trả góp ngoài bộ DEMO, phần này được bỏ qua và thông báo bằng `PRINT`; schema và danh mục vẫn chạy.
+
+Script chỉ thêm bản ghi còn thiếu; chạy lại không thêm trùng mã xe hoặc giao dịch, không sửa hay xóa dữ liệu hiện có. Script không tạo tài khoản hay mật khẩu Admin. Mỗi variant Eco/Plus có `ModelID` riêng vì bảng `Specifications` chỉ cho một dòng thông số trên một `ModelID`.

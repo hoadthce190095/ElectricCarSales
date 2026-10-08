@@ -1,5 +1,5 @@
 .codex-input/
-.codex-tools/
+tool/
 out/
 ElectricCarSales/target/
 ElectricCarSales/src/main/resources/db.properties

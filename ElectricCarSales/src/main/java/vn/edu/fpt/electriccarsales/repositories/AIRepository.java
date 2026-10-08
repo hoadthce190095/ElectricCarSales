@@ -51,7 +51,7 @@ public final class AIRepository implements AICatalogue {
             AND UPPER(LTRIM(RTRIM(cs.StatusName))) IN
                 (N'AVAILABLE', N'IN_STOCK', N'FOR_SALE', N'READY_FOR_SALE', N'CÓ SẴN', N'CO SAN'))
             ON c.ModelID = m.ModelID
-        LEFT JOIN CarVersions v ON v.VersionID = c.VersionID AND v.ModelID = m.ModelID
+        LEFT JOIN Carversions v ON v.VersionID = c.VersionID AND v.ModelID = m.ModelID
         LEFT JOIN Colors color ON color.ColorID = c.ColorID
         ORDER BY m.ModelID
         """;
