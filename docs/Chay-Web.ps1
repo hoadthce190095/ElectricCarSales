@@ -4,7 +4,7 @@
 param(
     [string]$TomcatHome = 'D:\apache-tomcat-10.1.60-windows-x64\apache-tomcat-10.1.60',
     [string]$JavaHome = 'C:\Program Files\Java\jdk-24\New Folder',
-    [ValidateRange(1024, 65535)][int]$Port = 8080,
+    [ValidateRange(1024, 65535)][int]$Port = 8081,
     [switch]$Build
 )
 Set-StrictMode -Version Latest
@@ -67,7 +67,7 @@ if ($null -ne $listener) {
             return
         }
     }
-    throw "Cong $Port da duoc dung. Dung web IntelliJ dang chay hoac them -Port 8081."
+    throw "Cong $Port da duoc dung. Dung server dang dung cong nay hoac them -Port 8082."
 }
 foreach ($folder in @('conf', 'conf/Catalina/localhost', 'logs', 'temp', 'work', 'webapps')) {
     New-Item -ItemType Directory -Path (Join-Path $serverBase $folder) -Force | Out-Null

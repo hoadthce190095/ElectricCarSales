@@ -71,7 +71,7 @@ Nếu chạy bằng cấu hình Tomcat của IntelliJ, thêm VM option `-Dapp.ad
 .\docs\Tao-Admin.ps1
 ```
 
-Script hỏi mật khẩu hai lần với nội dung được che; nhập 10–128 ký tự. Tên đăng nhập mặc định là `admin`; có thể đổi bằng `-Username ten_dang_nhap`. Script dùng lớp `BootstrapAdmin` từ bản WAR đã build, cấu hình DB cục bộ hoặc biến `DB_*` hiện có, và DLL Windows Authentication khi có trong `tool/jdbc-auth`. Mật khẩu chỉ được truyền tạm qua môi trường tiến trình Java, không được in hay ghi vào file; các biến môi trường trước đó được khôi phục sau khi chạy. Khi thấy `Created initial Admin: admin`, mở [giao diện đăng nhập](http://localhost:8080/ElectricCarSales/tan.html) và dùng mật khẩu vừa tự nhập. Không cần gửi mật khẩu trong chat.
+Script hỏi mật khẩu hai lần với nội dung được che; nhập 10–128 ký tự. Tên đăng nhập mặc định là `admin`; có thể đổi bằng `-Username ten_dang_nhap`. Script dùng lớp `BootstrapAdmin` từ bản WAR đã build, cấu hình DB cục bộ hoặc biến `DB_*` hiện có, và DLL Windows Authentication khi có trong `tool/jdbc-auth`. Mật khẩu chỉ được truyền tạm qua môi trường tiến trình Java, không được in hay ghi vào file; các biến môi trường trước đó được khôi phục sau khi chạy. Khi thấy `Created initial Admin: admin`, mở giao diện đăng nhập tại `http://localhost:8080/ElectricCarSales/tan.html` nếu chạy IntelliJ, hoặc `http://localhost:8081/ElectricCarSales/tan.html` nếu chạy script, và dùng mật khẩu vừa tự nhập. Không cần gửi mật khẩu trong chat.
 
 Nếu chưa có bản build, chạy Maven `verify` trước. Script tự tìm JDK 24 từ `JAVA_HOME` hoặc đường dẫn JDK hiện tại; máy khác có thể chỉ định `-JavaHome 'C:\duong-dan\jdk-24'`. Nếu PowerShell báo script bị chặn, có thể chạy một lần bằng `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\docs\Tao-Admin.ps1`; lệnh này không đổi execution policy được lưu trên máy.
 
@@ -98,7 +98,7 @@ mvn clean verify
 
 File đầu ra là `ElectricCarSales/target/ElectricCarSales.war`.
 
-**Chạy nhanh trên máy hiện tại:** từ thư mục gốc chạy `.\docs\Chay-Web.ps1`. Script dùng Tomcat 10.1.60 và JDK 24 đã cài, deploy `target/ElectricCarSales`, chỉ nghe `127.0.0.1` và kiểm tra web trả HTTP 200 trước khi thông báo. Có thể truyền `-TomcatHome`, `-JavaHome` và `-Port 8081`. Khi sửa code, chạy `.\docs\Dung-Web.ps1`, rồi `.\docs\Chay-Web.ps1 -Build`. Nếu dùng IntelliJ cùng cổng, dừng một server trước khi chạy server còn lại.
+**Chạy nhanh trên máy hiện tại:** từ thư mục gốc chạy `.\docs\Chay-Web.ps1`. Script dùng Tomcat 10.1.60 và JDK 24 đã cài, deploy `target/ElectricCarSales`, chỉ nghe `127.0.0.1` và kiểm tra web trả HTTP 200 trước khi thông báo. Script mặc định dùng cổng **8081**, còn Tomcat trong IntelliJ dùng **8080**. Có thể truyền `-TomcatHome`, `-JavaHome` và `-Port 8082` nếu cần một cổng khác. Khi đổi cổng, truyền cùng `-Port` cho script chạy và dừng. Khi sửa code, chạy `.\docs\Dung-Web.ps1`, rồi `.\docs\Chay-Web.ps1 -Build`. Nếu tự chọn cùng cổng cho cả hai cách chạy, dừng một server trước khi chạy server còn lại.
 
 **IntelliJ Ultimate:** sau khi import Maven, cấu hình chạy như sau:
 
