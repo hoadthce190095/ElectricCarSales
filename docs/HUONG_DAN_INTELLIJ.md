@@ -16,14 +16,14 @@ Nếu xuất hiện **Project JDK is not defined**, bấm **Setup SDK → 24**. 
 
 ## 2. Chuẩn bị SQL Server
 
-Kết nối SQL Server bằng SSMS và chạy `ElectricCarSalesDB.sql` ở thư mục gốc. Đây là file schema chung duy nhất của cả nhóm:
+Kết nối SQL Server bằng SSMS và chạy duy nhất `ElectricCarSalesDB.sql` ở thư mục gốc. File này chứa schema chung, danh mục VinFast và dữ liệu DEMO cho báo cáo:
 
 - **Chưa có ElectricCarSalesDB:** script tạo database và các bảng chung.
 - **Đã có ElectricCarSalesDB:** cùng script bổ sung các bảng còn thiếu, giữ database và dữ liệu hiện có.
 
-Schema chung khai báo Suppliers trước InventoryTransactions để tạo khóa ngoại đúng thứ tự, đồng thời có RolePermissions, SystemLogs và SystemConfigurations cho phần của Tấn. Có thể chạy lại script mà không xóa dữ liệu. Trigger bảo vệ SystemLogs khỏi UPDATE/DELETE. Script không tự nạp dữ liệu DEMO và không tạo mật khẩu Admin; tự tạo Admin theo mục 4.
+Schema chung khai báo Suppliers trước InventoryTransactions để tạo khóa ngoại đúng thứ tự, đồng thời có RolePermissions, SystemLogs và SystemConfigurations cho phần của Tấn. Trigger bảo vệ SystemLogs khỏi UPDATE/DELETE. Script không tạo tài khoản hay mật khẩu Admin; tự tạo Admin theo mục 4.
 
-**Dữ liệu mẫu tùy chọn cho bản trình bày:** sau schema chung, chỉ khi cần dữ liệu mẫu mới chạy `database/02-vinfast-catalogue.sql`, rồi `database/03-demo-reporting.sql`. Hai script này nạp dữ liệu vào cùng `ElectricCarSalesDB`, không tạo database riêng. Danh mục có thông số/giá từ nguồn VinFast; xe kho và mọi giao dịch DEMO đều giả lập. Script 03 từ chối khi có giao dịch không thuộc bộ DEMO. Không dùng nó cho showroom có giao dịch thật. Đọc `docs/NGUON_DU_LIEU_VINFAST.md` và `docs/KICH_BAN_BAO_CAO.md` để biết nguồn và cách giải thích số liệu.
+**Dữ liệu có trong cùng file SQL:** sau schema, script nạp danh mục VinFast và 30 xe kho DEMO, rồi bộ báo cáo giả lập gồm 9 đơn cùng thanh toán, trả góp và khuyến mãi vào `ElectricCarSalesDB`. Danh mục có thông số/giá từ nguồn VinFast; xe kho và mọi giao dịch DEMO đều giả lập. Nếu đã có đơn hàng, thanh toán hoặc trả góp ngoài bộ DEMO, script thông báo bằng `PRINT` và bỏ qua phần nạp báo cáo DEMO; schema và danh mục vẫn chạy. Chạy lại chỉ bổ sung bản ghi còn thiếu, không thêm trùng, không xóa hay ghi đè dữ liệu đã có. Đọc `docs/NGUON_DU_LIEU_VINFAST.md` và `docs/KICH_BAN_BAO_CAO.md` để biết nguồn và cách giải thích số liệu.
 
 SQL Server phải cho phép kết nối JDBC/TCP tới instance và cổng bạn cấu hình. Ví dụ máy dùng SQLEXPRESS có thể có cổng khác 1433; xem SQL Server Configuration Manager để lấy cổng đang dùng. Không cần đổi tên instance nếu đã cấu hình đúng URL.
 
@@ -142,7 +142,7 @@ Excel là XLSX có ô số và chuỗi văn bản, CSV chặn chuỗi có thể 
 
 Trợ lý chạy chế độ **CATALOG_RULES**, xử lý tiếng Việt và trả lời từ dữ liệu catalogue; không gọi ChatGPT/OpenAI hoặc LLM bên ngoài và không cần khóa API. Chỉ truy vấn bảng xe/hãng/dòng/thông số/phiên bản/màu/trạng thái sản phẩm. Giá lấy từ xe có thể bán, thông số thiếu được thông báo. Yêu cầu tài chính, thanh toán, giữ chỗ, đơn hàng, hợp đồng hoặc xác nhận mua xe bị từ chối; trợ lý không gọi PaymentService.
 
-Đăng nhập hiện là lớp tích hợp để chạy các màn hình của Tấn; đăng ký/OTP, gửi email thông tin tài khoản, dữ liệu phòng ban và nghiệp vụ các thành viên khác cần ghép với module của nhóm. ZIP không có cấu hình dịch vụ email hay cột phòng ban. Không có tính năng gửi email tự động. Bộ seed DEMO là tùy chọn cho database trình bày; không phải dữ liệu bán hàng thực tế. Promotions dùng chung với phần catalogue của Hoa.
+Đăng nhập hiện là lớp tích hợp để chạy các màn hình của Tấn; đăng ký/OTP, gửi email thông tin tài khoản, dữ liệu phòng ban và nghiệp vụ các thành viên khác cần ghép với module của nhóm. ZIP không có cấu hình dịch vụ email hay cột phòng ban. Không có tính năng gửi email tự động. Bộ DEMO trong file SQL chung phục vụ trình bày; phần nạp báo cáo được bỏ qua khi có giao dịch ngoài bộ DEMO. Đây không phải dữ liệu bán hàng thực tế. Promotions dùng chung với phần catalogue của Hoa.
 
 Nhánh `feature/phuc-tan-admin-report-ai` thêm package của Tấn và các tài nguyên riêng `tan.html`/`assets/tan-*`; giữ mã Java và JSP/CSS/JS đã có của nhóm. Ba bảng bổ sung được ghép vào `ElectricCarSalesDB.sql` chung. Filter chỉ xử lý `/api/auth`, `/api/setup`, `/api/ai`, `/api/reports` và `/api/admin/*`. Trước khi merge, thống nhất session đăng nhập, định dạng PasswordHash và quyền/schema dùng chung với các thành viên. Push nhánh riêng không sửa `main`.
 
@@ -150,7 +150,7 @@ Nhánh `feature/phuc-tan-admin-report-ai` thêm package của Tấn và các tà
 
 Trên bản cục bộ trước khi tách nhánh, đã chạy `mvn clean verify`: **90 kiểm thử đạt, 0 failures, 0 errors**. Kiểm thử bao gồm nghiệp vụ/H2 chế độ MSSQLServer, HTTP chạy Tomcat 10.1 và triển khai chính file WAR. Kiểm thử WAR sử dụng web.xml và tự phát hiện Servlet/Filter annotations, xác nhận JSP/assets, đăng nhập, báo cáo, màn hình setup bị tắt mặc định và trợ lý xe. Có kiểm tra tạo Admin lần đầu/CSRF/rollback và nhãn dữ liệu DEMO trong CSV/XLSX. Kết quả kiểm tra nhánh ghép từ `main` được ghi riêng trong `KET_QUA_KIEM_TRA.md`.
 
-Trên máy đã kiểm tra bản cục bộ, ElectricCarSalesDB có RolePermissions, SystemLogs và SystemConfigurations, 10 phiên bản VinFast, 30 xe kho DEMO và 9 đơn giả lập. Hai script seed chạy lại vẫn giữ số dòng, không thêm trùng. Báo cáo qua ReportService trên SQL Server đã khớp 6 xe bán, giá trị bán 4.413.000.000 VND và thu tiền 4.565.900.000 VND. Giao diện phần Tấn mở ở `http://localhost:8081/ElectricCarSales/tan.html` khi dùng script cổng 8081; script chạy/dừng chỉ quản lý server của nó. Máy clone nhánh cần cấu hình DB và tạo Admin theo các bước trên. Số liệu giả lập đã được đối chiếu, chưa xác nhận chính sách kế toán của dữ liệu bán hàng thật.
+Trên máy đã kiểm tra bản cục bộ, ElectricCarSalesDB có RolePermissions, SystemLogs và SystemConfigurations, 10 phiên bản VinFast, 30 xe kho DEMO và 9 đơn giả lập. Bộ dữ liệu mẫu đã được kiểm tra nạp lại: giữ số dòng, không thêm trùng. Báo cáo qua ReportService trên SQL Server đã khớp 6 xe bán, giá trị bán 4.413.000.000 VND và thu tiền 4.565.900.000 VND. Giao diện phần Tấn mở ở `http://localhost:8081/ElectricCarSales/tan.html` khi dùng script cổng 8081; script chạy/dừng chỉ quản lý server của nó. Máy clone nhánh cần cấu hình DB và tạo Admin theo các bước trên. Số liệu giả lập đã được đối chiếu, chưa xác nhận chính sách kế toán của dữ liệu bán hàng thật.
 
 Sau khi cấu hình SQL Server, kiểm tra:
 

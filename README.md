@@ -16,7 +16,7 @@ Trang riêng: [localhost:8080/ElectricCarSales/tan.html](http://localhost:8080/E
 ## Cài đặt và kiểm tra
 
 1. Mở `ElectricCarSales/pom.xml` trong IntelliJ, chọn JDK 24 và tải lại Maven.
-2. Chuẩn bị SQL Server theo [hướng dẫn IntelliJ](docs/HUONG_DAN_INTELLIJ.md). Chạy `ElectricCarSalesDB.sql` ở thư mục gốc cho cả database mới và database đã có. Đây là schema chung của cả nhóm: tạo `ElectricCarSalesDB` nếu thiếu, bổ sung bảng còn thiếu và không xóa database hay dữ liệu hiện có. Script không tạo mật khẩu Admin và không tự nạp dữ liệu DEMO. Khi cần dữ liệu trình bày, tùy chọn chạy `database/02-vinfast-catalogue.sql`, rồi `database/03-demo-reporting.sql`; cả hai nạp dữ liệu mẫu vào cùng `ElectricCarSalesDB`.
+2. Chuẩn bị SQL Server theo [hướng dẫn IntelliJ](docs/HUONG_DAN_INTELLIJ.md). Chỉ cần chạy `ElectricCarSalesDB.sql` ở thư mục gốc cho cả database mới và database đã có. File này tạo `ElectricCarSalesDB` nếu thiếu, bổ sung schema chung, rồi nạp danh mục VinFast và 30 xe kho DEMO, tiếp theo là bộ báo cáo giả lập gồm 9 đơn cùng thanh toán, trả góp và khuyến mãi. Khi phát hiện đơn hàng, thanh toán hoặc trả góp không thuộc bộ DEMO, script thông báo bằng `PRINT` và bỏ qua phần nạp báo cáo DEMO; schema và danh mục vẫn chạy. Chạy lại giữ dữ liệu hiện có, không xóa database và không thêm bản ghi trùng. Script không tạo tài khoản hay mật khẩu Admin; tự tạo Admin theo hướng dẫn.
 3. Điền kết nối riêng qua biến môi trường `DB_URL`, `DB_USER`, `DB_PASSWORD`, hoặc sao chép `db.properties.example` thành `db.properties`. File riêng này được bỏ qua bởi Git và loại khỏi WAR.
 4. Build tại thư mục gốc:
 

@@ -39,6 +39,7 @@ public final class TestApplication implements AutoCloseable {
             s.execute(
                 "CREATE ALIAS SYSDATETIME FOR" + " 'vn.edu.fpt.electriccarsales.controllers.TestApplication.now'");
             String ddl = Files.readString(Path.of("../ElectricCarSalesDB.sql"));
+            ddl = ddl.substring(0, ddl.indexOf("-- BEGIN DEMO DATA"));
             // H2 dung bang va du lieu mac dinh tu SQL chung, bo qua USE/GO va trigger cua SQL Server.
             Pattern sqlPattern = Pattern.compile(
                 "(?is)\\b(?:CREATE\\s+TABLE|INSERT\\s+INTO)\\s+dbo\\.\\w+\\s*\\(.*?;");

@@ -1,8 +1,16 @@
 # Kết quả kiểm tra ngày 05/10/2026
 
+## Cập nhật ngày 08/10/2026: một file SQL chung
+
+- `ElectricCarSalesDB.sql` chứa đủ 46 bảng, danh mục VinFast và dữ liệu báo cáo DEMO; không cần thư mục `database` hay các script SQL riêng.
+- Maven `verify` đạt 90 kiểm thử Java ở cả bản cục bộ và nhánh riêng; 21 kiểm tra JavaScript đạt ở bản cục bộ.
+- File SQL chung chạy hai lần trên SQL Server cục bộ: số dòng các bảng đang có giữ nguyên, không thêm trùng.
+- Đã kiểm tra nhánh bỏ qua dữ liệu báo cáo DEMO khi có giao dịch ngoài bộ DEMO: không phát sinh giao dịch hay rò rỉ transaction. Bản ghi kiểm tra được rollback.
+- AIService/ReportService đọc được 10 phiên bản xe, 9 đơn DEMO và 6 xe bán từ SQL Server. Các số liệu này là dữ liệu mô phỏng.
+
 ## Nhánh riêng trên mã mới nhất của nhóm
 
-Nhánh `feature/phuc-tan-admin-report-ai` được tạo từ `origin/main` tại commit `031ca5b`. Bổ sung mã/tài nguyên của Tấn, giữ nguyên các lớp Java/JSP/CSS/JS và SQL gốc của nhóm, giữ Maven `groupId` là `com.electriccarsales`. Trang gốc mở `index.jsp`; phần Tấn mở `tan.html`. Filter giới hạn trên năm nhóm URL của phần Tấn.
+Nhánh `feature/phuc-tan-admin-report-ai` được tạo từ `origin/main` tại commit `031ca5b`. Bổ sung mã/tài nguyên của Tấn, giữ nguyên các lớp Java/JSP/CSS/JS của nhóm; SQL chung đã được bổ sung cấu trúc và dữ liệu mẫu theo yêu cầu, giữ Maven `groupId` là `com.electriccarsales`. Trang gốc mở `index.jsp`; phần Tấn mở `tan.html`. Filter giới hạn trên năm nhóm URL của phần Tấn.
 
 - JDK 24, Maven `formatter:format clean verify`: **BUILD SUCCESS**, **90 kiểm thử Java đạt, 0 failures, 0 errors**.
 - Chạy `node ElectricCarSales/src/test/javascript/frontend-checks.cjs`: **21 kiểm tra đạt**.
@@ -31,7 +39,7 @@ Sau khi chuyển cấu trúc theo `Project.zip`:
 - Đổi mật khẩu: xác thực mật khẩu hiện tại, kiểm tra mật khẩu mới/xác nhận, ACTIVE và CSRF; đổi session/CSRF, hết hiệu lực phiên khác và phiên trước khi Admin đặt lại mật khẩu; sai 5 lần bị giới hạn, lỗi nhật ký rollback.
 - Trợ lý: nhận số người thành số chỗ tối thiểu, ưu tiên tiêu chí người dùng nhập, nhận dòng VF 9 và phiên bản cụ thể, không nhận nhầm VF 90; cuộc trò chuyện mới xóa ngữ cảnh riêng mà giữ đăng nhập và trình duyệt khác.
 - Nhãn DEMO trong CSV/XLSX xét cả tồn kho hiện tại, khoản thanh toán/trả góp của đơn ngoài kỳ; không thay đổi công thức tổng tiền hoặc số xe.
-- Hai script seed VinFast/DEMO đã nạp vào SQL Server và chạy lại: vẫn 10 mẫu/phiên bản, 30 xe, 9 đơn, 17 Payments, 10 ảnh; 22 AVAILABLE, 2 RESERVED, 6 SOLD.
+- Dữ liệu VinFast/DEMO đã nạp vào SQL Server và chạy lại: vẫn 10 mẫu/phiên bản, 30 xe, 9 đơn, 17 Payments, 10 ảnh; 22 AVAILABLE, 2 RESERVED, 6 SOLD.
 - ReportService đọc SQL Server thật cho kỳ 01/05/2026–05/10/2026: 6 xe bán, giá trị bán **4.413.000.000 VND**, tiền thực thu **4.565.900.000 VND**, còn phải thu **1.376.100.000 VND**, 14 thanh toán hoàn tất và 0 đơn không nhất quán. Thu kỳ hạn trả góp được trình bày riêng.
 - Xuất báo cáo DEMO từ số liệu SQL Server, đọc lại XLSX bằng Apache POI: đủ 5 sheet, ô số và nhãn dữ liệu mô phỏng; CSV có nhãn ở đầu file.
 - Chạy/dừng/khởi động lại Tomcat 10.1.60 bằng `Chay-Web.ps1`/`Dung-Web.ps1` tại cổng 8081; root, JSP, assets và API catalogue trả HTTP 200. Kiểm tra sẵn sàng dùng địa chỉ 127.0.0.1 để tránh chậm phân giải localhost trên máy này.
