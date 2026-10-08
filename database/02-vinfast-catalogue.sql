@@ -1,13 +1,15 @@
 -- Danh mục VinFast dùng cho bài báo cáo Phạm Trần Phúc Tấn.
 -- Kiểm tra nguồn chính thức ngày 05/10/2026, chi tiết ở docs/NGUON_DU_LIEU_VINFAST.md.
--- Chọn database trước khi chạy. Không đặt USE để có thể dùng database demo riêng.
+-- Chạy ElectricCarSalesDB.sql ở thư mục gốc trước; dữ liệu dùng database chung của nhóm.
 -- Script chỉ thêm dữ liệu còn thiếu, không sửa/xóa danh mục hoặc giao dịch sẵn có.
 -- Xe có mã DEMO/VIN giả lập phục vụ học tập, không phải tồn kho của VinFast.
+USE ElectricCarSalesDB;
+GO
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
 
 IF OBJECT_ID(N'dbo.CarModels', N'U') IS NULL OR OBJECT_ID(N'dbo.Cars', N'U') IS NULL
-    THROW 51000, N'Chưa có schema xe. Chạy 00-create-database.sql trước.', 1;
+    THROW 51000, N'Chưa có schema xe. Chạy ElectricCarSalesDB.sql trước.', 1;
 
 BEGIN TRY
     BEGIN TRANSACTION;
@@ -157,13 +159,13 @@ BEGIN TRY
         SELECT 1 FROM CarModels m WHERE m.CarLineID = l.CarLineID AND m.ModelName = c.ModelName
     );
 
-    INSERT INTO CarVersions(ModelID, VersionName, Description)
+    INSERT INTO Carversions(ModelID, VersionName, Description)
     SELECT m.ModelID, c.VersionName, N'Giá MSRP kèm pin và VAT, chính sách 15/07/2026. Trang bị tùy cấu hình.'
     FROM @Catalogue c
     INNER JOIN CarLines l ON l.BrandID = @BrandID AND l.CarLineName = c.CarLineName
     INNER JOIN CarModels m ON m.CarLineID = l.CarLineID AND m.ModelName = c.ModelName
     WHERE NOT EXISTS (
-        SELECT 1 FROM CarVersions v WHERE v.ModelID = m.ModelID AND v.VersionName = c.VersionName
+        SELECT 1 FROM Carversions v WHERE v.ModelID = m.ModelID AND v.VersionName = c.VersionName
     );
 
     -- Không suy ra mức tiêu thụ điện hoặc thời gian sạc đầy từ số liệu sạc nhanh.
@@ -282,7 +284,7 @@ BEGIN TRY
         FROM @Catalogue c
         INNER JOIN CarLines l ON l.BrandID = @BrandID AND l.CarLineName = c.CarLineName
         INNER JOIN CarModels m ON m.CarLineID = l.CarLineID AND m.ModelName = c.ModelName
-        INNER JOIN CarVersions v ON v.ModelID = m.ModelID AND v.VersionName = c.VersionName
+        INNER JOIN Carversions v ON v.ModelID = m.ModelID AND v.VersionName = c.VersionName
         INNER JOIN Colors color ON color.ColorName = CASE @Number
             WHEN 1 THEN c.DemoColor1 WHEN 2 THEN c.DemoColor2 ELSE c.DemoColor3 END
         WHERE NOT EXISTS (

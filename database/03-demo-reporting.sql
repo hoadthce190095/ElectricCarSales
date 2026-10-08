@@ -1,11 +1,13 @@
 /*
  * Du lieu MO PHONG cho bao cao cua Pham Tran Phuc Tan.
  * Khong phai giao dich, khach hang, nhan vien hay khuyen mai that cua VinFast.
- * Chay sau 00-create-database.sql, 01-tan-modules.sql va 02-vinfast-catalogue.sql.
+ * Chay sau ElectricCarSalesDB.sql o thu muc goc va 02-vinfast-catalogue.sql.
  * Script chi them ban ghi DEMO va doi trang thai cac xe DEMO do script 02 tao.
  * Khong tao Admin. Tai khoan DEMO INACTIVE va khong co mat khau dang nhap hop le.
  */
--- Chon database trinh bay truoc khi chay, giong script 02.
+-- Nap du lieu mo phong vao database chung cua nhom khi can trinh bay.
+USE ElectricCarSalesDB;
+GO
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
 
@@ -42,7 +44,7 @@ BEGIN TRY
     IF @Inactive IS NULL OR @CustomerRole IS NULL OR @SalesRole IS NULL OR @AccountantRole IS NULL
        OR @BankTransfer IS NULL OR @InstallmentMethod IS NULL OR @DepositType IS NULL
        OR @RemainingType IS NULL OR @PaymentCompleted IS NULL OR @PaymentPending IS NULL
-        THROW 51022, N'Thieu vai tro, trang thai hoac danh muc thanh toan. Hay chay script 00 truoc.', 1;
+        THROW 51022, N'Thieu vai tro, trang thai hoac danh muc thanh toan. Hay chay ElectricCarSalesDB.sql truoc.', 1;
 
     IF NOT EXISTS (SELECT 1 FROM CarStatuses WHERE StatusName = 'SOLD')
         INSERT INTO CarStatuses(StatusName, Description) VALUES ('SOLD', N'Xe da ban');

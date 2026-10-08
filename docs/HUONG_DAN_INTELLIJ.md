@@ -16,16 +16,14 @@ Nếu xuất hiện **Project JDK is not defined**, bấm **Setup SDK → 24**. 
 
 ## 2. Chuẩn bị SQL Server
 
-Kết nối SQL Server bằng SSMS và chạy đúng trường hợp:
+Kết nối SQL Server bằng SSMS và chạy `ElectricCarSalesDB.sql` ở thư mục gốc. Đây là file schema chung duy nhất của cả nhóm:
 
-- **Chưa có ElectricCarSalesDB:** chạy `database/00-create-database.sql`, rồi `database/01-tan-modules.sql`.
-- **Đã có ElectricCarSalesDB:** chỉ chạy `database/01-tan-modules.sql`.
+- **Chưa có ElectricCarSalesDB:** script tạo database và các bảng chung.
+- **Đã có ElectricCarSalesDB:** cùng script bổ sung các bảng còn thiếu, giữ database và dữ liệu hiện có.
 
-Script 00 lấy schema từ ZIP, chuyển khai báo Suppliers lên trước InventoryTransactions để khóa ngoại có thể tạo được. Script bỏ qua cài đặt khi database đã tồn tại. Script 01 thêm RolePermissions, SystemLogs và SystemConfigurations; chạy lại không xóa dữ liệu. Trigger bảo vệ SystemLogs khỏi UPDATE/DELETE.
+Schema chung khai báo Suppliers trước InventoryTransactions để tạo khóa ngoại đúng thứ tự, đồng thời có RolePermissions, SystemLogs và SystemConfigurations cho phần của Tấn. Có thể chạy lại script mà không xóa dữ liệu. Trigger bảo vệ SystemLogs khỏi UPDATE/DELETE. Script không tự nạp dữ liệu DEMO và không tạo mật khẩu Admin; tự tạo Admin theo mục 4.
 
-**Bản trình bày với dữ liệu xe VinFast:** chạy thêm `database/02-vinfast-catalogue.sql`, rồi `database/03-demo-reporting.sql`. Danh mục có thông số/giá từ nguồn VinFast; xe kho và mọi giao dịch DEMO đều giả lập. Script 03 từ chối khi có giao dịch không thuộc bộ DEMO. Không dùng nó cho showroom có giao dịch thật. Đọc `docs/NGUON_DU_LIEU_VINFAST.md` và `docs/KICH_BAN_BAO_CAO.md` để biết nguồn và cách giải thích số liệu.
-
-File SQL gốc `ElectricCarSalesDB.sql` có lệnh DROP DATABASE; sử dụng hai script trên cho bản triển khai này.
+**Dữ liệu mẫu tùy chọn cho bản trình bày:** sau schema chung, chỉ khi cần dữ liệu mẫu mới chạy `database/02-vinfast-catalogue.sql`, rồi `database/03-demo-reporting.sql`. Hai script này nạp dữ liệu vào cùng `ElectricCarSalesDB`, không tạo database riêng. Danh mục có thông số/giá từ nguồn VinFast; xe kho và mọi giao dịch DEMO đều giả lập. Script 03 từ chối khi có giao dịch không thuộc bộ DEMO. Không dùng nó cho showroom có giao dịch thật. Đọc `docs/NGUON_DU_LIEU_VINFAST.md` và `docs/KICH_BAN_BAO_CAO.md` để biết nguồn và cách giải thích số liệu.
 
 SQL Server phải cho phép kết nối JDBC/TCP tới instance và cổng bạn cấu hình. Ví dụ máy dùng SQLEXPRESS có thể có cổng khác 1433; xem SQL Server Configuration Manager để lấy cổng đang dùng. Không cần đổi tên instance nếu đã cấu hình đúng URL.
 
@@ -79,7 +77,7 @@ Nếu chưa có bản build, chạy Maven `verify` trước. Script tự tìm JD
 
 **Cách chạy trực tiếp lớp Java trong IntelliJ:**
 
-Sau migration, mở `vn.edu.fpt.electriccarsales.util.BootstrapAdmin` và chạy `main` từ IntelliJ với các biến DB ở trên, thêm:
+Sau khi chạy schema chung, mở `vn.edu.fpt.electriccarsales.util.BootstrapAdmin` và chạy `main` từ IntelliJ với các biến DB ở trên, thêm:
 
 ```properties
 ADMIN_USERNAME=admin
@@ -88,7 +86,7 @@ ADMIN_PASSWORD=YOUR_INITIAL_PASSWORD
 
 Mật khẩu phải dài 10–128 ký tự. Công cụ tạo tài khoản ADMIN/ACTIVE, băm PBKDF2 và ghi nhật ký; không có mật khẩu đăng nhập mặc định trong dự án. Công cụ từ chối nếu đã có Admin để tránh ghi đè tài khoản.
 
-Nếu database đã có Admin từ code cũ, đối chiếu định dạng PasswordHash. Bản này dùng `pbkdf2-sha256$iterations$salt$hash`; mật khẩu dạng plain text hoặc thuật toán khác không đăng nhập được qua lớp tích hợp này. Ghép `PasswordHasher` với AuthenticationService của thành viên phụ trách tài khoản hoặc dùng quy trình đặt lại mật khẩu của nhóm. Không xóa Admin hoặc chạy lại SQL gốc để xử lý lỗi đăng nhập.
+Nếu database đã có Admin từ code cũ, đối chiếu định dạng PasswordHash. Bản này dùng `pbkdf2-sha256$iterations$salt$hash`; mật khẩu dạng plain text hoặc thuật toán khác không đăng nhập được qua lớp tích hợp này. Ghép `PasswordHasher` với AuthenticationService của thành viên phụ trách tài khoản hoặc dùng quy trình đặt lại mật khẩu của nhóm. Không xóa Admin để xử lý lỗi đăng nhập; chạy schema chung không đặt lại mật khẩu.
 
 ## 5. Build và chạy Tomcat
 
@@ -146,13 +144,13 @@ Trợ lý chạy chế độ **CATALOG_RULES**, xử lý tiếng Việt và tr�
 
 Đăng nhập hiện là lớp tích hợp để chạy các màn hình của Tấn; đăng ký/OTP, gửi email thông tin tài khoản, dữ liệu phòng ban và nghiệp vụ các thành viên khác cần ghép với module của nhóm. ZIP không có cấu hình dịch vụ email hay cột phòng ban. Không có tính năng gửi email tự động. Bộ seed DEMO là tùy chọn cho database trình bày; không phải dữ liệu bán hàng thực tế. Promotions dùng chung với phần catalogue của Hoa.
 
-Nhánh `feature/phuc-tan-admin-report-ai` thêm package của Tấn và các tài nguyên riêng `tan.html`/`assets/tan-*`; giữ mã Java, JSP/CSS/JS và SQL gốc đã có của nhóm. Filter chỉ xử lý `/api/auth`, `/api/setup`, `/api/ai`, `/api/reports` và `/api/admin/*`. Trước khi merge, thống nhất session đăng nhập, định dạng PasswordHash và quyền/schema dùng chung với các thành viên. Push nhánh riêng không sửa `main`.
+Nhánh `feature/phuc-tan-admin-report-ai` thêm package của Tấn và các tài nguyên riêng `tan.html`/`assets/tan-*`; giữ mã Java và JSP/CSS/JS đã có của nhóm. Ba bảng bổ sung được ghép vào `ElectricCarSalesDB.sql` chung. Filter chỉ xử lý `/api/auth`, `/api/setup`, `/api/ai`, `/api/reports` và `/api/admin/*`. Trước khi merge, thống nhất session đăng nhập, định dạng PasswordHash và quyền/schema dùng chung với các thành viên. Push nhánh riêng không sửa `main`.
 
 ## 9. Kiểm tra trước khi nộp
 
 Trên bản cục bộ trước khi tách nhánh, đã chạy `mvn clean verify`: **90 kiểm thử đạt, 0 failures, 0 errors**. Kiểm thử bao gồm nghiệp vụ/H2 chế độ MSSQLServer, HTTP chạy Tomcat 10.1 và triển khai chính file WAR. Kiểm thử WAR sử dụng web.xml và tự phát hiện Servlet/Filter annotations, xác nhận JSP/assets, đăng nhập, báo cáo, màn hình setup bị tắt mặc định và trợ lý xe. Có kiểm tra tạo Admin lần đầu/CSRF/rollback và nhãn dữ liệu DEMO trong CSV/XLSX. Kết quả kiểm tra nhánh ghép từ `main` được ghi riêng trong `KET_QUA_KIEM_TRA.md`.
 
-Trên máy đã kiểm tra bản cục bộ, ElectricCarSalesDB có migration 01, 10 phiên bản VinFast, 30 xe kho DEMO và 9 đơn giả lập. Hai script seed chạy lại vẫn giữ số dòng, không thêm trùng. Báo cáo qua ReportService trên SQL Server đã khớp 6 xe bán, giá trị bán 4.413.000.000 VND và thu tiền 4.565.900.000 VND. Giao diện phần Tấn mở ở `http://localhost:8081/ElectricCarSales/tan.html` khi dùng script cổng 8081; script chạy/dừng chỉ quản lý server của nó. Máy clone nhánh cần cấu hình DB và tạo Admin theo các bước trên. Số liệu giả lập đã được đối chiếu, chưa xác nhận chính sách kế toán của dữ liệu bán hàng thật.
+Trên máy đã kiểm tra bản cục bộ, ElectricCarSalesDB có RolePermissions, SystemLogs và SystemConfigurations, 10 phiên bản VinFast, 30 xe kho DEMO và 9 đơn giả lập. Hai script seed chạy lại vẫn giữ số dòng, không thêm trùng. Báo cáo qua ReportService trên SQL Server đã khớp 6 xe bán, giá trị bán 4.413.000.000 VND và thu tiền 4.565.900.000 VND. Giao diện phần Tấn mở ở `http://localhost:8081/ElectricCarSales/tan.html` khi dùng script cổng 8081; script chạy/dừng chỉ quản lý server của nó. Máy clone nhánh cần cấu hình DB và tạo Admin theo các bước trên. Số liệu giả lập đã được đối chiếu, chưa xác nhận chính sách kế toán của dữ liệu bán hàng thật.
 
 Sau khi cấu hình SQL Server, kiểm tra:
 
@@ -165,4 +163,4 @@ Sau khi cấu hình SQL Server, kiểm tra:
 
 Lỗi HTTP 404 tại `/ElectricCarSales/tan.html`: kiểm tra tab **Deployment** dùng `ElectricCarSales:war exploded`, context `/ElectricCarSales`, tác vụ **Before launch** build đúng artifact và log Tomcat báo triển khai thành công. Artifact `unnamed` chỉ chứa lớp Java ở gốc không có trang web hoặc cấu trúc WAR đầy đủ nên có thể khiến Tomcat khởi động nhưng URL vẫn trả 404.
 
-Lỗi HTTP 503: kiểm tra DB_URL/DB_USER/DB_PASSWORD, TCP/cổng SQL Server và migration 01. Lỗi 401: đăng nhập hoặc kiểm tra ACTIVE/mật khẩu. Lỗi 403: quyền vai trò hoặc CSRF; tải lại trang để lấy phiên mới. Nếu cổng 8080 đã dùng, chọn cổng khác và thay URL trình duyệt tương ứng.
+Lỗi HTTP 503: kiểm tra DB_URL/DB_USER/DB_PASSWORD, TCP/cổng SQL Server và các bảng từ `ElectricCarSalesDB.sql`. Lỗi 401: đăng nhập hoặc kiểm tra ACTIVE/mật khẩu. Lỗi 403: quyền vai trò hoặc CSRF; tải lại trang để lấy phiên mới. Nếu cổng 8080 đã dùng, chọn cổng khác và thay URL trình duyệt tương ứng.

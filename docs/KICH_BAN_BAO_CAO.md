@@ -6,7 +6,7 @@ Danh mục thông số và giá tham khảo lấy từ nguồn công khai của 
 
 ## 1. Chuẩn bị lần đầu
 
-1. Tạo database bằng `database/00-create-database.sql`, rồi chạy `01-tan-modules.sql`, `02-vinfast-catalogue.sql`, `03-demo-reporting.sql` theo thứ tự trong SQL Server Management Studio. Script `03` từ chối nếu phát hiện đơn hoặc thanh toán không phải DEMO; không dùng script này cho database showroom có giao dịch thật.
+1. Trong SQL Server Management Studio, chạy `ElectricCarSalesDB.sql` ở thư mục gốc cho cả database mới và database đã có. Schema chung tạo `ElectricCarSalesDB` nếu thiếu, bổ sung bảng còn thiếu và giữ dữ liệu hiện có; không tự nạp DEMO hay tạo mật khẩu Admin. Nếu cần bộ dữ liệu mẫu để trình bày kịch bản dưới đây, tùy chọn chạy tiếp `database/02-vinfast-catalogue.sql`, rồi `database/03-demo-reporting.sql`. Hai script mẫu dùng cùng `ElectricCarSalesDB`, không tạo database riêng. Script `03` từ chối nếu phát hiện đơn hoặc thanh toán không phải DEMO; không dùng script này cho database showroom có giao dịch thật.
 2. Chạy `docs/Chay-Web.ps1 -Port 8081` hoặc cấu hình Tomcat IntelliJ (VM option `-Dapp.adminSetup.enabled=true` để bật tạo Admin lần đầu tại localhost).
 3. Mở `/ElectricCarSales/tan.html`, chọn **Tạo Admin đầu tiên**, tự đặt mật khẩu rồi đăng nhập. Có thể dùng `docs/Tao-Admin.ps1` thay màn hình này; không có mật khẩu Admin mặc định trong mã nguồn hoặc file ZIP.
 4. Trước giờ báo cáo, mở phần Báo cáo, chọn từ đầu tháng cách hiện tại 5 tháng đến hôm nay, nhấn Xem báo cáo.

@@ -12,6 +12,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /** Disposable H2 + actual Servlet container, independent of any local SQL Server data. */
 public final class TestApplication implements AutoCloseable {
@@ -36,23 +38,14 @@ public final class TestApplication implements AutoCloseable {
         try (Connection c = connection(); Statement s = c.createStatement()) {
             s.execute(
                 "CREATE ALIAS SYSDATETIME FOR" + " 'vn.edu.fpt.electriccarsales.controllers.TestApplication.now'");
-            String ddl = Files.readString(Path.of("../database/00-create-database.sql"));
-            ddl = ddl.substring(ddl.indexOf("CREATE TABLE Roles"));
-            for (String batch : ddl.split("(?im)^\\s*GO\\s*$")) {
-                if (!batch.isBlank() && !batch.contains("SET NOEXEC")) {
-                    s.execute(batch);
-                }
+            String ddl = Files.readString(Path.of("../ElectricCarSalesDB.sql"));
+            // H2 dung bang va du lieu mac dinh tu SQL chung, bo qua USE/GO va trigger cua SQL Server.
+            Pattern sqlPattern = Pattern.compile(
+                "(?is)\\b(?:CREATE\\s+TABLE|INSERT\\s+INTO)\\s+dbo\\.\\w+\\s*\\(.*?;");
+            Matcher sqlMatcher = sqlPattern.matcher(ddl);
+            while (sqlMatcher.find()) {
+                s.execute(sqlMatcher.group().replace("dbo.", ""));
             }
-            s.execute("CREATE TABLE SystemLogs(LogID BIGINT IDENTITY PRIMARY KEY,UserID INT"
-                + " REFERENCES Users(UserID),Action VARCHAR(50),TargetType"
-                + " VARCHAR(50),TargetID VARCHAR(100),Detail NVARCHAR(MAX),CreatedDate"
-                + " DATETIME2 DEFAULT SYSDATETIME())");
-            s.execute("CREATE TABLE RolePermissions(RoleID INT REFERENCES"
-                + " Roles(RoleID),PermissionCode VARCHAR(50),PRIMARY" + " KEY(RoleID,PermissionCode))");
-            s.execute("CREATE TABLE SystemConfigurations(ConfigKey VARCHAR(50) PRIMARY"
-                + " KEY,ConfigValue VARCHAR(100),UpdatedBy INT,UpdatedDate DATETIME2" + " DEFAULT SYSDATETIME())");
-            s.execute("INSERT INTO RolePermissions SELECT RoleID,'VIEW_REPORTS' FROM Roles WHERE"
-                + " RoleName IN ('MANAGER','ACCOUNTANT')");
             if (initialAdmin) {
                 insertUser(c, "webadmin", "admin@test.local", "0900000001", "ADMIN");
             }

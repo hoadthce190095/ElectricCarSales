@@ -52,8 +52,8 @@ Khách hàng, nhân viên, đơn hàng, hóa đơn và thanh toán được thê
 
 ## Chạy script
 
-1. Mở database phù hợp trong SQL Server; dùng database demo riêng nếu đang có dữ liệu kinh doanh thực.
-2. Chạy `database/02-vinfast-catalogue.sql` sau `00-create-database.sql` và `01-tan-modules.sql`.
-3. Chạy script dữ liệu báo cáo demo theo hướng dẫn của dự án.
+1. Trong SQL Server, chạy `ElectricCarSalesDB.sql` ở thư mục gốc cho cả database mới và database đã có. Đây là schema chung của cả nhóm: tạo `ElectricCarSalesDB` nếu thiếu, bổ sung bảng còn thiếu và giữ dữ liệu hiện có. Script không tự nạp DEMO và không tạo mật khẩu Admin.
+2. Khi cần dữ liệu mẫu cho bản trình bày, tùy chọn chạy `database/02-vinfast-catalogue.sql` sau schema chung.
+3. Nếu cần cả dữ liệu báo cáo giả lập, chạy tiếp `database/03-demo-reporting.sql`. Cả hai script mẫu nạp vào cùng `ElectricCarSalesDB`, không tạo database riêng. Script 03 từ chối khi có đơn hoặc thanh toán ngoài bộ DEMO; không dùng nó cho showroom có giao dịch thật.
 
 Script 02 chỉ thêm bản ghi còn thiếu và có transaction. Chạy lại không thêm trùng mã xe. Script không sửa hoặc xóa danh mục/giao dịch hiện có. Mỗi variant Eco/Plus có `ModelID` riêng vì bảng `Specifications` chỉ cho một dòng thông số trên một `ModelID`.
