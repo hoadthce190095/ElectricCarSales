@@ -16,7 +16,7 @@ Trang riêng: [localhost:8080/ElectricCarSales/tan.html](http://localhost:8080/E
 ## Cài đặt và kiểm tra
 
 1. Mở `ElectricCarSales/pom.xml` trong IntelliJ, chọn JDK 24 và tải lại Maven.
-2. Chuẩn bị SQL Server theo [hướng dẫn IntelliJ](docs/HUONG_DAN_INTELLIJ.md). Chưa có DB thì chạy `database/00-create-database.sql`; sau đó chạy `database/01-tan-modules.sql`. Hai script `02` và `03` dành cho catalogue và báo cáo DEMO tùy chọn.
+2. Chuẩn bị SQL Server theo [hướng dẫn IntelliJ](docs/HUONG_DAN_INTELLIJ.md). Chỉ cần chạy `ElectricCarSalesDB.sql` ở thư mục gốc cho cả database mới và database đã có. File này tạo `ElectricCarSalesDB` nếu thiếu, bổ sung schema chung, rồi nạp danh mục VinFast và 30 xe kho DEMO, tiếp theo là bộ báo cáo giả lập gồm 9 đơn cùng thanh toán, trả góp và khuyến mãi. Khi phát hiện đơn hàng, thanh toán hoặc trả góp không thuộc bộ DEMO, script thông báo bằng `PRINT` và bỏ qua phần nạp báo cáo DEMO; schema và danh mục vẫn chạy. Chạy lại giữ dữ liệu hiện có, không xóa database và không thêm bản ghi trùng. Script không tạo tài khoản hay mật khẩu Admin; tự tạo Admin theo hướng dẫn.
 3. Điền kết nối riêng qua biến môi trường `DB_URL`, `DB_USER`, `DB_PASSWORD`, hoặc sao chép `db.properties.example` thành `db.properties`. File riêng này được bỏ qua bởi Git và loại khỏi WAR.
 4. Build tại thư mục gốc:
 
@@ -31,6 +31,6 @@ Xem thêm [cấu trúc mã nguồn](docs/CAU_TRUC_MA_NGUON.md), [giải thích c
 
 ## Phạm vi nhánh và ghép với nhóm
 
-Push phần này lên `feature/phuc-tan-admin-report-ai`; nhánh `main` chỉ thay đổi khi nhóm chủ động merge. Các lớp Java/JSP/CSS/JS, file SQL gốc và trang chủ đã có trên `main` được giữ nguyên. POM giữ `groupId` của nhóm và bổ sung thư viện/plugin cần cho phần của Tấn.
+Push phần này lên `feature/phuc-tan-admin-report-ai`; nhánh `main` chỉ thay đổi khi nhóm chủ động merge. Các lớp Java/JSP/CSS/JS và trang chủ đã có trên `main` được giữ nguyên. Ba bảng bổ sung của Tấn được ghép vào `ElectricCarSalesDB.sql` chung của nhóm. POM giữ `groupId` của nhóm và bổ sung thư viện/plugin cần cho phần của Tấn.
 
 `SecurityFilter` chỉ áp dụng cho `/api/auth`, `/api/setup`, `/api/ai`, `/api/reports` và `/api/admin/*`. Khi ghép các module, thống nhất đăng nhập/session, định dạng mật khẩu, quyền vai trò và schema Users/Roles/xe/giao dịch với các thành viên. Báo cáo đọc dữ liệu Order/Payment/Inventory chung; không thực hiện nghiệp vụ bán hàng hoặc thanh toán thay module của nhóm.

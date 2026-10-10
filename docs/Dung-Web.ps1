@@ -1,11 +1,11 @@
 # Chỉ dừng Tomcat do Chay-Web.ps1 tạo; không dừng server IntelliJ hoặc Java khác.
 #Requires -Version 5.1
 [CmdletBinding()]
-param([ValidateRange(1024, 65535)][int]$Port = 8080)
+param([ValidateRange(1024, 65535)][int]$Port = 8081)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
-$serverBase = Join-Path $projectRoot ".codex-tools/tomcat-local-$Port"
+$serverBase = Join-Path $projectRoot "tool/tomcat-local-$Port"
 $statePath = Join-Path $serverBase 'server.json'
 if (-not (Test-Path -LiteralPath $statePath)) {
     Write-Output 'Khong co web do script nay khoi dong.';

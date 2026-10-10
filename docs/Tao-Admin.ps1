@@ -52,7 +52,7 @@ if ($null -eq $javaExe) {
 }
 
 $javaArguments = @('--enable-native-access=ALL-UNNAMED')
-$authDllDirectory = Join-Path $projectRoot '.codex-tools/jdbc-auth'
+$authDllDirectory = Join-Path $projectRoot 'tool/jdbc-auth'
 if (Test-Path -LiteralPath $authDllDirectory -PathType Container) {
     if (@(Get-ChildItem -LiteralPath $authDllDirectory -Filter 'mssql-jdbc_auth-13.4.0.x64.dll' -File).Count -gt 0) {
         $javaArguments += "-Djava.library.path=$authDllDirectory"
