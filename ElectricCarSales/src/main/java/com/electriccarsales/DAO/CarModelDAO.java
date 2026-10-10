@@ -35,5 +35,29 @@ public class CarModelDAO extends DBContext {
         return list;
     }
 
+public CarModel getlById(int modelID){
+        String sql = "SELECT * FROM CarModels WHERE modelID = ?";
 
+        try {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, modelID);
+            ResultSet rs = ps.executeQuery();
+
+            while(rs.next()){
+                CarModel carM = new CarModel();
+
+                carM.setModelID(rs.getInt("ModelID"));
+                carM.setCarLineID(rs.getInt("CarLineID"));
+                carM.setModelName(rs.getString("ModelName"));
+                carM.setDescription(rs.getString("Description"));
+                rs.close();
+                ps.close();
+
+                return carM;
+            }
+        } catch (Exception e) {
+            System.out.println("Error in getById: " + e.getMessage());
+        }
+        return null;
+    }
 }

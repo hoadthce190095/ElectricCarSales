@@ -59,4 +59,12 @@ public class VehicleCatalogService {
         return carImageDAO.getAll();
     }
 
+
+    public static void main(String[] args) {
+        VehicleCatalogService vehicleCatalogService = new VehicleCatalogService();
+        List<Brand> brands = vehicleCatalogService.getAllBrands();
+        for (Brand brand : brands) {
+            System.out.println(brand);
+        }
+    }
 }

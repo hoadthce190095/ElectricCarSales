@@ -27,7 +27,7 @@ public class VehicleController extends HttpServlet {
         List<CarModel> carModels = vehicleCatalogService.getAllCarModels();
 
         request.setAttribute("carModels", carModels);
-        request.getRequestDispatcher("/vehicle.jsp").forward(request, response);
+        request.getRequestDispatcher("/vehicle/vehicle-list.jsp").forward(request, response);
 
     }
 }
