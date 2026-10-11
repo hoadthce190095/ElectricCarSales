@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#112e24" />
+    <title>Volt — Quản trị cửa hàng xe điện</title>
+    <link rel="stylesheet" href="../assets/css/admin.css" />
+    <script src="../assets/js/common.js" defer></script>
+    <script src="../assets/js/admin.js" defer></script>
+    <script src="../assets/js/catelogue.js" defer></script>
+    <script src="../assets/js/ai.js" defer></script>
+    <script src="../assets/js/loginadmin.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" aria-label="Điều hướng chính">
+        <a class="brand" href="admin.html">
+                    <span class="brand-mark">
+                        v
+                        <span>•</span>
+                    </span>
+            <span>
+                        volt
+                        <small>ELECTRIC CAR SALES</small>
+                    </span>
+        </a>
+        <div class="workspace-label">KHÔNG GIAN LÀM VIỆC</div>
+        <nav id="navigation">
+            <button class="nav-item" data-view="overview" data-access="report" hidden>
+                <span class="nav-icon">⌂</span>
+                Tổng quan
+            </button>
+            <button class="nav-item" data-view="catalogue">
+                <span class="nav-icon">▱</span>
+                Danh mục xe
+            </button>
+            <button class="nav-item" data-view="users" data-access="admin" hidden>
+                <span class="nav-icon">▤</span>
+                Tài khoản
+            </button>
+            <button class="nav-item" data-view="employees" data-access="admin" hidden>
+                <span class="nav-icon">♙</span>
+                Nhân viên
+            </button>
+            <button class="nav-item" data-view="roles" data-access="admin" hidden>
+                <span class="nav-icon">◇</span>
+                Phân quyền
+            </button>
+            <button class="nav-item" data-view="configurations" data-access="admin" hidden>
+                <span class="nav-icon">⚙</span>
+                Cấu hình hệ thống
+            </button>
+            <button class="nav-item" data-view="promotions" data-access="admin" hidden>
+                <span class="nav-icon">%</span>
+                Khuyến mãi
+            </button>
+            <button class="nav-item" data-view="reports" data-access="report" hidden>
+                <span class="nav-icon">▥</span>
+                Báo cáo
+            </button>
+            <button class="nav-item" data-view="logs" data-access="admin" hidden>
+                <span class="nav-icon">◷</span>
+                Nhật ký hệ thống
+            </button>
+            <button class="nav-item" data-view="ai">
+                <span class="nav-icon">✧</span>
+                Trợ lý xe
+                <span class="nav-new">AI</span>
+            </button>
+        </nav>
+        <div class="sidebar-bottom">
+            <span class="live-dot"></span>
+            Electric Car Sales
+            <small>Administration · Reporting · AI</small>
+        </div>
+    </aside>
+    <div class="main-shell">
+        <header class="topbar">
+                    <span class="breadcrumb">
+                        Showroom
+                        <span>/</span>
+                        <strong id="breadcrumb-title">Danh mục xe</strong>
+                    </span>
+            <div class="topbar-right">
+                <span class="today" id="today"></span>
+                <button id="setup-button" class="button secondary small" hidden>Tạo Admin đầu tiên</button>
+                <button id="session-button" class="session-button">
+                    <span class="avatar" id="avatar">G</span>
+                    <span id="session-label">Đăng nhập</span>
+                    <span>⌄</span>
+                </button>
+            </div>
+        </header>
+        <main id="main" tabindex="-1">
+            <div class="demo-banner">
+                <span class="pill">BẢN DEMO BÁO CÁO</span>
+                <p>
+                    Xe: thông tin VinFast có nguồn tham khảo. Giao dịch, khách hàng và doanh thu: dữ liệu mô
+                    phỏng phục vụ bài báo cáo.
+                </p>
+            </div>
+            <div class="page-heading">
+                <div>
+                    <p class="eyebrow" id="page-eyebrow">KHÁM PHÁ XE ĐIỆN</p>
+                    <h1 id="page-title">Danh mục xe VinFast</h1>
+                    <p id="page-description">
+                        Khám phá thông số, đối chiếu các phiên bản và hỏi trợ lý tư vấn.
+                    </p>
+                </div>
+                <div id="page-actions"></div>
+            </div>
+            <div id="notice" class="notice" role="status" hidden></div>
+            <section id="content" aria-live="polite">
+                <div class="loading">Đang kết nối với hệ thống…</div>
+            </section>
+        </main>
+        <footer>
+            VOLT / Electric Car Sales
+            <span>Phạm Trần Phúc Tấn · Administration / Reporting / AI</span>
+        </footer>
+    </div>
+</div>
+<dialog id="form-dialog">
+    <div class="dialog-heading">
+        <div>
+            <p class="eyebrow" id="dialog-eyebrow">QUẢN LÝ SHOWROOM</p>
+            <h2 id="dialog-title"></h2>
+        </div>
+        <button type="button" id="dialog-close" class="icon-button" aria-label="Đóng">×</button>
+    </div>
+    <form id="dialog-form">
+        <div id="dialog-fields" class="form-grid"></div>
+        <p id="dialog-error" class="form-error" role="alert" hidden></p>
+        <div class="dialog-actions">
+            <button type="button" id="dialog-cancel" class="button secondary">Hủy</button>
+            <button type="submit" id="dialog-submit" class="button">Lưu thay đổi</button>
+        </div>
+    </form>
+</dialog>
+<div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>
