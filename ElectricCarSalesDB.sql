@@ -832,6 +832,19 @@ CREATE TABLE OTPVerifications(
 GO
 
 /* 
+  Suppliers
+  */
+CREATE TABLE Suppliers(
+	SupplierID INT IDENTITY(1,1) PRIMARY KEY,
+	SupplierName NVARCHAR(150) NOT NULL UNIQUE,
+	Phone VARCHAR(20) NULL,
+	Email VARCHAR(100) NULL,
+	Address NVARCHAR(255) NULL,
+	Description NVARCHAR(500) NULL
+);
+GO 
+
+/* 
   InventoryTransactions
   */
 CREATE TABLE InventoryTransactions(
@@ -910,18 +923,6 @@ CREATE TABLE PromotionCars(
 		UNIQUE (PromotionID, ModelID)
 );
 GO
-/* 
-  Suppliers
-  */
-CREATE TABLE Suppliers(
-	SupplierID INT IDENTITY(1,1) PRIMARY KEY,
-	SupplierName NVARCHAR(150) NOT NULL UNIQUE,
-	Phone VARCHAR(20) NULL,
-	Email VARCHAR(100) NULL,
-	Address NVARCHAR(255) NULL,
-	Description NVARCHAR(500) NULL
-);
-GO 
 
 /* 
   VehicleTCO
