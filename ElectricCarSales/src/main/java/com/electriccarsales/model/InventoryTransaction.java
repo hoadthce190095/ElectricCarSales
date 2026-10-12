@@ -6,7 +6,7 @@ public class InventoryTransaction {
     private int inventoryTransactionID;
     private int carID;
     private int employeeID;
-    private Integer supplierID; 
+    private Integer supplierID;
     private String transactionType;
     private Timestamp transactionDate;
     private String note;
