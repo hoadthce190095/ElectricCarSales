@@ -55,7 +55,7 @@ public class InventoryTransactionDAO {
             ps.setInt(1, it.getCarID());
             ps.setInt(2, it.getEmployeeID());
 
-          
+
             if (it.getSupplierID() != null) {
                 ps.setInt(3, it.getSupplierID());
             } else {
