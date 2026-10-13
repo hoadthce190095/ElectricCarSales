@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ArtifactsWorkspaceSettings">
+    <artifacts-to-build>
+      <artifact name="ElectricCarSales:war exploded" />
+    </artifacts-to-build>
+  </component>
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="740c799d-e83a-430a-aca5-6eb08e4227f1" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/PaymentController.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/PaymentController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/PaymentDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/PaymentDAO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Payment.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Payment.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/PaymentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/PaymentService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/common/customer-shell.jspf" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/common/customer-shell.jspf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-contracts.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-contracts.jsp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-payments.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-payments.jsp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSalesDB.sql" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSalesDB.sql" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="main" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;datdt05&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/hoadthce190095/ElectricCarSales&quot;,
+    &quot;accountId&quot;: &quot;bbe44fc7-ea96-46e6-8307-822e5bc0fb0f&quot;
+  }
+}</component>
+  <component name="LogFilters">
+    <option name="FILTER_ERRORS" value="false" />
+    <option name="FILTER_WARNINGS" value="false" />
+    <option name="FILTER_INFO" value="true" />
+    <option name="FILTER_DEBUG" value="true" />
+    <option name="CUSTOM_FILTER" />
+  </component>
+  <component name="NextEditCompletionFeaturesState">
+    <decayedCancelled>
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0000000007705991" />
+      <entry key="S2" value="1.0197338507617304" />
+      <entry key="S5" value="1.6164482185699607" />
+      <entry key="S10" value="3.006808581076603" />
+      <entry key="S30" value="5.92830589261342" />
+      <entry key="S60" value="7.702123550763976" />
+      <entry key="M2" value="9.135327344890912" />
+      <entry key="M5" value="10.500899327289611" />
+      <entry key="M10" value="11.253979690924519" />
+      <entry key="M15" value="11.631378996995199" />
+      <entry key="M30" value="12.164424677136182" />
+      <entry key="H1" value="12.53049110428127" />
+      <entry key="H2" value="12.749975095450713" />
+      <entry key="H4" value="12.870828612429937" />
+      <entry key="D1" value="12.97786222531102" />
+      <entry key="W1" value="12.996822110661746" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="0.0" />
+      <entry key="M2" value="0.0" />
+      <entry key="M5" value="0.0" />
+      <entry key="M10" value="0.0" />
+      <entry key="M15" value="0.0" />
+      <entry key="M30" value="0.0" />
+      <entry key="H1" value="0.0" />
+      <entry key="H2" value="0.0" />
+      <entry key="H4" value="0.0" />
+      <entry key="D1" value="0.0" />
+      <entry key="W1" value="0.0" />
+    </decayedSelected>
+    <decayedShown>
+      <entry key="MS100" value="0.9592641193252643" />
+      <entry key="MS500" value="0.9917167314587368" />
+      <entry key="S2" value="1.0169764336534157" />
+      <entry key="S5" value="1.60587120229114" />
+      <entry key="S10" value="2.9902128452627785" />
+      <entry key="S30" value="5.915834044042582" />
+      <entry key="S60" value="7.6942849653682925" />
+      <entry key="M2" value="9.130858285808488" />
+      <entry key="M5" value="10.49891721086371" />
+      <entry key="M10" value="11.252936234337417" />
+      <entry key="M15" value="11.630666198547013" />
+      <entry key="M30" value="12.164056368695073" />
+      <entry key="H1" value="12.530302917241158" />
+      <entry key="H2" value="12.749879801343955" />
+      <entry key="H4" value="12.870780635964724" />
+      <entry key="D1" value="12.977854180709322" />
+      <entry key="W1" value="12.99682096020631" />
+    </decayedShown>
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3KYYXWT2WqrTsWznMhbo5jjEliq" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "TomEE Server.ElectricCarSale.executor": "Run",
+    "TomEE Server.TomEE 10.1.56.executor": "Run",
+    "TomEE Server.Unnamed.executor": "Run",
+    "Tomcat Server.Tomcat 10.1.56.executor": "Run",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "tandat/payment",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.jshint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.jshint": "",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "to.speed.mode.migration.done": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\ElectricCarSales\ElectricCarSales\src\main\webapp" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="configurationStatuses">
+      <map>
+        <entry key="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory">
+          <value>
+            <map>
+              <entry key="Tomcat 10.1.56" value="STOPPED" />
+            </map>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="RunManager">
+    <configuration name="Tomcat 10.1.56" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Local" APPLICATION_SERVER_NAME="Tomcat 10.1.56" ALTERNATIVE_JRE_ENABLED="false" nameIsGenerated="true">
+      <option name="UPDATING_POLICY" value="restart-server" />
+      <deployment>
+        <artifact name="ElectricCarSales:war exploded">
+          <settings>
+            <option name="CONTEXT_PATH" value="/ElectricCarSales" />
+          </settings>
+        </artifact>
+      </deployment>
+      <server-settings>
+        <option name="BASE_DIRECTORY_NAME" value="525aa879-7ddb-48e6-b650-158f48f3c6aa" />
+        <option name="HTTP_PORT" value="8080" />
+      </server-settings>
+      <predefined_log_file enabled="true" id="Tomcat" />
+      <predefined_log_file enabled="true" id="Tomcat Catalina" />
+      <predefined_log_file id="Tomcat Manager" />
+      <predefined_log_file id="Tomcat Host Manager" />
+      <predefined_log_file id="Tomcat Localhost Access" />
+      <RunnerSettings RunnerId="Debug">
+        <option name="DEBUG_PORT" value="61807" />
+      </RunnerSettings>
+      <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Cover">
+        <option name="USE_ENV_VARIABLES" value="true" />
+        <STARTUP>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </STARTUP>
+        <SHUTDOWN>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </SHUTDOWN>
+      </ConfigurationWrapper>
+      <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Debug">
+        <option name="USE_ENV_VARIABLES" value="true" />
+        <STARTUP>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </STARTUP>
+        <SHUTDOWN>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </SHUTDOWN>
+      </ConfigurationWrapper>
+      <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Profile">
+        <option name="USE_ENV_VARIABLES" value="true" />
+        <STARTUP>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </STARTUP>
+        <SHUTDOWN>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </SHUTDOWN>
+      </ConfigurationWrapper>
+      <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Run">
+        <option name="USE_ENV_VARIABLES" value="true" />
+        <STARTUP>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </STARTUP>
+        <SHUTDOWN>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </SHUTDOWN>
+      </ConfigurationWrapper>
+      <method v="2">
+        <option name="Make" enabled="true" />
+        <option name="BuildArtifacts" enabled="true">
+          <artifact name="ElectricCarSales:war exploded" />
+        </option>
+      </method>
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-a203e0a19954-intellij.indexing.shared.core-IU-262.10968.63" />
+        <option value="bundled-js-predefined-d6986cc7102b-4abd2a77f808-JavaScript-IU-262.10968.63" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="740c799d-e83a-430a-aca5-6eb08e4227f1" name="Changes" comment="" />
+      <created>1791736008576</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1791736008576</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+</project>
