@@ -36,7 +36,7 @@ boolean customerView = "customer".equals(request.getParameter("view"));
             <% if (customerView) { %>
             <a class="account-link" href="<%= request.getContextPath() %>/customer/my-account.jsp"><span class="account-icon" aria-hidden="true">KH</span>Tài khoản của tôi</a>
             <% } else { %>
-            <a class="account-link" href="<%= request.getContextPath() %>/login.jsp"><span class="account-icon" aria-hidden="true">♙</span>Đăng nhập</a>
+            <a class="account-link" href="<%= request.getContextPath() %>/login"><span class="account-icon" aria-hidden="true">♙</span>Đăng nhập</a>
             <% } %>
         </div>
     </div>
