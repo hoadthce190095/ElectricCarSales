@@ -15,7 +15,7 @@ boolean customerView = "customer".equals(request.getParameter("view"));
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/home.css?v=4">
-    <script src="<%= request.getContextPath() %>/assets/js/home.js?v=12" defer></script>
+    <script src="<%= request.getContextPath() %>/assets/js/home.js?v=13" defer></script>
 </head>
 <body class="home-page">
 <header class="site-header">

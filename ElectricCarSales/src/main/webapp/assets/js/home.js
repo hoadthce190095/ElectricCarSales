@@ -26,6 +26,11 @@
     let compareNoticeTimer;
 
     const text = (value) => String(value ?? "").trim();
+    const normalizeSearch = (value) => String(value ?? "").normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLocaleLowerCase("vi")
+        .replace(/đ/g, "d")
+        .replace(/[^a-z0-9]+/g, "");
     const colorCategories = [
         { value: "white", label: "Trắng", aliases: ["trang", "white", "infinity blanc"] },
         { value: "gray", label: "Xám", aliases: ["xam", "gray", "grey", "zenith grey"] },
@@ -96,8 +101,8 @@
     }
 
     function matches(model) {
-        const searchText = text(search.value).toLocaleLowerCase("vi");
-        const fields = [model.modelName, model.carLine, model.specificationVersion, model.dimensions, ...(Array.isArray(model.colors) ? model.colors : [])].map((value) => text(value).toLocaleLowerCase("vi"));
+        const searchText = normalizeSearch(search.value);
+        const fields = [model.modelName, model.carLine, model.specificationVersion, model.dimensions, ...(Array.isArray(model.colors) ? model.colors : [])].map(normalizeSearch);
         const amount = number(model.priceVnd);
         const maxPriceMillions = number(priceFilter.value);
         const minimumRange = number(rangeFilter.value);
