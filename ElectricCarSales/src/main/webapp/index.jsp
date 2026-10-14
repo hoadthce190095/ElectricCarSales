@@ -14,8 +14,8 @@ boolean customerView = "customer".equals(request.getParameter("view"));
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/home.css?v=4">
-    <script src="<%= request.getContextPath() %>/assets/js/home.js?v=13" defer></script>
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/home.css?v=6">
+    <script src="<%= request.getContextPath() %>/assets/js/home.js?v=16" defer></script>
 </head>
 <body class="home-page">
 <header class="site-header">
@@ -147,10 +147,6 @@ boolean customerView = "customer".equals(request.getParameter("view"));
     <span><b id="compare-count">0</b> mẫu xe đã chọn để so sánh</span><button id="compare-open" type="button">So sánh xe <span>→</span></button><button class="compare-clear" id="compare-clear" type="button" aria-label="Xóa các xe đã chọn">×</button>
 </div>
 <div class="compare-notice" id="compare-notice" role="status" aria-live="polite" hidden></div>
-<dialog class="compare-dialog" id="compare-dialog" aria-labelledby="compare-title">
-    <div class="dialog-heading"><div><span class="eyebrow">ĐỐI CHIẾU THÔNG SỐ</span><h2 id="compare-title">So sánh xe</h2></div><button type="button" class="dialog-close" id="compare-close" aria-label="Đóng">×</button></div>
-    <div class="compare-table-wrap" id="compare-table-wrap"></div>
-</dialog>
 <footer class="site-footer"><a class="footer-brand" href="<%= request.getContextPath() %>/index.jsp">VinFast - ElectricCarSale</a><span>© <span id="copyright-year">2026</span> · Thông tin sản phẩm mang tính tham khảo.</span><a href="mailto:hotro@electriccarsale.vn">hotro@electriccarsale.vn</a></footer>
 <script>
     document.addEventListener("DOMContentLoaded", function () {

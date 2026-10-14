@@ -35,8 +35,8 @@
         .color-option:disabled { cursor: wait; opacity: .65; }
         .color-option[aria-pressed="true"] { border-color: #24568a; box-shadow: 0 0 0 2px #fff, 0 0 0 3px #24568a; }
         .color-swatch { width: 28px; height: 28px; border: 1px solid rgba(0, 0, 0, .18); border-radius: 50%; }
-        .color-note { margin: 9px 0 0; color: #777; font-size: 12px; }
         .color-status { min-height: 18px; margin: 5px 0 0; color: #a12626; font-size: 12px; }
+        .specs-title { grid-column: 1 / -1; margin: 0 0 4px; font-size: 18px; }
         .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 20px; }
         .contact-link { padding: 9px 13px; border: 1px solid #24568a; background: #24568a; color: #fff; font-size: 13px; text-decoration: none; }
         @media (max-width: 700px) { main { margin: 16px auto; } .detail-card { grid-template-columns: 1fr; gap: 18px; padding: 14px; } .gallery { min-height: 0; } .gallery img { height: clamp(230px, 68vw, 310px); } .gallery-message { min-height: 230px; } }
@@ -50,8 +50,7 @@
     <article class="detail-card">
         <div class="gallery" id="vehicle-gallery"
              data-model-name="<c:out value='${car.modelName}'/>"
-             data-catalog-model-name="<c:out value='${param.name}'/>"
-             data-car-line-name="<c:out value='${param.line}'/>" aria-label="Hình ảnh xe">
+             data-catalog-model-name="<c:out value='${param.name}'/>" aria-label="Hình ảnh xe">
             <c:forEach var="image" items="${carImages}">
                 <c:if test="${not empty image.imageURL}">
                     <img src="<c:out value='${image.imageURL}'/>" alt="<c:out value='${car.modelName}'/>" loading="lazy">
@@ -71,26 +70,12 @@
                 <p class="selected-color" aria-live="polite">Màu đang chọn: <strong id="selected-color-name"></strong></p>
                 <div class="color-options" id="color-options" aria-label="Chọn màu xe"></div>
                 <p class="color-status" id="color-status" role="status" aria-live="polite"></p>
-                <p class="color-note">Ảnh xe được cập nhật theo màu đang chọn.</p>
             </section>
 
-            <c:if test="${not empty specification}">
-                <section class="specs" aria-label="Thông số kỹ thuật">
-                    <div class="spec"><span>Kích thước</span><strong><c:out value="${specification.dimensions}" default="Đang cập nhật"/></strong></div>
-                    <div class="spec"><span>Dung lượng pin</span><strong><c:out value="${specification.batteryCapacity}"/> kWh</strong></div>
-                    <div class="spec"><span>Quãng đường công bố</span><strong><c:out value="${specification.rangeKM}"/> km</strong></div>
-                    <div class="spec"><span>Công suất tối đa</span><strong><c:out value="${specification.maxPower}"/> kW</strong></div>
-                    <div class="spec"><span>Số chỗ ngồi</span><strong><c:out value="${specification.seatingCapacity}"/> chỗ</strong></div>
-                    <div class="spec"><span>Túi khí</span><strong><c:choose><c:when test="${specification.airbagCount > 0}"><c:out value="${specification.airbagCount}"/></c:when><c:otherwise>Đang cập nhật</c:otherwise></c:choose></strong></div>
-                    <div class="spec"><span>Mâm xe</span><strong><c:out value="${specification.wheelType}" default="Đang cập nhật"/></strong></div>
-                    <div class="spec"><span>Tốc độ tối đa</span><strong><c:choose><c:when test="${specification.maxSpeed > 0}"><c:out value="${specification.maxSpeed}"/> km/h</c:when><c:otherwise>Đang cập nhật</c:otherwise></c:choose></strong></div>
-                    <div class="spec"><span>Mức tiêu thụ năng lượng</span><strong><c:choose><c:when test="${specification.energyConsumption > 0}"><c:out value="${specification.energyConsumption}"/></c:when><c:otherwise>Đang cập nhật</c:otherwise></c:choose></strong></div>
-                    <div class="spec"><span>Thời gian sạc</span><strong><c:choose><c:when test="${specification.chargingTime > 0}"><c:out value="${specification.chargingTime}"/> giờ</c:when><c:otherwise>Đang cập nhật</c:otherwise></c:choose></strong></div>
-                    <c:if test="${not empty specification.description}">
-                        <p class="spec-note"><c:out value="${specification.description}"/></p>
-                    </c:if>
-                </section>
-            </c:if>
+            <section class="specs" id="detail-specs" aria-label="Thông số kỹ thuật">
+                <h2 class="specs-title">Thông số kỹ thuật</h2>
+                <p class="spec-note" id="specification-status" role="status" aria-live="polite">Đang tải thông số xe...</p>
+            </section>
 
             <div class="actions">
                 <a class="back-link" href="<c:url value='/index.jsp#models'/>">← Quay lại danh sách xe</a>
@@ -104,11 +89,11 @@
         const gallery = document.getElementById("vehicle-gallery");
         const modelName = gallery.dataset.modelName;
         const catalogModelName = gallery.dataset.catalogModelName;
-        const carLineName = gallery.dataset.carLineName;
         const colorPicker = document.getElementById("color-picker");
         const colorOptions = document.getElementById("color-options");
         const selectedColorName = document.getElementById("selected-color-name");
         const colorStatus = document.getElementById("color-status");
+        const specifications = document.getElementById("detail-specs");
         let fallbackRequested = false;
         let cataloguePromise;
         let catalogueColorImages = {};
@@ -133,7 +118,49 @@
 
         function normalize(value) {
             return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                .toLocaleLowerCase("vi").replace(/[^a-z0-9]/g, "");
+                .toLocaleLowerCase("vi").replace(/đ/g, "d").replace(/[^a-z0-9]/g, "");
+        }
+
+        function renderSpecifications(model) {
+            const formatNumber = (value, suffix) => value == null || value === ""
+                ? "Đang cập nhật"
+                : new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 1 }).format(value) + suffix;
+            const valueOrPending = (value) => value == null || String(value).trim() === ""
+                ? "Đang cập nhật"
+                : String(value);
+            const rows = [
+                ["Phiên bản", valueOrPending(model.specificationVersion)],
+                ["Giá tham khảo", model.priceVnd == null ? "Liên hệ" : formatNumber(model.priceVnd, " ₫")],
+                ["Quãng đường công bố", formatNumber(model.rangeKm, " km")],
+                ["Tiêu chuẩn quãng đường", valueOrPending(model.rangeStandard)],
+                ["Dung lượng pin", formatNumber(model.batteryKwh, " kWh")],
+                ["Công suất tối đa", formatNumber(model.maxPowerKw, " kW")],
+                ["Số chỗ ngồi", formatNumber(model.seats, " chỗ")],
+                ["Kích thước", valueOrPending(model.dimensions)],
+                ["Mâm xe", valueOrPending(model.wheelType)],
+                ["Số túi khí", Number(model.airbagCount) > 0 ? String(model.airbagCount) : "Đang cập nhật"],
+                ["Tốc độ tối đa", formatNumber(model.maxSpeedKmh, " km/h")],
+                ["Thời gian sạc nhanh", formatNumber(model.rapidChargeMinutes, " phút")]
+            ];
+            const fragment = document.createDocumentFragment();
+            rows.forEach(([label, value]) => {
+                const item = document.createElement("div");
+                item.className = "spec";
+                const name = document.createElement("span");
+                name.textContent = label;
+                const content = document.createElement("strong");
+                content.textContent = value;
+                item.append(name, content);
+                fragment.append(item);
+            });
+            specifications.replaceChildren(fragment);
+        }
+
+        function showSpecificationError(message) {
+            const notice = document.createElement("p");
+            notice.className = "spec-note";
+            notice.textContent = message;
+            specifications.replaceChildren(notice);
         }
 
         function swatchBackground(colorName) {
@@ -270,8 +297,14 @@
                 const normalizeName = (value) => normalize(value);
                 const catalogModels = catalogue?.models || [];
                 const model = catalogModels.find((item) => normalizeName(item.modelName) === normalizeName(catalogModelName))
-                    || catalogModels.find((item) => normalizeName(item.modelName) === normalizeName(modelName))
-                    || catalogModels.find((item) => normalizeName(item.carLine) === normalizeName(carLineName));
+                    || catalogModels.find((item) => normalizeName(item.modelName) === normalizeName(modelName));
+                if (!catalogue) {
+                    showSpecificationError("Không tải được danh mục thông số xe. Vui lòng thử tải lại trang.");
+                } else if (model) {
+                    renderSpecifications(model);
+                } else {
+                    showSpecificationError("Chưa có thông số cho mẫu xe này trong danh mục.");
+                }
                 catalogueColorImages = catalogue?.colorImagesByLine?.[model?.carLine];
                 if (model?.colors) renderColorOptions(model.colors);
                 if (gallery.querySelector("img")) {
@@ -290,6 +323,7 @@
                 showFallbackImage(imageUrl.href);
             } catch (error) {
                 console.error("Không thể tải ảnh dự phòng cho xe.", error);
+                showSpecificationError("Không tải được thông số xe. Vui lòng thử tải lại trang.");
                 showMessage("Chưa tải được hình ảnh xe. Vui lòng thử tải lại trang.");
             }
         }

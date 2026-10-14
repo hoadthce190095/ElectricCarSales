@@ -3,6 +3,8 @@ GO
 
 /* =========================================================
    DROP OLD DATABASE
+   This full setup script deletes and recreates ElectricCarSalesDB.
+   Use ElectricCarSalesCatalogSync.sql to update an existing database safely.
    ========================================================= */
 
 IF DB_ID(N'ElectricCarSalesDB') IS NOT NULL
@@ -1026,15 +1028,31 @@ VALUES
 	   N'Eco - Tiêu chuẩn 2', N'Cấu hình Eco - Tiêu chuẩn 2.',
 	   N'3190 x 1679 x 1652 mm', 18.64, N'16 inch', NULL, 215, 30,
 	   NULL, 4, NULL, 1,
-	   N'Quãng đường công bố 215 km theo NEDC. Mức tiêu thụ, tốc độ tối đa và thời gian sạc không có trong danh mục dữ liệu.',
+	   N'Danh mục VF 3 trong bài chọn bản Eco Tiêu chuẩn 2, không đại diện bản Plus. Quãng đường công bố 215 km theo NEDC.',
 	   N'https://static-cms-prod.vinfastauto.com/statics/car/vf3/xe-dien-vinfast-vf3-chon-mau-nen-trang-logo-desktop.webp'
+),
+(
+	   N'VF 5', N'VF 5 Plus', N'Xe điện VinFast VF 5 Plus.',
+	   N'Plus - Tiêu chuẩn 1', N'Cấu hình Plus - Tiêu chuẩn 1.',
+	   N'3967 x 1723 x 1579 mm', 37.23, N'17 inch', NULL, 326, 100,
+	   NULL, 5, NULL, 6,
+	   N'Thông số công bố được kiểm tra ngày 05/10/2026; trang bị và quãng đường thực tế tùy cấu hình, điều kiện sử dụng.',
+	   N'https://static-cms-prod.vinfastauto.com/statics/car/vf5/xe-dien-vinfast-vf5-ngoai-that-mau-xam-toan-canh-desktop.webp'
+),
+(
+	   N'VF 6', N'VF 6 Eco', N'Xe điện VinFast VF 6 Eco.',
+	   N'Eco - Tiêu chuẩn 1', N'Cấu hình Eco - Tiêu chuẩn 1.',
+	   N'4241 x 1834 x 1580 mm', 59.60, NULL, NULL, 485, 130,
+	   NULL, 5, NULL, 4,
+	   N'Thông số công bố được kiểm tra ngày 05/10/2026; trang bị và quãng đường thực tế tùy cấu hình, điều kiện sử dụng.',
+	   N'https://static-cms-prod.vinfastauto.com/statics/car/vf6/hinh-anh-xe-vinfast-vf6-logo-vf6-mau-do-desktop.webp'
 ),
 (
 	   N'VF 6', N'VF 6 Plus', N'Xe SUV điện VinFast VF 6 Plus.',
 	   N'Plus - Tiêu chuẩn 2', N'Cấu hình Plus - Tiêu chuẩn 2.',
 	   N'4241 x 1834 x 1580 mm', 59.60, N'18 inch', NULL, 460, 150,
 	   NULL, 5, NULL, NULL,
-	   N'Quãng đường công bố 460 km theo NEDC. Chưa ghi nhận số túi khí, mức tiêu thụ, tốc độ tối đa và thời gian sạc cho cấu hình này.',
+	   N'Bản Plus có nhiều mức trang bị. Không nhập số túi khí do trang sản phẩm chưa tách rõ Tiêu chuẩn 1 và Tiêu chuẩn 2.',
 	   N'https://static-cms-prod.vinfastauto.com/statics/car/vf6/hinh-anh-xe-vinfast-vf6-logo-vf6-mau-xanh-reu-desktop.webp'
 ),
 (
@@ -1042,47 +1060,47 @@ VALUES
 	   N'Eco - Tiêu chuẩn 2', N'Cấu hình Eco - Tiêu chuẩn 2.',
 	   N'4545 x 1890 x 1635.75 mm', 59.60, N'19 inch', NULL, 440, 130,
 	   NULL, 5, NULL, 4,
-	   N'Quãng đường công bố 440 km theo NEDC. Mức tiêu thụ, tốc độ tối đa và thời gian sạc không có trong danh mục dữ liệu.',
+	   N'Thông số công bố được kiểm tra ngày 05/10/2026; trang bị và quãng đường thực tế tùy cấu hình, điều kiện sử dụng.',
 	   N'https://static-cms-prod.vinfastauto.com/statics/car/vf7/hinh-anh-vinfast-vf7-text-logo-banner-desktop.webp'
 ),
 (
 	   N'VF 7', N'VF 7 Plus', N'Xe SUV điện VinFast VF 7 Plus.',
-	   N'Plus FWD - Trần thép - Tiêu chuẩn 2', N'Cấu hình Plus FWD, trần thép - Tiêu chuẩn 2.',
+	   N'Plus FWD - Trần thép - Tiêu chuẩn 2', 	   N'Cấu hình Plus FWD - Trần thép - Tiêu chuẩn 2.',
 	   N'4545 x 1890 x 1635.75 mm', 70.00, N'20 inch', NULL, 500.50, 150,
 	   NULL, 5, NULL, NULL,
-	   N'Quãng đường công bố 500.5 km theo NEDC. Chưa ghi nhận số túi khí, mức tiêu thụ và tốc độ tối đa cho cấu hình này.',
+	   N'Chọn Plus FWD, trần thép; không dùng công suất 260 kW của Plus AWD. Range 500,5 km NEDC từ mục thông số Pin và Sạc. Số túi khí chưa tách rõ cấu hình TC2 nên để trống.',
 	   N'https://static-cms-prod.vinfastauto.com/statics/car/vf7/hinh-anh-vinfast-vf7-plus-text-logo-banner-desktop.webp'
 ),
 (
 	   N'VF 8', N'VF 8 Eco', N'Xe SUV điện VinFast VF 8 Eco.',
-	   N'Eco FWD - Pin CATL VN - Tiêu chuẩn 1', N'Cấu hình Eco FWD, pin CATL VN - Tiêu chuẩn 1.',
+	   N'Eco FWD - Pin CATL VN - Tiêu chuẩn 1', 	   N'Cấu hình Eco FWD - Pin CATL VN - Tiêu chuẩn 1.',
 	   N'4750 x 1934 x 1667 mm', 87.70, N'19 inch', NULL, 635, 150,
 	   NULL, 5, NULL, 11,
-	   N'Quãng đường công bố 635 km. Danh mục nguồn không nêu tiêu chuẩn đo cho cấu hình này; mức tiêu thụ, tốc độ tối đa và thời gian sạc chưa ghi nhận.',
+	   N'Range 635 km NEDC theo trang sản phẩm ngày 05/10/2026. Brochure 03/02/2026 từng ghi Eco 562 km NEDC; không ghép số liệu của hai thời điểm.',
 	   N'https://static-cms-prod.vinfastauto.com/statics/car/vf8/hinh-anh-vinfast-vf8-eco-text-logo-banner-desktop.webp'
 ),
 (
 	   N'VF 8', N'VF 8 Plus', N'Xe SUV điện VinFast VF 8 Plus.',
-	   N'Plus AWD - Pin CATL VN - Tiêu chuẩn 1', N'Cấu hình Plus AWD, pin CATL VN - Tiêu chuẩn 1.',
+	   N'Plus AWD - Pin CATL VN - Tiêu chuẩn 1', 	   N'Cấu hình Plus AWD - Pin CATL VN - Tiêu chuẩn 1.',
 	   N'4750 x 1934 x 1667 mm', 87.70, N'20 inch', NULL, 475, 300,
 	   NULL, 5, NULL, 11,
-	   N'Quãng đường công bố 475 km. Danh mục nguồn không nêu tiêu chuẩn đo cho cấu hình này; mức tiêu thụ, tốc độ tối đa và thời gian sạc chưa ghi nhận.',
+	   N'Range 475 km NEDC theo trang sản phẩm ngày 05/10/2026. Brochure 03/02/2026 từng ghi Plus 457 km WLTP; hai tiêu chuẩn không được so sánh trực tiếp.',
 	   N'https://static-cms-prod.vinfastauto.com/statics/car/VF-8/hinh-anh-xe-VinFast-vf8-ngoai-that-mau-xanh-reu-02.webp'
 ),
 (
 	   N'VF 9', N'VF 9 Eco', N'Xe SUV điện 7 chỗ VinFast VF 9 Eco.',
-	   N'Eco - Pin CATL - Điều hòa 3 vùng', N'Cấu hình Eco, pin CATL, điều hòa 3 vùng.',
+	   N'Eco - Pin CATL - Điều hòa 3 vùng', 	   N'Cấu hình Eco - Pin CATL - Điều hòa 3 vùng.',
 	   N'5119 x 2254 x 1697 mm', 123.00, N'20 inch', NULL, 626, 300,
 	   200, 7, NULL, 11,
-	   N'Quãng đường công bố 626 km; tốc độ tối đa 200 km/h. Danh mục nguồn không nêu tiêu chuẩn đo; mức tiêu thụ và thời gian sạc chưa ghi nhận.',
+	   N'Công suất 300 kW tương đương 402 hp theo brochure chính thức, không phải 402 kW. Rộng 2254 mm theo cách đo trong brochure; thông số kích thước gồm gương cần đối chiếu khi so xe.',
 	   N'https://static-cms-prod.vinfastauto.com/statics/car/vf9/hinh-anh-vinfast-vf9-eco-text-logo-banner-desktop.webp'
 ),
 (
 	   N'VF 9', N'VF 9 Plus', N'Xe SUV điện 7 chỗ VinFast VF 9 Plus.',
-	   N'Plus - Trần thép - 7 chỗ - Pin CATL', N'Cấu hình Plus, trần thép, 7 chỗ, pin CATL.',
+	   N'Plus - Trần thép - 7 chỗ - Pin CATL', 	   N'Cấu hình Plus - Trần thép - 7 chỗ - Pin CATL.',
 	   N'5119 x 2254 x 1697 mm', 123.00, N'21 inch', NULL, 602, 300,
 	   200, 7, NULL, 11,
-	   N'Quãng đường công bố 602 km; tốc độ tối đa 200 km/h. Danh mục nguồn không nêu tiêu chuẩn đo; mức tiêu thụ và thời gian sạc chưa ghi nhận.',
+	   N'Chọn bản 7 chỗ, trần thép; ghế cơ trưởng 6 chỗ là tùy chọn có giá riêng. Công suất theo brochure 300 kW, tương đương 402 hp.',
 	   N'https://static-cms-prod.vinfastauto.com/statics/car/vf9/hinh-anh-vinfast-vf9-product-summary-desktop.webp'
 );
 

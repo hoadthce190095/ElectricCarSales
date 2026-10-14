@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
-@WebServlet(name = "VehicleController", urlPatterns = {"/home", "/cars"})
+@WebServlet(name = "VehicleController", urlPatterns = {"/cars"})
 public class VehicleController extends HttpServlet {
 
     @Override

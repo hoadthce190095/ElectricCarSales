@@ -15,15 +15,23 @@
     const emptyState = document.getElementById("empty-state");
     const compareDock = document.getElementById("compare-dock");
     const compareNotice = document.getElementById("compare-notice");
-    const compareDialog = document.getElementById("compare-dialog");
-    const compareTable = document.getElementById("compare-table-wrap");
     const modelKey = (value) => String(value ?? "").trim().toLocaleLowerCase("vi").replace(/[^a-z0-9]/g, "");
     const detailUrls = new Map([...grid.querySelectorAll("[data-model-name][data-detail-url]")]
         .map((card) => [modelKey(card.dataset.modelName), card.dataset.detailUrl]));
     const selections = new Set();
+    const compareSelectionStorageKey = "electriccarsale.compareSelections";
     let models = [];
     let catalogueMetadata = {};
     let compareNoticeTimer;
+
+    try {
+        const storedSelections = JSON.parse(sessionStorage.getItem(compareSelectionStorageKey) || "[]");
+        if (Array.isArray(storedSelections)) {
+            storedSelections.filter((id) => typeof id === "string").forEach((id) => selections.add(id));
+        }
+    } catch (error) {
+        console.error("Không thể khôi phục các xe đã chọn để so sánh.", error);
+    }
 
     const text = (value) => String(value ?? "").trim();
     const normalizeSearch = (value) => String(value ?? "").normalize("NFD")
@@ -126,7 +134,7 @@
     function card(model, index) {
         const id = `${text(model.modelName)}-${text(model.specificationVersion)}`;
         const selected = selections.has(id);
-        const article = make("article", "vehicle-card");
+        const article = make("article", `vehicle-card${selected ? " selected-for-compare" : ""}`);
         const photo = make("div", "vehicle-photo");
         const badge = make("span", "model-badge", className(model));
         const selectedColor = colorFilter.value && Array.isArray(model.colors)
@@ -229,6 +237,14 @@
         compareDock.hidden = selections.size === 0;
     }
 
+    function persistCompareSelections() {
+        try {
+            sessionStorage.setItem(compareSelectionStorageKey, JSON.stringify([...selections]));
+        } catch (error) {
+            console.error("Không thể lưu các xe đã chọn để so sánh.", error);
+        }
+    }
+
     function showCompareNotice() {
         compareNotice.textContent = "Bạn chỉ có thể chọn tối đa 3 xe để so sánh.";
         compareNotice.hidden = false;
@@ -245,37 +261,14 @@
             showCompareNotice();
             return;
         }
+        persistCompareSelections();
         render();
         syncCompare();
     }
 
     function openComparison() {
-        const selectedModels = [...selections].map((id) => models.find((model) => `${text(model.modelName)}-${text(model.specificationVersion)}` === id)).filter(Boolean);
-        const table = make("table", "compare-table");
-        const head = make("tr");
-        head.append(make("th", "", "Thông tin"));
-        selectedModels.forEach((model) => head.append(make("th", "", text(model.modelName))));
-        const thead = make("thead");
-        thead.append(head);
-        const tbody = make("tbody");
-        const rows = [
-            ["Phiên bản", (model) => text(model.specificationVersion) || "—"],
-            ["Giá tham khảo", (model) => price(model.priceVnd)],
-            ["Quãng đường công bố", range],
-            ["Dung lượng pin", battery],
-            ["Số chỗ ngồi", seats],
-            ["Kích thước", (model) => text(model.dimensions) || "Đang cập nhật"],
-            ["Tiêu chuẩn quãng đường", (model) => text(model.rangeStandard) || "Chưa ghi nhận"]
-        ];
-        rows.forEach(([label, value]) => {
-            const row = make("tr");
-            row.append(make("td", "", label));
-            selectedModels.forEach((model) => row.append(make("td", "", value(model))));
-            tbody.append(row);
-        });
-        table.append(thead, tbody);
-        compareTable.replaceChildren(table);
-        compareDialog.showModal();
+        persistCompareSelections();
+        window.location.href = `${contextPath}/compare.jsp`;
     }
 
     function resetFilters() {
@@ -295,6 +288,13 @@
             catalogueMetadata = await response.json();
             models = Array.isArray(catalogueMetadata.models) ? catalogueMetadata.models.filter((model) => text(model.modelName)) : [];
             if (!models.length) throw new Error("No catalogue models are available");
+            const availableIds = new Set(models.map((model) =>
+                `${text(model.modelName)}-${text(model.specificationVersion)}`
+            ));
+            for (const id of selections) {
+                if (!availableIds.has(id)) selections.delete(id);
+            }
+            persistCompareSelections();
             populateFilters();
             const banners = ["VF 3", "VF 7", "VF 8"];
             banners.forEach((name, index) => {
@@ -306,6 +306,7 @@
             const disclaimer = text(catalogueMetadata.note);
             document.getElementById("catalog-disclaimer").textContent = disclaimer || "Giá và thông số hiển thị theo dữ liệu tham khảo của từng cấu hình; vui lòng đối chiếu với VinFast trước khi giao dịch.";
             render();
+            syncCompare();
         } catch (error) {
             grid.setAttribute("aria-busy", "false");
             grid.replaceChildren();
@@ -325,9 +326,12 @@
     document.getElementById("empty-reset").addEventListener("click", resetFilters);
     document.getElementById("compare-open").addEventListener("click", openComparison);
     document.addEventListener("compare-limit-reached", showCompareNotice);
-    document.getElementById("compare-clear").addEventListener("click", () => { selections.clear(); render(); syncCompare(); });
-    document.getElementById("compare-close").addEventListener("click", () => compareDialog.close());
-    compareDialog.addEventListener("click", (event) => { if (event.target === compareDialog) compareDialog.close(); });
+    document.getElementById("compare-clear").addEventListener("click", () => {
+        selections.clear();
+        persistCompareSelections();
+        render();
+        syncCompare();
+    });
     const menuButton = document.querySelector(".mobile-menu-toggle");
     const nav = document.getElementById("primary-nav");
     menuButton.addEventListener("click", () => {

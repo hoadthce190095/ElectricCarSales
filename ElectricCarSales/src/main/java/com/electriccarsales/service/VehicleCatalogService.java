@@ -66,10 +66,7 @@ public class VehicleCatalogService {
 
     public CarModel getCarModelByNameOrLine(String modelName, String carLineName) {
         if (modelName != null && !modelName.isBlank()) {
-            CarModel car = carModelDAO.getByName(modelName);
-            if (car != null) {
-                return car;
-            }
+            return carModelDAO.getByName(modelName);
         }
 
         if (carLineName == null || carLineName.isBlank()) {
@@ -85,10 +82,10 @@ public class VehicleCatalogService {
             return null;
         }
 
-        return carModelDAO.getAll().stream()
+        List<CarModel> matchingModels = carModelDAO.getAll().stream()
                 .filter(car -> matchingLineIds.contains(car.getCarLineID()))
-                .findFirst()
-                .orElse(null);
+                .toList();
+        return matchingModels.size() == 1 ? matchingModels.get(0) : null;
     }
 
     private String normalizeName(String value) {
