@@ -17,6 +17,6 @@ public class CarModelService {
     }
 
     public CarModel getCarModelById(int modelID) {
-        return carModelDAO.getlById(modelID);
+        return carModelDAO.getById(modelID);
     }
 }

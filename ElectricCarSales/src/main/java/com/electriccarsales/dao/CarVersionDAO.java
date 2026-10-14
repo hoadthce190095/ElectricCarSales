@@ -9,16 +9,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CarVersionDAO extends DBContext {
+
     public List<CarVersion> getAll() {
         List<CarVersion> list = new ArrayList<>();
-
         String sql = "SELECT * FROM CarVersions";
 
-        try{
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
 
-            while(rs.next()){
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
                 CarVersion carV = new CarVersion();
                 carV.setVersionID(rs.getInt("VersionID"));
                 carV.setModelID(rs.getInt("ModelID"));
@@ -27,12 +27,10 @@ public class CarVersionDAO extends DBContext {
 
                 list.add(carV);
             }
-            rs.close();
-            ps.close();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error in CarVersionDAO.getAll(): " + e.getMessage(), e);
         }
-        return  list;
+        return list;
     }
 
 }

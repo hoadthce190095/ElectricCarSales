@@ -1,4 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%
 boolean customerView = "customer".equals(request.getParameter("view"));
 %>
@@ -100,9 +101,32 @@ boolean customerView = "customer".equals(request.getParameter("view"));
             </div>
 
             <div class="active-filters" id="active-filters" aria-live="polite"></div>
-            <div class="vehicle-grid" id="vehicle-grid" aria-live="polite" aria-busy="true">
-                <div class="loading-card"><span class="loading-orbit"></span><span>Đang tải danh sách xe...</span></div>
-            </div>
+       <div class="vehicle-grid" id="vehicle-grid" aria-live="polite" aria-busy="false" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+           <c:choose>
+               <c:when test="${not empty carList}">
+                   <c:forEach var="car" items="${carList}">
+                       <div class="vehicle-card" style="border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                           <div class="vehicle-info">
+                               <h3 style="font-size: 20px; color: #111; margin-bottom: 8px;">${car.modelName}</h3>
+                               <p style="color: #666; font-size: 14px; margin-bottom: 15px; min-height: 40px;">${car.description}</p>
+
+                               <div class="vehicle-actions" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f0f0f0; padding-top: 15px;">
+                                   <a href="${pageContext.request.contextPath}/detail?id=${car.modelID}" style="background: #0068ff; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 600;">Xem chi tiết</a>
+                                   <label style="font-size: 13px; color: #555; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                                       <input type="checkbox" name="compare" value="${car.modelID}"> So sánh
+                                   </label>
+                               </div>
+                           </div>
+                       </div>
+                   </c:forEach>
+               </c:when>
+               <c:otherwise>
+                   <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 30px;">
+                       <p>Không có mẫu xe nào trong hệ thống.</p>
+                   </div>
+               </c:otherwise>
+           </c:choose>
+       </div>
             <div class="empty-state" id="empty-state" hidden><span aria-hidden="true">⌕</span><h3>Chưa tìm thấy mẫu xe phù hợp</h3><p>Thử thay đổi từ khóa hoặc bộ lọc để xem thêm lựa chọn.</p><button type="button" id="empty-reset">Xóa bộ lọc</button></div>
             <p class="catalog-disclaimer" id="catalog-disclaimer"></p>
         </div>
@@ -122,5 +146,24 @@ boolean customerView = "customer".equals(request.getParameter("view"));
     <div class="compare-table-wrap" id="compare-table-wrap"></div>
 </dialog>
 <footer class="site-footer"><a class="footer-brand" href="<%= request.getContextPath() %>/index.jsp">VinFast - ElectricCarSale</a><span>© <span id="copyright-year">2026</span> · Thông tin sản phẩm mang tính tham khảo.</span><a href="mailto:hotro@electriccarsale.vn">hotro@electriccarsale.vn</a></footer>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Lấy tất cả các checkbox so sánh trên trang
+        const compareCheckboxes = document.querySelectorAll('input[type="checkbox"][name="compare"]');
+
+        compareCheckboxes.forEach(cb => {
+            cb.addEventListener('change', function () {
+                // Đếm số lượng xe đang được tích chọn
+                const checkedCount = document.querySelectorAll('input[type="checkbox"][name="compare"]:checked').length;
+
+                // Nếu vượt quá 3 xe (tức là đang cố gắng chọn chiếc thứ 4)
+                if (checkedCount > 3) {
+                    alert("Bạn chỉ được chọn tối đa từ 2 đến 3 xe để so sánh!");
+                    this.checked = false; // Hủy ngay thao tác tích chọn chiếc thứ 4
+                }
+            });
+        });
+    });
+</script>
 </body>
 </html>

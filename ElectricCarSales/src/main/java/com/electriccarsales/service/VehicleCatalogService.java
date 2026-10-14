@@ -8,7 +8,7 @@ import java.util.List;
 public class VehicleCatalogService {
     private BrandDAO brandDAO;
     private CarLineDAO carLineDAO;
-    private CarModelDAO  carModelDAO;
+    private CarModelDAO carModelDAO;
     private CarVersionDAO carVersionDAO;
     private SpecificationDAO specificationDAO;
     private ColorDAO colorDAO;
@@ -24,7 +24,6 @@ public class VehicleCatalogService {
         colorDAO = new ColorDAO();
         modelColorDAO = new ModelColorDAO();
         carImageDAO = new CarImageDAO();
-
     }
 
     public List<Brand> getAllBrands() {
@@ -60,11 +59,32 @@ public class VehicleCatalogService {
     }
 
 
-    public static void main(String[] args) {
-        VehicleCatalogService vehicleCatalogService = new VehicleCatalogService();
-        List<Brand> brands = vehicleCatalogService.getAllBrands();
-        for (Brand brand : brands) {
-            System.out.println(brand);
-        }
+    // Lấy thông tin chi tiết một mẫu xe theo ModelID
+    public CarModel getCarModelById(int modelID) {
+        return carModelDAO.getById(modelID);
     }
+
+    // Lấy thông số kỹ thuật theo ModelID
+    public Specification getSpecificationByModelId(int modelID) {
+        List<Specification> specs = specificationDAO.getAll();
+        for (Specification spec : specs) {
+            if (spec.getModelID() == modelID) {
+                return spec;
+            }
+        }
+        return null;
+    }
+
+    // Lấy danh sách hình ảnh theo ModelID
+    public List<CarImage> getImagesByModelId(int modelID) {
+        List<CarImage> allImages = carImageDAO.getAll();
+        List<CarImage> result = new java.util.ArrayList<>();
+        for (CarImage img : allImages) {
+            if (img.getModelID() == modelID) {
+                result.add(img);
+            }
+        }
+        return result;
+    }
+
 }
