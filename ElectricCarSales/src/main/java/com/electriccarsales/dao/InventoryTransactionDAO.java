@@ -1,24 +1,22 @@
 package com.electriccarsales.dao;
 
 import com.electriccarsales.model.InventoryTransaction;
-import java.sql.Connection;
+import util.DBContext;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.electriccarsales.config.Database.getConnection;
-
-public class InventoryTransactionDAO {
+public class InventoryTransactionDAO extends DBContext {
 
     @SuppressWarnings("SqlResolve")
     public List<InventoryTransaction> getAllTransactions() {
         List<InventoryTransaction> list = new ArrayList<>();
         String sql = "SELECT * FROM InventoryTransactions";
 
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
+        // Sử dụng trực tiếp biến 'conn' từ lớp cha DBContext
+        try (PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
@@ -49,12 +47,10 @@ public class InventoryTransactionDAO {
     public boolean addTransaction(InventoryTransaction it) {
         String sql = "INSERT INTO InventoryTransactions (CarID, EmployeeID, SupplierID, TransactionType, Note) VALUES (?, ?, ?, ?, ?)";
 
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, it.getCarID());
             ps.setInt(2, it.getEmployeeID());
-
 
             if (it.getSupplierID() != null) {
                 ps.setInt(3, it.getSupplierID());

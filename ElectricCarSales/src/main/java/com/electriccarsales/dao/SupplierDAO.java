@@ -1,23 +1,21 @@
 package com.electriccarsales.dao;
 
 import com.electriccarsales.model.Supplier;
-import java.sql.Connection;
+import util.DBContext;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.electriccarsales.config.Database.getConnection;
-
-public class SupplierDAO {
+public class SupplierDAO extends DBContext {
 
     @SuppressWarnings("SqlResolve")
     public List<Supplier> getAllSuppliers() {
         List<Supplier> list = new ArrayList<>();
         String sql = "SELECT * FROM Suppliers";
 
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
+
+        try (PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
@@ -41,8 +39,7 @@ public class SupplierDAO {
     public boolean addSupplier(Supplier s) {
         String sql = "INSERT INTO Suppliers (SupplierName, Phone, Email, Address, Description) VALUES (?, ?, ?, ?, ?)";
 
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, s.getSupplierName());
             ps.setString(2, s.getPhone());

@@ -1,23 +1,21 @@
 package com.electriccarsales.dao;
 
 import com.electriccarsales.model.Delivery;
-import java.sql.Connection;
+import util.DBContext;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.electriccarsales.config.Database.getConnection;
-
-public class DeliveryDAO {
+public class DeliveryDAO extends DBContext {
 
     @SuppressWarnings("SqlResolve")
     public List<Delivery> getAllDeliveries() {
         List<Delivery> list = new ArrayList<>();
         String sql = "SELECT * FROM Deliveries";
 
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
+        // Sử dụng trực tiếp biến 'conn' từ lớp cha DBContext
+        try (PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
@@ -44,8 +42,7 @@ public class DeliveryDAO {
     public boolean addDelivery(Delivery d) {
         String sql = "INSERT INTO Deliveries (OrderID, CustomerID, EmployeeID, CarID, DeliveryAddress, DeliveryStatus, Note) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, d.getOrderID());
             ps.setInt(2, d.getCustomerID());

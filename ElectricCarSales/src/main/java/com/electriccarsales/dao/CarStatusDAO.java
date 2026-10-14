@@ -1,24 +1,21 @@
 package com.electriccarsales.dao;
 
 import com.electriccarsales.model.CarStatus;
-import java.sql.Connection;
+import util.DBContext;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-
-import static com.electriccarsales.config.Database.getConnection;
-
-public class CarStatusDAO {
+public class CarStatusDAO extends DBContext {
 
     @SuppressWarnings("SqlResolve")
     public List<CarStatus> getAllCarStatuses() {
         List<CarStatus> list = new ArrayList<>();
         String sql = "SELECT * FROM CarStatuses";
 
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
+
+        try (PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
