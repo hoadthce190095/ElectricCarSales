@@ -64,27 +64,45 @@ public class VehicleCatalogService {
         return carModelDAO.getById(modelID);
     }
 
-    // Lấy thông số kỹ thuật theo ModelID
-    public Specification getSpecificationByModelId(int modelID) {
-        List<Specification> specs = specificationDAO.getAll();
-        for (Specification spec : specs) {
-            if (spec.getModelID() == modelID) {
-                return spec;
+    public CarModel getCarModelByNameOrLine(String modelName, String carLineName) {
+        if (modelName != null && !modelName.isBlank()) {
+            CarModel car = carModelDAO.getByName(modelName);
+            if (car != null) {
+                return car;
             }
         }
-        return null;
+
+        if (carLineName == null || carLineName.isBlank()) {
+            return null;
+        }
+
+        String requestedLine = normalizeName(carLineName);
+        List<Integer> matchingLineIds = carLineDAO.getAll().stream()
+                .filter(line -> normalizeName(line.getCarLineName()).equals(requestedLine))
+                .map(CarLine::getCarLineID)
+                .toList();
+        if (matchingLineIds.isEmpty()) {
+            return null;
+        }
+
+        return carModelDAO.getAll().stream()
+                .filter(car -> matchingLineIds.contains(car.getCarLineID()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private String normalizeName(String value) {
+        return value.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", "");
+    }
+
+    // Lấy thông số kỹ thuật theo ModelID
+    public Specification getSpecificationByModelId(int modelID) {
+        return specificationDAO.getByModelId(modelID);
     }
 
     // Lấy danh sách hình ảnh theo ModelID
     public List<CarImage> getImagesByModelId(int modelID) {
-        List<CarImage> allImages = carImageDAO.getAll();
-        List<CarImage> result = new java.util.ArrayList<>();
-        for (CarImage img : allImages) {
-            if (img.getModelID() == modelID) {
-                result.add(img);
-            }
-        }
-        return result;
+        return carImageDAO.getByModelId(modelID);
     }
 
 }

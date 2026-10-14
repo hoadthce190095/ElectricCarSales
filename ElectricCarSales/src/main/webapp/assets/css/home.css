@@ -96,8 +96,8 @@ main { width: min(1440px, calc(100% - 72px)); margin: 0 auto; }
 .vehicle-photo img { width: 100%; height: 100%; object-fit: cover; object-position: center; transition: transform .45s; }
 .vehicle-card:hover .vehicle-photo img { transform: scale(1.035); }
 .model-badge { position: absolute; z-index: 1; top: 10px; left: 10px; padding: 4px 8px; border: 1px solid #ffffff99; border-radius: 4px; background: #ffffffed; color: #415575; font-size: 8px; font-weight: 700; }
-.compare-check { position: absolute; z-index: 2; top: 9px; right: 9px; display: flex; align-items: center; gap: 5px; padding: 5px 8px; border: 1px solid #ffffffb5; border-radius: 5px; background: #ffffffeb; color: #53627a; font-size: 8px; font-weight: 600; }
-.compare-check input { width: 12px; height: 12px; margin: 0; accent-color: var(--home-blue); }
+.vehicle-detail-link { position: absolute; z-index: 2; top: 9px; right: 9px; padding: 6px 9px; border: 1px solid #ffffffb5; border-radius: 5px; background: #ffffffeb; color: #48648e; font-size: 8px; font-weight: 700; text-decoration: none; }
+.vehicle-detail-link:hover { background: #fff; color: var(--home-blue); }
 .vehicle-card-body { padding: 13px 13px 12px; }
 .vehicle-name { overflow: hidden; margin: 0; color: #243753; font: 800 15px/1.35 var(--home-display); letter-spacing: -.35px; text-overflow: ellipsis; white-space: nowrap; }
 .vehicle-version { margin: 4px 0 0; color: #8b94a2; font-size: 9px; }
@@ -139,6 +139,9 @@ main { width: min(1440px, calc(100% - 72px)); margin: 0 auto; }
 .compare-dock > button:not(.compare-clear) { padding: 8px 12px; border: 0; border-radius: 5px; background: var(--home-blue); color: white; font-size: 9px; font-weight: 700; }
 .compare-dock > button span { margin-left: 7px; }
 .compare-clear { width: 24px; height: 24px; border: 0; border-radius: 50%; background: #f0f2f5; color: #778398; font-size: 16px; }
+.compare-notice { position: fixed; z-index: 40; right: 50%; bottom: 82px; width: max-content; max-width: calc(100% - 28px); padding: 11px 16px; border: 1px solid #dbe4ef; border-radius: 8px; background: #fff; color: #344967; box-shadow: 0 8px 28px #172b4726; font-size: 12px; font-weight: 600; text-align: center; transform: translateX(50%); animation: compare-notice-in .18s ease-out; }
+.compare-notice[hidden] { display: none; }
+@keyframes compare-notice-in { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
 .compare-dialog { width: min(850px, calc(100% - 28px)); max-height: min(82vh, 720px); padding: 0; overflow: hidden; border: 1px solid #e3e8ef; border-radius: 11px; background: #fff; color: var(--home-ink); box-shadow: 0 22px 80px #15274145; }
 .compare-dialog::backdrop { background: rgba(17,30,49,.48); backdrop-filter: blur(3px); }
 .dialog-heading { display: flex; align-items: center; justify-content: space-between; padding: 19px 22px; border-bottom: 1px solid #e9edf2; }
@@ -209,8 +212,7 @@ main { width: min(1440px, calc(100% - 72px)); margin: 0 auto; }
     .vehicle-price { font-size: 13px; }
     .vehicle-card-footer { align-items: flex-start; flex-direction: column; }
     .quick-compare { align-self: flex-end; }
-    .compare-check { top: 6px; right: 6px; padding: 4px 5px; font-size: 7px; }
-    .compare-check input { width: 11px; height: 11px; }
+    .vehicle-detail-link { top: 6px; right: 6px; padding: 4px 5px; font-size: 7px; }
     .model-badge { top: 6px; left: 6px; padding: 3px 5px; font-size: 7px; }
     .about-strip { grid-template-columns: 38px minmax(0,1fr); gap: 10px; margin-bottom: 22px; padding: 14px; }
     .about-icon { width: 36px; height: 36px; font-size: 17px; }
@@ -219,6 +221,7 @@ main { width: min(1440px, calc(100% - 72px)); margin: 0 auto; }
     .about-strip > a { grid-column: 2; justify-self: start; padding: 8px 10px; font-size: 8px; }
     .site-footer { flex-wrap: wrap; justify-content: flex-start; gap: 5px 16px; padding: 13px 15px; font-size: 8px; }
     .compare-dock { bottom: 9px; gap: 8px; padding: 8px; }
+    .compare-notice { bottom: 69px; padding: 9px 12px; font-size: 10px; }
     .compare-dock > span { font-size: 8px; }
     .compare-dock > button:not(.compare-clear) { padding: 7px 8px; font-size: 8px; }
     .compare-table th, .compare-table td { min-width: 105px; padding: 8px; font-size: 9px; }

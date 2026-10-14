@@ -23,10 +23,10 @@ public class VehicleController extends HttpServlet {
 
         VehicleCatalogService service = new VehicleCatalogService();
 
-        // 1. Lấy danh sách mẫu xe từ CSDL
+
         List<CarModel> carList = service.getAllCarModels();
 
-        // 2. Lấy hình ảnh tương ứng cho từng xe để trang chủ hiển thị đúng ảnh
+
         Map<Integer, String> carImagesMap = new HashMap<>();
         for (CarModel car : carList) {
             List<CarImage> images = service.getImagesByModelId(car.getModelID());
@@ -37,11 +37,11 @@ public class VehicleController extends HttpServlet {
             }
         }
 
-        // 3. Đẩy dữ liệu sang request attribute
+
         request.setAttribute("carList", carList);
         request.setAttribute("carImagesMap", carImagesMap);
 
-        // 4. Forward trực tiếp về trang chủ index.jsp của nhóm
+
         request.getRequestDispatcher("/index.jsp").forward(request, response);
     }
 }

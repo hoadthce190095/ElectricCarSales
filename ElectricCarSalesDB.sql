@@ -970,3 +970,205 @@ GO
         REFERENCES Employees(EmployeeID)
 );
 GO
+/* =========================================================
+	  VINFAST VEHICLE CATALOGUE
+	  Seed models, trims, available specifications and official images.
+	  Unknown specification values are kept NULL rather than guessed.
+	========================================================= */
+DECLARE @VinFastBrandStatusID INT;
+
+SELECT TOP (1) @VinFastBrandStatusID = BrandStatusID
+FROM dbo.BrandStatuses
+WHERE StatusName = 'ACTIVE';
+
+IF @VinFastBrandStatusID IS NULL
+	   THROW 51000, 'Active brand status was not found.', 1;
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Brands WHERE BrandName = N'VinFast')
+BEGIN
+	   INSERT INTO dbo.Brands (BrandName, Description, BrandStatusID)
+	   VALUES (N'VinFast', N'Thương hiệu xe điện VinFast.', @VinFastBrandStatusID);
+END;
+
+DECLARE @BrandID INT;
+SELECT @BrandID = BrandID
+FROM dbo.Brands
+WHERE BrandName = N'VinFast';
+
+DECLARE @Vehicles TABLE (
+	   CarLineName NVARCHAR(100) NOT NULL,
+	   ModelName NVARCHAR(100) NOT NULL,
+	   ModelDescription NVARCHAR(500) NOT NULL,
+	   VersionName NVARCHAR(100) NOT NULL,
+	   VersionDescription NVARCHAR(500) NOT NULL,
+	   Dimensions NVARCHAR(100) NOT NULL,
+	   BatteryCapacity DECIMAL(10,2) NULL,
+	   WheelType NVARCHAR(100) NULL,
+	   EnergyConsumption DECIMAL(10,2) NULL,
+	   RangeKM DECIMAL(10,2) NULL,
+	   MaxPower DECIMAL(10,2) NULL,
+	   MaxSpeed DECIMAL(10,2) NULL,
+	   SeatingCapacity INT NULL,
+	   ChargingTime DECIMAL(10,2) NULL,
+	   AirbagCount INT NULL,
+	   SpecificationDescription NVARCHAR(500) NOT NULL,
+	   ImageURL NVARCHAR(500) NOT NULL
+);
+
+INSERT INTO @Vehicles (
+	   CarLineName, ModelName, ModelDescription, VersionName, VersionDescription,
+	   Dimensions, BatteryCapacity, WheelType, EnergyConsumption, RangeKM, MaxPower,
+	   MaxSpeed, SeatingCapacity, ChargingTime, AirbagCount, SpecificationDescription, ImageURL
+)
+VALUES
+(
+	   N'VF 3', N'VF 3', N'Xe điện đô thị VinFast VF 3.',
+	   N'Eco - Tiêu chuẩn 2', N'Cấu hình Eco - Tiêu chuẩn 2.',
+	   N'3190 x 1679 x 1652 mm', 18.64, N'16 inch', NULL, 215, 30,
+	   NULL, 4, NULL, 1,
+	   N'Quãng đường công bố 215 km theo NEDC. Mức tiêu thụ, tốc độ tối đa và thời gian sạc không có trong danh mục dữ liệu.',
+	   N'https://static-cms-prod.vinfastauto.com/statics/car/vf3/xe-dien-vinfast-vf3-chon-mau-nen-trang-logo-desktop.webp'
+),
+(
+	   N'VF 6', N'VF 6 Plus', N'Xe SUV điện VinFast VF 6 Plus.',
+	   N'Plus - Tiêu chuẩn 2', N'Cấu hình Plus - Tiêu chuẩn 2.',
+	   N'4241 x 1834 x 1580 mm', 59.60, N'18 inch', NULL, 460, 150,
+	   NULL, 5, NULL, NULL,
+	   N'Quãng đường công bố 460 km theo NEDC. Chưa ghi nhận số túi khí, mức tiêu thụ, tốc độ tối đa và thời gian sạc cho cấu hình này.',
+	   N'https://static-cms-prod.vinfastauto.com/statics/car/vf6/hinh-anh-xe-vinfast-vf6-logo-vf6-mau-xanh-reu-desktop.webp'
+),
+(
+	   N'VF 7', N'VF 7 Eco', N'Xe SUV điện VinFast VF 7 Eco.',
+	   N'Eco - Tiêu chuẩn 2', N'Cấu hình Eco - Tiêu chuẩn 2.',
+	   N'4545 x 1890 x 1635.75 mm', 59.60, N'19 inch', NULL, 440, 130,
+	   NULL, 5, NULL, 4,
+	   N'Quãng đường công bố 440 km theo NEDC. Mức tiêu thụ, tốc độ tối đa và thời gian sạc không có trong danh mục dữ liệu.',
+	   N'https://static-cms-prod.vinfastauto.com/statics/car/vf7/hinh-anh-vinfast-vf7-text-logo-banner-desktop.webp'
+),
+(
+	   N'VF 7', N'VF 7 Plus', N'Xe SUV điện VinFast VF 7 Plus.',
+	   N'Plus FWD - Trần thép - Tiêu chuẩn 2', N'Cấu hình Plus FWD, trần thép - Tiêu chuẩn 2.',
+	   N'4545 x 1890 x 1635.75 mm', 70.00, N'20 inch', NULL, 500.50, 150,
+	   NULL, 5, NULL, NULL,
+	   N'Quãng đường công bố 500.5 km theo NEDC. Chưa ghi nhận số túi khí, mức tiêu thụ và tốc độ tối đa cho cấu hình này.',
+	   N'https://static-cms-prod.vinfastauto.com/statics/car/vf7/hinh-anh-vinfast-vf7-plus-text-logo-banner-desktop.webp'
+),
+(
+	   N'VF 8', N'VF 8 Eco', N'Xe SUV điện VinFast VF 8 Eco.',
+	   N'Eco FWD - Pin CATL VN - Tiêu chuẩn 1', N'Cấu hình Eco FWD, pin CATL VN - Tiêu chuẩn 1.',
+	   N'4750 x 1934 x 1667 mm', 87.70, N'19 inch', NULL, 635, 150,
+	   NULL, 5, NULL, 11,
+	   N'Quãng đường công bố 635 km. Danh mục nguồn không nêu tiêu chuẩn đo cho cấu hình này; mức tiêu thụ, tốc độ tối đa và thời gian sạc chưa ghi nhận.',
+	   N'https://static-cms-prod.vinfastauto.com/statics/car/vf8/hinh-anh-vinfast-vf8-eco-text-logo-banner-desktop.webp'
+),
+(
+	   N'VF 8', N'VF 8 Plus', N'Xe SUV điện VinFast VF 8 Plus.',
+	   N'Plus AWD - Pin CATL VN - Tiêu chuẩn 1', N'Cấu hình Plus AWD, pin CATL VN - Tiêu chuẩn 1.',
+	   N'4750 x 1934 x 1667 mm', 87.70, N'20 inch', NULL, 475, 300,
+	   NULL, 5, NULL, 11,
+	   N'Quãng đường công bố 475 km. Danh mục nguồn không nêu tiêu chuẩn đo cho cấu hình này; mức tiêu thụ, tốc độ tối đa và thời gian sạc chưa ghi nhận.',
+	   N'https://static-cms-prod.vinfastauto.com/statics/car/VF-8/hinh-anh-xe-VinFast-vf8-ngoai-that-mau-xanh-reu-02.webp'
+),
+(
+	   N'VF 9', N'VF 9 Eco', N'Xe SUV điện 7 chỗ VinFast VF 9 Eco.',
+	   N'Eco - Pin CATL - Điều hòa 3 vùng', N'Cấu hình Eco, pin CATL, điều hòa 3 vùng.',
+	   N'5119 x 2254 x 1697 mm', 123.00, N'20 inch', NULL, 626, 300,
+	   200, 7, NULL, 11,
+	   N'Quãng đường công bố 626 km; tốc độ tối đa 200 km/h. Danh mục nguồn không nêu tiêu chuẩn đo; mức tiêu thụ và thời gian sạc chưa ghi nhận.',
+	   N'https://static-cms-prod.vinfastauto.com/statics/car/vf9/hinh-anh-vinfast-vf9-eco-text-logo-banner-desktop.webp'
+),
+(
+	   N'VF 9', N'VF 9 Plus', N'Xe SUV điện 7 chỗ VinFast VF 9 Plus.',
+	   N'Plus - Trần thép - 7 chỗ - Pin CATL', N'Cấu hình Plus, trần thép, 7 chỗ, pin CATL.',
+	   N'5119 x 2254 x 1697 mm', 123.00, N'21 inch', NULL, 602, 300,
+	   200, 7, NULL, 11,
+	   N'Quãng đường công bố 602 km; tốc độ tối đa 200 km/h. Danh mục nguồn không nêu tiêu chuẩn đo; mức tiêu thụ và thời gian sạc chưa ghi nhận.',
+	   N'https://static-cms-prod.vinfastauto.com/statics/car/vf9/hinh-anh-vinfast-vf9-product-summary-desktop.webp'
+);
+
+BEGIN TRY
+	   BEGIN TRANSACTION;
+
+	   INSERT INTO dbo.CarLines (BrandID, CarLineName, Description)
+	   SELECT @BrandID, v.CarLineName, CONCAT(N'Dòng xe điện VinFast ', v.CarLineName, N'.')
+	   FROM (SELECT DISTINCT CarLineName FROM @Vehicles) v
+	   WHERE NOT EXISTS (
+	       SELECT 1
+	       FROM dbo.CarLines existing
+	       WHERE existing.BrandID = @BrandID
+	         AND existing.CarLineName = v.CarLineName
+	   );
+
+	   INSERT INTO dbo.CarModels (CarLineID, ModelName, Description)
+	   SELECT line.CarLineID, v.ModelName, v.ModelDescription
+	   FROM @Vehicles v
+	   INNER JOIN dbo.CarLines line
+	       ON line.BrandID = @BrandID
+	      AND line.CarLineName = v.CarLineName
+	   WHERE NOT EXISTS (
+	       SELECT 1
+	       FROM dbo.CarModels existing
+	       WHERE existing.CarLineID = line.CarLineID
+	         AND existing.ModelName = v.ModelName
+	   );
+
+	   INSERT INTO dbo.CarVersions (ModelID, VersionName, Description)
+	   SELECT model.ModelID, v.VersionName, v.VersionDescription
+	   FROM @Vehicles v
+	   INNER JOIN dbo.CarLines line
+	       ON line.BrandID = @BrandID
+	      AND line.CarLineName = v.CarLineName
+	   INNER JOIN dbo.CarModels model
+	       ON model.CarLineID = line.CarLineID
+	      AND model.ModelName = v.ModelName
+	   WHERE NOT EXISTS (
+	       SELECT 1
+	       FROM dbo.CarVersions existing
+	       WHERE existing.ModelID = model.ModelID
+	         AND existing.VersionName = v.VersionName
+	   );
+
+	   INSERT INTO dbo.Specifications (
+	       ModelID, Dimensions, BatteryCapacity, WheelType, EnergyConsumption,
+	       RangeKM, MaxPower, MaxSpeed, SeatingCapacity, ChargingTime, AirbagCount, Description
+	   )
+	   SELECT model.ModelID, v.Dimensions, v.BatteryCapacity, v.WheelType, v.EnergyConsumption,
+	          v.RangeKM, v.MaxPower, v.MaxSpeed, v.SeatingCapacity, v.ChargingTime, v.AirbagCount,
+	          v.SpecificationDescription
+	   FROM @Vehicles v
+	   INNER JOIN dbo.CarLines line
+	       ON line.BrandID = @BrandID
+	      AND line.CarLineName = v.CarLineName
+	   INNER JOIN dbo.CarModels model
+	       ON model.CarLineID = line.CarLineID
+	      AND model.ModelName = v.ModelName
+	   WHERE NOT EXISTS (
+	       SELECT 1
+	       FROM dbo.Specifications existing
+	       WHERE existing.ModelID = model.ModelID
+	   );
+
+	   INSERT INTO dbo.CarImages (ModelID, ImageURL, ImageType, IsPrimary, DisplayOrder)
+	   SELECT model.ModelID, v.ImageURL, 'EXTERIOR', 1, 1
+	   FROM @Vehicles v
+	   INNER JOIN dbo.CarLines line
+	       ON line.BrandID = @BrandID
+	      AND line.CarLineName = v.CarLineName
+	   INNER JOIN dbo.CarModels model
+	       ON model.CarLineID = line.CarLineID
+	      AND model.ModelName = v.ModelName
+	   WHERE NOT EXISTS (
+	       SELECT 1
+	       FROM dbo.CarImages existing
+	       WHERE existing.ModelID = model.ModelID
+	         AND existing.ImageURL = v.ImageURL
+	   );
+
+	   COMMIT TRANSACTION;
+END TRY
+BEGIN CATCH
+	   IF @@TRANCOUNT > 0
+	       ROLLBACK TRANSACTION;
+	   THROW;
+END CATCH;
+GO

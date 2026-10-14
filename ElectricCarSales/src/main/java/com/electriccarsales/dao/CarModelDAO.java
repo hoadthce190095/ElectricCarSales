@@ -47,7 +47,28 @@ public class CarModelDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            System.out.println("Error in getById: " + e.getMessage());
+            throw new RuntimeException("Error in CarModelDAO.getById(): " + e.getMessage(), e);
+        }
+        return null;
+    }
+
+    public CarModel getByName(String modelName) {
+        String sql = "SELECT * FROM CarModels WHERE ModelName = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, modelName);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    CarModel carM = new CarModel();
+                    carM.setModelID(rs.getInt("ModelID"));
+                    carM.setCarLineID(rs.getInt("CarLineID"));
+                    carM.setModelName(rs.getString("ModelName"));
+                    carM.setDescription(rs.getString("Description"));
+                    return carM;
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error in CarModelDAO.getByName(): " + e.getMessage(), e);
         }
         return null;
     }

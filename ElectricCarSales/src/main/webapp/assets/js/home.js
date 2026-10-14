@@ -14,14 +14,43 @@
     const activeFilters = document.getElementById("active-filters");
     const emptyState = document.getElementById("empty-state");
     const compareDock = document.getElementById("compare-dock");
+    const compareNotice = document.getElementById("compare-notice");
     const compareDialog = document.getElementById("compare-dialog");
     const compareTable = document.getElementById("compare-table-wrap");
+    const modelKey = (value) => String(value ?? "").trim().toLocaleLowerCase("vi").replace(/[^a-z0-9]/g, "");
+    const detailUrls = new Map([...grid.querySelectorAll("[data-model-name][data-detail-url]")]
+        .map((card) => [modelKey(card.dataset.modelName), card.dataset.detailUrl]));
     const selections = new Set();
     let models = [];
     let catalogueMetadata = {};
+    let compareNoticeTimer;
 
     const text = (value) => String(value ?? "").trim();
+    const colorCategories = [
+        { value: "white", label: "Trắng", aliases: ["trang", "white", "infinity blanc"] },
+        { value: "gray", label: "Xám", aliases: ["xam", "gray", "grey", "zenith grey"] },
+        { value: "silver", label: "Bạc", aliases: ["bac", "silver", "desat silver"] },
+        { value: "black", label: "Đen", aliases: ["den", "black", "jet black"] },
+        { value: "red", label: "Đỏ", aliases: ["do", "red", "solar ruby", "crimson red"] },
+        { value: "yellow", label: "Vàng", aliases: ["vang", "yellow", "summer yellow"] },
+        { value: "blue", label: "Xanh dương", aliases: ["xanh duong", "blue", "sky blue"] },
+        { value: "green", label: "Xanh lá", aliases: ["xanh la", "green", "urban mint", "ivy green"] },
+        { value: "pink", label: "Hồng", aliases: ["hong", "pink", "rose pink"] }
+    ];
+    const normalizeColor = (value) => String(value ?? "").normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLocaleLowerCase("vi")
+        .replace(/đ/g, "d")
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+    const colorCategory = (colorName) => {
+        const normalized = normalizeColor(String(colorName ?? "").split(/[+(]/, 1)[0]);
+        return colorCategories.find((category) =>
+            category.aliases.some((alias) => normalized.includes(alias))
+        );
+    };
     const number = (value) => {
+        if (value == null || text(value) === "") return null;
         const parsed = Number(value);
         return Number.isFinite(parsed) ? parsed : null;
     };
@@ -56,8 +85,14 @@
     function populateFilters() {
         const lines = [...new Set(models.map(lineName).filter(Boolean))];
         lines.forEach((line) => modelFilter.add(new Option(line, line)));
-        const colors = [...new Set(models.flatMap((model) => Array.isArray(model.colors) ? model.colors : []).map(text).filter(Boolean))].sort((a, b) => a.localeCompare(b, "vi"));
-        colors.forEach((color) => colorFilter.add(new Option(color, color)));
+        const availableColors = new Set(models.flatMap((model) =>
+            (Array.isArray(model.colors) ? model.colors : [])
+                .map(colorCategory)
+                .filter(Boolean)
+                .map((category) => category.value)
+        ));
+        colorCategories.filter((category) => availableColors.has(category.value))
+            .forEach((category) => colorFilter.add(new Option(category.label, category.value)));
     }
 
     function matches(model) {
@@ -70,7 +105,9 @@
             && (!modelFilter.value || lineName(model) === modelFilter.value)
             && (maxPriceMillions === null || amount === null || amount <= maxPriceMillions * 1_000_000)
             && (minimumRange === null || number(model.rangeKm) === null || Number(model.rangeKm) >= minimumRange)
-            && (!colorFilter.value || (Array.isArray(model.colors) && model.colors.includes(colorFilter.value)));
+            && (!colorFilter.value || (Array.isArray(model.colors) && model.colors.some((color) =>
+                colorCategory(color)?.value === colorFilter.value
+            )));
     }
 
     function sorted(items) {
@@ -87,25 +124,31 @@
         const article = make("article", "vehicle-card");
         const photo = make("div", "vehicle-photo");
         const badge = make("span", "model-badge", className(model));
-        const imageUrl = safeOfficialUrl(model.imageUrl);
+        const selectedColor = colorFilter.value && Array.isArray(model.colors)
+            ? model.colors.find((color) => colorCategory(color)?.value === colorFilter.value)
+            : "";
+        const colorImageUrl = selectedColor
+            ? catalogueMetadata.colorImagesByLine?.[lineName(model)]?.[selectedColor]
+            : "";
+        const imageUrl = safeOfficialUrl(colorImageUrl) || safeOfficialUrl(model.imageUrl);
         if (imageUrl) {
             const image = make("img");
             image.src = imageUrl;
-            image.alt = `${text(model.modelName)} – xe điện VinFast`;
+            image.alt = selectedColor
+                ? `${text(model.modelName)} – ${selectedColor}`
+                : `${text(model.modelName)} – xe điện VinFast`;
             image.loading = index < 3 ? "eager" : "lazy";
             image.decoding = "async";
             image.referrerPolicy = "no-referrer";
             image.addEventListener("error", () => image.remove(), { once: true });
             photo.append(image);
         }
-        const compareLabel = make("label", "compare-check");
-        const checkbox = make("input");
-        checkbox.type = "checkbox";
-        checkbox.checked = selected;
-        checkbox.setAttribute("aria-label", `Chọn ${text(model.modelName)} để so sánh`);
-        checkbox.addEventListener("change", () => toggleCompare(id, model));
-        compareLabel.append(checkbox, document.createTextNode("So sánh"));
-        photo.append(badge, compareLabel);
+        const detailUrl = detailUrls.get(modelKey(model.modelName))
+            || detailUrls.get(modelKey(model.carLine))
+            || `${contextPath}/detail?name=${encodeURIComponent(text(model.modelName))}&line=${encodeURIComponent(text(model.carLine))}`;
+        const detailLink = make("a", "vehicle-detail-link", "Xem chi tiết ↗");
+        detailLink.href = detailUrl;
+        photo.append(badge, detailLink);
 
         const body = make("div", "vehicle-card-body");
         const title = make("h3", "vehicle-name", text(model.modelName));
@@ -181,11 +224,20 @@
         compareDock.hidden = selections.size === 0;
     }
 
+    function showCompareNotice() {
+        compareNotice.textContent = "Bạn chỉ có thể chọn tối đa 3 xe để so sánh.";
+        compareNotice.hidden = false;
+        window.clearTimeout(compareNoticeTimer);
+        compareNoticeTimer = window.setTimeout(() => {
+            compareNotice.hidden = true;
+        }, 2800);
+    }
+
     function toggleCompare(id, model) {
         if (selections.has(id)) selections.delete(id);
         else if (selections.size < 3) selections.add(id);
         else {
-            summary.textContent = "Bạn có thể chọn tối đa 3 phiên bản để so sánh.";
+            showCompareNotice();
             return;
         }
         render();
@@ -267,6 +319,7 @@
     document.getElementById("reset-filters").addEventListener("click", resetFilters);
     document.getElementById("empty-reset").addEventListener("click", resetFilters);
     document.getElementById("compare-open").addEventListener("click", openComparison);
+    document.addEventListener("compare-limit-reached", showCompareNotice);
     document.getElementById("compare-clear").addEventListener("click", () => { selections.clear(); render(); syncCompare(); });
     document.getElementById("compare-close").addEventListener("click", () => compareDialog.close());
     compareDialog.addEventListener("click", (event) => { if (event.target === compareDialog) compareDialog.close(); });

@@ -4,6 +4,54 @@
   "priceSourceUrl": "https://static-cms-prod.vinfastauto.com/202607015_thong-bao-chinh-sach-gia-ban-cac-dong-xe-vinfast-thang-07.2026_0.pdf",
   "pricePolicyPageUrl": "https://vinfastauto.com/vn_vi/node/11885",
   "rangeNote": "NEDC và WLTP là hai quy trình thử khác nhau; quãng đường công bố không phải cam kết quãng đường thực tế. Hãy đối chiếu cùng tiêu chuẩn khi so sánh.",
+  "colorImagesByLine": {
+    "VF 3": {
+      "Trắng (Infinity Blanc)": "https://static-cms-prod.vinfastauto.com/statics/car/vf3/hinh-anh-vinfast-vf3-ngoai-that-mau-trang-mobile.webp",
+      "Xám (Zenith Grey)": "https://static-cms-prod.vinfastauto.com/statics/car/vf3/hinh-anh-vinfast-vf3-ngoai-that-mau-xam-mobile.webp",
+      "Đỏ (Solar Ruby)": "https://static-cms-prod.vinfastauto.com/statics/car/vf3/hinh-anh-vinfast-vf3-ngoai-that-mau-do-mobile.webp",
+      "Vàng (Summer Yellow)": "https://static-cms-prod.vinfastauto.com/statics/car/vf3/hinh-anh-vinfast-vf3-ngoai-that-mau-vang-mobile.webp",
+      "Xanh dương (Sky Blue)": "https://static-cms-prod.vinfastauto.com/statics/car/vf3/hinh-anh-vinfast-vf3-ngoai-that-mau-xanh-duong-mobile.webp",
+      "Hồng (Rose Pink)": "https://static-cms-prod.vinfastauto.com/statics/car/vf3/hinh-anh-vinfast-vf3-ngoai-that-mau-hong-mobile.webp",
+      "Xanh lá nhạt (Urban Mint)": "https://static-cms-prod.vinfastauto.com/statics/car/vf3/hinh-anh-vinfast-vf3-ngoai-that-mau-xanh-urban-mobile.webp"
+    },
+    "VF 5": {
+      "Trắng (Infinity Blanc)": "https://static-cms-prod.vinfastauto.com/statics/car/vf5/hinh-anh-vinfast-vf5-ngoai-that-mau-trang-mobile.webp",
+      "Xám (Zenith Grey)": "https://static-cms-prod.vinfastauto.com/statics/car/vf5/hinh-anh-vinfast-vf5-ngoai-that-mau-xam-mobile.webp",
+      "Đỏ (Solar Ruby)": "https://static-cms-prod.vinfastauto.com/statics/car/vf5/hinh-anh-vinfast-vf5-ngoai-that-mau-do-mobile.webp",
+      "Vàng (Summer Yellow) + nóc đen": "https://static-cms-prod.vinfastauto.com/statics/car/vf5/hinh-anh-vinfast-vf5-ngoai-that-mau-vang-mobile.webp",
+      "Xanh dương (Sky Blue) + nóc trắng": "https://static-cms-prod.vinfastauto.com/statics/car/vf5/hinh-anh-vinfast-vf5-ngoai-that-mau-xanh-duong-mobile.webp",
+      "Xanh lá nhạt (Urban Mint)": "https://static-cms-prod.vinfastauto.com/statics/car/vf5/hinh-anh-vinfast-vf5-ngoai-that-mau-xanh-urban-mobile.webp"
+    },
+    "VF 6": {
+      "Trắng (Infinity Blanc)": "https://static-cms-prod.vinfastauto.com/statics/car/vf6/hinh-anh-xe-vinfast-vf6-plus-mau-trang-mobile.webp",
+      "Xám (Zenith Grey)": "https://static-cms-prod.vinfastauto.com/statics/car/vf6/hinh-anh-xe-vinfast-vf6-plus-mau-bac-mobile.webp",
+      "Đen (Jet Black)": "https://static-cms-prod.vinfastauto.com/statics/car/vf6/hinh-anh-xe-vinfast-vf6-plus-mau-den-mobile.webp",
+      "Xanh lá nhạt (Urban Mint)": "https://static-cms-prod.vinfastauto.com/statics/car/vf6/hinh-anh-xe-vinfast-vf6-plus-mau-xanh-reu-mobile.webp",
+      "Đỏ (Solar Ruby)": "https://static-cms-prod.vinfastauto.com/statics/car/vf6/hinh-anh-xe-vinfast-vf6-plus-mau-do-mobile.webp"
+    },
+    "VF 7": {
+      "Trắng (Infinity Blanc)": "https://static-cms-prod.vinfastauto.com/statics/car/vf7/hinh-anh-vinfast-vf7-mau-trang-mobile.webp",
+      "Xám (Zenith Grey)": "https://static-cms-prod.vinfastauto.com/statics/car/vf7/hinh-anh-vinfast-vf7-mau-xam-mobile.webp",
+      "Đen (Jet Black)": "https://static-cms-prod.vinfastauto.com/statics/car/vf7/hinh-anh-vinfast-vf7-mau-den-mobile.webp",
+      "Đỏ (Solar Ruby)": "https://static-cms-prod.vinfastauto.com/statics/car/vf7/hinh-anh-vinfast-vf7-mau-do-mobile.webp",
+      "Xanh lá nhạt (Urban Mint)": "https://static-cms-prod.vinfastauto.com/statics/car/vf7/hinh-anh-vinfast-vf7-mau-xanh-mint-mobile.webp"
+    },
+    "VF 8": {
+      "Trắng (Infinity Blanc)": "https://static-cms-prod.vinfastauto.com/statics/car/VF-8/hinh-anh-xe-VinFast-vf8-ngoai-that-mau-trang-mobile-01.webp",
+      "Đen (Jet Black)": "https://static-cms-prod.vinfastauto.com/statics/car/VF-8/hinh-anh-xe-VinFast-vf8-ngoai-that-mau-den-mobile-01.webp",
+      "Đỏ (Crimson Red)": "https://static-cms-prod.vinfastauto.com/statics/car/VF-8/hinh-anh-xe-VinFast-vf8-ngoai-that-mau-do-mobile-01.webp",
+      "Xanh lá đậm (Ivy Green)": "https://static-cms-prod.vinfastauto.com/statics/car/VF-8/hinh-anh-xe-VinFast-vf8-ngoai-that-mau-xanh-reu-mobile-01.webp"
+    },
+    "VF 9": {
+      "Trắng (Infinity Blanc)": "https://static-cms-prod.vinfastauto.com/statics/car/vf9/hinh-anh-vinfast-vf9-infinity-blanc-mobile-20260915.webp",
+      "Xám (Zenith Grey)": "https://static-cms-prod.vinfastauto.com/statics/car/vf9/hinh-anh-vinfast-vf9-zenith-grey-mobile.webp",
+      "Đen (Jet Black)": "https://static-cms-prod.vinfastauto.com/statics/car/vf9/hinh-anh-vinfast-vf9-jet-black-mobile.webp",
+      "Xanh lá nhạt (Urban Mint)": "https://static-cms-prod.vinfastauto.com/statics/car/vf9/hinh-anh-vinfast-vf9-urban-mint-mobile.webp",
+      "Đỏ (Solar Ruby)": "https://static-cms-prod.vinfastauto.com/statics/car/vf9/hinh-anh-vinfast-vf9-solar-ruby-mobile.webp",
+      "Xanh lá đậm (Ivy Green)": "https://static-cms-prod.vinfastauto.com/statics/car/vf9/hinh-anh-vinfast-vf9-ivy-green-mobile.webp",
+      "Bạc (Desat Silver)": "https://static-cms-prod.vinfastauto.com/statics/car/vf9/hinh-anh-vinfast-vf9-desat-silver-mobile-20260915.webp"
+    }
+  },
   "models": [
     {
       "modelName": "VF 3",
