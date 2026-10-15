@@ -1,23 +1,22 @@
 package com.electriccarsales.dao;
 
 import com.electriccarsales.model.Car;
-import java.sql.Connection;
+import util.DBContext;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.electriccarsales.config.Database.getConnection;
 
-public class CarDAO {
+public class CarDAO extends DBContext {
 
     @SuppressWarnings("SqlResolve")
     public List<Car> getAllCars() {
         List<Car> list = new ArrayList<>();
         String sql = "SELECT * FROM Cars";
 
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
+
+        try (PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
@@ -47,8 +46,7 @@ public class CarDAO {
     public boolean addCar(Car c) {
         String sql = "INSERT INTO Cars (CarCode, ModelID, VersionID, ColorID, CarStatusID, Origin, Year, VIN, EngineNumber, LotCode, Price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, c.getCarCode());
             ps.setInt(2, c.getModelID());
