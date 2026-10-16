@@ -30,6 +30,24 @@ public class InvoiceDAO extends DBContext {
         }
     }
 
+    public List<Invoices> findByEmployeeUserId(int userId) {
+        String sql = "SELECT i.InvoiceID, i.OrderID, i.CustomerID, i.EmployeeID, i.InvoiceNumber, i.InvoiceDate, "
+                + "i.SubTotal, i.DiscountAmount, i.TaxAmount, i.TotalAmount, i.Status, i.Note "
+                + "FROM Invoices i JOIN Orders o ON o.OrderID = i.OrderID "
+                + "JOIN Employees e ON e.EmployeeID = o.EmployeeID WHERE e.UserID = ? "
+                + "ORDER BY i.InvoiceDate DESC, i.InvoiceID DESC";
+        List<Invoices> invoices = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) invoices.add(map(rs));
+            }
+            return invoices;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể truy vấn hóa đơn được phân công.", e);
+        }
+    }
+
     public Invoices findByIdForCustomer(int invoiceId, int customerId) {
         String sql = "SELECT InvoiceID, OrderID, CustomerID, EmployeeID, InvoiceNumber, InvoiceDate, "
                 + "SubTotal, DiscountAmount, TaxAmount, TotalAmount, Status, Note FROM Invoices "

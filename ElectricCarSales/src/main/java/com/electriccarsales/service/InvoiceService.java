@@ -17,6 +17,11 @@ public class InvoiceService {
         return invoiceDAO.findAll();
     }
 
+    public List<Invoices> getEmployeeInvoices(int employeeUserId) {
+        if (employeeUserId <= 0) throw new IllegalArgumentException("Tài khoản nhân viên không hợp lệ.");
+        return invoiceDAO.findByEmployeeUserId(employeeUserId);
+    }
+
     public Invoices getCustomerInvoice(int invoiceId, int customerId) {
         if (invoiceId <= 0 || customerId <= 0) throw new IllegalArgumentException("Hóa đơn không hợp lệ.");
         return invoiceDAO.findByIdForCustomer(invoiceId, customerId);

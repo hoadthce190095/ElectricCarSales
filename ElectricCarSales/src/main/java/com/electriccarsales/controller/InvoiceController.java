@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.Locale;
 
 @WebServlet("/invoice")
-public class InvoiceController extends HttpServlet{
+public class InvoiceController extends HttpServlet {
     private final InvoiceService invoiceService = new InvoiceService();
 
     @Override
@@ -34,7 +34,9 @@ public class InvoiceController extends HttpServlet{
                     return;
                 }
                 req.setAttribute("invoices", invoiceService.getCustomerInvoices(customer.getCustomerID()));
-            } else if ("ACCOUNTANT".equals(role) || "ADMIN".equals(role)) {
+            } else if ("SALES".equals(role)) {
+                req.setAttribute("invoices", invoiceService.getEmployeeInvoices(userId));
+            } else if ("ACCOUNTANT".equals(role) || "MANAGER".equals(role)) {
                 req.setAttribute("invoices", invoiceService.getAllInvoices());
             } else {
                 resp.sendError(HttpServletResponse.SC_FORBIDDEN);
