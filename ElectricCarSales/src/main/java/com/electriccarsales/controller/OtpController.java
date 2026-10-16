@@ -1,6 +1,6 @@
 package com.electriccarsales.controller;
 
-import com.electriccarsales.dao.OTPVerificationDAO;
+import com.electriccarsales.service.OtpService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -22,8 +22,7 @@ public class OtpController extends HttpServlet {
         try {
             int userId = Integer.parseInt(req.getParameter("userId"));
             String code = req.getParameter("otp");
-            if (code == null || !code.matches("\\d{6}")
-                    || !new OTPVerificationDAO().verifyRegistrationOtp(userId, code)) {
+            if (!new OtpService().verifyRegistration(userId, code)) {
                 req.setAttribute("error", "OTP không đúng hoặc đã hết hạn. Hãy đăng ký lại để nhận mã mới.");
                 req.setAttribute("userId", userId);
                 req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);

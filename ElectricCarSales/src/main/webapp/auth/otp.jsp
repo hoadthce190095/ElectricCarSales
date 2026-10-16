@@ -20,9 +20,6 @@
         .otp-form .input-wrap input { height: 48px; text-align: center; font-size: 18px; letter-spacing: 8px; padding-left: 20px; }
         .otp-form .submit-button { width: 205px; }
         .otp-hint { margin: 0 0 20px; color: #a0a3a7; font-size: 10px; line-height: 1.8; }
-        .otp-test { margin: 0 0 14px; padding: 12px 14px; border: 1px dashed #d7d9d8; border-radius: 9px; background: #f7f8f6; color: #60666a; font-size: 10px; line-height: 1.7; }
-        .otp-test strong { display: block; color: #25292c; font-size: 13px; letter-spacing: 2px; }
-        .otp-test small { display: block; margin-top: 4px; color: #92969a; font-size: 9px; letter-spacing: 0; }
         .otp-message { display: block; margin: 0 0 12px; }
         .otp-success { border-color: #cde8d7; background: #f4fff7; color: #237044; }
         .otp-content .form-intro { margin-bottom: 18px; }
@@ -58,9 +55,6 @@
                 </c:if>
                 <c:if test="${not empty error}">
                     <p class="form-message otp-message" role="alert"><c:out value="${error}"/></p>
-                </c:if>
-                <c:if test="${not empty otpForTesting}">
-                    <div class="otp-test"><span>OTP dùng để kiểm thử</span><strong><c:out value="${otpForTesting}"/></strong></div>
                 </c:if>
                 <p class="otp-hint">Mã có hiệu lực trong 5 phút. Vui lòng không chia sẻ mã này với người khác.</p>
                 <form class="auth-form otp-form" action="${pageContext.request.contextPath}/verify-otp" method="post">

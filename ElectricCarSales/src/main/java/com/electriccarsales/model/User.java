@@ -95,7 +95,6 @@ public class User {
         return "User{" +
                 "userID=" + userID +
                 ", username='" + username + '\'' +
-                ", passwordHash='" + passwordHash + '\'' +
                 ", email='" + email + '\'' +
                 ", phone='" + phone + '\'' +
                 ", roleID=" + roleID +

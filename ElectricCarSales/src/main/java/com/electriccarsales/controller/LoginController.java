@@ -1,6 +1,6 @@
 package com.electriccarsales.controller;
 
-import com.electriccarsales.dao.UserDAO;
+import com.electriccarsales.service.AuthenticationService;
 import com.electriccarsales.model.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -10,7 +10,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
-import java.util.Locale;
 
 @WebServlet("/login")
 public class LoginController extends HttpServlet {
@@ -32,31 +31,24 @@ public class LoginController extends HttpServlet {
             return;
         }
         try {
-            UserDAO dao = new UserDAO();
-            User user = dao.findByUsername(username.trim());
-            if (user == null || !dao.authenticate(password, user)) {
+            AuthenticationService authenticationService = new AuthenticationService();
+            User user = authenticationService.authenticate(username.trim(), password);
+            if (user == null) {
                 req.setAttribute("error", "Tên đăng nhập hoặc mật khẩu không chính xác.");
                 req.getRequestDispatcher("/login.jsp").forward(req, resp);
                 return;
             }
-            String status = dao.getStatusName(user.getStatusID()).toUpperCase(Locale.ROOT);
-            if (!"ACTIVE".equals(status)) {
-                req.setAttribute("error", "Tài khoản chưa được kích hoạt hoặc đã bị khóa. Nếu vừa đăng ký, hãy xác thực OTP trước.");
-                req.getRequestDispatcher("/login.jsp").forward(req, resp);
-                return;
-            }
-
             HttpSession old = req.getSession(false);
             if (old != null) old.invalidate();
             HttpSession session = req.getSession(true);
             session.setAttribute("userID", user.getUserID());
             session.setAttribute("username", user.getUsername());
             session.setAttribute("roleID", user.getRoleID());
-            session.setAttribute("roleName", dao.getRoleName(user.getRoleID()));
+            session.setAttribute("roleName", authenticationService.getRoleName(user.getRoleID()));
             session.setAttribute("email", user.getEmail());
             session.setAttribute("phone", user.getPhone());
 
-            String role = ((String) session.getAttribute("roleName")).toUpperCase(Locale.ROOT);
+            String role = ((String) session.getAttribute("roleName")).toUpperCase(java.util.Locale.ROOT);
             if ("CUSTOMER".equals(role)) resp.sendRedirect(req.getContextPath() + "/index.jsp");
             else if ("ADMIN".equals(role)) resp.sendRedirect(req.getContextPath() + "/admin/admin.html");
             else resp.sendRedirect(req.getContextPath() + "/staff/dashboard.jsp");

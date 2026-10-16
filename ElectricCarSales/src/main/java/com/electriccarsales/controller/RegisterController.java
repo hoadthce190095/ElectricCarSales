@@ -1,6 +1,5 @@
 package com.electriccarsales.controller;
 
-import com.electriccarsales.dao.UserDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -8,12 +7,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.security.SecureRandom;
 import java.util.regex.Pattern;
 
 @WebServlet("/register")
 public class RegisterController extends HttpServlet {
-    private static final SecureRandom RANDOM = new SecureRandom();
     private static final Pattern USERNAME = Pattern.compile("[A-Za-z0-9_]{5,50}");
     private static final Pattern PHONE = Pattern.compile("0[0-9]{9,10}");
     private static final Pattern EMAIL = Pattern.compile("^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)+$");
@@ -44,27 +41,10 @@ public class RegisterController extends HttpServlet {
             return;
         }
 
-        UserDAO dao = new UserDAO();
-        try {
-            if (dao.exists(username, phone, email)) {
-                req.setAttribute("error", "Tên đăng nhập, số điện thoại hoặc email đã được sử dụng.");
-                req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
-                return;
-            }
-            String otp = String.format("%06d", RANDOM.nextInt(1_000_000));
-            int userId = dao.registerCustomer(username, dao.hashPassword(password), email, phone, name, address, otp);
-            req.setAttribute("userId", userId);
-            req.setAttribute("otpForTesting", otp);
-            req.setAttribute("success", "Đã tạo tài khoản tạm. Nhập OTP để kích hoạt tài khoản.");
-            req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);
-        } catch (IllegalArgumentException e) {
-            req.setAttribute("error", e.getMessage());
-            req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
-        } catch (RuntimeException e) {
-            log("Registration failed", e);
-            req.setAttribute("error", "Không thể đăng ký lúc này. Vui lòng kiểm tra kết nối database và thử lại.");
-            req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
-        }
+        // Registration creates an inactive account and is not safe to persist until OTP delivery is available.
+        req.setAttribute("error", "Hệ thống chưa cấu hình kênh gửi OTP nên chưa thể hoàn tất đăng ký. "
+                + "Vui lòng liên hệ quản trị viên.");
+        req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
     }
 
     private String validate(String name, String username, String phone, String email, String password, String confirm) {

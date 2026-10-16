@@ -118,7 +118,9 @@ public class UserDAO extends DBContext {
         String otpSql = "INSERT INTO OTPVerifications(UserID,OTPCode,Purpose,ExpiredDate,Status) " +
                 "VALUES(?,?,'REGISTER',DATEADD(MINUTE,5,SYSDATETIME()),'PENDING')";
         if (conn == null) throw new IllegalStateException("Không kết nối được cơ sở dữ liệu.");
+        boolean oldAutoCommit = true;
         try {
+            oldAutoCommit = conn.getAutoCommit();
             conn.setAutoCommit(false);
             int userId;
             try (PreparedStatement ps = conn.prepareStatement(userSql)) {
@@ -142,12 +144,13 @@ public class UserDAO extends DBContext {
             conn.commit();
             return userId;
         } catch (SQLException e) {
-            try { conn.rollback(); } catch (SQLException ignored) {}
+            try { conn.rollback(); } catch (SQLException rollbackError) { e.addSuppressed(rollbackError); }
             if (e.getErrorCode() == 2627 || e.getErrorCode() == 2601)
                 throw new IllegalArgumentException("Tên đăng nhập, số điện thoại hoặc email đã được sử dụng.");
             throw new IllegalStateException("Không thể tạo tài khoản", e);
         } finally {
-            try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
+            try { conn.setAutoCommit(oldAutoCommit); }
+            catch (SQLException e) { throw new IllegalStateException("Không thể khôi phục trạng thái kết nối.", e); }
         }
     }
 
