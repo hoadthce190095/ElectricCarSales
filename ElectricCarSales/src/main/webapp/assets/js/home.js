@@ -2,7 +2,7 @@
 
 (() => {
     const contextPath = document.querySelector(".brand")?.getAttribute("href")?.replace(/\/index\.jsp$/, "") || "";
-    const catalogueUrl = `${contextPath}/assets/vinfast-catelogue.json`;
+    const catalogueUrl = `${contextPath}/api/catalogue`;
     const grid = document.getElementById("vehicle-grid");
     const search = document.getElementById("vehicle-search");
     const modelFilter = document.getElementById("model-filter");
@@ -15,11 +15,13 @@
     const emptyState = document.getElementById("empty-state");
     const compareDock = document.getElementById("compare-dock");
     const compareNotice = document.getElementById("compare-notice");
-    const modelKey = (value) => String(value ?? "").trim().toLocaleLowerCase("vi").replace(/[^a-z0-9]/g, "");
-    const detailUrls = new Map([...grid.querySelectorAll("[data-model-name][data-detail-url]")]
-        .map((card) => [modelKey(card.dataset.modelName), card.dataset.detailUrl]));
     const selections = new Set();
     const compareSelectionStorageKey = "electriccarsale.compareSelections";
+    const serverSearchApplied = grid.dataset.serverSearchApplied === "true";
+    const serverSearchKeyword = grid.dataset.serverSearchKeyword;
+    const serverSearchModelIds = new Set(
+        grid.dataset.serverSearchModelIds.split(",").filter(Boolean)
+    );
     let models = [];
     let catalogueMetadata = {};
     let compareNoticeTimer;
@@ -109,12 +111,15 @@
     }
 
     function matches(model) {
+        if (serverSearchApplied && !serverSearchModelIds.has(String(model.modelID))) return false;
         const searchText = normalizeSearch(search.value);
         const fields = [model.modelName, model.carLine, model.specificationVersion, model.dimensions, ...(Array.isArray(model.colors) ? model.colors : [])].map(normalizeSearch);
+        const shouldMatchSearchText = !serverSearchApplied ||
+            searchText !== normalizeSearch(serverSearchKeyword);
         const amount = number(model.priceVnd);
         const maxPriceMillions = number(priceFilter.value);
         const minimumRange = number(rangeFilter.value);
-        return (!searchText || fields.some((value) => value.includes(searchText)))
+        return (!searchText || !shouldMatchSearchText || fields.some((value) => value.includes(searchText)))
             && (!modelFilter.value || lineName(model) === modelFilter.value)
             && (maxPriceMillions === null || amount === null || amount <= maxPriceMillions * 1_000_000)
             && (minimumRange === null || number(model.rangeKm) === null || Number(model.rangeKm) >= minimumRange)
@@ -132,7 +137,7 @@
     }
 
     function card(model, index) {
-        const id = `${text(model.modelName)}-${text(model.specificationVersion)}`;
+        const id = text(model.comparisonKey);
         const selected = selections.has(id);
         const article = make("article", `vehicle-card${selected ? " selected-for-compare" : ""}`);
         const photo = make("div", "vehicle-photo");
@@ -140,9 +145,7 @@
         const selectedColor = colorFilter.value && Array.isArray(model.colors)
             ? model.colors.find((color) => colorCategory(color)?.value === colorFilter.value)
             : "";
-        const colorImageUrl = selectedColor
-            ? catalogueMetadata.colorImagesByLine?.[lineName(model)]?.[selectedColor]
-            : "";
+        const colorImageUrl = selectedColor ? model.colorImages?.[selectedColor] : "";
         const imageUrl = safeOfficialUrl(colorImageUrl) || safeOfficialUrl(model.imageUrl);
         if (imageUrl) {
             const image = make("img");
@@ -156,9 +159,7 @@
             image.addEventListener("error", () => image.remove(), { once: true });
             photo.append(image);
         }
-        const detailUrl = detailUrls.get(modelKey(model.modelName))
-            || detailUrls.get(modelKey(model.carLine))
-            || `${contextPath}/detail?name=${encodeURIComponent(text(model.modelName))}&line=${encodeURIComponent(text(model.carLine))}`;
+        const detailUrl = `${contextPath}/detail?id=${encodeURIComponent(model.modelID)}`;
         const detailLink = make("a", "vehicle-detail-link", "Xem chi tiết ↗");
         detailLink.href = detailUrl;
         photo.append(badge, detailLink);
@@ -175,7 +176,7 @@
         const priceLabel = make("span", "vehicle-price-label", "Giá tham khảo · đã gồm pin");
         const priceValue = make("strong", "vehicle-price", price(model.priceVnd));
         const footer = make("div", "vehicle-card-footer");
-        const sourceUrl = safeOfficialUrl(model.priceSourceUrl || catalogueMetadata.pricePolicyPageUrl);
+        const sourceUrl = safeOfficialUrl(model.priceSourceUrl);
         if (sourceUrl) {
             const source = make("a", "vehicle-source", "Nguồn giá VinFast ↗");
             source.href = sourceUrl;
@@ -268,10 +269,16 @@
 
     function openComparison() {
         persistCompareSelections();
-        window.location.href = `${contextPath}/compare.jsp`;
+        const query = new URLSearchParams();
+        selections.forEach((key) => query.append("key", key));
+        window.location.href = `${contextPath}/comparison?${query.toString()}`;
     }
 
     function resetFilters() {
+        if (serverSearchApplied) {
+            window.location.href = `${contextPath}/index.jsp#models`;
+            return;
+        }
         search.value = "";
         modelFilter.value = "";
         priceFilter.value = "";
@@ -283,14 +290,15 @@
 
     async function loadCatalogue() {
         try {
-            const response = await fetch(catalogueUrl, { credentials: "same-origin", headers: { Accept: "application/json" } });
+            const response = await fetch(catalogueUrl, {
+                credentials: "same-origin",
+                headers: { Accept: "application/json" }
+            });
             if (!response.ok) throw new Error(`Catalogue request failed: ${response.status}`);
             catalogueMetadata = await response.json();
             models = Array.isArray(catalogueMetadata.models) ? catalogueMetadata.models.filter((model) => text(model.modelName)) : [];
             if (!models.length) throw new Error("No catalogue models are available");
-            const availableIds = new Set(models.map((model) =>
-                `${text(model.modelName)}-${text(model.specificationVersion)}`
-            ));
+            const availableIds = new Set(models.map((model) => text(model.comparisonKey)));
             for (const id of selections) {
                 if (!availableIds.has(id)) selections.delete(id);
             }
@@ -321,7 +329,6 @@
 
     [modelFilter, priceFilter, rangeFilter, colorFilter, sortFilter].forEach((control) => control.addEventListener("change", render));
     search.addEventListener("input", render);
-    document.getElementById("search-form").addEventListener("submit", (event) => { event.preventDefault(); render(); });
     document.getElementById("reset-filters").addEventListener("click", resetFilters);
     document.getElementById("empty-reset").addEventListener("click", resetFilters);
     document.getElementById("compare-open").addEventListener("click", openComparison);

@@ -49,8 +49,9 @@
 <main>
     <article class="detail-card">
         <div class="gallery" id="vehicle-gallery"
+             data-model-id="<c:out value='${car.modelID}'/>"
              data-model-name="<c:out value='${car.modelName}'/>"
-             data-catalog-model-name="<c:out value='${param.name}'/>" aria-label="Hình ảnh xe">
+             aria-label="Hình ảnh xe">
             <c:forEach var="image" items="${carImages}">
                 <c:if test="${not empty image.imageURL}">
                     <img src="<c:out value='${image.imageURL}'/>" alt="<c:out value='${car.modelName}'/>" loading="lazy">
@@ -88,7 +89,7 @@
     (() => {
         const gallery = document.getElementById("vehicle-gallery");
         const modelName = gallery.dataset.modelName;
-        const catalogModelName = gallery.dataset.catalogModelName;
+        const modelID = gallery.dataset.modelId;
         const colorPicker = document.getElementById("color-picker");
         const colorOptions = document.getElementById("color-options");
         const selectedColorName = document.getElementById("selected-color-name");
@@ -173,6 +174,7 @@
             if (color.includes("do") || color.includes("solarruby") || color.includes("crimsonred")) return "#c82932";
             if (color.includes("vang") || color.includes("summeryellow")) return "#f2c230";
             if (color.includes("xanhduong") || color.includes("skyblue")) return "#4b9bcc";
+            if (color.includes("xanhla")) return "#4b7b55";
             if (color.includes("hong") || color.includes("rosepink")) return "#e7a6b8";
             if (color.includes("xanhnhat") || color.includes("urbanmint")) return "#a7c7b5";
             if (color.includes("xanhdam") || color.includes("ivygreen")) return "#234c3e";
@@ -207,9 +209,7 @@
 
             loadedImage.alt = colorName ? modelName + " - " + colorName : modelName;
             loadedImage.loading = "eager";
-            const currentImage = gallery.querySelector("img");
-            if (currentImage) currentImage.replaceWith(loadedImage);
-            else gallery.replaceChildren(loadedImage);
+            gallery.replaceChildren(loadedImage);
             return true;
         }
 
@@ -241,17 +241,16 @@
 
         async function selectColor(colorName, button) {
             const sequence = ++imageChangeSequence;
-            colorOptions.querySelectorAll(".color-option").forEach((option) => {
-                option.disabled = true;
-            });
-            colorStatus.textContent = "Đang tải ảnh màu " + colorName + "...";
             try {
-                const changed = await setVehicleImage(
-                    catalogueColorImages?.[colorName],
-                    colorName,
-                    sequence
-                );
-                if (!changed) return;
+                const colorImageUrl = catalogueColorImages?.[colorName];
+                if (colorImageUrl) {
+                    colorOptions.querySelectorAll(".color-option").forEach((option) => {
+                        option.disabled = true;
+                    });
+                    colorStatus.textContent = "Đang tải ảnh màu " + colorName + "...";
+                    const changed = await setVehicleImage(colorImageUrl, colorName, sequence);
+                    if (!changed) return;
+                }
                 selectedColorName.textContent = colorName;
                 colorStatus.textContent = "";
                 colorOptions.querySelectorAll(".color-option").forEach((option) => {
@@ -274,16 +273,16 @@
 
         async function loadCatalogue() {
             if (!cataloguePromise) {
-                cataloguePromise = fetch("<c:url value='/assets/vinfast-catelogue.json'/>", {
+                cataloguePromise = fetch("<c:url value='/api/catalogue'/>?modelId=" + encodeURIComponent(modelID), {
                     credentials: "same-origin",
                     cache: "no-cache",
                     headers: { Accept: "application/json" }
                 }).then((response) => {
-                    if (!response.ok) throw new Error("Catalogue request failed: " + response.status);
+                    if (!response.ok) throw new Error("Vehicle catalog request failed: " + response.status);
                     return response.json();
                 }).catch((error) => {
-                    console.error("Không thể tải danh mục xe.", error);
-                    return null;
+                    console.error("Không thể tải dữ liệu xe từ cơ sở dữ liệu.", error);
+                    throw error;
                 });
             }
             return cataloguePromise;
@@ -292,20 +291,15 @@
         async function loadFallbackImage() {
             if (fallbackRequested) return;
             fallbackRequested = true;
-            const catalogue = await loadCatalogue();
             try {
-                const normalizeName = (value) => normalize(value);
-                const catalogModels = catalogue?.models || [];
-                const model = catalogModels.find((item) => normalizeName(item.modelName) === normalizeName(catalogModelName))
-                    || catalogModels.find((item) => normalizeName(item.modelName) === normalizeName(modelName));
-                if (!catalogue) {
-                    showSpecificationError("Không tải được danh mục thông số xe. Vui lòng thử tải lại trang.");
-                } else if (model) {
+                const catalogue = await loadCatalogue();
+                const model = catalogue.models?.find((item) => Number(item.modelID) === Number(modelID));
+                if (model) {
                     renderSpecifications(model);
                 } else {
                     showSpecificationError("Chưa có thông số cho mẫu xe này trong danh mục.");
                 }
-                catalogueColorImages = catalogue?.colorImagesByLine?.[model?.carLine];
+                catalogueColorImages = model?.colorImages;
                 if (model?.colors) renderColorOptions(model.colors);
                 if (gallery.querySelector("img")) {
                     fallbackRequested = false;
@@ -322,7 +316,7 @@
                 }
                 showFallbackImage(imageUrl.href);
             } catch (error) {
-                console.error("Không thể tải ảnh dự phòng cho xe.", error);
+                console.error("Không thể tải dữ liệu dự phòng cho xe.", error);
                 showSpecificationError("Không tải được thông số xe. Vui lòng thử tải lại trang.");
                 showMessage("Chưa tải được hình ảnh xe. Vui lòng thử tải lại trang.");
             }

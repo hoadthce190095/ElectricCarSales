@@ -14,8 +14,8 @@ boolean customerView = "customer".equals(request.getParameter("view"));
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/home.css?v=6">
-    <script src="<%= request.getContextPath() %>/assets/js/home.js?v=16" defer></script>
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/home.css?v=8">
+    <script src="<%= request.getContextPath() %>/assets/js/home.js?v=21" defer></script>
 </head>
 <body class="home-page">
 <header class="site-header">
@@ -88,10 +88,12 @@ boolean customerView = "customer".equals(request.getParameter("view"));
         </aside>
 
         <div class="catalog-main">
-            <form class="search-form" id="search-form" role="search">
+            <form class="search-form" id="search-form" action="<c:url value='/cars/search'/>" method="get" role="search">
                 <label class="sr-only" for="vehicle-search">Tìm kiếm xe</label>
                 <span class="search-icon" aria-hidden="true">⌕</span>
-                <input id="vehicle-search" type="search" placeholder="Tìm theo mẫu xe hoặc từ khóa..." autocomplete="off">
+                <input id="vehicle-search" type="search" name="q" maxlength="100"
+                       value="<c:out value='${searchKeyword}'/>"
+                       placeholder="Tìm theo mẫu xe hoặc từ khóa..." autocomplete="off">
                 <button type="submit">Tìm kiếm</button>
             </form>
 
@@ -101,7 +103,11 @@ boolean customerView = "customer".equals(request.getParameter("view"));
             </div>
 
             <div class="active-filters" id="active-filters" aria-live="polite"></div>
-     <div class="vehicle-grid" id="vehicle-grid" aria-live="polite" aria-busy="false" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+     <div class="vehicle-grid" id="vehicle-grid"
+          data-server-search-applied="<c:out value='${serverSearchApplied}'/>"
+          data-server-search-model-ids="<c:out value='${serverSearchModelIds}'/>"
+          data-server-search-keyword="<c:out value='${searchKeyword}'/>"
+          aria-live="polite" aria-busy="false" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
          <c:choose>
              <c:when test="${not empty carList}">
                  <c:forEach var="car" items="${carList}">

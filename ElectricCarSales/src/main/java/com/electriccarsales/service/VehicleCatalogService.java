@@ -3,6 +3,7 @@ package com.electriccarsales.service;
 import com.electriccarsales.dao.*;
 import com.electriccarsales.model.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public class VehicleCatalogService {
@@ -14,6 +15,7 @@ public class VehicleCatalogService {
     private ColorDAO colorDAO;
     private ModelColorDAO modelColorDAO;
     private CarImageDAO carImageDAO;
+    private CatalogVehicleDAO catalogVehicleDAO;
 
     public VehicleCatalogService() {
         brandDAO = new BrandDAO();
@@ -24,6 +26,7 @@ public class VehicleCatalogService {
         colorDAO = new ColorDAO();
         modelColorDAO = new ModelColorDAO();
         carImageDAO = new CarImageDAO();
+        catalogVehicleDAO = new CatalogVehicleDAO();
     }
 
     public List<Brand> getAllBrands() {
@@ -36,6 +39,16 @@ public class VehicleCatalogService {
 
     public List<CarModel> getAllCarModels() {
         return carModelDAO.getAll();
+    }
+
+    public List<CarModel> searchCarModels(String keyword, Integer brandId, Integer carLineId,
+                                          BigDecimal maxPrice, BigDecimal minRange, Integer colorId,
+                                          String sort) {
+        return carModelDAO.search(keyword, brandId, carLineId, maxPrice, minRange, colorId, sort);
+    }
+
+    public List<CatalogVehicle> getCatalogVehicles() {
+        return catalogVehicleDAO.getAll();
     }
 
     public List<CarVersion> getAllCarVersions() {
