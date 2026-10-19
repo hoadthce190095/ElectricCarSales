@@ -23,6 +23,14 @@ public class OrderService {
         return orderDAO.findAll();
     }
 
+    public Order getOrderById(int orderId) {
+        return orderDAO.findById(orderId);
+    }
+
+    public void updateOrderStatus(int orderId, int statusId) {
+        orderDAO.updateStatus(orderId, statusId);
+    }
+
     public void createOrder(Order order) {
         orderDAO.insert(order);
     }

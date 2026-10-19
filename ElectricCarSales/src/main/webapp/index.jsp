@@ -27,10 +27,10 @@ boolean customerView = "customer".equals(request.getParameter("view"));
         <nav class="primary-nav" id="primary-nav" aria-label="Điều hướng chính">
             <a class="nav-link current" href="#models">Mua xe <span aria-hidden="true">⌄</span></a>
             <a class="nav-link" href="#about">Giới thiệu</a>
-            <a class="nav-link" href="#contact">Tư vấn</a>
+            <a class="nav-link" href="<%= request.getContextPath() %>/customer/consultation">Tư vấn</a>
         </nav>
         <div class="header-actions">
-            <a class="header-contact" href="mailto:hotro@electriccarsale.vn?subject=Yeu%20cau%20tu%20van%20xe%20VinFast">
+            <a class="header-contact" href="<%= request.getContextPath() %>/customer/consultation">
                 <span aria-hidden="true">✉</span><span>Liên hệ tư vấn</span>
             </a>
             <% if (customerView) { %>
@@ -83,7 +83,7 @@ boolean customerView = "customer".equals(request.getParameter("view"));
             <div class="select-wrap"><span aria-hidden="true">◉</span><select id="color-filter"><option value="">Tất cả màu sắc</option></select><b aria-hidden="true">⌄</b></div>
 
             <div class="filter-note"><span aria-hidden="true">i</span><p>Giá và quãng đường là thông tin tham khảo theo cấu hình được ghi trong danh mục.</p></div>
-            <a class="filter-contact" href="mailto:hotro@electriccarsale.vn?subject=Tu%20van%20chon%20xe%20VinFast">Cần tư vấn chọn xe? <span>Liên hệ với chúng tôi ↗</span></a>
+            <a class="filter-contact" href="<%= request.getContextPath() %>/customer/consultation">Cần tư vấn chọn xe? <span>Gửi yêu cầu tư vấn ↗</span></a>
         </aside>
 
         <div class="catalog-main">
@@ -110,7 +110,7 @@ boolean customerView = "customer".equals(request.getParameter("view"));
 
     <section class="about-strip" id="about">
         <div class="about-icon" aria-hidden="true">⚡</div><div><span class="eyebrow">VINFAST · ELECTRIC CAR SALE</span><h2>Thông tin xe rõ ràng, lựa chọn dễ dàng</h2><p>Tìm hiểu mẫu xe, cấu hình và thông số trước khi quyết định. Đội ngũ tư vấn sẵn sàng hỗ trợ khi bạn cần.</p></div>
-        <a href="mailto:hotro@electriccarsale.vn?subject=Yeu%20cau%20tu%20van%20xe%20VinFast" id="contact">Gửi yêu cầu tư vấn <span>↗</span></a>
+        <a href="<%= request.getContextPath() %>/customer/consultation" id="contact">Gửi yêu cầu tư vấn <span>↗</span></a>
     </section>
 </main>
 

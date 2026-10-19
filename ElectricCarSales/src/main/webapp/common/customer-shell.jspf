@@ -52,6 +52,10 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
                         <span class="nav-icon">▤</span>
                         <span>Đơn hàng</span>
                     </a>
+                    <a class="nav-link <%= customerPage.equals("consultation.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/consultation">
+                        <span class="nav-icon">✧</span>
+                        <span>Yêu cầu tư vấn</span>
+                    </a>
                     <a class="nav-link <%= customerPage.equals("my-payments.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/my-payments.jsp">
                         <span class="nav-icon">◉</span>
                         <span>Thanh toán</span>
@@ -85,7 +89,7 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
                     <div class="help-orbit">✳</div>
                     <strong>Cần hỗ trợ?</strong>
                     <p>Đội ngũ VinFast luôn sẵn sàng đồng hành cùng bạn.</p>
-                    <a href="mailto:hotro@electriccarsale.vn">Liên hệ hỗ trợ <span>↗</span>
+                    <a href="<%= customerContext %>/customer/consultation">Gửi yêu cầu tư vấn <span>↗</span>
                     </a>
                 </div>
                 <div class="sidebar-bottom">

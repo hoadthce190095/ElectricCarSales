@@ -2,6 +2,7 @@
 (() => {
     const app = document.querySelector("[data-staff-app]");
     if (!app) return;
+    const contextPath = app.dataset.contextPath || "";
     const $ = (selector, root = document) => root.querySelector(selector);
     const content = $("#staff-content");
     const nav = $("#staff-nav");
@@ -203,7 +204,7 @@
             <h2 class="panel-title">${roleDashboard[currentRole].caption}</h2>
             <p class="panel-subtitle">Cập nhật hoạt động mới nhất</p>
             </div>
-            <button class="text-button" data-view="${key}">Xem tất cả →</button>
+            ${key === "transactions" ? `<a href="${contextPath}/staff/transactions" class="text-button" style="text-decoration:none;">Xem tất cả →</a>` : `<button class="text-button" data-view="${key}">Xem tất cả →</button>`}
             </div>
             <div class="table-wrap">
             <table>
@@ -223,8 +224,7 @@
         const bars = [38, 55, 48, 73, 61, 88, 67, 95, 72, 84, 62, 100];
         return `${heading(d.title, d.kicker, d.intro, `<span class="live-indicator">
             <i>
-            </i> Cập nhật trực tiếp</span>${currentRole === "manager" ? `<button class="button button-secondary" data-view="transactions">Xem giao dịch →</button>` : `<button class="button" data-toast="Biểu mẫu tạo mới sẽ được kết nối khi backend sẵn sàng.">
-            <span class="button-icon">＋</span> Tạo giao dịch</button>`}`)}${note()}${metricCards(d.metrics)}<div class="dashboard-grid">
+            </i> Cập nhật trực tiếp</span>${currentRole === "manager" ? `<a href="${contextPath}/staff/transactions" class="button button-secondary" style="text-decoration:none;">Xem giao dịch →</a>` : `<a href="${contextPath}/staff/transactions" class="button" style="text-decoration:none;"><span class="button-icon">＋</span> Quản lý giao dịch</a>`}`)}${note()}${metricCards(d.metrics)}<div class="dashboard-grid">
             <section class="panel">
             <div class="panel-head">
             <div>
@@ -269,14 +269,19 @@
             </div>
             <span class="status-pill warning">${d.tasks.length} việc</span>
             </div>
-            <div class="task-list">${d.tasks.map(([title, detail, icon, color]) => `<div class="task-row">
+            <div class="task-list">${d.tasks.map(([title, detail, icon, color]) => {
+                let taskLink = "";
+                if (title.includes("tư vấn")) taskLink = `${contextPath}/staff/consultations`;
+                else if (title.includes("Giao dịch") || title.includes("Hợp đồng")) taskLink = `${contextPath}/staff/transactions`;
+                return `<div class="task-row" ${taskLink ? `onclick="window.location.href='${taskLink}'" style="cursor:pointer;"` : ""}>
             <span class="task-icon ${color}">${icon}</span>
             <div class="task-copy">
             <strong>${title}</strong>
             <span>${detail}</span>
             </div>
             <span class="task-count">→</span>
-            </div>`).join("")}</div>
+            </div>`;
+            }).join("")}</div>
             </section>
             </div>
             <div class="dashboard-lower">${miniTable(d.rows)}<section class="panel">
@@ -324,8 +329,23 @@
         const rows = demoRows[key] || [];
         const hasStatuses = !(["transaction-report", "vehicle-report"].includes(key));
         const addable = ["customers", "consultations", "transactions", "vehicle-movements"].includes(key) && currentRole !== "manager";
-        const action = addable ? `<button class="button" data-toast="Biểu mẫu sẽ được kết nối khi backend được triển khai.">
+        let action = addable ? `<button class="button" data-toast="Biểu mẫu sẽ được kết nối khi backend được triển khai.">
             <span class="button-icon">＋</span>${key === "transactions" ? "Tạo giao dịch" : "Thêm mới"}</button>` : `<button class="button button-secondary" data-toast="Báo cáo minh họa sẵn sàng để xuất khi backend được kết nối.">↓ Xuất báo cáo</button>`;
+        if (key === "consultations") {
+            action = `<a href="${contextPath}/staff/consultations" class="button" style="text-decoration:none;"><span class="button-icon">✧</span> Mở Quản lý Tư vấn ↗</a>`;
+        } else if (key === "transactions") {
+            action = `<a href="${contextPath}/staff/transactions" class="button" style="text-decoration:none;"><span class="button-icon">▤</span> Mở Quản lý Giao dịch ↗</a>`;
+        } else if (key === "revenue-report" || key === "transaction-report") {
+            action = `<a href="${contextPath}/staff/report" class="button button-secondary" style="text-decoration:none;"><span class="button-icon">▥</span> Xem Báo cáo & Thống kê ↗</a>`;
+        }
+        let rowAction = `<button class="text-button" data-toast="Chi tiết bản ghi sẽ hiển thị khi kết nối backend.">Chi tiết →</button>`;
+        if (key === "transactions") {
+            rowAction = `<a href="${contextPath}/staff/transaction-detail?id=1" class="text-button" style="text-decoration:none; color: #0071e3; font-weight:600;">Chi tiết →</a>`;
+        } else if (key === "consultations") {
+            rowAction = `<a href="${contextPath}/staff/consultations" class="text-button" style="text-decoration:none; color: #0071e3; font-weight:600;">Xử lý →</a>`;
+        } else if (key === "revenue-report" || key === "transaction-report") {
+            rowAction = `<a href="${contextPath}/staff/report" class="text-button" style="text-decoration:none; color: #0071e3; font-weight:600;">Xem chi tiết →</a>`;
+        }
         const cells = rows.map(row => `<tr>${row.map((cell, i) => {
             if (hasStatuses && i === row.length - 2) return `<td>
             <span class="status-pill ${row.at(-1)}">${esc(cell)}</span>
@@ -340,7 +360,7 @@
             if (key === "vehicle-report" && i === row.length - 1) return "";
             return `<td>${i === 0 || i === 1 ? `<span class="cell-primary">${esc(cell)}</span>` : esc(cell)}</td>`;
         }).join("")}<td>
-            <button class="text-button" data-toast="Chi tiết bản ghi sẽ hiển thị khi kết nối backend.">Chi tiết →</button>
+            ${rowAction}
             </td>
             </tr>`).join("");
         return `${heading(title, currentRole === "manager" ? "BÁO CÁO & GIÁM SÁT" : "NGHIỆP VỤ NỘI BỘ", intro, action)}${note()}<section class="panel table-panel">

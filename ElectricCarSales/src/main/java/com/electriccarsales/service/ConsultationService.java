@@ -12,7 +12,10 @@ public class ConsultationService {
     }
 
     public void createRequest(ConsultationRequest request) {
-        request.setStatus("Pending");
         dao.insert(request);
+    }
+
+    public void updateRequestStatus(int requestId, int statusId) {
+        dao.updateStatus(requestId, statusId);
     }
 }
