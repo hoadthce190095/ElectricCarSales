@@ -1,4 +1,4 @@
-package com.electriccarsales.model.consultation;
+package com.electriccarsales.model;
 
 public class ConsultationStatus {
     private int id;

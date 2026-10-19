@@ -1,6 +1,6 @@
-package com.electriccarsales.controller.order;
+package com.electriccarsales.controller;
 
-import com.electriccarsales.service.order.OrderService;
+import com.electriccarsales.service.OrderService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;

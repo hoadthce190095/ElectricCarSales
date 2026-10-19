@@ -1,4 +1,4 @@
-package com.electriccarsales.model.consultation;
+package com.electriccarsales.model;
 
 import java.sql.Timestamp;
 
