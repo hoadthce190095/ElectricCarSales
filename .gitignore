@@ -1,0 +1,7 @@
+.codex-input/
+tool/
+out/
+ElectricCarSales/target/
+ElectricCarSales/src/main/resources/db.properties
+*.log
+deliverables/
