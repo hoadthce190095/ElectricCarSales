@@ -119,9 +119,9 @@ public class InstallmentController extends HttpServlet {
                     return;
                 }
             }
-            // Contract creation needs an eligible-order/confirmed-deposit transaction; payment needs a gateway.
+            // Contract creation and installment payment require verified business and gateway workflows.
             FinanceControllerSupport.sendError(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,
-                    "Nghiệp vụ này chưa được bật vì chưa có xác minh điều kiện đơn hàng và thanh toán.");
+                    "Chưa cấu hình quy trình hợp đồng và cổng thanh toán đã xác minh cho nghiệp vụ này.");
         } catch (FinanceDAOException e) {
             getServletContext().log("Installment authorization query failed.", e);
             FinanceControllerSupport.sendError(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,

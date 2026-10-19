@@ -10,7 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
-/** Read-only payment history and balance endpoints. Gateway operations stay disabled until a verified adapter exists. */
+/** Payment history and balance endpoints. Checkout and callbacks require a configured provider adapter. */
 @WebServlet("/payment/*")
 public class PaymentController extends HttpServlet {
     private PaymentService paymentService;
@@ -93,7 +93,7 @@ public class PaymentController extends HttpServlet {
         String action = action(request);
         if ("callback".equals(action)) {
             FinanceControllerSupport.sendError(response, HttpServletResponse.SC_NOT_IMPLEMENTED,
-                    "Chưa cấu hình kênh xác minh giao dịch đáng tin cậy.");
+                    "Chưa cấu hình adapter cổng để xác minh thông báo giao dịch.");
             return;
         }
         Integer customerId = FinanceControllerSupport.customerId(request, response);
@@ -120,9 +120,9 @@ public class PaymentController extends HttpServlet {
                         "Không tìm thấy đơn hàng.");
                 return;
             }
-            // No QR/gateway adapter or provider-specific amount configuration exists in this project yet.
+            // Do not create a pending row until provider and provider-specific amount rules are configured.
             FinanceControllerSupport.sendError(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,
-                    "Cổng thanh toán chưa được cấu hình; chưa tạo yêu cầu hoặc ghi nhận giao dịch.");
+                    "Chưa cấu hình cổng thanh toán điện tử; chưa tạo yêu cầu hoặc ghi nhận giao dịch.");
         } catch (FinanceDAOException e) {
             getServletContext().log("Payment authorization query failed.", e);
             FinanceControllerSupport.sendError(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,

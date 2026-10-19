@@ -1,5 +1,8 @@
 package com.electriccarsales.controller;
 
+import com.electriccarsales.dao.FinanceCustomerDAO;
+import com.electriccarsales.dao.FinanceDAOException;
+import com.electriccarsales.model.SessionUser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -16,13 +19,23 @@ final class FinanceControllerSupport {
 
     static Integer customerId(HttpServletRequest request, HttpServletResponse response) throws IOException {
         HttpSession session = request.getSession(false);
-        Integer customerId = positiveSessionInt(session, "customerId");
-        String role = session == null ? null : stringSessionValue(session, "role");
-        if (customerId == null || (role != null && !CUSTOMER_ROLE.equals(role.toUpperCase(Locale.ROOT)))) {
+        Object sessionUser = session == null ? null : session.getAttribute("user");
+        if (!(sessionUser instanceof SessionUser user) || user.getRole() == null
+                || !CUSTOMER_ROLE.equals(user.getRole().trim().toUpperCase(Locale.ROOT))) {
             sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "Vui lòng đăng nhập bằng tài khoản khách hàng.");
             return null;
         }
-        return customerId;
+        try {
+            Integer customerId = new FinanceCustomerDAO().findCustomerIdByUserId(user.getUserId());
+            if (customerId == null) {
+                sendError(response, HttpServletResponse.SC_FORBIDDEN, "Tài khoản chưa liên kết hồ sơ khách hàng.");
+            }
+            return customerId;
+        } catch (FinanceDAOException e) {
+            sendError(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+                    "Chưa thể xác minh hồ sơ khách hàng. Vui lòng thử lại sau.");
+            return null;
+        }
     }
 
     static Integer employeeId(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -69,7 +82,8 @@ final class FinanceControllerSupport {
     }
 
     private static String stringSessionValue(HttpSession session, String key) {
-        Object value = session.getAttribute(key);
+        Object value = session == null ? null : session.getAttribute(key);
         return value instanceof String text ? text.trim() : null;
     }
+
 }

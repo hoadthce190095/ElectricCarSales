@@ -14,47 +14,21 @@ public class PaymentGateway {
         this.supportedChannels = new ArrayList<>();
     }
 
-    public PaymentGateway(String gatewayCode, String gatewayName,
-                          List<String> supportedChannels, boolean active) {
+    public PaymentGateway(String gatewayCode, String gatewayName, List<String> supportedChannels, boolean active) {
         this.gatewayCode = gatewayCode;
         this.gatewayName = gatewayName;
         setSupportedChannels(supportedChannels);
         this.active = active;
     }
 
-    public String getGatewayCode() {
-        return gatewayCode;
-    }
-
-    public void setGatewayCode(String gatewayCode) {
-        this.gatewayCode = gatewayCode;
-    }
-
-    public String getGatewayName() {
-        return gatewayName;
-    }
-
-    public void setGatewayName(String gatewayName) {
-        this.gatewayName = gatewayName;
-    }
-
-    public List<String> getSupportedChannels() {
-        return new ArrayList<>(supportedChannels);
-    }
-
+    public String getGatewayCode() { return gatewayCode; }
+    public void setGatewayCode(String gatewayCode) { this.gatewayCode = gatewayCode; }
+    public String getGatewayName() { return gatewayName; }
+    public void setGatewayName(String gatewayName) { this.gatewayName = gatewayName; }
+    public List<String> getSupportedChannels() { return new ArrayList<>(supportedChannels); }
     public void setSupportedChannels(List<String> supportedChannels) {
-        if (supportedChannels == null) {
-            this.supportedChannels = new ArrayList<>();
-        } else {
-            this.supportedChannels = new ArrayList<>(supportedChannels);
-        }
+        this.supportedChannels = supportedChannels == null ? new ArrayList<>() : new ArrayList<>(supportedChannels);
     }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
 }

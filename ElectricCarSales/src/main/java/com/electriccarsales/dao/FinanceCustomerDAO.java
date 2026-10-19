@@ -7,14 +7,10 @@ import java.sql.SQLException;
 
 /** Resolves the finance-side customer record for an authenticated user. */
 public class FinanceCustomerDAO extends FinanceDAOBase {
-    public FinanceCustomerDAO() {
-        super();
-    }
+    public FinanceCustomerDAO() { super(); }
 
     public Integer findCustomerIdByUserId(int userId) {
-        if (userId <= 0) {
-            throw new IllegalArgumentException("userId must be greater than zero");
-        }
+        if (userId <= 0) throw new IllegalArgumentException("userId must be greater than zero");
         return withConnection(connection -> findCustomerId(connection, userId));
     }
 

@@ -1,6 +1,6 @@
 package com.electriccarsales.model;
 
-/** A customer's tokenized card, wallet, or bank instrument held by a payment provider. */
+/** A tokenized card, wallet, or bank instrument held by a payment provider. */
 public class LinkedPaymentInstrument {
     private int linkedInstrumentID;
     private int customerID;
@@ -12,8 +12,7 @@ public class LinkedPaymentInstrument {
     private boolean defaultInstrument;
     private boolean active;
 
-    public LinkedPaymentInstrument() {
-    }
+    public LinkedPaymentInstrument() { }
 
     public LinkedPaymentInstrument(int linkedInstrumentID, int customerID, String gatewayCode,
                                    String instrumentType, String network, String providerToken,
@@ -29,76 +28,23 @@ public class LinkedPaymentInstrument {
         this.active = active;
     }
 
-    public int getLinkedInstrumentID() {
-        return linkedInstrumentID;
-    }
-
-    public void setLinkedInstrumentID(int linkedInstrumentID) {
-        this.linkedInstrumentID = linkedInstrumentID;
-    }
-
-    public int getCustomerID() {
-        return customerID;
-    }
-
-    public void setCustomerID(int customerID) {
-        this.customerID = customerID;
-    }
-
-    public String getGatewayCode() {
-        return gatewayCode;
-    }
-
-    public void setGatewayCode(String gatewayCode) {
-        this.gatewayCode = gatewayCode;
-    }
-
-    public String getInstrumentType() {
-        return instrumentType;
-    }
-
-    public void setInstrumentType(String instrumentType) {
-        this.instrumentType = instrumentType;
-    }
-
-    public String getNetwork() {
-        return network;
-    }
-
-    public void setNetwork(String network) {
-        this.network = network;
-    }
-
-    /** Token supplied by the payment provider. Never store a card number or security code here. */
-    public String getProviderToken() {
-        return providerToken;
-    }
-
-    public void setProviderToken(String providerToken) {
-        this.providerToken = providerToken;
-    }
-
-    public String getMaskedLabel() {
-        return maskedLabel;
-    }
-
-    public void setMaskedLabel(String maskedLabel) {
-        this.maskedLabel = maskedLabel;
-    }
-
-    public boolean isDefaultInstrument() {
-        return defaultInstrument;
-    }
-
-    public void setDefaultInstrument(boolean defaultInstrument) {
-        this.defaultInstrument = defaultInstrument;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
+    public int getLinkedInstrumentID() { return linkedInstrumentID; }
+    public void setLinkedInstrumentID(int linkedInstrumentID) { this.linkedInstrumentID = linkedInstrumentID; }
+    public int getCustomerID() { return customerID; }
+    public void setCustomerID(int customerID) { this.customerID = customerID; }
+    public String getGatewayCode() { return gatewayCode; }
+    public void setGatewayCode(String gatewayCode) { this.gatewayCode = gatewayCode; }
+    public String getInstrumentType() { return instrumentType; }
+    public void setInstrumentType(String instrumentType) { this.instrumentType = instrumentType; }
+    public String getNetwork() { return network; }
+    public void setNetwork(String network) { this.network = network; }
+    /** Token from the provider. Never store card numbers or security codes here. */
+    public String getProviderToken() { return providerToken; }
+    public void setProviderToken(String providerToken) { this.providerToken = providerToken; }
+    public String getMaskedLabel() { return maskedLabel; }
+    public void setMaskedLabel(String maskedLabel) { this.maskedLabel = maskedLabel; }
+    public boolean isDefaultInstrument() { return defaultInstrument; }
+    public void setDefaultInstrument(boolean defaultInstrument) { this.defaultInstrument = defaultInstrument; }
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
 }
