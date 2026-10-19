@@ -26,7 +26,7 @@ Nếu muốn chạy bằng script tại thư mục gốc:
 ElectricCarSales/src/main/java/
   com/electriccarsales/
     controller/   Các Servlet và SecurityFilter
-    dao/          AdministrationDAO, AuthenticationDAO, RoleDAO, SystemConfigurationDAO,
+    dao/          AdministrationDAO, AuthenticationDAO, AdminRoleDAO, SystemConfigurationDAO,
                   SystemLogDAO, ReportDAO, AIDAO, AICatalogue
     model/        Dữ liệu nghiệp vụ, request/response, SessionUser, ApiException
     service/      Nghiệp vụ quản trị, phân quyền, báo cáo, tư vấn xe;

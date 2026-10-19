@@ -8,7 +8,7 @@ import com.electriccarsales.model.UserRequest;
 import com.electriccarsales.model.Employee;
 import com.electriccarsales.model.Promotion;
 import com.electriccarsales.model.SystemLog;
-import com.electriccarsales.model.User;
+import com.electriccarsales.model.AdminUser;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -38,11 +38,11 @@ public class AdministrationDAO {
         return result;
     }
 
-    public PageResponse<User> users(Connection connection, String query, int page) throws SQLException {
+    public PageResponse<AdminUser> users(Connection connection, String query, int page) throws SQLException {
         return users(connection, query, page, null, null);
     }
 
-    public PageResponse<User> users(Connection connection, String query, int page, Integer roleId, Integer statusId)
+    public PageResponse<AdminUser> users(Connection connection, String query, int page, Integer roleId, Integer statusId)
         throws SQLException {
         // Dùng cùng điều kiện cho tổng số và danh sách để phân trang không bị lệch.
         String where = " WHERE (u.Username LIKE ? ESCAPE '~' OR u.Email LIKE ? ESCAPE '~' OR"
@@ -63,7 +63,7 @@ public class AdministrationDAO {
                 total = resultSet.getLong(1);
             }
         }
-        List<User> result = new ArrayList<>();
+        List<AdminUser> result = new ArrayList<>();
         try (PreparedStatement statement = connection
             .prepareStatement(USERS + where + " ORDER BY u.UserID DESC OFFSET ? ROWS FETCH NEXT 20 ROWS" + " ONLY")) {
             int nextParameter = bindUserFilters(statement, search, roleId, statusId);
@@ -92,7 +92,7 @@ public class AdministrationDAO {
         return nextParameter;
     }
 
-    public User findUser(Connection connection, int id) throws SQLException {
+    public AdminUser findUser(Connection connection, int id) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(USERS + " WHERE u.UserID=?")) {
             statement.setInt(1, id);
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -101,8 +101,8 @@ public class AdministrationDAO {
         }
     }
 
-    private User user(ResultSet resultSet) throws SQLException {
-        return new User(resultSet.getInt("UserID"), resultSet.getString("Username"), resultSet.getString("Email"),
+    private AdminUser user(ResultSet resultSet) throws SQLException {
+        return new AdminUser(resultSet.getInt("UserID"), resultSet.getString("Username"), resultSet.getString("Email"),
             resultSet.getString("Phone"), resultSet.getInt("RoleID"), resultSet.getString("RoleName"),
             resultSet.getInt("StatusID"), resultSet.getString("StatusName"),
             resultSet.getTimestamp("CreatedDate").toLocalDateTime(), resultSet.getObject("EmployeeID", Integer.class),

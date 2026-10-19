@@ -9,7 +9,7 @@ import com.electriccarsales.model.EmployeeRequest;
 import com.electriccarsales.model.PromotionRequest;
 import com.electriccarsales.model.UserRequest;
 import com.electriccarsales.model.Promotion;
-import com.electriccarsales.model.User;
+import com.electriccarsales.model.AdminUser;
 import com.electriccarsales.model.ApiException;
 
 import java.math.BigDecimal;
@@ -80,7 +80,7 @@ class AdministrationServiceTest {
 
     @Test
     void createsHashedStaffAndEmployeeAndAuditTogether() throws Exception {
-        User user = service.createUser(1, staff("staff", 3, 1));
+        AdminUser user = service.createUser(1, staff("staff", 3, 1));
         assertEquals("SALES", user.getRole());
         assertNotNull(user.getEmployeeId());
         assertEquals(1, count("Employees"));
@@ -106,8 +106,8 @@ class AdministrationServiceTest {
 
     @Test
     void duplicateUpdatesPreserveUserEmployeeAndAudit() throws Exception {
-        User first = service.createUser(1, staff("first", 3, 1));
-        User second = service.createUser(1, new UserRequest("second", "test-password-123", "second@test.local",
+        AdminUser first = service.createUser(1, staff("first", 3, 1));
+        AdminUser second = service.createUser(1, new UserRequest("second", "test-password-123", "second@test.local",
             "0900000003", 3, 1, "Nhân viên thứ hai"));
         ApiException accountError = assertThrows(ApiException.class, () -> service.updateUser(1, first.getUserId(),
             new UserRequest(null, null, second.getEmail(), first.getPhone(), 3, 1, "Tên chưa lưu")));
@@ -115,7 +115,7 @@ class AdministrationServiceTest {
         ApiException employeeError = assertThrows(ApiException.class, () -> service.updateEmployee(1,
             first.getEmployeeId(), new EmployeeRequest("Tên chưa lưu", second.getPhone(), first.getEmail())));
         assertEquals(409, employeeError.getStatus());
-        User unchanged = service.users("first", 1).getItems().getFirst();
+        AdminUser unchanged = service.users("first", 1).getItems().getFirst();
         assertEquals(first.getEmail(), unchanged.getEmail());
         assertEquals(first.getPhone(), unchanged.getPhone());
         assertEquals(first.getEmployeeName(), unchanged.getEmployeeName());
@@ -152,7 +152,7 @@ class AdministrationServiceTest {
 
     @Test
     void lockingAnotherAdminSucceedsIfOneRemainsAndLogsBeforeAfter() throws Exception {
-        User second = service.createUser(1, staff("secondadmin", 1, 1));
+        AdminUser second = service.createUser(1, staff("secondadmin", 1, 1));
         service.updateUser(1, second.getUserId(),
             new UserRequest(null, null, second.getEmail(), second.getPhone(), 1, 2, "Admin 2"));
         assertEquals("LOCKED", service.users("second", 1).getItems().getFirst().getStatus());
@@ -161,11 +161,11 @@ class AdministrationServiceTest {
 
     @Test
     void rolePermissionAllowsDelegatedStaffButNeverAdminEscalation() throws Exception {
-        User manager = service.createUser(1, staff("manager", 2, 1));
+        AdminUser manager = service.createUser(1, staff("manager", 2, 1));
         try (Connection c = connection(); Statement s = c.createStatement()) {
             s.execute("INSERT INTO RolePermissions VALUES(2,'MANAGE_USERS')");
         }
-        User created = service.createUser(manager.getUserId(),
+        AdminUser created = service.createUser(manager.getUserId(),
             new UserRequest("sales", "test-password-123", "sales@test.local", "0900000004", 3, 1, "Sales"));
         assertEquals("SALES", created.getRole());
         assertEquals(403,
@@ -252,7 +252,7 @@ class AdministrationServiceTest {
         assertEquals(3, secondPage.getItems().size());
         assertEquals("sales03", secondPage.getItems().getFirst().getUsername());
         assertEquals("sales01", secondPage.getItems().getLast().getUsername());
-        for (User user : firstPage.getItems()) {
+        for (AdminUser user : firstPage.getItems()) {
             assertEquals("SALES", user.getRole());
             assertEquals("ACTIVE", user.getStatus());
         }

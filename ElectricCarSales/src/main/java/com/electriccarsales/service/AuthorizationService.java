@@ -6,9 +6,9 @@ import com.electriccarsales.model.PermissionDTO;
 import com.electriccarsales.model.RoleRequest;
 import com.electriccarsales.model.RolesResponse;
 import com.electriccarsales.model.Account;
-import com.electriccarsales.model.Role;
+import com.electriccarsales.model.AdminRole;
 import com.electriccarsales.dao.AuthenticationDAO;
-import com.electriccarsales.dao.RoleDAO;
+import com.electriccarsales.dao.AdminRoleDAO;
 import com.electriccarsales.dao.SystemLogDAO;
 import com.electriccarsales.model.ApiException;
 
@@ -26,15 +26,15 @@ public class AuthorizationService {
         new PermissionDTO("VIEW_REPORTS", "Xem và xuất báo cáo tài chính, kinh doanh"),
         new PermissionDTO("VIEW_LOGS", "Xem nhật ký hệ thống"));
 
-    private final RoleDAO roleDAO;
+    private final AdminRoleDAO roleDAO;
     private final AuthenticationDAO authenticationDAO;
     private final SystemLogDAO systemLogDAO;
 
     public AuthorizationService() {
-        this(new RoleDAO(), new AuthenticationDAO(), new SystemLogDAO());
+        this(new AdminRoleDAO(), new AuthenticationDAO(), new SystemLogDAO());
     }
 
-    public AuthorizationService(RoleDAO roleDAO, AuthenticationDAO authenticationDAO, SystemLogDAO systemLogDAO) {
+    public AuthorizationService(AdminRoleDAO roleDAO, AuthenticationDAO authenticationDAO, SystemLogDAO systemLogDAO) {
         this.roleDAO = roleDAO;
         this.authenticationDAO = authenticationDAO;
         this.systemLogDAO = systemLogDAO;
@@ -44,13 +44,13 @@ public class AuthorizationService {
         if ("ADMIN".equals(role)) {
             return DEFINITIONS.stream().map(PermissionDTO::getCode).toList();
         }
-        return new RoleDAO().findPermissions(connection, roleId);
+        return new AdminRoleDAO().findPermissions(connection, roleId);
     }
 
     public RolesResponse roles() throws SQLException {
         try (Connection connection = DBContext.openConnection()) {
-            List<Role> roles = roleDAO.findAll(connection);
-            for (Role role : roles) {
+            List<AdminRole> roles = roleDAO.findAll(connection);
+            for (AdminRole role : roles) {
                 role.setPermissions(permissions(connection, role.getRoleId(), role.getRoleName()));
             }
             List<PermissionDTO> definitions = DEFINITIONS.stream()
@@ -59,7 +59,7 @@ public class AuthorizationService {
         }
     }
 
-    public Role createRole(int actorId, CreateRoleRequest input) throws SQLException {
+    public AdminRole createRole(int actorId, CreateRoleRequest input) throws SQLException {
         if (input == null || input.getRoleName() == null || !input.getRoleName().matches("[A-Z][A-Z0-9_]{2,19}")) {
             throw new IllegalArgumentException("Tên vai trò gồm 3–20 chữ IN HOA, số hoặc gạch dưới, bắt đầu bằng chữ.");
         }
@@ -90,7 +90,7 @@ public class AuthorizationService {
                     "role=" + input.getRoleName() + "; permissions=" + permissionList + "; cloneRoleId="
                         + input.getCloneRoleId());
                 connection.commit();
-                return new Role(roleId, input.getRoleName(), List.copyOf(permissionList));
+                return new AdminRole(roleId, input.getRoleName(), List.copyOf(permissionList));
             } catch (SQLException | RuntimeException exception) {
                 connection.rollback();
                 if (exception instanceof SQLException sqlException && (sqlException.getErrorCode() == 2601
@@ -102,7 +102,7 @@ public class AuthorizationService {
         }
     }
 
-    public Role updateRole(int actorId, int roleId, RoleRequest input) throws SQLException {
+    public AdminRole updateRole(int actorId, int roleId, RoleRequest input) throws SQLException {
         if (input == null) {
             throw new IllegalArgumentException("Danh sách quyền không hợp lệ.");
         }
@@ -129,7 +129,7 @@ public class AuthorizationService {
                 systemLogDAO.record(connection, actorId, "ROLE_PERMISSIONS_UPDATE", "ROLE", String.valueOf(roleId),
                     "role=" + roleName + "; before=" + previousPermissions + "; after=" + input.getPermissions());
                 connection.commit();
-                return new Role(roleId, roleName, List.copyOf(input.getPermissions()));
+                return new AdminRole(roleId, roleName, List.copyOf(input.getPermissions()));
             } catch (SQLException | RuntimeException exception) {
                 connection.rollback();
                 throw exception;

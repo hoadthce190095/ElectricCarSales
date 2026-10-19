@@ -16,7 +16,7 @@ Trong `com.electriccarsales`, `controller` nhận yêu cầu từ giao diện; `
 6. Khi mọi bước thành công, `connection.commit()` lưu dữ liệu. Khi có lỗi, `rollbackTransaction()` hủy toàn bộ để không có tài khoản thiếu nhân viên hoặc thiếu nhật ký.
 7. Controller trả thông tin tài khoản đã tạo. Response không chứa mật khẩu hoặc hash.
 
-`UserRequest` chứa mật khẩu đầu vào, còn `User` chứa dữ liệu được trả cho giao diện. Đây là lý do dùng hai class riêng.
+`UserRequest` chứa mật khẩu đầu vào, còn `AdminUser` chứa dữ liệu được trả cho giao diện. Đây là lý do dùng hai class riêng.
 
 ## 3. Khuyến mãi
 

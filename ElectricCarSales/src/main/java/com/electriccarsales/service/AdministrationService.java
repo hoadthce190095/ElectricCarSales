@@ -10,7 +10,7 @@ import com.electriccarsales.model.UserRequest;
 import com.electriccarsales.model.Employee;
 import com.electriccarsales.model.Promotion;
 import com.electriccarsales.model.SystemLog;
-import com.electriccarsales.model.User;
+import com.electriccarsales.model.AdminUser;
 import com.electriccarsales.dao.AdministrationDAO;
 import com.electriccarsales.dao.SystemLogDAO;
 import com.electriccarsales.model.ApiException;
@@ -54,11 +54,11 @@ public class AdministrationService {
         }
     }
 
-    public PageResponse<User> users(String query, int page) throws SQLException {
+    public PageResponse<AdminUser> users(String query, int page) throws SQLException {
         return users(query, page, null, null);
     }
 
-    public PageResponse<User> users(String query, int page, Integer roleId, Integer statusId) throws SQLException {
+    public PageResponse<AdminUser> users(String query, int page, Integer roleId, Integer statusId) throws SQLException {
         if (query == null) {
             query = "";
         }
@@ -89,7 +89,7 @@ public class AdministrationService {
         }
     }
 
-    public User createUser(int actor, UserRequest raw) throws SQLException {
+    public AdminUser createUser(int actor, UserRequest raw) throws SQLException {
         UserRequest input = validateUser(raw, true);
         String hash = PasswordHasher.hash(input.getPassword());
         try (Connection connection = connections.open()) {
@@ -100,7 +100,7 @@ public class AdministrationService {
                 protectAdmin(connection, actor, null, repository.role(connection, input.getRoleId()));
                 int id = repository.createUser(connection, input, hash);
                 repository.saveEmployee(connection, id, input.getEmployeeName(), input.getPhone(), input.getEmail());
-                User created = repository.findUser(connection, id);
+                AdminUser created = repository.findUser(connection, id);
                 logs.record(connection, actor, "USER_CREATE", "USER", String.valueOf(id), "Tạo nhân viên "
                     + created.getUsername() + "; role=" + created.getRole() + "; status=" + created.getStatus());
                 connection.commit();
@@ -112,7 +112,7 @@ public class AdministrationService {
         }
     }
 
-    public User updateUser(int actor, int id, UserRequest raw) throws SQLException {
+    public AdminUser updateUser(int actor, int id, UserRequest raw) throws SQLException {
         UserRequest input = validateUser(raw, false);
         String hash = input.getPassword() == null || input.getPassword().isBlank()
             ? null
@@ -121,7 +121,7 @@ public class AdministrationService {
             beginTransaction(connection);
             try {
                 assertPermission(connection, actor, "MANAGE_USERS");
-                User old = repository.findUser(connection, id);
+                AdminUser old = repository.findUser(connection, id);
                 if (old == null) {
                     throw new ApiException(404, "Không tìm thấy tài khoản.");
                 }
@@ -159,7 +159,7 @@ public class AdministrationService {
                         statement.executeUpdate();
                     }
                 }
-                User changed = repository.findUser(connection, id);
+                AdminUser changed = repository.findUser(connection, id);
                 logs.record(connection, actor, "USER_UPDATE", "USER", String.valueOf(id),
                     "username=" + old.getUsername() + "; role: " + old.getRole() + " -> " + changed.getRole()
                         + "; status: " + old.getStatus() + " -> " + changed.getStatus() + "; email: " + old.getEmail()
@@ -317,15 +317,15 @@ public class AdministrationService {
     }
 
     private void assertPermission(Connection connection, int id, String permission) throws SQLException {
-        User actor = repository.findUser(connection, id);
+        AdminUser actor = repository.findUser(connection, id);
         if (actor == null || !"ACTIVE".equals(actor.getStatus())
             || !AuthorizationService.permissions(connection, actor.getRoleId(), actor.getRole()).contains(permission)) {
             throw new ApiException(403, "Bạn không có quyền sử dụng chức năng này.");
         }
     }
 
-    private void protectAdmin(Connection connection, int actorId, User target, String newRole) throws SQLException {
-        User actor = repository.findUser(connection, actorId);
+    private void protectAdmin(Connection connection, int actorId, AdminUser target, String newRole) throws SQLException {
+        AdminUser actor = repository.findUser(connection, actorId);
         if (!"ADMIN".equals(actor.getRole())
             && ("ADMIN".equals(newRole) || target != null && "ADMIN".equals(target.getRole()))) {
             throw new ApiException(403, "Chỉ Admin được quản lý tài khoản và vai trò Admin.");
