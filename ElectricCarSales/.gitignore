@@ -3,6 +3,8 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 .kotlin
+src/main/webapp/WEB-INF/classes/
+src/main/webapp/WEB-INF/lib/
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
