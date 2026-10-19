@@ -6,7 +6,7 @@ import com.electriccarsales.model.PageResponse;
 import com.electriccarsales.model.PromotionRequest;
 import com.electriccarsales.model.UserRequest;
 import com.electriccarsales.model.Employee;
-import com.electriccarsales.model.Promotion;
+import com.electriccarsales.model.AdminPromotion;
 import com.electriccarsales.model.SystemLog;
 import com.electriccarsales.model.AdminUser;
 
@@ -211,8 +211,8 @@ public class AdministrationDAO {
         return result;
     }
 
-    public List<Promotion> promotions(Connection connection) throws SQLException {
-        List<Promotion> result = new ArrayList<>();
+    public List<AdminPromotion> promotions(Connection connection) throws SQLException {
+        List<AdminPromotion> result = new ArrayList<>();
         try (
             PreparedStatement statement = connection
                 .prepareStatement("SELECT * FROM Promotions ORDER BY PromotionID DESC");
@@ -229,7 +229,7 @@ public class AdministrationDAO {
                         }
                     }
                 }
-                result.add(new Promotion(id, resultSet.getNString("PromotionName"), resultSet.getNString("Description"),
+                result.add(new AdminPromotion(id, resultSet.getNString("PromotionName"), resultSet.getNString("Description"),
                     resultSet.getString("DiscountType"), resultSet.getBigDecimal("DiscountValue"),
                     resultSet.getTimestamp("StartDate").toLocalDateTime(),
                     resultSet.getTimestamp("EndDate").toLocalDateTime(), resultSet.getString("Status"), ids));

@@ -41,7 +41,7 @@ Controller và service nhận dependency qua constructor; constructor không tha
 
 | Chức năng                        | Controller               | Service                                     | DAO / đối tượng                                                                               |
 | -------------------------------- | ------------------------ | ------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Tài khoản, nhân viên, khuyến mãi | AdministrationController | AdministrationService                       | AdministrationDAO; AdminUser, Employee, Promotion                                                  |
+| Tài khoản, nhân viên, khuyến mãi | AdministrationController | AdministrationService                       | AdministrationDAO; AdminUser, Employee, AdminPromotion                                                  |
 | Vai trò, phân quyền              | AdministrationController | AuthorizationService                        | AdminRoleDAO; AdminRole, PermissionDTO, CreateRoleRequest, RoleRequest                                  |
 | Nhật ký                          | AdministrationController | AdministrationService                       | SystemLogDAO, AdministrationDAO; SystemLog, PageResponse                                      |
 | Cấu hình                         | AdministrationController | SystemConfigurationService                  | SystemConfigurationDAO; SystemConfiguration, ConfigurationRequest                             |

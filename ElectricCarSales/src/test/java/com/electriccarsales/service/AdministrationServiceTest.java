@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import com.electriccarsales.model.EmployeeRequest;
 import com.electriccarsales.model.PromotionRequest;
 import com.electriccarsales.model.UserRequest;
-import com.electriccarsales.model.Promotion;
+import com.electriccarsales.model.AdminPromotion;
 import com.electriccarsales.model.AdminUser;
 import com.electriccarsales.model.ApiException;
 
@@ -182,7 +182,7 @@ class AdministrationServiceTest {
 
     @Test
     void promotionLinksAndHistoryRemainOnDeactivation() throws Exception {
-        Promotion p = service.savePromotion(1, null, promotion(List.of(1, 2)));
+        AdminPromotion p = service.savePromotion(1, null, promotion(List.of(1, 2)));
         assertEquals(2, count("PromotionCars"));
         service.deactivatePromotion(1, p.getPromotionId());
         assertEquals(1, count("Promotions"));
@@ -193,7 +193,7 @@ class AdministrationServiceTest {
 
     @Test
     void invalidPromotionCannotPartiallyReplaceLinks() throws Exception {
-        Promotion p = service.savePromotion(1, null, promotion(List.of(1, 2)));
+        AdminPromotion p = service.savePromotion(1, null, promotion(List.of(1, 2)));
         assertThrows(IllegalArgumentException.class,
             () -> service.savePromotion(1, p.getPromotionId(), promotion(List.of(1, 99))));
         assertEquals(List.of(1, 2), service.promotions().getFirst().getModelIds());

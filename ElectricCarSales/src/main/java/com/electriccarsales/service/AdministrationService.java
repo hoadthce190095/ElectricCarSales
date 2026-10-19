@@ -8,7 +8,7 @@ import com.electriccarsales.model.PageResponse;
 import com.electriccarsales.model.PromotionRequest;
 import com.electriccarsales.model.UserRequest;
 import com.electriccarsales.model.Employee;
-import com.electriccarsales.model.Promotion;
+import com.electriccarsales.model.AdminPromotion;
 import com.electriccarsales.model.SystemLog;
 import com.electriccarsales.model.AdminUser;
 import com.electriccarsales.dao.AdministrationDAO;
@@ -83,7 +83,7 @@ public class AdministrationService {
         }
     }
 
-    public List<Promotion> promotions() throws SQLException {
+    public List<AdminPromotion> promotions() throws SQLException {
         try (Connection connection = connections.open()) {
             return repository.promotions(connection);
         }
@@ -223,13 +223,13 @@ public class AdministrationService {
         }
     }
 
-    public Promotion savePromotion(int actor, Integer id, PromotionRequest raw) throws SQLException {
+    public AdminPromotion savePromotion(int actor, Integer id, PromotionRequest raw) throws SQLException {
         PromotionRequest input = validatePromotion(raw);
         try (Connection connection = connections.open()) {
             beginTransaction(connection);
             try {
                 assertPermission(connection, actor, "MANAGE_PROMOTIONS");
-                Promotion old = null;
+                AdminPromotion old = null;
                 if (id != null) {
                     old = findPromotion(connection, id);
                 }
@@ -244,7 +244,7 @@ public class AdministrationService {
                 logs.record(connection, actor, id == null ? "PROMOTION_CREATE" : "PROMOTION_UPDATE", "PROMOTION",
                     String.valueOf(key), "before=" + old + "; after=" + input);
                 connection.commit();
-                return new Promotion(key, input.getPromotionName(), input.getDescription(), input.getDiscountType(),
+                return new AdminPromotion(key, input.getPromotionName(), input.getDescription(), input.getDiscountType(),
                     input.getDiscountValue(), input.getStartDate(), input.getEndDate(), input.getStatus(),
                     input.getModelIds());
             } catch (SQLException | RuntimeException exception) {
@@ -362,8 +362,8 @@ public class AdministrationService {
         throw new ApiException(404, "Không tìm thấy nhân viên.");
     }
 
-    private Promotion findPromotion(Connection connection, int promotionId) throws SQLException {
-        for (Promotion promotion : repository.promotions(connection)) {
+    private AdminPromotion findPromotion(Connection connection, int promotionId) throws SQLException {
+        for (AdminPromotion promotion : repository.promotions(connection)) {
             if (promotion.getPromotionId() == promotionId) {
                 return promotion;
             }
