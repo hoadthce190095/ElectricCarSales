@@ -332,19 +332,19 @@
         let action = addable ? `<button class="button" data-toast="Biểu mẫu sẽ được kết nối khi backend được triển khai.">
             <span class="button-icon">＋</span>${key === "transactions" ? "Tạo giao dịch" : "Thêm mới"}</button>` : `<button class="button button-secondary" data-toast="Báo cáo minh họa sẵn sàng để xuất khi backend được kết nối.">↓ Xuất báo cáo</button>`;
         if (key === "consultations") {
-            action = `<a href="${contextPath}/staff/consultations" class="button" style="text-decoration:none;"><span class="button-icon">✧</span> Mở Quản lý Tư vấn ↗</a>`;
+            action = `<a href="${contextPath}/staff/consultations" class="button" style="text-decoration:none;">Mở Quản lý Tư vấn</a>`;
         } else if (key === "transactions") {
-            action = `<a href="${contextPath}/staff/transactions" class="button" style="text-decoration:none;"><span class="button-icon">▤</span> Mở Quản lý Giao dịch ↗</a>`;
+            action = `<a href="${contextPath}/staff/transactions" class="button" style="text-decoration:none;">Mở Quản lý Giao dịch</a>`;
         } else if (key === "revenue-report" || key === "transaction-report") {
-            action = `<a href="${contextPath}/staff/report" class="button button-secondary" style="text-decoration:none;"><span class="button-icon">▥</span> Xem Báo cáo & Thống kê ↗</a>`;
+            action = `<a href="${contextPath}/staff/report" class="button button-secondary" style="text-decoration:none;">Xem Báo cáo & Thống kê</a>`;
         }
-        let rowAction = `<button class="text-button" data-toast="Chi tiết bản ghi sẽ hiển thị khi kết nối backend.">Chi tiết →</button>`;
+        let rowAction = `<button class="text-button" data-toast="Chi tiết bản ghi sẽ hiển thị khi kết nối backend.">Chi tiết</button>`;
         if (key === "transactions") {
-            rowAction = `<a href="${contextPath}/staff/transaction-detail?id=1" class="text-button" style="text-decoration:none; color: #0071e3; font-weight:600;">Chi tiết →</a>`;
+            rowAction = `<a href="${contextPath}/staff/transaction-detail?id=1" class="text-button" style="text-decoration:none; color: #0071e3; font-weight:600;">Chi tiết</a>`;
         } else if (key === "consultations") {
-            rowAction = `<a href="${contextPath}/staff/consultations" class="text-button" style="text-decoration:none; color: #0071e3; font-weight:600;">Xử lý →</a>`;
+            rowAction = `<a href="${contextPath}/staff/consultations" class="text-button" style="text-decoration:none; color: #0071e3; font-weight:600;">Xử lý</a>`;
         } else if (key === "revenue-report" || key === "transaction-report") {
-            rowAction = `<a href="${contextPath}/staff/report" class="text-button" style="text-decoration:none; color: #0071e3; font-weight:600;">Xem chi tiết →</a>`;
+            rowAction = `<a href="${contextPath}/staff/report" class="text-button" style="text-decoration:none; color: #0071e3; font-weight:600;">Xem chi tiết</a>`;
         }
         const cells = rows.map(row => `<tr>${row.map((cell, i) => {
             if (hasStatuses && i === row.length - 2) return `<td>

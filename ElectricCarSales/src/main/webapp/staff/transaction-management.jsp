@@ -13,43 +13,40 @@
     <!-- Top Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 py-3 border-bottom border-secondary">
         <a class="navbar-brand fw-bold text-primary" href="${pageContext.request.contextPath}/staff/dashboard.jsp">
-            ⚡ VinFast Staff Portal
+            VinFast Staff Portal
         </a>
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link text-white" href="${pageContext.request.contextPath}/staff/dashboard.jsp">⌂ Tổng quan</a>
+                    <a class="nav-link text-white" href="${pageContext.request.contextPath}/staff/dashboard.jsp">Tổng quan</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white" href="${pageContext.request.contextPath}/staff/consultations">✧ Yêu cầu tư vấn</a>
+                    <a class="nav-link text-white" href="${pageContext.request.contextPath}/staff/consultations">Yêu cầu tư vấn</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active fw-bold text-info" href="${pageContext.request.contextPath}/staff/transactions">▤ Giao dịch bán xe</a>
+                    <a class="nav-link active fw-bold text-info" href="${pageContext.request.contextPath}/staff/transactions">Giao dịch bán xe</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white" href="${pageContext.request.contextPath}/staff/report">▥ Báo cáo & Thống kê</a>
+                    <a class="nav-link text-white" href="${pageContext.request.contextPath}/staff/report">Báo cáo &amp; Thống kê</a>
                 </li>
             </ul>
-            <span class="navbar-text text-light">
-                Chuyên viên: <strong>Trần Võ Anh Kiệt</strong>
-            </span>
         </div>
     </nav>
 
     <div class="container-fluid px-4 mt-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-                <h3 class="fw-bold mb-1">Quản Lý Giao Dịch Bán Xe (Transaction Management)</h3>
+                <h3 class="fw-bold mb-1">Quản Lý Giao Dịch Bán Xe</h3>
                 <p class="text-secondary mb-0">Theo dõi, kiểm tra và quản lý toàn bộ các giao dịch mua bán xe trong suốt quy trình bán hàng.</p>
             </div>
             <a href="${pageContext.request.contextPath}/staff/report" class="btn btn-outline-info btn-sm">
-                ▥ Xem Báo Cáo Tiến Độ Giao Dịch
+                Xem Báo Cáo Tiến Độ Giao Dịch
             </a>
         </div>
 
         <c:if test="${param.updated eq 'true'}">
             <div class="alert alert-success alert-dismissible fade show" role="alert">
-                ✓ Cập nhật trạng thái giao dịch thành công!
+                Cập nhật trạng thái giao dịch thành công!
             </div>
         </c:if>
 
@@ -73,8 +70,8 @@
                                 <c:forEach var="order" items="${orderList}">
                                     <tr>
                                         <td class="ps-3 fw-bold text-info">#ORD-${order.id}</td>
-                                        <td>${empty order.customerName ? 'Trần Võ Anh Kiệt' : order.customerName}</td>
-                                        <td><span class="badge bg-primary">${empty order.vehicleName ? 'VinFast VF 8' : order.vehicleName}</span></td>
+                                        <td>${empty order.customerName ? '-' : order.customerName}</td>
+                                        <td><span class="badge bg-primary">${empty order.vehicleName ? '-' : order.vehicleName}</span></td>
                                         <td class="text-secondary small">${order.orderDate}</td>
                                         <td class="fw-bold text-success">
                                             <fmt:formatNumber value="${order.originalAmount}" type="currency" currencySymbol="VNĐ" maxFractionDigits="0"/>
@@ -84,51 +81,16 @@
                                         </td>
                                         <td class="text-center">
                                             <a href="${pageContext.request.contextPath}/staff/transaction-detail?id=${order.id}" class="btn btn-sm btn-primary">
-                                                Xem Chi Tiết →
+                                                Xem Chi Tiết
                                             </a>
                                         </td>
                                     </tr>
                                 </c:forEach>
                             </c:when>
                             <c:otherwise>
-                                <!-- Dữ liệu mẫu minh họa -->
                                 <tr>
-                                    <td class="ps-3 fw-bold text-info">#GD-00842</td>
-                                    <td>Nguyễn Minh Anh</td>
-                                    <td><span class="badge bg-primary">VinFast VF 8 Plus</span></td>
-                                    <td class="text-secondary small">15/10/2026 · 10:30</td>
-                                    <td class="fw-bold text-success">1.299.000.000 VNĐ</td>
-                                    <td><span class="badge bg-success">Đã đặt cọc</span></td>
-                                    <td class="text-center">
-                                        <a href="${pageContext.request.contextPath}/staff/transaction-detail?id=1" class="btn btn-sm btn-primary">
-                                            Xem Chi Tiết →
-                                        </a>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="ps-3 fw-bold text-info">#GD-00839</td>
-                                    <td>Lê Hoàng Yến</td>
-                                    <td><span class="badge bg-primary">VinFast VF 9 Eco</span></td>
-                                    <td class="text-secondary small">14/10/2026 · 15:45</td>
-                                    <td class="fw-bold text-success">1.499.000.000 VNĐ</td>
-                                    <td><span class="badge bg-warning text-dark">Chờ hợp đồng</span></td>
-                                    <td class="text-center">
-                                        <a href="${pageContext.request.contextPath}/staff/transaction-detail?id=2" class="btn btn-sm btn-primary">
-                                            Xem Chi Tiết →
-                                        </a>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="ps-3 fw-bold text-info">#GD-00831</td>
-                                    <td>Trần Quốc Bảo</td>
-                                    <td><span class="badge bg-primary">VinFast VF 6 Plus</span></td>
-                                    <td class="text-secondary small">12/10/2026 · 09:15</td>
-                                    <td class="fw-bold text-success">765.000.000 VNĐ</td>
-                                    <td><span class="badge bg-info">Đang xử lý</span></td>
-                                    <td class="text-center">
-                                        <a href="${pageContext.request.contextPath}/staff/transaction-detail?id=3" class="btn btn-sm btn-primary">
-                                            Xem Chi Tiết →
-                                        </a>
+                                    <td colspan="7" class="text-center py-4 text-secondary">
+                                        Hiện chưa có giao dịch nào trong hệ thống.
                                     </td>
                                 </tr>
                             </c:otherwise>

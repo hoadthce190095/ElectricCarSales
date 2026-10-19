@@ -12,26 +12,23 @@
     <!-- Top Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 py-3 border-bottom border-secondary">
         <a class="navbar-brand fw-bold text-primary" href="${pageContext.request.contextPath}/staff/dashboard.jsp">
-            ⚡ VinFast Staff Portal
+            VinFast Staff Portal
         </a>
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link text-white" href="${pageContext.request.contextPath}/staff/dashboard.jsp">⌂ Tổng quan</a>
+                    <a class="nav-link text-white" href="${pageContext.request.contextPath}/staff/dashboard.jsp">Tổng quan</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active fw-bold text-info" href="${pageContext.request.contextPath}/staff/consultations">✧ Yêu cầu tư vấn</a>
+                    <a class="nav-link active fw-bold text-info" href="${pageContext.request.contextPath}/staff/consultations">Yêu cầu tư vấn</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white" href="${pageContext.request.contextPath}/staff/transactions">▤ Giao dịch bán xe</a>
+                    <a class="nav-link text-white" href="${pageContext.request.contextPath}/staff/transactions">Giao dịch bán xe</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white" href="${pageContext.request.contextPath}/staff/report">▥ Báo cáo & Thống kê</a>
+                    <a class="nav-link text-white" href="${pageContext.request.contextPath}/staff/report">Báo cáo &amp; Thống kê</a>
                 </li>
             </ul>
-            <span class="navbar-text text-light">
-                Chuyên viên: <strong>Trần Võ Anh Kiệt</strong>
-            </span>
         </div>
     </nav>
 
@@ -42,13 +39,13 @@
                 <p class="text-secondary mb-0">Tiếp nhận, xử lý và cập nhật tiến độ tư vấn cho khách hàng quan tâm xe điện.</p>
             </div>
             <a href="${pageContext.request.contextPath}/customer/consultation" target="_blank" class="btn btn-outline-info btn-sm">
-                ↗ Mở form gửi tư vấn khách hàng
+                Mở form gửi tư vấn khách hàng
             </a>
         </div>
 
         <c:if test="${param.updated eq 'true'}">
             <div class="alert alert-success alert-dismissible fade show" role="alert">
-                ✓ Cập nhật trạng thái yêu cầu tư vấn thành công!
+                Cập nhật trạng thái yêu cầu tư vấn thành công!
             </div>
         </c:if>
 
@@ -73,9 +70,9 @@
                                 <c:forEach var="c" items="${consultationList}">
                                     <tr>
                                         <td class="ps-3 fw-bold text-info">#YC-${c.id}</td>
-                                        <td>${empty c.customerName ? 'Khách vãng lai' : c.customerName}</td>
-                                        <td>${empty c.customerPhone ? '0901234567' : c.customerPhone}</td>
-                                        <td><span class="badge bg-primary">${empty c.modelName ? 'VinFast VF 8' : c.modelName}</span></td>
+                                        <td>${empty c.customerName ? '-' : c.customerName}</td>
+                                        <td>${empty c.customerPhone ? '-' : c.customerPhone}</td>
+                                        <td><span class="badge bg-primary">${empty c.modelName ? '-' : c.modelName}</span></td>
                                         <td style="max-width: 250px;" class="text-truncate" title="${c.content}">${c.content}</td>
                                         <td class="text-secondary small">${c.createdAt}</td>
                                         <td>
@@ -109,30 +106,9 @@
                                 </c:forEach>
                             </c:when>
                             <c:otherwise>
-                                <!-- Dữ liệu mẫu minh họa ban đầu -->
                                 <tr>
-                                    <td class="ps-3 fw-bold text-info">#YC-0184</td>
-                                    <td>Nguyễn Minh Anh</td>
-                                    <td>0903 221 480</td>
-                                    <td><span class="badge bg-primary">VinFast VF 8 Plus</span></td>
-                                    <td>Cần tư vấn pin thuê và chính sách bảo hành 10 năm</td>
-                                    <td class="text-secondary small">Hôm nay · 09:20</td>
-                                    <td><span class="badge bg-danger">Chưa tiếp nhận</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-warning">Tiếp nhận</button>
-                                        <button class="btn btn-sm btn-outline-success">Hoàn tất</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="ps-3 fw-bold text-info">#YC-0182</td>
-                                    <td>Trần Quốc Bảo</td>
-                                    <td>0918 445 203</td>
-                                    <td><span class="badge bg-primary">VinFast VF 6 Plus</span></td>
-                                    <td>Hỏi thủ tục trả góp ngân hàng 80%</td>
-                                    <td class="text-secondary small">Hôm nay · 08:45</td>
-                                    <td><span class="badge bg-warning text-dark">Đang xử lý</span></td>
-                                    <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-success">Hoàn tất</button>
+                                    <td colspan="8" class="text-center py-4 text-secondary">
+                                        Hiện chưa có yêu cầu tư vấn nào từ khách hàng.
                                     </td>
                                 </tr>
                             </c:otherwise>

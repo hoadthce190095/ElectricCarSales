@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @WebServlet(name = "ReportController", urlPatterns = {"/staff/report", "/admin/report", "/staff/reports"})
 public class ReportController extends HttpServlet {
@@ -35,6 +36,9 @@ public class ReportController extends HttpServlet {
             int countCompleted = 0;
             int countCancelled = 0;
 
+            Map<String, int[]> modelCounts = new java.util.LinkedHashMap<>();
+            Map<String, BigDecimal> modelRevenues = new java.util.LinkedHashMap<>();
+
             if (orders != null && !orders.isEmpty()) {
                 for (Order o : orders) {
                     if (o.getOriginalAmount() != null) {
@@ -48,15 +52,28 @@ public class ReportController extends HttpServlet {
                     else if ("6".equals(status)) countCompleted++;
                     else if ("7".equals(status)) countCancelled++;
                     else countProcessing++;
+
+                    String vName = (o.getVehicleName() != null && !o.getVehicleName().trim().isEmpty()) ? o.getVehicleName() : "Khác";
+                    int[] c = modelCounts.getOrDefault(vName, new int[]{0});
+                    c[0]++;
+                    modelCounts.put(vName, c);
+
+                    BigDecimal curRev = modelRevenues.getOrDefault(vName, BigDecimal.ZERO);
+                    if (o.getOriginalAmount() != null) {
+                        modelRevenues.put(vName, curRev.add(o.getOriginalAmount()));
+                    } else {
+                        modelRevenues.put(vName, curRev);
+                    }
                 }
-            } else {
-                // Dữ liệu mặc định nếu DB chưa có
-                totalRevenue = new BigDecimal("42850000000");
-                carsSold = 36;
-                countDeposited = 18;
-                countProcessing = 9;
-                countCompleted = 6;
-                countCancelled = 3;
+            }
+
+            java.util.List<java.util.Map<String, Object>> vehicleStats = new java.util.ArrayList<>();
+            for (Map.Entry<String, int[]> entry : modelCounts.entrySet()) {
+                java.util.Map<String, Object> stat = new java.util.HashMap<>();
+                stat.put("modelName", entry.getKey());
+                stat.put("count", entry.getValue()[0]);
+                stat.put("revenue", modelRevenues.getOrDefault(entry.getKey(), BigDecimal.ZERO));
+                vehicleStats.add(stat);
             }
 
             if (consultations != null) {
@@ -65,8 +82,6 @@ public class ReportController extends HttpServlet {
                         pendingConsultations++;
                     }
                 }
-            } else {
-                pendingConsultations = 8;
             }
 
             request.setAttribute("totalRevenue", totalRevenue);
@@ -78,6 +93,7 @@ public class ReportController extends HttpServlet {
             request.setAttribute("countCompleted", countCompleted);
             request.setAttribute("countCancelled", countCancelled);
             request.setAttribute("orders", orders);
+            request.setAttribute("vehicleStats", vehicleStats);
 
             request.getRequestDispatcher("/staff/sales-report.jsp").forward(request, response);
         } catch (Exception e) {

@@ -37,19 +37,16 @@
         <nav class="staff-nav" id="staff-nav" aria-label="Điều hướng nhân viên">
     </nav>
 
-        <div class="workspace-caption" style="margin-top: 12px; color: #0071e3; font-weight: bold;">PHÂN HỆ TRẦN VÕ ANH KIỆT</div>
+        <div class="workspace-caption" style="margin-top: 12px;">NGHIỆP VỤ</div>
         <div style="padding: 0 12px; display: flex; flex-direction: column; gap: 3px;">
-            <a href="<%= appContext %>/staff/consultations" style="color: #8ab4f8; text-decoration: none; font-size: 13px; padding: 6px 10px; border-radius: 6px; display: flex; align-items: center; gap: 8px; background: rgba(138, 180, 248, 0.08);">
-                <span>✧</span> <span>Yêu cầu tư vấn</span>
+            <a href="<%= appContext %>/staff/consultations" style="color: #e1e4ea; text-decoration: none; font-size: 13px; padding: 6px 10px; border-radius: 6px; display: block;">
+                Yêu cầu tư vấn
             </a>
-            <a href="<%= appContext %>/staff/transactions" style="color: #81c995; text-decoration: none; font-size: 13px; padding: 6px 10px; border-radius: 6px; display: flex; align-items: center; gap: 8px; background: rgba(129, 201, 149, 0.08);">
-                <span>▤</span> <span>Quản lý giao dịch</span>
+            <a href="<%= appContext %>/staff/transactions" style="color: #e1e4ea; text-decoration: none; font-size: 13px; padding: 6px 10px; border-radius: 6px; display: block;">
+                Quản lý giao dịch
             </a>
-            <a href="<%= appContext %>/staff/transaction-detail?id=1" style="color: #fdd663; text-decoration: none; font-size: 13px; padding: 6px 10px; border-radius: 6px; display: flex; align-items: center; gap: 8px; background: rgba(253, 214, 99, 0.08);">
-                <span>↗</span> <span>Chi tiết giao dịch</span>
-            </a>
-            <a href="<%= appContext %>/staff/report" style="color: #c58af9; text-decoration: none; font-size: 13px; padding: 6px 10px; border-radius: 6px; display: flex; align-items: center; gap: 8px; background: rgba(197, 138, 249, 0.08);">
-                <span>▥</span> <span>Báo cáo & Thống kê</span>
+            <a href="<%= appContext %>/staff/report" style="color: #e1e4ea; text-decoration: none; font-size: 13px; padding: 6px 10px; border-radius: 6px; display: block;">
+                Báo cáo &amp; Thống kê
             </a>
         </div>
 
@@ -95,24 +92,20 @@
             </div>
         </header>
 
-        <!-- Phím tắt liên kết nhanh đến các phân hệ của Chuyên viên Trần Võ Anh Kiệt -->
+        <!-- Thanh liên kết nhanh đến các phân hệ nghiệp vụ -->
         <div class="staff-quick-nav" style="background: #181b20; border-bottom: 1px solid #2d3139; padding: 10px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 13px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="background: #0071e3; color: white; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 11px;">CHUYÊN VIÊN TRẦN VÕ ANH KIỆT</span>
-                <span style="color: #9aa0a6;">Truy cập nhanh các phân hệ nghiệp vụ:</span>
+                <span style="color: #9aa0a6;">Truy cập nhanh nghiệp vụ:</span>
             </div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <a href="<%= appContext %>/staff/consultations" class="btn-quick-nav" style="color: #4dabf7; text-decoration: none; padding: 5px 12px; background: rgba(77, 171, 247, 0.12); border: 1px solid rgba(77, 171, 247, 0.35); border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
-                    ✧ Yêu cầu tư vấn (Consultation)
+                <a href="<%= appContext %>/staff/consultations" class="btn-quick-nav" style="color: #4dabf7; text-decoration: none; padding: 5px 12px; background: rgba(77, 171, 247, 0.12); border: 1px solid rgba(77, 171, 247, 0.35); border-radius: 6px; font-weight: 500;">
+                    Yêu cầu tư vấn
                 </a>
-                <a href="<%= appContext %>/staff/transactions" class="btn-quick-nav" style="color: #69db7c; text-decoration: none; padding: 5px 12px; background: rgba(105, 219, 124, 0.12); border: 1px solid rgba(105, 219, 124, 0.35); border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
-                    ▤ Quản lý giao dịch (Transaction Management)
+                <a href="<%= appContext %>/staff/transactions" class="btn-quick-nav" style="color: #69db7c; text-decoration: none; padding: 5px 12px; background: rgba(105, 219, 124, 0.12); border: 1px solid rgba(105, 219, 124, 0.35); border-radius: 6px; font-weight: 500;">
+                    Quản lý giao dịch
                 </a>
-                <a href="<%= appContext %>/staff/transaction-detail?id=1" class="btn-quick-nav" style="color: #ffd43b; text-decoration: none; padding: 5px 12px; background: rgba(255, 212, 59, 0.12); border: 1px solid rgba(255, 212, 59, 0.35); border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
-                    ↗ Chi tiết giao dịch (Transaction Detail)
-                </a>
-                <a href="<%= appContext %>/staff/report" class="btn-quick-nav" style="color: #da77f2; text-decoration: none; padding: 5px 12px; background: rgba(218, 119, 242, 0.12); border: 1px solid rgba(218, 119, 242, 0.35); border-radius: 6px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
-                    ▥ Báo cáo doanh thu & giao dịch (Reporting)
+                <a href="<%= appContext %>/staff/report" class="btn-quick-nav" style="color: #da77f2; text-decoration: none; padding: 5px 12px; background: rgba(218, 119, 242, 0.12); border: 1px solid rgba(218, 119, 242, 0.35); border-radius: 6px; font-weight: 500;">
+                    Báo cáo doanh thu &amp; giao dịch
                 </a>
             </div>
         </div>

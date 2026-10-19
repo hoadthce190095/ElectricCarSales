@@ -13,34 +13,31 @@
     <!-- Top Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 py-3 border-bottom border-secondary">
         <a class="navbar-brand fw-bold text-primary" href="${pageContext.request.contextPath}/staff/dashboard.jsp">
-            ⚡ VinFast Staff Portal
+            VinFast Staff Portal
         </a>
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link text-white" href="${pageContext.request.contextPath}/staff/dashboard.jsp">⌂ Tổng quan</a>
+                    <a class="nav-link text-white" href="${pageContext.request.contextPath}/staff/dashboard.jsp">Tổng quan</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white" href="${pageContext.request.contextPath}/staff/consultations">✧ Yêu cầu tư vấn</a>
+                    <a class="nav-link text-white" href="${pageContext.request.contextPath}/staff/consultations">Yêu cầu tư vấn</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active fw-bold text-info" href="${pageContext.request.contextPath}/staff/transactions">▤ Giao dịch bán xe</a>
+                    <a class="nav-link active fw-bold text-info" href="${pageContext.request.contextPath}/staff/transactions">Giao dịch bán xe</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white" href="${pageContext.request.contextPath}/staff/report">▥ Báo cáo & Thống kê</a>
+                    <a class="nav-link text-white" href="${pageContext.request.contextPath}/staff/report">Báo cáo &amp; Thống kê</a>
                 </li>
             </ul>
-            <span class="navbar-text text-light">
-                Chuyên viên: <strong>Trần Võ Anh Kiệt</strong>
-            </span>
         </div>
     </nav>
 
     <div class="container-fluid px-4 mt-4 mb-5">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-                <a href="${pageContext.request.contextPath}/staff/transactions" class="text-decoration-none text-info small">← Danh sách giao dịch (Staff)</a> &nbsp;|&nbsp; <a href="${pageContext.request.contextPath}/customer/my-orders.jsp" class="text-decoration-none text-info small">← Đơn hàng của tôi (Khách hàng)</a>
-                <h3 class="fw-bold mt-1">Chi Tiết Giao Dịch Bán Xe #GD-${empty order ? '00842' : order.id}</h3>
+                <a href="${pageContext.request.contextPath}/staff/transactions" class="text-decoration-none text-info small">Danh sách giao dịch (Staff)</a> &nbsp;|&nbsp; <a href="${pageContext.request.contextPath}/customer/my-orders.jsp" class="text-decoration-none text-info small">Đơn hàng của tôi (Khách hàng)</a>
+                <h3 class="fw-bold mt-1">Chi Tiết Giao Dịch Bán Xe #GD-${empty order ? '-' : order.id}</h3>
             </div>
             <div>
                 <span class="badge bg-success fs-6 px-3 py-2">
@@ -51,7 +48,7 @@
 
         <c:if test="${param.updated eq 'true'}">
             <div class="alert alert-success alert-dismissible fade show" role="alert">
-                ✓ Đã cập nhật trạng thái giao dịch và ghi nhận vào lịch sử thành công!
+                Đã cập nhật trạng thái giao dịch và ghi nhận vào lịch sử thành công!
             </div>
         </c:if>
 
@@ -61,25 +58,25 @@
                 <!-- Thông tin khách hàng -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header bg-secondary text-white fw-bold">
-                        👤 1. Thông Tin Khách Hàng (Customer Information)
+                        1. Thông Tin Khách Hàng (Customer Information)
                     </div>
                     <div class="card-body">
                         <table class="table table-dark table-borderless mb-0">
                             <tr>
                                 <td class="text-secondary" style="width: 35%;">Họ và tên:</td>
-                                <td class="fw-bold text-white">${empty order.customerName ? 'Nguyễn Minh Anh' : order.customerName}</td>
+                                <td class="fw-bold text-white">${empty order.customerName ? '-' : order.customerName}</td>
                             </tr>
                             <tr>
                                 <td class="text-secondary">Số điện thoại:</td>
-                                <td class="text-info">${empty order.customerPhone ? '0903 221 480' : order.customerPhone}</td>
+                                <td class="text-info">${empty order.customerPhone ? '-' : order.customerPhone}</td>
                             </tr>
                             <tr>
                                 <td class="text-secondary">Email:</td>
-                                <td>${empty order.customerEmail ? 'minhanh.nguyen@gmail.com' : order.customerEmail}</td>
+                                <td>${empty order.customerEmail ? '-' : order.customerEmail}</td>
                             </tr>
                             <tr>
                                 <td class="text-secondary">Địa chỉ nhận xe:</td>
-                                <td>${empty order.customerAddress ? 'Quận 1, TP. Hồ Chí Minh' : order.customerAddress}</td>
+                                <td>${empty order.customerAddress ? '-' : order.customerAddress}</td>
                             </tr>
                         </table>
                     </div>
@@ -88,27 +85,27 @@
                 <!-- Thông tin xe đã chọn -->
                 <div class="card bg-dark border-secondary">
                     <div class="card-header bg-secondary text-white fw-bold">
-                        🚗 2. Thông Tin Xe Đã Chọn (Selected Vehicle)
+                        2. Thông Tin Xe Đã Chọn (Selected Vehicle)
                     </div>
                     <div class="card-body">
                         <table class="table table-dark table-borderless mb-0">
                             <tr>
                                 <td class="text-secondary" style="width: 35%;">Dòng xe / Mẫu xe:</td>
-                                <td class="fw-bold text-warning">${empty order.vehicleName ? 'VinFast VF 8 Plus' : order.vehicleName}</td>
+                                <td class="fw-bold text-warning">${empty order.vehicleName ? '-' : order.vehicleName}</td>
                             </tr>
                             <tr>
                                 <td class="text-secondary">Số khung (VIN):</td>
-                                <td><code>${empty order.vinNumber ? 'VF8-24-VN08914' : order.vinNumber}</code></td>
+                                <td><code>${empty order.vinNumber ? '-' : order.vinNumber}</code></td>
                             </tr>
                             <tr>
                                 <td class="text-secondary">Giá niêm yết:</td>
                                 <td class="fw-bold text-success fs-5">
-                                    <fmt:formatNumber value="${empty order.originalAmount ? 1299000000 : order.originalAmount}" type="currency" currencySymbol="VNĐ" maxFractionDigits="0"/>
+                                    <fmt:formatNumber value="${order.originalAmount}" type="currency" currencySymbol="VNĐ" maxFractionDigits="0"/>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="text-secondary">Ghi chú đơn hàng:</td>
-                                <td class="text-light">${empty order.note ? 'Bàn giao xe tại Showroom TP.HCM kèm gói bảo dưỡng 3 năm' : order.note}</td>
+                                <td class="text-light">${empty order.note ? '-' : order.note}</td>
                             </tr>
                         </table>
                     </div>
@@ -120,28 +117,28 @@
                 <!-- Thanh toán & Tài chính -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header bg-secondary text-white fw-bold">
-                        💳 3. Thanh Toán & Tài Chính (Payment & Financials)
+                        3. Thanh Toán &amp; Tài Chính (Payment &amp; Financials)
                     </div>
                     <div class="card-body">
                         <table class="table table-dark table-borderless mb-0">
                             <tr>
                                 <td class="text-secondary" style="width: 40%;">Phương thức thanh toán:</td>
-                                <td><span class="badge bg-info text-dark">${empty order.paymentMethod ? 'CHUYỂN KHOẢN NGÂN HÀNG' : order.paymentMethod}</span></td>
+                                <td><span class="badge bg-info text-dark">${empty order.paymentMethod ? '-' : order.paymentMethod}</span></td>
                             </tr>
                             <tr>
                                 <td class="text-secondary">Ngày tạo giao dịch:</td>
-                                <td>${empty order.orderDate ? '2026-10-15 10:30:00' : order.orderDate}</td>
+                                <td>${empty order.orderDate ? '-' : order.orderDate}</td>
                             </tr>
                             <tr>
                                 <td class="text-secondary">Đã đặt cọc:</td>
                                 <td class="fw-bold text-info">
-                                    <fmt:formatNumber value="${empty order.depositAmount ? 50000000 : order.depositAmount}" type="currency" currencySymbol="VNĐ" maxFractionDigits="0"/>
+                                    <fmt:formatNumber value="${order.depositAmount}" type="currency" currencySymbol="VNĐ" maxFractionDigits="0"/>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="text-secondary">Số tiền còn lại:</td>
                                 <td class="fw-bold text-danger">
-                                    <fmt:formatNumber value="${empty order.remainingAmount ? 1249000000 : order.remainingAmount}" type="currency" currencySymbol="VNĐ" maxFractionDigits="0"/>
+                                    <fmt:formatNumber value="${order.remainingAmount}" type="currency" currencySymbol="VNĐ" maxFractionDigits="0"/>
                                 </td>
                             </tr>
                         </table>
@@ -151,11 +148,11 @@
                 <!-- Cập nhật trạng thái giao dịch -->
                 <div class="card bg-dark border-secondary">
                     <div class="card-header bg-secondary text-white fw-bold d-flex justify-content-between align-items-center">
-                        <span>🔄 4. Trạng Thái & Quy Trình Giao Dịch</span>
+                        <span>4. Trạng Thái &amp; Quy Trình Giao Dịch</span>
                     </div>
                     <div class="card-body">
                         <form action="${pageContext.request.contextPath}/staff/order/update-status" method="POST" class="mb-4">
-                            <input type="hidden" name="orderId" value="${empty order.id ? 1 : order.id}">
+                            <input type="hidden" name="orderId" value="${order.id}">
                             <label class="form-label text-secondary small fw-bold">CẬP NHẬT TIẾN ĐỘ GIAO DỊCH (Dành cho Nhân viên / Quản lý):</label>
                             <div class="input-group">
                                 <select name="statusId" class="form-select bg-dark text-white border-secondary">
@@ -183,13 +180,8 @@
                                     </c:forEach>
                                 </c:when>
                                 <c:otherwise>
-                                    <li class="list-group-item bg-dark text-white border-secondary d-flex justify-content-between">
-                                        <span>✓ Đã xác nhận tiền đặt cọc 50.000.000 VNĐ</span>
-                                        <span class="text-secondary small">15/10/2026 · 14:00</span>
-                                    </li>
-                                    <li class="list-group-item bg-dark text-white border-secondary d-flex justify-content-between">
-                                        <span>✓ Tạo đơn hàng thành công từ khách hàng</span>
-                                        <span class="text-secondary small">15/10/2026 · 10:30</span>
+                                    <li class="list-group-item bg-dark text-secondary border-secondary">
+                                        Chưa có bản ghi lịch sử trạng thái nào.
                                     </li>
                                 </c:otherwise>
                             </c:choose>

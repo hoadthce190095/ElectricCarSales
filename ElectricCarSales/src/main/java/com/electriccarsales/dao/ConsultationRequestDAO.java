@@ -42,40 +42,6 @@ public class ConsultationRequestDAO extends DBContext {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        if (list.isEmpty()) {
-            ConsultationRequest r1 = new ConsultationRequest();
-            r1.setId(184);
-            r1.setCustomerName("Nguyễn Minh Anh");
-            r1.setCustomerPhone("0903 221 480");
-            r1.setModelName("VinFast VF 8 Plus");
-            r1.setContent("Tư vấn chính sách trả góp 0% và ưu đãi thuê pin");
-            r1.setStatus("1");
-            r1.setStatusName("Chưa tiếp nhận");
-            r1.setCreatedAt(new Timestamp(System.currentTimeMillis() - 7200000));
-            list.add(r1);
-
-            ConsultationRequest r2 = new ConsultationRequest();
-            r2.setId(182);
-            r2.setCustomerName("Trần Quốc Bảo");
-            r2.setCustomerPhone("0918 445 203");
-            r2.setModelName("VinFast VF 6 Plus");
-            r2.setContent("Muốn đăng ký lái thử tại Showroom TP.HCM cuối tuần này");
-            r2.setStatus("2");
-            r2.setStatusName("Đang xử lý");
-            r2.setCreatedAt(new Timestamp(System.currentTimeMillis() - 14400000));
-            list.add(r2);
-
-            ConsultationRequest r3 = new ConsultationRequest();
-            r3.setId(179);
-            r3.setCustomerName("Lê Hoàng Yến");
-            r3.setCustomerPhone("0982 115 908");
-            r3.setModelName("VinFast VF 9 Eco");
-            r3.setContent("Tư vấn thời gian giao xe và các gói phụ kiện chính hãng");
-            r3.setStatus("3");
-            r3.setStatusName("Đã liên hệ");
-            r3.setCreatedAt(new Timestamp(System.currentTimeMillis() - 86400000));
-            list.add(r3);
-        }
         return list;
     }
 

@@ -14,7 +14,7 @@
 
 <% if ("true".equals(request.getParameter("success"))) { %>
 <div style="background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; color: #4ade80; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-    ✓ <strong>Thành công!</strong> Yêu cầu tư vấn của bạn đã được gửi. Chuyên viên kinh doanh sẽ liên hệ với bạn trong thời gian sớm nhất.
+    <strong>Thành công!</strong> Yêu cầu tư vấn của bạn đã được gửi. Chuyên viên kinh doanh sẽ liên hệ với bạn trong thời gian sớm nhất.
 </div>
 <% } %>
 
@@ -37,9 +37,8 @@
             <textarea id="consultationContent" name="content" rows="4" required placeholder="Ví dụ: Tôi muốn tư vấn về giá lăn bánh, chính sách trả góp 0% và ưu đãi pin..." style="width: 100%; padding: 0.75rem; background: #0e0f12; border: 1px solid #333742; color: #fff; border-radius: 8px;"></textarea>
         </div>
 
-        <button type="submit" style="background: #2563eb; color: #fff; border: none; padding: 0.85rem 1.75rem; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">
-            <span>Gửi yêu cầu ngay</span>
-            <span>→</span>
+        <button type="submit" style="background: #2563eb; color: #fff; border: none; padding: 0.85rem 1.75rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+            Gửi yêu cầu ngay
         </button>
     </form>
 </section>
