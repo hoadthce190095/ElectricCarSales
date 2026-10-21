@@ -2,6 +2,7 @@ package com.electriccarsales.model;
 
 import java.io.Serializable;
 
+/** Authenticated user information stored in the HTTP session. */
 public class SessionUser implements Serializable {
     private static final long serialVersionUID = 1L;
 

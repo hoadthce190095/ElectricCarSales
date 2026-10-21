@@ -1,0 +1,135 @@
+<%@ page pageEncoding="UTF-8" %>
+<%
+response.setCharacterEncoding("UTF-8");
+String customerContext = request.getContextPath();
+String customerPage = request.getRequestURI().substring(request.getRequestURI().lastIndexOf('/') + 1);
+String customerTitle = (String) request.getAttribute("customerTitle");
+if (customerTitle == null) customerTitle = "Tài khoản của tôi";
+String customerEyebrow = (String) request.getAttribute("customerEyebrow");
+if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
+%>
+<!doctype html>
+<html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#101113">
+        <title>
+            <%= customerTitle %> · VinFast ElectricCarSale</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="<%= customerContext %>/assets/css/customer.css">
+        <link rel="stylesheet" href="<%= customerContext %>/assets/css/customer-ai.css">
+        <script src="<%= customerContext %>/assets/js/customer.js" defer>
+        </script>
+    </head>
+    <body>
+        <div class="customer-app">
+            <aside class="customer-sidebar" id="customer-sidebar">
+                <a class="vf-brand" href="<%= customerContext %>/customer/my-account.jsp" aria-label="VinFast ElectricCarSale">
+                    <span class="vf-mark" aria-hidden="true">V</span>
+                    <span class="vf-brand-copy">
+                        <strong>VinFast</strong>
+                        <small>ELECTRIC CAR SALE</small>
+                    </span>
+                </a>
+                <div class="sidebar-caption">KHÔNG GIAN CỦA BẠN</div>
+                <nav class="customer-nav" aria-label="Điều hướng khách hàng">
+                    <a class="nav-link <%= customerPage.equals("my-account.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/my-account.jsp">
+                        <span class="nav-icon">⌂</span>
+                        <span>Tổng quan</span>
+                    </a>
+                    <a class="nav-link <%= customerPage.equals("cart.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/cart.jsp">
+                        <span class="nav-icon">▢</span>
+                        <span>Giỏ hàng</span>
+                        <span class="nav-count" data-cart-count>0</span>
+                    </a>
+                    <div class="nav-divider">
+                        <span>GIAO DỊCH CỦA TÔI</span>
+                    </div>
+                    <a class="nav-link <%= customerPage.equals("my-orders.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/my-orders.jsp">
+                        <span class="nav-icon">▤</span>
+                        <span>Đơn hàng</span>
+                    </a>
+                    <a class="nav-link <%= customerPage.equals("my-payments.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/my-payments.jsp">
+                        <span class="nav-icon">◉</span>
+                        <span>Thanh toán</span>
+                    </a>
+                    <a class="nav-link <%= customerPage.equals("my-contracts.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/my-contracts.jsp">
+                        <span class="nav-icon">▧</span>
+                        <span>Hợp đồng</span>
+                    </a>
+                    <a class="nav-link <%= customerPage.equals("my-invoices.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/my-invoices.jsp">
+                        <span class="nav-icon">▨</span>
+                        <span>Hóa đơn</span>
+                    </a>
+                    <a class="nav-link <%= customerPage.equals("ai-assistant.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/ai-assistant.jsp">
+                        <span class="nav-icon">✳</span>
+                        <span>AI tư vấn xe</span>
+                        <span class="ai-tag">AI</span>
+                    </a>
+                    <div class="nav-divider">
+                        <span>TÀI KHOẢN</span>
+                    </div>
+                    <a class="nav-link" href="<%= customerContext %>/customer/my-account.jsp#profile">
+                        <span class="nav-icon">◎</span>
+                        <span>Hồ sơ cá nhân</span>
+                    </a>
+                    <a class="nav-link" href="<%= customerContext %>/index.jsp?view=customer#models">
+                        <span class="nav-icon">↗</span>
+                        <span>Khám phá xe</span>
+                    </a>
+                </nav>
+                <div class="sidebar-help">
+                    <div class="help-orbit">✳</div>
+                    <strong>Cần hỗ trợ?</strong>
+                    <p>Đội ngũ VinFast luôn sẵn sàng đồng hành cùng bạn.</p>
+                    <a href="mailto:hotro@electriccarsale.vn">Liên hệ hỗ trợ <span>↗</span>
+                    </a>
+                </div>
+                <div class="sidebar-bottom">
+                    <span class="status-dot"></span> Kết nối an toàn <span class="version-label">· Phiên khách hàng</span>
+                </div>
+            </aside>
+            <div class="customer-main">
+                <header class="customer-topbar">
+                    <button class="mobile-menu" type="button" aria-label="Mở menu" aria-expanded="false" data-menu-toggle>☰</button>
+                    <div class="breadcrumb">
+                        <span>VinFast</span>
+                        <i>/</i>
+                        <strong>
+                            <%= customerTitle %>
+                        </strong>
+                    </div>
+                    <div class="topbar-actions">
+                        <a class="icon-button" href="<%= customerContext %>/customer/cart.jsp" aria-label="Giỏ hàng">▢<span class="cart-dot" data-cart-count>0</span>
+                        </a>
+                        <button class="icon-button notification-button" type="button" aria-label="Thông báo" data-notification>♧</button>
+                        <span class="topbar-divider"></span>
+                        <a class="user-chip" href="<%= customerContext %>/customer/my-account.jsp#profile">
+                            <span class="user-avatar">KH</span>
+                            <span class="user-chip-copy">
+                                <strong>Khách hàng</strong>
+                                <small>Tài khoản cá nhân</small>
+                            </span>
+                            <span class="chevron">⌄</span>
+                        </a>
+                    </div>
+                </header>
+                <main class="customer-content">
+                    <div class="page-heading">
+                        <div>
+                            <div class="eyebrow">
+                                <span class="eyebrow-line"></span>
+                                <%= customerEyebrow %>
+                            </div>
+                            <h1>
+                                <%= customerTitle %>
+                            </h1>
+                        </div>
+                        <div class="heading-actions">
+                            <span class="secure-label">
+                                <span>✓</span> Thông tin được bảo mật</span>
+                        </div>
+                    </div>

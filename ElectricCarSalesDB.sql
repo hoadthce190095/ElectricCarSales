@@ -283,6 +283,7 @@ BEGIN
         ModelColorsID INT IDENTITY(1, 1) PRIMARY KEY,
         ModelID INT NOT NULL,
         ColorID INT NOT NULL,
+        ColorImageURL NVARCHAR(500) NULL,
         CONSTRAINT FK_ModelColors_CarModels
             FOREIGN KEY (ModelID)
             REFERENCES dbo.CarModels(ModelID),
@@ -295,6 +296,10 @@ BEGIN
 END;
 GO
 
+IF COL_LENGTH(N'dbo.ModelColors', N'ColorImageURL') IS NULL
+    ALTER TABLE dbo.ModelColors ADD ColorImageURL NVARCHAR(500) NULL;
+GO
+
  /*
     CARVERSIONS PHIEN BAN XE
 */
@@ -305,6 +310,12 @@ BEGIN
         ModelID INT NOT NULL,
         VersionName NVARCHAR(100) NOT NULL,
         Description NVARCHAR(500) NULL,
+        CatalogPrice DECIMAL(18, 2) NULL,
+        RangeStandard VARCHAR(20) NULL,
+        SourceURL NVARCHAR(500) NULL,
+        PriceSourceURL NVARCHAR(500) NULL,
+        RapidChargeMinutes INT NULL,
+        PriceNote NVARCHAR(500) NULL,
         CONSTRAINT FK_Carversions_CarModels
             FOREIGN KEY(ModelID)
             REFERENCES dbo.CarModels(ModelID),
@@ -312,6 +323,21 @@ BEGIN
             UNIQUE (ModelID, VersionName)
     );
 END;
+GO
+
+-- Bo sung cot danh muc cho database da tao truoc khi cap nhat trang chu.
+IF COL_LENGTH(N'dbo.Carversions', N'CatalogPrice') IS NULL
+    ALTER TABLE dbo.Carversions ADD CatalogPrice DECIMAL(18, 2) NULL;
+IF COL_LENGTH(N'dbo.Carversions', N'RangeStandard') IS NULL
+    ALTER TABLE dbo.Carversions ADD RangeStandard VARCHAR(20) NULL;
+IF COL_LENGTH(N'dbo.Carversions', N'SourceURL') IS NULL
+    ALTER TABLE dbo.Carversions ADD SourceURL NVARCHAR(500) NULL;
+IF COL_LENGTH(N'dbo.Carversions', N'PriceSourceURL') IS NULL
+    ALTER TABLE dbo.Carversions ADD PriceSourceURL NVARCHAR(500) NULL;
+IF COL_LENGTH(N'dbo.Carversions', N'RapidChargeMinutes') IS NULL
+    ALTER TABLE dbo.Carversions ADD RapidChargeMinutes INT NULL;
+IF COL_LENGTH(N'dbo.Carversions', N'PriceNote') IS NULL
+    ALTER TABLE dbo.Carversions ADD PriceNote NVARCHAR(500) NULL;
 GO
 
  /*
@@ -1380,6 +1406,45 @@ BEGIN TRY
     WHERE NOT EXISTS (
         SELECT 1 FROM Carversions v WHERE v.ModelID = m.ModelID AND v.VersionName = c.VersionName
     );
+
+    -- Chi dien metadata con thieu tu danh muc tham khao da co; giu gia va nguon da duoc cap nhat.
+    DECLARE @CatalogueMetadata TABLE (
+        ModelName NVARCHAR(100),
+        VersionName NVARCHAR(100),
+        RangeStandard VARCHAR(20),
+        SourceURL NVARCHAR(500),
+        PriceSourceURL NVARCHAR(500),
+        RapidChargeMinutes INT,
+        PriceNote NVARCHAR(500)
+    );
+    INSERT INTO @CatalogueMetadata VALUES
+    (N'VF 3', N'Eco - Tiêu chuẩn 2', N'NEDC', N'https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf3', N'https://static-cms-prod.vinfastauto.com/202607015_thong-bao-chinh-sach-gia-ban-cac-dong-xe-vinfast-thang-07.2026_0.pdf', 36, N'MSRP kèm pin, gồm VAT, chính sách 15/07/2026; cấu hình Eco - Tiêu chuẩn 2. Chưa tính phí lăn bánh, bộ sạc tại nhà, màu nâng cao hoặc ưu đãi riêng.'),
+    (N'VF 5 Plus', N'Plus - Tiêu chuẩn 1', N'NEDC', N'https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf5', N'https://static-cms-prod.vinfastauto.com/202607015_thong-bao-chinh-sach-gia-ban-cac-dong-xe-vinfast-thang-07.2026_0.pdf', 33, N'MSRP kèm pin, gồm VAT, chính sách 15/07/2026; cấu hình Plus - Tiêu chuẩn 1. Chưa tính phí lăn bánh, bộ sạc tại nhà, màu nâng cao hoặc ưu đãi riêng.'),
+    (N'VF 6 Eco', N'Eco - Tiêu chuẩn 1', N'NEDC', N'https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf6', N'https://static-cms-prod.vinfastauto.com/202607015_thong-bao-chinh-sach-gia-ban-cac-dong-xe-vinfast-thang-07.2026_0.pdf', 25, N'MSRP kèm pin, gồm VAT, chính sách 15/07/2026; cấu hình Eco - Tiêu chuẩn 1. Chưa tính phí lăn bánh, bộ sạc tại nhà, màu nâng cao hoặc ưu đãi riêng.'),
+    (N'VF 6 Plus', N'Plus - Tiêu chuẩn 2', N'NEDC', N'https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf6', N'https://static-cms-prod.vinfastauto.com/202607015_thong-bao-chinh-sach-gia-ban-cac-dong-xe-vinfast-thang-07.2026_0.pdf', 25, N'MSRP kèm pin, gồm VAT, chính sách 15/07/2026; cấu hình Plus - Tiêu chuẩn 2. Chưa tính phí lăn bánh, bộ sạc tại nhà, màu nâng cao hoặc ưu đãi riêng.'),
+    (N'VF 7 Eco', N'Eco - Tiêu chuẩn 2', N'NEDC', N'https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf7', N'https://static-cms-prod.vinfastauto.com/202607015_thong-bao-chinh-sach-gia-ban-cac-dong-xe-vinfast-thang-07.2026_0.pdf', 25, N'MSRP kèm pin, gồm VAT, chính sách 15/07/2026; cấu hình Eco - Tiêu chuẩn 2. Chưa tính phí lăn bánh, bộ sạc tại nhà, màu nâng cao hoặc ưu đãi riêng.'),
+    (N'VF 7 Plus', N'Plus FWD - Trần thép - Tiêu chuẩn 2', N'NEDC', N'https://vinfastauto.com/vn_vi/dat-coc-xe-dien-vf7', N'https://static-cms-prod.vinfastauto.com/202607015_thong-bao-chinh-sach-gia-ban-cac-dong-xe-vinfast-thang-07.2026_0.pdf', 28, N'MSRP kèm pin, gồm VAT, chính sách 15/07/2026; cấu hình Plus FWD - Trần thép - Tiêu chuẩn 2. Chưa tính phí lăn bánh, bộ sạc tại nhà, màu nâng cao hoặc ưu đãi riêng.'),
+    (N'VF 8 Eco', N'Eco FWD - Pin CATL VN - Tiêu chuẩn 1', N'NEDC', N'https://vinfastauto.com/vn_vi/dat-coc-xe-vf8', N'https://static-cms-prod.vinfastauto.com/202607015_thong-bao-chinh-sach-gia-ban-cac-dong-xe-vinfast-thang-07.2026_0.pdf', 31, N'MSRP kèm pin, gồm VAT, chính sách 15/07/2026; cấu hình Eco FWD - Pin CATL VN - Tiêu chuẩn 1. Chưa tính phí lăn bánh, bộ sạc tại nhà, màu nâng cao hoặc ưu đãi riêng.'),
+    (N'VF 8 Plus', N'Plus AWD - Pin CATL VN - Tiêu chuẩn 1', N'NEDC', N'https://vinfastauto.com/vn_vi/dat-coc-xe-vf8', N'https://static-cms-prod.vinfastauto.com/202607015_thong-bao-chinh-sach-gia-ban-cac-dong-xe-vinfast-thang-07.2026_0.pdf', 31, N'MSRP kèm pin, gồm VAT, chính sách 15/07/2026; cấu hình Plus AWD - Pin CATL VN - Tiêu chuẩn 1. Chưa tính phí lăn bánh, bộ sạc tại nhà, màu nâng cao hoặc ưu đãi riêng.'),
+    (N'VF 9 Eco', N'Eco - Pin CATL - Điều hòa 3 vùng', N'WLTP', N'https://vinfastauto.com/vn_vi/dat-coc-xe-vf9', N'https://static-cms-prod.vinfastauto.com/202607015_thong-bao-chinh-sach-gia-ban-cac-dong-xe-vinfast-thang-07.2026_0.pdf', 35, N'MSRP kèm pin, gồm VAT, chính sách 15/07/2026; cấu hình Eco - Pin CATL - Điều hòa 3 vùng. Chưa tính phí lăn bánh, bộ sạc tại nhà, màu nâng cao hoặc ưu đãi riêng.'),
+    (N'VF 9 Plus', N'Plus - Trần thép - 7 chỗ - Pin CATL', N'WLTP', N'https://vinfastauto.com/vn_vi/dat-coc-xe-vf9', N'https://static-cms-prod.vinfastauto.com/202607015_thong-bao-chinh-sach-gia-ban-cac-dong-xe-vinfast-thang-07.2026_0.pdf', 35, N'MSRP kèm pin, gồm VAT, chính sách 15/07/2026; cấu hình Plus - Trần thép - 7 chỗ - Pin CATL. Chưa tính phí lăn bánh, bộ sạc tại nhà, màu nâng cao hoặc ưu đãi riêng.');
+
+    UPDATE v
+    SET CatalogPrice = COALESCE(v.CatalogPrice, c.Price),
+        RangeStandard = COALESCE(v.RangeStandard, metadata.RangeStandard),
+        SourceURL = COALESCE(v.SourceURL, metadata.SourceURL),
+        PriceSourceURL = COALESCE(v.PriceSourceURL, metadata.PriceSourceURL),
+        RapidChargeMinutes = COALESCE(v.RapidChargeMinutes, metadata.RapidChargeMinutes),
+        PriceNote = COALESCE(v.PriceNote, metadata.PriceNote)
+    FROM Carversions v
+    INNER JOIN CarModels m ON m.ModelID = v.ModelID
+    INNER JOIN CarLines l ON l.CarLineID = m.CarLineID AND l.BrandID = @BrandID
+    INNER JOIN @Catalogue c ON c.ModelName = m.ModelName AND c.CarLineName = l.CarLineName
+        AND c.VersionName = v.VersionName
+    INNER JOIN @CatalogueMetadata metadata ON metadata.ModelName = c.ModelName
+        AND metadata.VersionName = c.VersionName
+    WHERE v.CatalogPrice IS NULL OR v.RangeStandard IS NULL OR v.SourceURL IS NULL
+        OR v.PriceSourceURL IS NULL OR v.RapidChargeMinutes IS NULL OR v.PriceNote IS NULL;
 
     -- Không suy ra mức tiêu thụ điện hoặc thời gian sạc đầy từ số liệu sạc nhanh.
     INSERT INTO Specifications(ModelID, Dimensions, BatteryCapacity, WheelType,

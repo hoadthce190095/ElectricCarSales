@@ -1,5 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%
+boolean customerView = "customer".equals(request.getParameter("view"));
+%>
 <!doctype html>
 <html lang="vi">
 <head>
@@ -29,13 +32,17 @@
             <a class="nav-link" href="#about">Giới thiệu</a>
             <a class="nav-link" href="#contact">Tư vấn</a>
             <a class="nav-link" href="<c:url value='/tan.jsp' />#ai">Trợ lý xe</a>
-            <a class="nav-link" href="<c:url value='/tan.jsp' />">Quản trị</a>
+            <a class="nav-link" href="<c:url value='/tan.jsp'><c:param name='login' value='1' /></c:url>">Quản trị</a>
         </nav>
         <div class="header-actions">
             <a class="header-contact" href="mailto:hotro@electriccarsale.vn?subject=Yeu%20cau%20tu%20van%20xe%20VinFast">
                 <span aria-hidden="true">✉</span><span>Liên hệ tư vấn</span>
             </a>
-            <a class="account-link" href="<c:url value='/tan.jsp'><c:param name='login' value='1' /></c:url>"><span class="account-icon" aria-hidden="true">♙</span>Đăng nhập</a>
+            <% if (customerView) { %>
+            <a class="account-link" href="<c:url value='/customer/my-account.jsp' />"><span class="account-icon" aria-hidden="true">KH</span>Tài khoản của tôi</a>
+            <% } else { %>
+            <a class="account-link" href="<c:url value='/login.jsp' />"><span class="account-icon" aria-hidden="true">♙</span>Đăng nhập</a>
+            <% } %>
         </div>
     </div>
 </header>

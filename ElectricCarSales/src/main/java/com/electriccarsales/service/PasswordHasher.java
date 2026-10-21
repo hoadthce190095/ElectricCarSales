@@ -34,7 +34,7 @@ public final class PasswordHasher {
         }
         try {
             String[] parts = encoded.split("\\$");
-            if (parts.length != 4 || !parts[0].equals("pbkdf2-sha256")) {
+            if (parts.length != 4 || !(parts[0].equals("pbkdf2-sha256") || parts[0].equals("PBKDF2"))) {
                 return false;
             }
             int iterations = Integer.parseInt(parts[1]);
