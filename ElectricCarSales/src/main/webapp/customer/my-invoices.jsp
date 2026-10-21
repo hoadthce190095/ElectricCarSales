@@ -6,6 +6,18 @@
 <div class="page-intro">
     <p>Tra cứu hóa đơn, tổng giá trị và trạng thái phát hành theo giao dịch của bạn.</p>
 </div>
+<c:if test="${not empty success}"><p role="status"><c:out value="${success}"/></p></c:if>
+<c:if test="${not empty error}"><p role="alert"><c:out value="${error}"/></p></c:if>
+<c:if test="${invoiceRole eq 'ACCOUNTANT'}">
+    <section class="panel">
+        <div class="panel-heading"><div><span class="section-overline">KẾ TOÁN</span><h2>Phát hành hóa đơn</h2></div></div>
+        <p>Nhập mã đơn hàng. Hệ thống kiểm tra hợp đồng đã ký, trạng thái thanh toán và chống phát hành trùng.</p>
+        <form action="${pageContext.request.contextPath}/invoice" method="post">
+            <label>Mã đơn hàng <input type="number" min="1" name="orderId" required></label>
+            <button class="edit-link" type="submit">Kiểm tra và phát hành</button>
+        </form>
+    </section>
+</c:if>
 <section class="invoice-overview">
     <div class="invoice-metric">
         <span class="metric-icon">▨</span>
@@ -18,7 +30,7 @@
     <div class="panel-heading">
         <div>
             <span class="section-overline">LỊCH SỬ HÓA ĐƠN</span>
-            <h2>Hóa đơn của tôi</h2>
+            <h2>Danh sách hóa đơn</h2>
         </div>
         <label class="search-field">
             <span>⌕</span>

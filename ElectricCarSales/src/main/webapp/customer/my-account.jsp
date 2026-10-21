@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
+<c:if test="${empty profileControllerRequest}"><c:redirect url="/customer/profile"/></c:if>
 <%
     request.setAttribute("customerTitle", "Tài khoản của tôi");
     request.setAttribute("customerEyebrow", "CHÀO MỪNG TRỞ LẠI");
@@ -114,10 +115,11 @@
             </div>
         </div>
         <c:if test="${not empty error}"><p class="profile-note"><c:out value="${error}"/></p></c:if>
+        <c:if test="${not empty success}"><p class="profile-note"><c:out value="${success}"/></p></c:if>
         <form id="profile-edit" action="${pageContext.request.contextPath}/customer/profile" method="post" class="profile-fields">
             <label>Họ và tên <input name="customerName" maxlength="100" required value="<c:out value='${customer.customerName}'/>"/></label>
             <label>Số điện thoại <input name="phone" maxlength="20" required value="<c:out value='${customer.phone}'/>"/></label>
-            <label>Email <input name="email" type="email" maxlength="100" required value="<c:out value='${customer.email}'/>"/></label>
+            <label>Email <input name="email" type="email" maxlength="100" value="<c:out value='${customer.email}'/>"/></label>
             <label>Địa chỉ <input name="address" maxlength="255" value="<c:out value='${customer.address}'/>"/></label>
             <button class="edit-link" type="submit">Lưu hồ sơ</button>
         </form>

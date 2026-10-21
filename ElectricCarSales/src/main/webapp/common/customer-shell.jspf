@@ -72,7 +72,7 @@
             <div class="nav-divider">
                 <span>TÀI KHOẢN</span>
             </div>
-            <a class="nav-link" href="<%= customerContext %>/customer/my-account.jsp#profile">
+            <a class="nav-link" href="<%= customerContext %>/customer/profile#profile">
                 <span class="nav-icon">◎</span>
                 <span>Hồ sơ cá nhân</span>
             </a>
@@ -107,7 +107,7 @@
                 </a>
                 <button class="icon-button notification-button" type="button" aria-label="Thông báo" data-notification>♧</button>
                 <span class="topbar-divider"></span>
-                <a class="user-chip" href="<%= customerContext %>/customer/my-account.jsp#profile">
+                <a class="user-chip" href="<%= customerContext %>/customer/profile#profile">
                     <span class="user-avatar">KH</span>
                     <span class="user-chip-copy">
                                 <strong>Khách hàng</strong>

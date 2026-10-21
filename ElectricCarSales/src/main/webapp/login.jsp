@@ -1,4 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <!doctype html>
 <html lang="vi">
 <head>
@@ -37,6 +38,8 @@
                 <span class="form-eyebrow">TÀI KHOẢN VINFAST</span>
                 <h1 id="login-title">Đăng nhập</h1>
                 <p class="form-intro">Nhập tên đăng nhập và mật khẩu để tiếp tục.</p>
+                <c:if test="${not empty success}"><p class="form-message" role="status"><c:out value="${success}"/></p></c:if>
+                <c:if test="${not empty error}"><p class="form-message" role="alert"><c:out value="${error}"/></p></c:if>
 
                 <form id="login-form" class="auth-form" action="${pageContext.request.contextPath}/login" method="post">
                     <label class="sr-only" for="username">Tên đăng nhập</label>

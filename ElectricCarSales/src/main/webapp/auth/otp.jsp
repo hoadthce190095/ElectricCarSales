@@ -50,6 +50,9 @@
                 <span class="form-eyebrow">BẢO MẬT TÀI KHOẢN</span>
                 <h1 id="otp-title">Xác thực OTP</h1>
                 <p class="form-intro">Nhập mã xác thực gồm 6 chữ số để kích hoạt tài khoản.</p>
+                <c:if test="${not empty notice}">
+                    <p class="form-message otp-message otp-success" role="status"><c:out value="${notice}"/></p>
+                </c:if>
                 <c:if test="${not empty success}">
                     <p class="form-message otp-message otp-success" role="status"><c:out value="${success}"/></p>
                 </c:if>
@@ -57,12 +60,16 @@
                     <p class="form-message otp-message" role="alert"><c:out value="${error}"/></p>
                 </c:if>
                 <p class="otp-hint">Mã có hiệu lực trong 5 phút. Vui lòng không chia sẻ mã này với người khác.</p>
+                <c:if test="${not empty email}"><p class="otp-hint">Mã được gửi đến <c:out value="${email}"/>.</p></c:if>
                 <form class="auth-form otp-form" action="${pageContext.request.contextPath}/verify-otp" method="post">
-                    <input type="hidden" name="userId" value="<c:out value='${userId}'/>">
                     <label class="field-label" for="otp">Mã xác thực</label>
                     <div class="input-wrap"><input id="otp" name="otp" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="000000" aria-describedby="otp-help" required autofocus></div>
                     <span id="otp-help" class="sr-only">Nhập chính xác 6 chữ số.</span>
                     <button class="submit-button" type="submit">Xác nhận tài khoản <span aria-hidden="true">→</span></button>
+                </form>
+                <form action="${pageContext.request.contextPath}/verify-otp" method="post" class="otp-form">
+                    <input type="hidden" name="action" value="resend">
+                    <button class="text-button" type="submit">Gửi lại mã xác thực</button>
                 </form>
                 <div class="form-bottom"><span>Đã có tài khoản?</span><a href="${pageContext.request.contextPath}/login" class="text-button">Đăng nhập</a></div>
             </div>
