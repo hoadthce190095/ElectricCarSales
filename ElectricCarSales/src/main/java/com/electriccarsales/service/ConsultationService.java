@@ -1,7 +1,7 @@
-package com.electriccarsales.service.consultation;
+package com.electriccarsales.service;
 
-import com.electriccarsales.dao.consultation.ConsultationRequestDAO;
-import com.electriccarsales.model.consultation.ConsultationRequest;
+import com.electriccarsales.dao.ConsultationRequestDAO;
+import com.electriccarsales.model.ConsultationRequest;
 import java.util.List;
 
 public class ConsultationService {
@@ -12,7 +12,10 @@ public class ConsultationService {
     }
 
     public void createRequest(ConsultationRequest request) {
-        request.setStatus("Pending");
         dao.insert(request);
+    }
+
+    public void updateRequestStatus(int requestId, int statusId) {
+        dao.updateStatus(requestId, statusId);
     }
 }

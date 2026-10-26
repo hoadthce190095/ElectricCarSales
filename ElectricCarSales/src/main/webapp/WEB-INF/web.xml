@@ -15,4 +15,50 @@
         <welcome-file>index.jsp</welcome-file>
         <welcome-file>admin.html</welcome-file>
     </welcome-file-list>
+
+    <!-- Servlets for Tran Vo Anh Kiet modules -->
+    <servlet>
+        <servlet-name>ConsultationController</servlet-name>
+        <servlet-class>com.electriccarsales.controller.ConsultationController</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ConsultationController</servlet-name>
+        <url-pattern>/consultation</url-pattern>
+        <url-pattern>/customer/consultation</url-pattern>
+        <url-pattern>/staff/consultations</url-pattern>
+        <url-pattern>/staff/consultation/update</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>OrderController</servlet-name>
+        <servlet-class>com.electriccarsales.controller.OrderController</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>OrderController</servlet-name>
+        <url-pattern>/orders</url-pattern>
+        <url-pattern>/staff/transactions</url-pattern>
+        <url-pattern>/staff/transaction-detail</url-pattern>
+        <url-pattern>/order/detail</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>OrderStatusController</servlet-name>
+        <servlet-class>com.electriccarsales.controller.OrderStatusController</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>OrderStatusController</servlet-name>
+        <url-pattern>/order-status</url-pattern>
+        <url-pattern>/staff/order/update-status</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ReportController</servlet-name>
+        <servlet-class>com.electriccarsales.controller.ReportController</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ReportController</servlet-name>
+        <url-pattern>/staff/report</url-pattern>
+        <url-pattern>/admin/report</url-pattern>
+        <url-pattern>/staff/reports</url-pattern>
+    </servlet-mapping>
 </web-app>

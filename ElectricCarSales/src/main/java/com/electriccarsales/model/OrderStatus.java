@@ -1,4 +1,4 @@
-package com.electriccarsales.model.order;
+package com.electriccarsales.model;
 
 public class OrderStatus {
     private int id;
