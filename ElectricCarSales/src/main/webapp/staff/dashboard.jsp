@@ -17,7 +17,7 @@
     </script>
 </head>
 <body>
-<div class="staff-app" data-staff-app data-context-path="<%= appContext %>">
+<div class="staff-app" data-staff-app>
     <aside class="staff-sidebar" id="staff-sidebar">
         <a class="staff-brand" href="<%= appContext %>/staff/dashboard.jsp" aria-label="VinFast - ElectricCarSale">
             <span class="staff-brand-mark">V</span>
@@ -36,21 +36,7 @@
         </select>
         <nav class="staff-nav" id="staff-nav" aria-label="Điều hướng nhân viên">
     </nav>
-
-        <div class="workspace-caption" style="margin-top: 12px;">NGHIỆP VỤ</div>
-        <div style="padding: 0 12px; display: flex; flex-direction: column; gap: 3px;">
-            <a href="<%= appContext %>/staff/consultations" style="color: #e1e4ea; text-decoration: none; font-size: 13px; padding: 6px 10px; border-radius: 6px; display: block;">
-                Yêu cầu tư vấn
-            </a>
-            <a href="<%= appContext %>/staff/transactions" style="color: #e1e4ea; text-decoration: none; font-size: 13px; padding: 6px 10px; border-radius: 6px; display: block;">
-                Quản lý giao dịch
-            </a>
-            <a href="<%= appContext %>/staff/report" style="color: #e1e4ea; text-decoration: none; font-size: 13px; padding: 6px 10px; border-radius: 6px; display: block;">
-                Báo cáo &amp; Thống kê
-            </a>
-        </div>
-
-        <div class="sidebar-support" style="margin-top: 15px;">
+        <div class="sidebar-support">
             <span class="support-orbit">✳</span>
             <strong>Trung tâm hỗ trợ</strong>
             <p>Liên hệ quản trị viên khi bạn cần trợ giúp về quyền truy cập.</p>
@@ -91,24 +77,6 @@
                 </button>
             </div>
         </header>
-
-        <!-- Thanh liên kết nhanh đến các phân hệ nghiệp vụ -->
-        <div class="staff-quick-nav" style="background: #181b20; border-bottom: 1px solid #2d3139; padding: 10px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 13px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="color: #9aa0a6;">Truy cập nhanh nghiệp vụ:</span>
-            </div>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <a href="<%= appContext %>/staff/consultations" class="btn-quick-nav" style="color: #4dabf7; text-decoration: none; padding: 5px 12px; background: rgba(77, 171, 247, 0.12); border: 1px solid rgba(77, 171, 247, 0.35); border-radius: 6px; font-weight: 500;">
-                    Yêu cầu tư vấn
-                </a>
-                <a href="<%= appContext %>/staff/transactions" class="btn-quick-nav" style="color: #69db7c; text-decoration: none; padding: 5px 12px; background: rgba(105, 219, 124, 0.12); border: 1px solid rgba(105, 219, 124, 0.35); border-radius: 6px; font-weight: 500;">
-                    Quản lý giao dịch
-                </a>
-                <a href="<%= appContext %>/staff/report" class="btn-quick-nav" style="color: #da77f2; text-decoration: none; padding: 5px 12px; background: rgba(218, 119, 242, 0.12); border: 1px solid rgba(218, 119, 242, 0.35); border-radius: 6px; font-weight: 500;">
-                    Báo cáo doanh thu &amp; giao dịch
-                </a>
-            </div>
-        </div>
 
         <main class="staff-content" id="staff-content" tabindex="-1" aria-live="polite">
     </main>

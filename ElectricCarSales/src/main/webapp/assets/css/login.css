@@ -372,6 +372,11 @@ body.login-page {
 .form-message[hidden] {
   display: none;
 }
+.form-message.success {
+  border-color: #c7ddcd;
+  background: #f2f8f3;
+  color: #2d6b44;
+}
 .form-bottom {
   display: flex;
   align-items: center;

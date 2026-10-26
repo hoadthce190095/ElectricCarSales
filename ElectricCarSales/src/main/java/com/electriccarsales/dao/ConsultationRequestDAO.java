@@ -1,81 +1,105 @@
-package com.electriccarsales.dao;
+package com.electriccarsales.dao.consultation;
 
-import com.electriccarsales.model.ConsultationRequest;
+import com.electriccarsales.model.consultation.ConsultationRequest;
 import util.DBContext;
-import java.sql.*;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
-public class ConsultationRequestDAO extends DBContext {
+public class ConsultationRequestDAO {
+    @FunctionalInterface
+    interface ConnectionProvider {
+        Connection open() throws SQLException;
+    }
+
+    private final ConnectionProvider connections;
+
+    public ConsultationRequestDAO() {
+        this(DBContext::openConnection);
+    }
+
+    ConsultationRequestDAO(ConnectionProvider connections) {
+        this.connections = connections;
+    }
 
     public List<ConsultationRequest> findAll() {
-        List<ConsultationRequest> list = new ArrayList<>();
-        String sql = "SELECT cr.ConsultationRequestID, cr.CustomerID, cr.EmployeeID, cr.ModelID, " +
-                     "cr.RequestContent, cr.RequestDate, cr.ConsultationStatusID, " +
-                     "c.CustomerName, c.Phone AS CustomerPhone, " +
-                     "m.ModelName, " +
-                     "s.StatusName " +
-                     "FROM ConsultationRequests cr " +
-                     "LEFT JOIN Customers c ON cr.CustomerID = c.CustomerID " +
-                     "LEFT JOIN CarModels m ON cr.ModelID = m.ModelID " +
-                     "LEFT JOIN ConsultationStatuses s ON cr.ConsultationStatusID = s.ConsultationStatusID " +
-                     "ORDER BY cr.RequestDate DESC";
-        try (PreparedStatement ps = conn != null ? conn.prepareStatement(sql) : null;
-             ResultSet rs = ps != null ? ps.executeQuery() : null) {
-            if (rs != null) {
-                while (rs.next()) {
-                    ConsultationRequest req = new ConsultationRequest();
-                    req.setId(rs.getInt("ConsultationRequestID"));
-                    req.setCustomerId(rs.getInt("CustomerID"));
-                    req.setStaffId(rs.getInt("EmployeeID"));
-                    req.setModelId(rs.getInt("ModelID"));
-                    req.setContent(rs.getString("RequestContent"));
-                    req.setStatus(String.valueOf(rs.getInt("ConsultationStatusID")));
-                    req.setCreatedAt(rs.getTimestamp("RequestDate"));
-                    req.setCustomerName(rs.getString("CustomerName"));
-                    req.setCustomerPhone(rs.getString("CustomerPhone"));
-                    req.setModelName(rs.getString("ModelName"));
-                    req.setStatusName(rs.getString("StatusName"));
-                    list.add(req);
-                }
+        String sql = """
+            SELECT r.ConsultationRequestID,r.CustomerID,r.EmployeeID,r.ModelID,
+                   r.RequestContent,r.RequestDate,s.StatusName
+            FROM ConsultationRequests r
+            JOIN ConsultationStatuses s ON s.ConsultationStatusID=r.ConsultationStatusID
+            ORDER BY r.RequestDate DESC,r.ConsultationRequestID DESC
+            """;
+        try (Connection connection = connections.open();
+            PreparedStatement statement = connection.prepareStatement(sql);
+            ResultSet rows = statement.executeQuery()) {
+            List<ConsultationRequest> requests = new ArrayList<>();
+            while (rows.next()) {
+                ConsultationRequest request = new ConsultationRequest();
+                request.setId(rows.getInt("ConsultationRequestID"));
+                request.setCustomerId(rows.getInt("CustomerID"));
+                request.setStaffId(rows.getInt("EmployeeID"));
+                request.setModelId(rows.getObject("ModelID", Integer.class));
+                request.setContent(rows.getString("RequestContent"));
+                request.setStatus(rows.getString("StatusName"));
+                request.setCreatedAt(rows.getTimestamp("RequestDate"));
+                requests.add(request);
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+            return requests;
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Không thể tải yêu cầu tư vấn.", exception);
         }
-        return list;
     }
 
     public void insert(ConsultationRequest request) {
-        String sql = "INSERT INTO ConsultationRequests (CustomerID, ModelID, RequestContent, ConsultationStatusID, RequestDate) " +
-                     "VALUES (?, ?, ?, ?, ?)";
-        try (PreparedStatement ps = conn != null ? conn.prepareStatement(sql) : null) {
-            if (ps != null) {
-                ps.setInt(1, request.getCustomerId() > 0 ? request.getCustomerId() : 1);
-                if (request.getModelId() > 0) {
-                    ps.setInt(2, request.getModelId());
-                } else {
-                    ps.setNull(2, java.sql.Types.INTEGER);
-                }
-                ps.setString(3, request.getContent());
-                ps.setInt(4, 1); // 1 = PENDING
-                ps.setTimestamp(5, request.getCreatedAt() != null ? request.getCreatedAt() : new Timestamp(System.currentTimeMillis()));
-                ps.executeUpdate();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        if (request == null || request.getCustomerId() <= 0 || request.getStaffId() < 0
+            || (request.getModelId() != null && request.getModelId() <= 0)
+            || request.getContent() == null || request.getContent().isBlank() || request.getContent().length() > 1000) {
+            throw new IllegalArgumentException("Thông tin yêu cầu tư vấn không hợp lệ.");
         }
-    }
-
-    public void updateStatus(int requestId, int statusId) {
-        String sql = "UPDATE ConsultationRequests SET ConsultationStatusID = ? WHERE ConsultationRequestID = ?";
-        try (PreparedStatement ps = conn != null ? conn.prepareStatement(sql) : null) {
-            if (ps != null) {
-                ps.setInt(1, statusId);
-                ps.setInt(2, requestId);
-                ps.executeUpdate();
+        String status = request.getStatus() == null ? "PENDING" : request.getStatus().trim().toUpperCase(Locale.ROOT);
+        Timestamp date = request.getCreatedAt() == null ? new Timestamp(System.currentTimeMillis()) : request.getCreatedAt();
+        String sql = """
+            INSERT INTO ConsultationRequests(CustomerID,EmployeeID,ModelID,ConsultationStatusID,
+                                             RequestContent,RequestDate)
+            VALUES(?,?,?,(SELECT ConsultationStatusID FROM ConsultationStatuses WHERE StatusName=?),?,?)
+            """;
+        try (Connection connection = connections.open();
+            PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setInt(1, request.getCustomerId());
+            if (request.getStaffId() == 0) {
+                statement.setNull(2, Types.INTEGER);
+            } else {
+                statement.setInt(2, request.getStaffId());
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+            if (request.getModelId() == null) {
+                statement.setNull(3, Types.INTEGER);
+            } else {
+                statement.setInt(3, request.getModelId());
+            }
+            statement.setString(4, status);
+            statement.setString(5, request.getContent());
+            statement.setTimestamp(6, date);
+            if (statement.executeUpdate() != 1) {
+                throw new SQLException("Không tạo được yêu cầu tư vấn.");
+            }
+            try (ResultSet keys = statement.getGeneratedKeys()) {
+                if (keys.next()) {
+                    request.setId(keys.getInt(1));
+                }
+            }
+            request.setStatus(status);
+            request.setCreatedAt(date);
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Không thể tạo yêu cầu tư vấn.", exception);
         }
     }
 }

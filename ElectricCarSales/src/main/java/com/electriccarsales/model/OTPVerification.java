@@ -95,7 +95,7 @@ public class OTPVerification {
         return "OTPVerification{" +
                 "otpVerificationID=" + otpVerificationID +
                 ", userID=" + userID +
-                ", otpCode='[REDACTED]'" +
+                ", otpCode='" + otpCode + '\'' +
                 ", purpose='" + purpose + '\'' +
                 ", createdDate=" + createdDate +
                 ", expiredDate=" + expiredDate +

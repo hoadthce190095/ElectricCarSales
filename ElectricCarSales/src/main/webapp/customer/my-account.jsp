@@ -1,10 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ taglib uri="jakarta.tags.core" prefix="c" %>
-<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
-<c:if test="${empty profileControllerRequest}"><c:redirect url="/customer/profile"/></c:if>
 <%
-    request.setAttribute("customerTitle", "Tài khoản của tôi");
-    request.setAttribute("customerEyebrow", "CHÀO MỪNG TRỞ LẠI");
+request.setAttribute("customerTitle", "Tài khoản của tôi");
+request.setAttribute("customerEyebrow", "CHÀO MỪNG TRỞ LẠI");
 %>
 <%@ include file="../common/customer-shell.jspf" %>
 <section class="welcome-banner">
@@ -89,13 +86,13 @@
                 <span class="section-overline">THÔNG TIN CỦA BẠN</span>
                 <h2>Hồ sơ cá nhân</h2>
             </div>
-            <a class="edit-link" href="#profile-edit" data-profile-edit>Chỉnh sửa <span>↗</span>
+            <a class="edit-link" href="#profile" data-profile-edit>Chỉnh sửa <span>↗</span>
             </a>
         </div>
         <div class="profile-summary">
             <div class="profile-avatar">KH</div>
             <div>
-                <strong><c:out value="${customer.customerName}" default="Khách hàng"/></strong>
+                <strong>Khách hàng</strong>
                 <span>Thành viên VinFast</span>
             </div>
             <span class="verified-badge">✓ Đã xác thực</span>
@@ -103,26 +100,18 @@
         <div class="profile-fields">
             <div>
                 <span>Họ và tên</span>
-                <strong><c:out value="${customer.customerName}" default="Chưa cập nhật"/></strong>
+                <strong>Chưa cập nhật</strong>
             </div>
             <div>
                 <span>Số điện thoại</span>
-                <strong><c:out value="${customer.phone}" default="Chưa cập nhật"/></strong>
+                <strong>Chưa cập nhật</strong>
             </div>
             <div>
                 <span>Email</span>
-                <strong><c:out value="${customer.email}" default="Chưa cập nhật"/></strong>
+                <strong>Chưa cập nhật</strong>
             </div>
         </div>
-        <c:if test="${not empty error}"><p class="profile-note"><c:out value="${error}"/></p></c:if>
-        <c:if test="${not empty success}"><p class="profile-note"><c:out value="${success}"/></p></c:if>
-        <form id="profile-edit" action="${pageContext.request.contextPath}/customer/profile" method="post" class="profile-fields">
-            <label>Họ và tên <input name="customerName" maxlength="100" required value="<c:out value='${customer.customerName}'/>"/></label>
-            <label>Số điện thoại <input name="phone" maxlength="20" required value="<c:out value='${customer.phone}'/>"/></label>
-            <label>Email <input name="email" type="email" maxlength="100" value="<c:out value='${customer.email}'/>"/></label>
-            <label>Địa chỉ <input name="address" maxlength="255" value="<c:out value='${customer.address}'/>"/></label>
-            <button class="edit-link" type="submit">Lưu hồ sơ</button>
-        </form>
+        <p class="profile-note">Thông tin sẽ được tải từ tài khoản của bạn khi kết nối hệ thống.</p>
     </section>
 </div>
 <section class="journey-strip">

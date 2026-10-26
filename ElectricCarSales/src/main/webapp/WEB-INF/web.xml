@@ -1,14 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
-<<<<<<< HEAD
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
-         version="6.0">
-=======
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
     version="6.0">
->>>>>>> origin/Phuc-Tan
     <display-name>Electric Car Sales</display-name>
     <session-config>
         <session-timeout>30</session-timeout>
@@ -19,58 +13,6 @@
     </session-config>
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>
-<<<<<<< HEAD
-        <welcome-file>admin.html</welcome-file>
-    </welcome-file-list>
-
-    <!-- Servlets for Tran Vo Anh Kiet modules -->
-    <servlet>
-        <servlet-name>ConsultationController</servlet-name>
-        <servlet-class>com.electriccarsales.controller.ConsultationController</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>ConsultationController</servlet-name>
-        <url-pattern>/consultation</url-pattern>
-        <url-pattern>/customer/consultation</url-pattern>
-        <url-pattern>/staff/consultations</url-pattern>
-        <url-pattern>/staff/consultation/update</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
-        <servlet-name>OrderController</servlet-name>
-        <servlet-class>com.electriccarsales.controller.OrderController</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>OrderController</servlet-name>
-        <url-pattern>/orders</url-pattern>
-        <url-pattern>/staff/transactions</url-pattern>
-        <url-pattern>/staff/transaction-detail</url-pattern>
-        <url-pattern>/order/detail</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
-        <servlet-name>OrderStatusController</servlet-name>
-        <servlet-class>com.electriccarsales.controller.OrderStatusController</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>OrderStatusController</servlet-name>
-        <url-pattern>/order-status</url-pattern>
-        <url-pattern>/staff/order/update-status</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
-        <servlet-name>ReportController</servlet-name>
-        <servlet-class>com.electriccarsales.controller.ReportController</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>ReportController</servlet-name>
-        <url-pattern>/staff/report</url-pattern>
-        <url-pattern>/admin/report</url-pattern>
-        <url-pattern>/staff/reports</url-pattern>
-    </servlet-mapping>
-</web-app>
-=======
-        <welcome-file>tan.jsp</welcome-file>
+        <welcome-file>admin.jsp</welcome-file>
     </welcome-file-list>
 </web-app>
->>>>>>> origin/Phuc-Tan

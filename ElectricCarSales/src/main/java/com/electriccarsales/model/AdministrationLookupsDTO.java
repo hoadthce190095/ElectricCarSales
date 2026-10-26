@@ -1,11 +1,14 @@
 package com.electriccarsales.model;
 
 import java.util.List;
+import java.util.Map;
+import java.math.BigDecimal;
 
 public class AdministrationLookupsDTO {
     private List<LookupDTO> roles;
     private List<LookupDTO> statuses;
     private List<LookupDTO> models;
+    private Map<Integer, BigDecimal> modelMinPrices = Map.of();
 
     public AdministrationLookupsDTO() {
     }
@@ -38,5 +41,13 @@ public class AdministrationLookupsDTO {
 
     public void setModels(List<LookupDTO> models) {
         this.models = models;
+    }
+
+    public Map<Integer, BigDecimal> getModelMinPrices() {
+        return modelMinPrices;
+    }
+
+    public void setModelMinPrices(Map<Integer, BigDecimal> modelMinPrices) {
+        this.modelMinPrices = modelMinPrices;
     }
 }

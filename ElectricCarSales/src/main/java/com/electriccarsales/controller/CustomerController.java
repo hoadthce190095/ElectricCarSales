@@ -27,12 +27,6 @@ public class CustomerController extends HttpServlet {
         }
         try {
             Customer customer = customerService.getOwnProfile(userId);
-            if (customer == null) {
-                resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Không tìm thấy hồ sơ khách hàng.");
-                return;
-            }
-            req.setAttribute("profileControllerRequest", Boolean.TRUE);
-            if ("1".equals(req.getParameter("updated"))) req.setAttribute("success", "Hồ sơ đã được cập nhật.");
             req.setAttribute("customer", customer);
             req.getRequestDispatcher("/customer/my-account.jsp").forward(req, resp);
         } catch (RuntimeException e) {
@@ -54,23 +48,13 @@ public class CustomerController extends HttpServlet {
             return;
         }
         try {
-            boolean updated = customerService.updateOwnProfile(userId, req.getParameter("customerName"), req.getParameter("phone"),
+            customerService.updateOwnProfile(userId, req.getParameter("customerName"), req.getParameter("phone"),
                     req.getParameter("email"), req.getParameter("address"));
-            if (!updated) {
-                resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Không thể cập nhật hồ sơ khách hàng.");
-                return;
-            }
-            Customer persisted = customerService.getOwnProfile(userId);
-            if (persisted != null) {
-                req.getSession(false).setAttribute("email", persisted.getEmail());
-                req.getSession(false).setAttribute("phone", persisted.getPhone());
-            }
             resp.sendRedirect(req.getContextPath() + "/customer/profile?updated=1");
         } catch (IllegalArgumentException e) {
             req.setAttribute("error", e.getMessage());
             try {
                 req.setAttribute("customer", customerService.getOwnProfile(userId));
-                req.setAttribute("profileControllerRequest", Boolean.TRUE);
                 req.getRequestDispatcher("/customer/my-account.jsp").forward(req, resp);
             } catch (RuntimeException loadError) {
                 log("Could not reload customer profile", loadError);

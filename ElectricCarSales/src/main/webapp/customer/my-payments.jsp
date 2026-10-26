@@ -1,9 +1,9 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <% request.setAttribute("customerTitle", "Thanh toán"); request.setAttribute("customerEyebrow", "THANH TOÁN AN TOÀN"); %>
 <%@ include file="../common/customer-shell.jspf" %>
 <div class="page-intro">
     <p>Xem các khoản đặt cọc, thanh toán còn lại và kỳ trả góp được ghi nhận trong giao dịch của bạn.</p>
+    <a class="button button-primary" href="<%= request.getContextPath() %>/customer/payment-demo.jsp">Xem giao diện cổng thanh toán <span>→</span></a>
 </div>
 <section class="payment-highlight">
     <div>
@@ -13,20 +13,11 @@
     </div>
     <div class="payment-total">
         <span>Số dư cần thanh toán</span>
-        <strong><c:choose><c:when test="${not empty outstandingDebt}"><c:out value="${outstandingDebt}"/> ₫</c:when><c:otherwise>—</c:otherwise></c:choose></strong>
-        <small><c:choose><c:when test="${not empty orderBalance}">Công nợ của đơn hàng đang xem</c:when><c:otherwise>Chọn đơn hàng để xem công nợ</c:otherwise></c:choose></small>
+        <strong>—</strong>
+        <small>Chưa có dữ liệu</small>
     </div>
     <div class="highlight-orbit">₫</div>
 </section>
-<c:if test="${not empty orderBalance}">
-    <section class="panel">
-        <h2>Đơn hàng #<c:out value="${requestedOrderId}"/></h2>
-        <p>Tổng giá trị: <c:out value="${orderBalance.totalAmount}"/> ₫</p>
-        <p>Tiền đặt cọc theo đơn: <c:out value="${orderBalance.depositAmount}"/> ₫</p>
-        <p>Đã thanh toán thành công: <c:out value="${orderBalance.successfulPayments}"/> ₫</p>
-        <p>Công nợ còn lại: <c:out value="${outstandingDebt}"/> ₫</p>
-    </section>
-</c:if>
 <div class="filter-tabs" role="tablist" aria-label="Lọc giao dịch thanh toán">
     <button class="filter-tab active" type="button" role="tab" aria-selected="true">Tất cả <span>0</span>
     </button>
@@ -49,31 +40,15 @@
                 </tr>
             </thead>
             <tbody>
-                <c:choose>
-                    <c:when test="${not empty paymentHistory}">
-                        <c:forEach var="payment" items="${paymentHistory}">
-                            <tr>
-                                <td><c:out value="${payment.referenceCode}" default="—"/></td>
-                                <td><c:out value="${payment.orderID}"/></td>
-                                <td><c:out value="${payment.paymentTypeName}" default="—"/></td>
-                                <td><c:out value="${payment.paymentDate}" default="—"/></td>
-                                <td><c:out value="${payment.paymentAmount}"/> ₫</td>
-                                <td><c:out value="${payment.paymentStatusCode}" default="—"/></td>
-                            </tr>
-                        </c:forEach>
-                    </c:when>
-                    <c:otherwise>
-                        <tr>
-                            <td colspan="6">
-                                <div class="table-empty">
-                                    <span>◉</span>
-                                    <strong>Chưa có khoản thanh toán</strong>
-                                    <p>Lịch sử đặt cọc, thanh toán và trả góp sẽ được cập nhật khi phát sinh.</p>
-                                </div>
-                            </td>
-                        </tr>
-                    </c:otherwise>
-                </c:choose>
+                <tr>
+                    <td colspan="6">
+                        <div class="table-empty">
+                            <span>◉</span>
+                            <strong>Chưa có khoản thanh toán</strong>
+                            <p>Lịch sử đặt cọc, thanh toán và trả góp sẽ được cập nhật khi phát sinh.</p>
+                        </div>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -82,5 +57,4 @@
     <span>i</span>
     <p>Trạng thái thanh toán phản ánh dữ liệu hệ thống. Với chuyển khoản hoặc thanh toán tiền mặt, nhân viên có thẩm quyền có thể cần xác minh trước khi giao dịch được xác nhận.</p>
 </div>
-<c:if test="${paymentTestMode}"><div class="info-note"><span>i</span><p>Chế độ kiểm thử đang bật. Khi tích hợp cổng thanh toán, số tiền gửi cổng sẽ được quy đổi riêng; số tiền nghiệp vụ trong lịch sử vẫn giữ nguyên.</p></div></c:if>
 <%@ include file="../common/customer-shell-end.jspf" %>

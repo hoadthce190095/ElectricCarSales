@@ -2,6 +2,7 @@ package com.electriccarsales.dao;
 
 import com.electriccarsales.model.InstallmentPayment;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,6 +14,8 @@ import java.util.List;
 public class InstallmentPaymentDAO extends FinanceDAOBase {
     private static final String COLUMNS = "InstallmentPaymentID, ScheduleID, PaymentAmount, PaymentDate, "
             + "PaymentMethodID, PaymentStatusID, ReferenceCode, Note";
+    private static final String QUALIFIED_COLUMNS = "ip.InstallmentPaymentID, ip.ScheduleID, ip.PaymentAmount, "
+            + "ip.PaymentDate, ip.PaymentMethodID, ip.PaymentStatusID, ip.ReferenceCode, ip.Note";
 
     public InstallmentPaymentDAO() { super(); }
     public InstallmentPaymentDAO(Connection transactionConnection) { super(transactionConnection); }
@@ -29,13 +32,13 @@ public class InstallmentPaymentDAO extends FinanceDAOBase {
     }
 
     public List<InstallmentPayment> findByContractId(int contractId) {
-        return withConnection(connection -> list(connection, "SELECT ip." + COLUMNS.replace(", ", ", ip.")
+        return withConnection(connection -> list(connection, "SELECT " + QUALIFIED_COLUMNS
                 + " FROM InstallmentPayments ip JOIN InstallmentSchedules s ON s.ScheduleID = ip.ScheduleID "
                 + "WHERE s.InstallmentContractID = ? ORDER BY ip.PaymentDate, ip.InstallmentPaymentID", contractId));
     }
 
     public List<InstallmentPayment> findByStatusCode(String statusCode) {
-        return withConnection(connection -> list(connection, "SELECT ip." + COLUMNS.replace(", ", ", ip.")
+        return withConnection(connection -> list(connection, "SELECT " + QUALIFIED_COLUMNS
                 + " FROM InstallmentPayments ip JOIN PaymentStatuses ps ON ps.PaymentStatusID = ip.PaymentStatusID "
                 + "WHERE ps.StatusID = ? ORDER BY ip.PaymentDate DESC, ip.InstallmentPaymentID DESC", statusCode));
     }
@@ -62,6 +65,55 @@ public class InstallmentPaymentDAO extends FinanceDAOBase {
                 int id = FinanceJDBC.generatedId(statement);
                 payment.setInstallmentPaymentID(id);
                 return id;
+            }
+        });
+    }
+
+    /**
+     * Creates a pending installment payment using the original amount due in the contract.
+     * Any test-mode conversion is only for the gateway request and must happen in the service.
+     */
+    public InstallmentPayment createPending(int scheduleId, int paymentMethodId,
+                                            BigDecimal originalAmount, String referenceCode) {
+        if (scheduleId <= 0) {
+            throw new IllegalArgumentException("scheduleId must be greater than zero");
+        }
+        if (paymentMethodId <= 0) {
+            throw new IllegalArgumentException("paymentMethodId must be greater than zero");
+        }
+        if (originalAmount == null || originalAmount.signum() <= 0) {
+            throw new IllegalArgumentException("originalAmount must be greater than zero");
+        }
+        if (referenceCode == null || referenceCode.isBlank()) {
+            throw new IllegalArgumentException("referenceCode is required");
+        }
+
+        return withConnection(connection -> {
+            int pendingStatusId;
+            String lookupSql = "SELECT PaymentStatusID FROM PaymentStatuses WHERE StatusID = ?";
+            try (PreparedStatement statement = connection.prepareStatement(lookupSql)) {
+                statement.setString(1, "PENDING");
+                try (ResultSet rs = statement.executeQuery()) {
+                    if (!rs.next()) {
+                        throw new FinanceDAOException("Payment status PENDING is not configured.");
+                    }
+                    pendingStatusId = rs.getInt("PaymentStatusID");
+                }
+            }
+
+            InstallmentPayment payment = new InstallmentPayment(0, scheduleId, originalAmount,
+                    null, paymentMethodId, pendingStatusId, referenceCode, null);
+            String sql = "INSERT INTO InstallmentPayments (ScheduleID, PaymentAmount, PaymentMethodID, "
+                    + "PaymentStatusID, ReferenceCode) VALUES (?, ?, ?, ?, ?)";
+            try (PreparedStatement statement = FinanceJDBC.insertStatement(connection, sql)) {
+                statement.setInt(1, payment.getScheduleID());
+                statement.setBigDecimal(2, payment.getPaymentAmount());
+                statement.setInt(3, payment.getPaymentMethodID());
+                statement.setInt(4, payment.getPaymentStatusID());
+                statement.setString(5, payment.getReferenceCode());
+                statement.executeUpdate();
+                payment.setInstallmentPaymentID(FinanceJDBC.generatedId(statement));
+                return payment;
             }
         });
     }

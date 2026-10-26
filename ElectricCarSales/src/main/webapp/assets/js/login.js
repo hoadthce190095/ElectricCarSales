@@ -1,23 +1,23 @@
 "use strict";
 
-const passwordInput = document.querySelector("#password");
-const passwordToggle = document.querySelector("[data-password-toggle]");
-const forgotButton = document.querySelector("[data-forgot-password]");
 const loginMessage = document.querySelector("#form-message");
+const passwordInput = document.querySelector("#password");
 
-if (passwordToggle && passwordInput) {
-    passwordToggle.addEventListener("click", () => {
-        const showing = passwordInput.type === "text";
-        passwordInput.type = showing ? "password" : "text";
-        passwordToggle.textContent = showing ? "Hiện" : "Ẩn";
-        passwordToggle.setAttribute("aria-label", showing ? "Hiện mật khẩu" : "Ẩn mật khẩu");
-        passwordToggle.setAttribute("aria-pressed", String(!showing));
-    });
-}
+document.querySelector("[data-password-toggle]").addEventListener("click", (event) => {
+    const button = event.currentTarget;
+    const showing = passwordInput.type === "text";
+    passwordInput.type = showing ? "password" : "text";
+    button.textContent = showing ? "Hiện" : "Ẩn";
+    button.setAttribute("aria-label", showing ? "Hiện mật khẩu" : "Ẩn mật khẩu");
+    button.setAttribute("aria-pressed", String(!showing));
+});
 
-if (forgotButton && loginMessage) {
-    forgotButton.addEventListener("click", () => {
-        loginMessage.textContent = "Chức năng khôi phục mật khẩu sẽ được thực hiện qua xác thực OTP.";
-        loginMessage.hidden = false;
-    });
-}
+document.querySelector("[data-forgot-password]").addEventListener("click", () => {
+    loginMessage.textContent = "Vui lòng liên hệ hotro@electriccarsale.vn để được hỗ trợ khôi phục mật khẩu.";
+    loginMessage.hidden = false;
+});
+
+document.querySelector("[data-register]").addEventListener("click", () => {
+    loginMessage.textContent = "Chức năng đăng ký chưa sẵn sàng. Vui lòng liên hệ quản trị viên để được hỗ trợ.";
+    loginMessage.hidden = false;
+});

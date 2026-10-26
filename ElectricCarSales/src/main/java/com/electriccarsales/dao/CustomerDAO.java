@@ -46,15 +46,11 @@ public class CustomerDAO extends DBContext {
     }
 
     public boolean updateOwnedProfile(int userId, String customerName, String phone, String email, String address) {
-        String userSql = "UPDATE u SET Phone = ?, Email = ? FROM Users u "
-                + "JOIN Roles r ON r.RoleID=u.RoleID JOIN Statuses s ON s.StatusID=u.StatusID "
-                + "WHERE u.UserID = ? AND r.RoleName='CUSTOMER' AND s.StatusName='ACTIVE' "
+        String userSql = "UPDATE u SET Phone = ?, Email = ? FROM Users u WHERE u.UserID = ? "
                 + "AND NOT EXISTS (SELECT 1 FROM Users x WHERE x.UserID <> u.UserID "
                 + "AND (x.Phone = ? OR (? IS NOT NULL AND x.Email = ?)))";
         String sql = "UPDATE c SET CustomerName = ?, Phone = ?, Email = ?, Address = ? "
-                + "FROM Customers c JOIN Users u ON u.UserID=c.UserID "
-                + "JOIN Roles r ON r.RoleID=u.RoleID JOIN Statuses s ON s.StatusID=u.StatusID "
-                + "WHERE c.UserID = ? AND r.RoleName='CUSTOMER' AND s.StatusName='ACTIVE' "
+                + "FROM Customers c WHERE c.UserID = ? "
                 + "AND NOT EXISTS (SELECT 1 FROM Customers x WHERE x.CustomerID <> c.CustomerID "
                 + "AND (x.Phone = ? OR (? IS NOT NULL AND x.Email = ?))) "
                 + "AND NOT EXISTS (SELECT 1 FROM Users u WHERE u.UserID <> c.UserID "

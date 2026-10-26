@@ -1,5 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ taglib uri="jakarta.tags.core" prefix="c" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!doctype html>
 <html lang="vi">
 <head>
@@ -10,8 +10,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/login.css">
-    <script src="<%= request.getContextPath() %>/assets/js/login.js" defer></script>
+    <link rel="stylesheet" href="<c:url value='/assets/css/login.css'><c:param name='v' value='login-post-20261021' /></c:url>">
+    <script src="<c:url value='/assets/js/login.js'><c:param name='v' value='login-post-20261021' /></c:url>" defer></script>
 </head>
 <body class="login-page">
 <main class="login-layout">
@@ -38,13 +38,11 @@
                 <span class="form-eyebrow">TÀI KHOẢN VINFAST</span>
                 <h1 id="login-title">Đăng nhập</h1>
                 <p class="form-intro">Nhập tên đăng nhập và mật khẩu để tiếp tục.</p>
-                <c:if test="${not empty success}"><p class="form-message" role="status"><c:out value="${success}"/></p></c:if>
-                <c:if test="${not empty error}"><p class="form-message" role="alert"><c:out value="${error}"/></p></c:if>
 
-                <form id="login-form" class="auth-form" action="${pageContext.request.contextPath}/login" method="post">
+                <form id="login-form" class="auth-form" method="post" action="<c:url value='/login' />">
                     <label class="sr-only" for="username">Tên đăng nhập</label>
                     <div class="input-wrap">
-                        <input id="username" name="username" type="text" autocomplete="username" placeholder="TÊN ĐĂNG NHẬP" required maxlength="50">
+                        <input id="username" name="username" type="text" autocomplete="username" placeholder="TÊN ĐĂNG NHẬP" value="<c:out value='${param.username}' />" required maxlength="50">
                         <span class="field-status" aria-hidden="true">✓</span>
                     </div>
 
@@ -59,12 +57,12 @@
                         <button type="button" class="text-button" data-forgot-password>Quên mật khẩu?</button>
                     </div>
 
-                    <p class="form-message" id="form-message" role="status" aria-live="polite" hidden></p>
+                    <p class="form-message${empty error and not empty success ? ' success' : ''}" id="form-message" role="status" aria-live="polite" ${empty error and empty success ? 'hidden' : ''}><c:out value="${not empty error ? error : success}" /></p>
                     <button class="submit-button" type="submit">Đăng nhập <span aria-hidden="true">→</span></button>
                 </form>
 
-                <div class="form-bottom"><span>Bạn chưa có tài khoản?</span><a href="${pageContext.request.contextPath}/register" class="text-button" type="button" data-register>Đăng ký</a></div>
-
+                <div class="form-bottom"><span>Bạn chưa có tài khoản?</span><button class="text-button" type="button" data-register>Đăng ký</button></div>
+                <p class="role-note">Sau khi xác thực, hệ thống sẽ mở giao diện phù hợp với vai trò tài khoản của bạn.</p>
             </div>
 
             <footer class="panel-footer"><span>© VinFast ElectricCarSale</span><span>Đăng nhập an toàn</span></footer>

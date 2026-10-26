@@ -1,20 +1,15 @@
-package com.electriccarsales.service;
+package com.electriccarsales.service.order;
 
-import com.electriccarsales.dao.OrderDAO;
-import com.electriccarsales.dao.OrderStatusHistoryDAO;
+import com.electriccarsales.dao.order.OrderStatusHistoryDAO;
 import com.electriccarsales.model.OrderStatusHistory;
-import java.sql.Timestamp;
 
 public class OrderStatusService {
-    private OrderDAO orderDAO = new OrderDAO();
     private OrderStatusHistoryDAO historyDAO = new OrderStatusHistoryDAO();
 
-    public void updateOrderStatus(int orderId, int statusId) {
-        orderDAO.updateStatus(orderId, statusId);
+    public void updateOrderStatus(int orderId, String newStatus) {
         OrderStatusHistory history = new OrderStatusHistory();
         history.setOrderId(orderId);
-        history.setStatus(String.valueOf(statusId));
-        history.setChangedAt(new Timestamp(System.currentTimeMillis()));
+        history.setStatus(newStatus);
         historyDAO.insert(history);
     }
 }

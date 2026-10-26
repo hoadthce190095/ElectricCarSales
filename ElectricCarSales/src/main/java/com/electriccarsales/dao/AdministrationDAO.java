@@ -14,6 +14,9 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.math.BigDecimal;
 
 public class AdministrationDAO {
     private static final String USERS = "SELECT"
@@ -22,9 +25,25 @@ public class AdministrationDAO {
         + " s.StatusID=u.StatusID LEFT JOIN Employees e ON e.UserID=u.UserID ";
 
     public AdministrationLookupsDTO lookups(Connection connection) throws SQLException {
-        return new AdministrationLookupsDTO(lookup(connection, "SELECT RoleID,RoleName FROM Roles ORDER BY RoleID"),
+        AdministrationLookupsDTO result = new AdministrationLookupsDTO(lookup(connection, "SELECT RoleID,RoleName FROM Roles ORDER BY RoleID"),
             lookup(connection, "SELECT StatusID,StatusName FROM Statuses ORDER BY StatusID"),
             lookup(connection, "SELECT ModelID,ModelName FROM CarModels ORDER BY ModelName"));
+        result.setModelMinPrices(modelMinPrices(connection));
+        return result;
+    }
+
+    public Map<Integer, BigDecimal> modelMinPrices(Connection connection) throws SQLException {
+        Map<Integer, BigDecimal> prices = new LinkedHashMap<>();
+        try (PreparedStatement statement = connection.prepareStatement("SELECT ModelID,MIN(Price) AS MinPrice FROM Cars GROUP BY ModelID");
+            ResultSet rows = statement.executeQuery()) {
+            while (rows.next()) {
+                BigDecimal price = rows.getBigDecimal("MinPrice");
+                if (price != null) {
+                    prices.put(rows.getInt("ModelID"), price);
+                }
+            }
+        }
+        return prices;
     }
 
     private List<LookupDTO> lookup(Connection connection, String sql) throws SQLException {
@@ -155,14 +174,17 @@ public class AdministrationDAO {
     }
 
     public void updateUser(Connection connection, int id, UserRequest input, String hash) throws SQLException {
-        String sql = "UPDATE Users SET Email=?,Phone=?,RoleID=?,StatusID=?" + (hash == null ? "" : ",PasswordHash=?")
+        boolean profile = input.getEmail() != null || input.getPhone() != null;
+        String sql = "UPDATE Users SET RoleID=?,StatusID=?" + (profile ? ",Email=?,Phone=?" : "") + (hash == null ? "" : ",PasswordHash=?")
             + " WHERE UserID=?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, input.getEmail());
-            statement.setString(2, input.getPhone());
-            statement.setInt(3, input.getRoleId());
-            statement.setInt(4, input.getStatusId());
-            int i = 5;
+            statement.setInt(1, input.getRoleId());
+            statement.setInt(2, input.getStatusId());
+            int i = 3;
+            if (profile) {
+                statement.setString(i++, input.getEmail());
+                statement.setString(i++, input.getPhone());
+            }
             if (hash != null) {
                 statement.setString(i++, hash);
             }

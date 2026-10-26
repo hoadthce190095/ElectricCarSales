@@ -5,13 +5,8 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import com.electriccarsales.dao.UserDAO;
-import com.electriccarsales.service.RegistrationEmailService;
-import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
-import java.security.SecureRandom;
-import java.util.Locale;
 import java.util.regex.Pattern;
 
 @WebServlet("/register")
@@ -19,7 +14,6 @@ public class RegisterController extends HttpServlet {
     private static final Pattern USERNAME = Pattern.compile("[A-Za-z0-9_]{5,50}");
     private static final Pattern PHONE = Pattern.compile("0[0-9]{9,10}");
     private static final Pattern EMAIL = Pattern.compile("^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)+$");
-    private static final SecureRandom OTP_RANDOM = new SecureRandom();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -32,7 +26,7 @@ public class RegisterController extends HttpServlet {
         String name = trim(req.getParameter("name"));
         String username = trim(req.getParameter("username"));
         String phone = trim(req.getParameter("phone"));
-        String email = trim(req.getParameter("email")).toLowerCase(Locale.ROOT);
+        String email = trim(req.getParameter("email")).toLowerCase();
         String address = trim(req.getParameter("address"));
         String password = req.getParameter("password");
         String confirm = req.getParameter("confirmPassword");
@@ -47,37 +41,10 @@ public class RegisterController extends HttpServlet {
             return;
         }
 
-        RegistrationEmailService emailService = new RegistrationEmailService();
-        if (!emailService.isConfigured()) {
-            req.setAttribute("error", "Hệ thống chưa cấu hình SMTP gửi OTP. Vui lòng thử lại sau.");
-            req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
-            return;
-        }
-        UserDAO userDAO = new UserDAO();
-        try {
-            if (userDAO.exists(username, phone, email)) {
-                req.setAttribute("error", "Tên đăng nhập, số điện thoại hoặc email đã được sử dụng.");
-                req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
-                return;
-            }
-            String otp = String.format(Locale.ROOT, "%06d", OTP_RANDOM.nextInt(1_000_000));
-            String passwordHash = userDAO.hashPassword(password);
-            int userId = userDAO.registerCustomer(username, passwordHash, email, phone, name, address, otp);
-            HttpSession session = req.getSession(true);
-            session.setAttribute("pendingRegistrationUserId", userId);
-            session.setAttribute("pendingRegistrationEmail", email);
-            if (!emailService.sendRegistrationOtp(email, otp)) {
-                session.setAttribute("otpNotice", "Tài khoản đã được tạo ở trạng thái chờ xác minh, nhưng email chưa gửi được. Hãy yêu cầu gửi lại mã.");
-            }
-            resp.sendRedirect(req.getContextPath() + "/verify-otp");
-        } catch (IllegalArgumentException e) {
-            req.setAttribute("error", e.getMessage());
-            req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
-        } catch (RuntimeException e) {
-            log("Registration failed", e);
-            req.setAttribute("error", "Không thể tạo tài khoản lúc này. Vui lòng thử lại.");
-            req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
-        }
+        // Registration creates an inactive account and is not safe to persist until OTP delivery is available.
+        req.setAttribute("error", "Hệ thống chưa cấu hình kênh gửi OTP nên chưa thể hoàn tất đăng ký. "
+                + "Vui lòng liên hệ quản trị viên.");
+        req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
     }
 
     private String validate(String name, String username, String phone, String email, String password, String confirm) {

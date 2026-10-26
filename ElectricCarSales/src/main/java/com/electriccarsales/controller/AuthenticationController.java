@@ -20,6 +20,8 @@ import com.electriccarsales.model.ApiException;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Base64;
 import java.util.LinkedHashMap;
@@ -102,7 +104,7 @@ public class AuthenticationController extends JsonServlet {
             List<String> permissions = AuthorizationService.permissions(connection, account.getRoleId(),
                 account.getRole());
             ATTEMPTS.remove(remoteAddress);
-            createLoginSession(request, account, permissions);
+            createLoginSession(request, account, permissions, connection);
             writeJson(response, state(request));
         }
     }
@@ -121,7 +123,9 @@ public class AuthenticationController extends JsonServlet {
             PasswordChangeService.ChangeResult changed = passwordChangeService.changePassword(user.getUserId(),
                 session.getAttribute(PasswordSession.ATTRIBUTE), input);
             PASSWORD_ATTEMPTS.remove(attemptKey);
-            createLoginSession(request, changed.account(), changed.permissions());
+            try (Connection connection = DBContext.openConnection()) {
+                createLoginSession(request, changed.account(), changed.permissions(), connection);
+            }
             Map<String, Object> result = state(request);
             result.put("message", "Đã đổi mật khẩu. Các phiên đăng nhập khác đã hết hiệu lực.");
             writeJson(response, result);
@@ -136,7 +140,24 @@ public class AuthenticationController extends JsonServlet {
         }
     }
 
-    private void createLoginSession(HttpServletRequest request, Account account, List<String> permissions) {
+    static void createLoginSession(HttpServletRequest request, Account account, List<String> permissions,
+        Connection connection) throws SQLException {
+        String email;
+        String phone;
+        Integer employeeId;
+        try (PreparedStatement statement = connection.prepareStatement(
+            "SELECT u.Email,u.Phone,e.EmployeeID FROM Users u LEFT JOIN Employees e ON e.UserID=u.UserID"
+                + " WHERE u.UserID=?")) {
+            statement.setInt(1, account.getUserId());
+            try (ResultSet result = statement.executeQuery()) {
+                if (!result.next()) {
+                    throw new ApiException(401, "Tài khoản không còn tồn tại.");
+                }
+                email = result.getString("Email");
+                phone = result.getString("Phone");
+                employeeId = result.getObject("EmployeeID", Integer.class);
+            }
+        }
         HttpSession previous = request.getSession(false);
         if (previous != null) {
             previous.invalidate();
@@ -144,6 +165,16 @@ public class AuthenticationController extends JsonServlet {
         HttpSession session = request.getSession();
         session.setAttribute("user", new SessionUser(account.getUserId(), account.getUsername(), account.getRole()));
         session.setAttribute(PasswordSession.ATTRIBUTE, PasswordSession.fingerprint(account.getPasswordHash()));
+        session.setAttribute("userID", account.getUserId());
+        session.setAttribute("username", account.getUsername());
+        session.setAttribute("roleID", account.getRoleId());
+        session.setAttribute("roleName", account.getRole());
+        session.setAttribute("email", email);
+        session.setAttribute("phone", phone);
+        if (employeeId != null && employeeId > 0) {
+            session.setAttribute("employeeId", employeeId);
+            session.setAttribute("role", account.getRole());
+        }
         request.setAttribute("permissions", permissions);
     }
 

@@ -9,25 +9,21 @@ function modelPrice(vehicle) {
         : money(vehicle.minPrice);
 }
 
+// Metadata giữ nguồn tham khảo; thông số và số xe đang bán vẫn đọc từ database.
 async function loadCatalogueMetadata() {
     if (state.catalogueMetadata) {
         return;
     }
     try {
-        const response = await fetch("../api/catalogue", {
-            credentials: "same-origin",
-            headers: { Accept: "application/json" }
-        });
-        if (!response.ok) {
-            throw new Error(`Không tải được danh mục tham khảo (${response.status}).`);
+        const response = await fetch("../assets/vinfast-catelogue.json", { credentials: "same-origin" });
+        if (response.ok) {
+            const data = await response.json();
+            if (Array.isArray(data.models)) {
+                state.catalogueMetadata = data;
+            }
         }
-        const data = await response.json();
-        if (!Array.isArray(data.models)) {
-            throw new Error("Dữ liệu danh mục từ máy chủ không hợp lệ.");
-        }
-        state.catalogueMetadata = data;
-    } catch (error) {
-        console.error("Không thể tải dữ liệu danh mục từ cơ sở dữ liệu.", error);
+    } catch (_) {
+        /* Danh mục database vẫn sử dụng được nếu file nguồn chưa có. */
     }
 }
 
