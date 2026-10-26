@@ -1,0 +1,2597 @@
+Index: ElectricCarSales/src/main/webapp/common/customer-shell.jspf
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><%@ page pageEncoding=\"UTF-8\" %>\r\n<%\r\nresponse.setCharacterEncoding(\"UTF-8\");\r\nString customerContext = request.getContextPath();\r\nString customerPage = request.getRequestURI().substring(request.getRequestURI().lastIndexOf('/') + 1);\r\nString customerTitle = (String) request.getAttribute(\"customerTitle\");\r\nif (customerTitle == null) customerTitle = \"Tài khoản của tôi\";\r\nString customerEyebrow = (String) request.getAttribute(\"customerEyebrow\");\r\nif (customerEyebrow == null) customerEyebrow = \"VINFAST · ELECTRIC CAR SALE\";\r\n%>\r\n<!doctype html>\r\n<html lang=\"vi\">\r\n    <head>\r\n        <meta charset=\"UTF-8\">\r\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\r\n        <meta name=\"theme-color\" content=\"#101113\">\r\n        <title>\r\n            <%= customerTitle %> · VinFast ElectricCarSale</title>\r\n        <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\r\n        <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\r\n        <link href=\"https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap\" rel=\"stylesheet\">\r\n        <link rel=\"stylesheet\" href=\"<%= customerContext %>/assets/css/customer.css\">\r\n        <link rel=\"stylesheet\" href=\"<%= customerContext %>/assets/css/customer-ai.css\">\r\n        <% if (customerPage.equals(\"payment-demo.jsp\")) { %><link rel=\"stylesheet\" href=\"<%= customerContext %>/assets/css/payment-demo.css\"><% } %>\r\n        <script src=\"<%= customerContext %>/assets/js/customer.js\" defer>\r\n        </script>\r\n    </head>\r\n    <body>\r\n        <div class=\"customer-app\">\r\n            <aside class=\"customer-sidebar\" id=\"customer-sidebar\">\r\n                <a class=\"vf-brand\" href=\"<%= customerContext %>/customer/my-account.jsp\" aria-label=\"VinFast ElectricCarSale\">\r\n                    <span class=\"vf-mark\" aria-hidden=\"true\">V</span>\r\n                    <span class=\"vf-brand-copy\">\r\n                        <strong>VinFast</strong>\r\n                        <small>ELECTRIC CAR SALE</small>\r\n                    </span>\r\n                </a>\r\n                <div class=\"sidebar-caption\">KHÔNG GIAN CỦA BẠN</div>\r\n                <nav class=\"customer-nav\" aria-label=\"Điều hướng khách hàng\">\r\n                    <a class=\"nav-link <%= customerPage.equals(\"my-account.jsp\") ? \"active\" : \"\" %>\" href=\"<%= customerContext %>/customer/my-account.jsp\">\r\n                        <span class=\"nav-icon\">⌂</span>\r\n                        <span>Tổng quan</span>\r\n                    </a>\r\n                    <a class=\"nav-link <%= customerPage.equals(\"cart.jsp\") ? \"active\" : \"\" %>\" href=\"<%= customerContext %>/customer/cart.jsp\">\r\n                        <span class=\"nav-icon\">▢</span>\r\n                        <span>Giỏ hàng</span>\r\n                        <span class=\"nav-count\" data-cart-count>0</span>\r\n                    </a>\r\n                    <div class=\"nav-divider\">\r\n                        <span>GIAO DỊCH CỦA TÔI</span>\r\n                    </div>\r\n                    <a class=\"nav-link <%= customerPage.equals(\"my-orders.jsp\") ? \"active\" : \"\" %>\" href=\"<%= customerContext %>/customer/my-orders.jsp\">\r\n                        <span class=\"nav-icon\">▤</span>\r\n                        <span>Đơn hàng</span>\r\n                    </a>\r\n                    <a class=\"nav-link <%= customerPage.equals(\"my-payments.jsp\") ? \"active\" : \"\" %>\" href=\"<%= customerContext %>/customer/my-payments.jsp\">\r\n                        <span class=\"nav-icon\">◉</span>\r\n                        <span>Thanh toán</span>\r\n                    </a>\r\n                    <a class=\"nav-link <%= customerPage.equals(\"payment-demo.jsp\") ? \"active\" : \"\" %>\" href=\"<%= customerContext %>/customer/payment-demo.jsp\">\r\n                        <span class=\"nav-icon\">▦</span>\r\n                        <span>Demo thanh toán</span>\r\n                    </a>\r\n                    <a class=\"nav-link <%= customerPage.equals(\"my-contracts.jsp\") ? \"active\" : \"\" %>\" href=\"<%= customerContext %>/customer/my-contracts.jsp\">\r\n                        <span class=\"nav-icon\">▧</span>\r\n                        <span>Hợp đồng</span>\r\n                    </a>\r\n                    <a class=\"nav-link <%= customerPage.equals(\"my-invoices.jsp\") ? \"active\" : \"\" %>\" href=\"<%= customerContext %>/customer/my-invoices.jsp\">\r\n                        <span class=\"nav-icon\">▨</span>\r\n                        <span>Hóa đơn</span>\r\n                    </a>\r\n                    <a class=\"nav-link <%= customerPage.equals(\"ai-assistant.jsp\") ? \"active\" : \"\" %>\" href=\"<%= customerContext %>/customer/ai-assistant.jsp\">\r\n                        <span class=\"nav-icon\">✳</span>\r\n                        <span>AI tư vấn xe</span>\r\n                        <span class=\"ai-tag\">AI</span>\r\n                    </a>\r\n                    <div class=\"nav-divider\">\r\n                        <span>TÀI KHOẢN</span>\r\n                    </div>\r\n                    <a class=\"nav-link\" href=\"<%= customerContext %>/customer/my-account.jsp#profile\">\r\n                        <span class=\"nav-icon\">◎</span>\r\n                        <span>Hồ sơ cá nhân</span>\r\n                    </a>\r\n                    <a class=\"nav-link\" href=\"<%= customerContext %>/index.jsp?view=customer#models\">\r\n                        <span class=\"nav-icon\">↗</span>\r\n                        <span>Khám phá xe</span>\r\n                    </a>\r\n                </nav>\r\n                <div class=\"sidebar-help\">\r\n                    <div class=\"help-orbit\">✳</div>\r\n                    <strong>Cần hỗ trợ?</strong>\r\n                    <p>Đội ngũ VinFast luôn sẵn sàng đồng hành cùng bạn.</p>\r\n                    <a href=\"mailto:hotro@electriccarsale.vn\">Liên hệ hỗ trợ <span>↗</span>\r\n                    </a>\r\n                </div>\r\n                <div class=\"sidebar-bottom\">\r\n                    <span class=\"status-dot\"></span> Kết nối an toàn <span class=\"version-label\">· Phiên khách hàng</span>\r\n                </div>\r\n            </aside>\r\n            <div class=\"customer-main\">\r\n                <header class=\"customer-topbar\">\r\n                    <button class=\"mobile-menu\" type=\"button\" aria-label=\"Mở menu\" aria-expanded=\"false\" data-menu-toggle>☰</button>\r\n                    <div class=\"breadcrumb\">\r\n                        <span>VinFast</span>\r\n                        <i>/</i>\r\n                        <strong>\r\n                            <%= customerTitle %>\r\n                        </strong>\r\n                    </div>\r\n                    <div class=\"topbar-actions\">\r\n                        <a class=\"icon-button\" href=\"<%= customerContext %>/customer/cart.jsp\" aria-label=\"Giỏ hàng\">▢<span class=\"cart-dot\" data-cart-count>0</span>\r\n                        </a>\r\n                        <button class=\"icon-button notification-button\" type=\"button\" aria-label=\"Thông báo\" data-notification>♧</button>\r\n                        <span class=\"topbar-divider\"></span>\r\n                        <a class=\"user-chip\" href=\"<%= customerContext %>/customer/my-account.jsp#profile\">\r\n                            <span class=\"user-avatar\">KH</span>\r\n                            <span class=\"user-chip-copy\">\r\n                                <strong>Khách hàng</strong>\r\n                                <small>Tài khoản cá nhân</small>\r\n                            </span>\r\n                            <span class=\"chevron\">⌄</span>\r\n                        </a>\r\n                    </div>\r\n                </header>\r\n                <main class=\"customer-content\">\r\n                    <div class=\"page-heading\">\r\n                        <div>\r\n                            <div class=\"eyebrow\">\r\n                                <span class=\"eyebrow-line\"></span>\r\n                                <%= customerEyebrow %>\r\n                            </div>\r\n                            <h1>\r\n                                <%= customerTitle %>\r\n                            </h1>\r\n                        </div>\r\n                        <div class=\"heading-actions\">\r\n                            <span class=\"secure-label\">\r\n                                <span>✓</span> Thông tin được bảo mật</span>\r\n                        </div>\r\n                    </div>\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/ElectricCarSales/src/main/webapp/common/customer-shell.jspf b/ElectricCarSales/src/main/webapp/common/customer-shell.jspf
+--- a/ElectricCarSales/src/main/webapp/common/customer-shell.jspf	(revision 8f8b98f2737872a34bc3c81cd530b88feaa2f587)
++++ b/ElectricCarSales/src/main/webapp/common/customer-shell.jspf	(date 1792391421748)
+@@ -59,7 +59,7 @@
+                     </a>
+                     <a class="nav-link <%= customerPage.equals("payment-demo.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/payment-demo.jsp">
+                         <span class="nav-icon">▦</span>
+-                        <span>Demo thanh toán</span>
++                        <span>Cổng thanh toán</span>
+                     </a>
+                     <a class="nav-link <%= customerPage.equals("my-contracts.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/my-contracts.jsp">
+                         <span class="nav-icon">▧</span>
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/Employee.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/Employee.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/Employee.java
+new file mode 100644
+--- /dev/null	(date 1792389950453)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/Employee.java	(date 1792389950453)
+@@ -0,0 +1,91 @@
++package com.electriccarsales.model;
++
++public class Employee {
++    private int employeeId;
++    private int userId;
++    private String employeeName;
++    private String phone;
++    private String email;
++    private String username;
++    private String role;
++    private String status;
++
++    public Employee() {
++    }
++
++    public Employee(int employeeId, int userId, String employeeName, String phone, String email, String username,
++        String role, String status) {
++        this.employeeId = employeeId;
++        this.userId = userId;
++        this.employeeName = employeeName;
++        this.phone = phone;
++        this.email = email;
++        this.username = username;
++        this.role = role;
++        this.status = status;
++    }
++
++    public int getEmployeeId() {
++        return employeeId;
++    }
++
++    public void setEmployeeId(int employeeId) {
++        this.employeeId = employeeId;
++    }
++
++    public int getUserId() {
++        return userId;
++    }
++
++    public void setUserId(int userId) {
++        this.userId = userId;
++    }
++
++    public String getEmployeeName() {
++        return employeeName;
++    }
++
++    public void setEmployeeName(String employeeName) {
++        this.employeeName = employeeName;
++    }
++
++    public String getPhone() {
++        return phone;
++    }
++
++    public void setPhone(String phone) {
++        this.phone = phone;
++    }
++
++    public String getEmail() {
++        return email;
++    }
++
++    public void setEmail(String email) {
++        this.email = email;
++    }
++
++    public String getUsername() {
++        return username;
++    }
++
++    public void setUsername(String username) {
++        this.username = username;
++    }
++
++    public String getRole() {
++        return role;
++    }
++
++    public void setRole(String role) {
++        this.role = role;
++    }
++
++    public String getStatus() {
++        return status;
++    }
++
++    public void setStatus(String status) {
++        this.status = status;
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/LoginRequest.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/LoginRequest.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/LoginRequest.java
+new file mode 100644
+--- /dev/null	(date 1792389950476)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/LoginRequest.java	(date 1792389950476)
+@@ -0,0 +1,75 @@
++package com.electriccarsales.model;
++
++public class LoginRequest {
++    private String action;
++    private String username;
++
++    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
++    private String password;
++
++    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
++    private String currentPassword;
++
++    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
++    private String newPassword;
++
++    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
++    private String confirmPassword;
++
++    public LoginRequest() {
++    }
++
++    public LoginRequest(String action, String username, String password) {
++        this.action = action;
++        this.username = username;
++        this.password = password;
++    }
++
++    public String getAction() {
++        return action;
++    }
++
++    public void setAction(String action) {
++        this.action = action;
++    }
++
++    public String getUsername() {
++        return username;
++    }
++
++    public void setUsername(String username) {
++        this.username = username;
++    }
++
++    public String getPassword() {
++        return password;
++    }
++
++    public void setPassword(String password) {
++        this.password = password;
++    }
++
++    public String getCurrentPassword() {
++        return currentPassword;
++    }
++
++    public void setCurrentPassword(String currentPassword) {
++        this.currentPassword = currentPassword;
++    }
++
++    public String getNewPassword() {
++        return newPassword;
++    }
++
++    public void setNewPassword(String newPassword) {
++        this.newPassword = newPassword;
++    }
++
++    public String getConfirmPassword() {
++        return confirmPassword;
++    }
++
++    public void setConfirmPassword(String confirmPassword) {
++        this.confirmPassword = confirmPassword;
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/ReportSummary.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/ReportSummary.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/ReportSummary.java
+new file mode 100644
+--- /dev/null	(date 1792389950577)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/ReportSummary.java	(date 1792389950577)
+@@ -0,0 +1,165 @@
++package com.electriccarsales.model;
++
++import java.math.BigDecimal;
++
++public class ReportSummary {
++    private BigDecimal revenue;
++    private BigDecimal salesAmount;
++    private long vehiclesSold;
++    private long totalOrders;
++    private long completedOrders;
++    private long cancelledOrders;
++    private BigDecimal outstandingAmount;
++    private long completedPayments;
++    private long contracts;
++    private BigDecimal discountAmount;
++    private BigDecimal taxAmount;
++    private long installmentContracts;
++    private BigDecimal overdueAmount;
++    private BigDecimal installmentReceipts;
++    private long inconsistentOrders;
++
++    public ReportSummary() {
++    }
++
++    public ReportSummary(BigDecimal revenue, BigDecimal salesAmount, long vehiclesSold, long totalOrders,
++        long completedOrders, long cancelledOrders, BigDecimal outstandingAmount, long completedPayments,
++        long contracts, BigDecimal discountAmount, BigDecimal taxAmount, long installmentContracts,
++        BigDecimal overdueAmount, BigDecimal installmentReceipts, long inconsistentOrders) {
++        this.revenue = revenue;
++        this.salesAmount = salesAmount;
++        this.vehiclesSold = vehiclesSold;
++        this.totalOrders = totalOrders;
++        this.completedOrders = completedOrders;
++        this.cancelledOrders = cancelledOrders;
++        this.outstandingAmount = outstandingAmount;
++        this.completedPayments = completedPayments;
++        this.contracts = contracts;
++        this.discountAmount = discountAmount;
++        this.taxAmount = taxAmount;
++        this.installmentContracts = installmentContracts;
++        this.overdueAmount = overdueAmount;
++        this.installmentReceipts = installmentReceipts;
++        this.inconsistentOrders = inconsistentOrders;
++    }
++
++    public BigDecimal getRevenue() {
++        return revenue;
++    }
++
++    public void setRevenue(BigDecimal revenue) {
++        this.revenue = revenue;
++    }
++
++    public BigDecimal getSalesAmount() {
++        return salesAmount;
++    }
++
++    public void setSalesAmount(BigDecimal salesAmount) {
++        this.salesAmount = salesAmount;
++    }
++
++    public long getVehiclesSold() {
++        return vehiclesSold;
++    }
++
++    public void setVehiclesSold(long vehiclesSold) {
++        this.vehiclesSold = vehiclesSold;
++    }
++
++    public long getTotalOrders() {
++        return totalOrders;
++    }
++
++    public void setTotalOrders(long totalOrders) {
++        this.totalOrders = totalOrders;
++    }
++
++    public long getCompletedOrders() {
++        return completedOrders;
++    }
++
++    public void setCompletedOrders(long completedOrders) {
++        this.completedOrders = completedOrders;
++    }
++
++    public long getCancelledOrders() {
++        return cancelledOrders;
++    }
++
++    public void setCancelledOrders(long cancelledOrders) {
++        this.cancelledOrders = cancelledOrders;
++    }
++
++    public BigDecimal getOutstandingAmount() {
++        return outstandingAmount;
++    }
++
++    public void setOutstandingAmount(BigDecimal outstandingAmount) {
++        this.outstandingAmount = outstandingAmount;
++    }
++
++    public long getCompletedPayments() {
++        return completedPayments;
++    }
++
++    public void setCompletedPayments(long completedPayments) {
++        this.completedPayments = completedPayments;
++    }
++
++    public long getContracts() {
++        return contracts;
++    }
++
++    public void setContracts(long contracts) {
++        this.contracts = contracts;
++    }
++
++    public BigDecimal getDiscountAmount() {
++        return discountAmount;
++    }
++
++    public void setDiscountAmount(BigDecimal discountAmount) {
++        this.discountAmount = discountAmount;
++    }
++
++    public BigDecimal getTaxAmount() {
++        return taxAmount;
++    }
++
++    public void setTaxAmount(BigDecimal taxAmount) {
++        this.taxAmount = taxAmount;
++    }
++
++    public long getInstallmentContracts() {
++        return installmentContracts;
++    }
++
++    public void setInstallmentContracts(long installmentContracts) {
++        this.installmentContracts = installmentContracts;
++    }
++
++    public BigDecimal getOverdueAmount() {
++        return overdueAmount;
++    }
++
++    public void setOverdueAmount(BigDecimal overdueAmount) {
++        this.overdueAmount = overdueAmount;
++    }
++
++    public BigDecimal getInstallmentReceipts() {
++        return installmentReceipts;
++    }
++
++    public void setInstallmentReceipts(BigDecimal installmentReceipts) {
++        this.installmentReceipts = installmentReceipts;
++    }
++
++    public long getInconsistentOrders() {
++        return inconsistentOrders;
++    }
++
++    public void setInconsistentOrders(long inconsistentOrders) {
++        this.inconsistentOrders = inconsistentOrders;
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/LookupDTO.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/LookupDTO.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/LookupDTO.java
+new file mode 100644
+--- /dev/null	(date 1792389950489)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/LookupDTO.java	(date 1792389950489)
+@@ -0,0 +1,30 @@
++package com.electriccarsales.model;
++
++public class LookupDTO {
++    private int id;
++    private String name;
++
++    public LookupDTO() {
++    }
++
++    public LookupDTO(int id, String name) {
++        this.id = id;
++        this.name = name;
++    }
++
++    public int getId() {
++        return id;
++    }
++
++    public void setId(int id) {
++        this.id = id;
++    }
++
++    public String getName() {
++        return name;
++    }
++
++    public void setName(String name) {
++        this.name = name;
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/ConversationContext.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/ConversationContext.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/ConversationContext.java
+new file mode 100644
+--- /dev/null	(date 1792389950426)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/ConversationContext.java	(date 1792389950426)
+@@ -0,0 +1,45 @@
++package com.electriccarsales.model;
++
++import java.util.List;
++
++/**
++ * Session-local product context; it contains no account or financial data.
++ */
++public class ConversationContext {
++    private String id;
++    private AIConstraints constraints;
++    private List<Integer> modelIds = List.of();
++
++    public ConversationContext() {
++    }
++
++    public ConversationContext(String id, AIConstraints constraints, List<Integer> modelIds) {
++        setId(id);
++        setConstraints(constraints);
++        setModelIds(modelIds);
++    }
++
++    public String getId() {
++        return id;
++    }
++
++    public void setId(String id) {
++        this.id = id;
++    }
++
++    public AIConstraints getConstraints() {
++        return constraints;
++    }
++
++    public void setConstraints(AIConstraints constraints) {
++        this.constraints = constraints;
++    }
++
++    public List<Integer> getModelIds() {
++        return modelIds;
++    }
++
++    public void setModelIds(List<Integer> modelIds) {
++        this.modelIds = modelIds == null ? List.of() : List.copyOf(modelIds);
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/ReportData.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/ReportData.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/ReportData.java
+new file mode 100644
+--- /dev/null	(date 1792389950546)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/ReportData.java	(date 1792389950546)
+@@ -0,0 +1,127 @@
++package com.electriccarsales.model;
++
++import java.time.LocalDateTime;
++import java.util.List;
++import java.util.Map;
++
++public class ReportData {
++    private ReportPeriod period;
++    private LocalDateTime generatedAt;
++    private Map<String, String> definitions;
++    private ReportSummary summary;
++    private List<MonthlyReport> monthly;
++    private List<ModelSalesReport> models;
++    private List<EmployeeSalesReport> employees;
++    private List<StatusTotal> orderStatuses;
++    private List<StatusTotal> paymentStatuses;
++    private List<StatusTotal> inventory;
++    private List<SaleReport> sales;
++
++    public ReportData() {
++    }
++
++    public ReportData(ReportPeriod period, LocalDateTime generatedAt, Map<String, String> definitions,
++        ReportSummary summary, List<MonthlyReport> monthly, List<ModelSalesReport> models,
++        List<EmployeeSalesReport> employees, List<StatusTotal> orderStatuses, List<StatusTotal> paymentStatuses,
++        List<StatusTotal> inventory, List<SaleReport> sales) {
++        this.period = period;
++        this.generatedAt = generatedAt;
++        this.definitions = definitions;
++        this.summary = summary;
++        this.monthly = monthly;
++        this.models = models;
++        this.employees = employees;
++        this.orderStatuses = orderStatuses;
++        this.paymentStatuses = paymentStatuses;
++        this.inventory = inventory;
++        this.sales = sales;
++    }
++
++    public ReportPeriod getPeriod() {
++        return period;
++    }
++
++    public void setPeriod(ReportPeriod period) {
++        this.period = period;
++    }
++
++    public LocalDateTime getGeneratedAt() {
++        return generatedAt;
++    }
++
++    public void setGeneratedAt(LocalDateTime generatedAt) {
++        this.generatedAt = generatedAt;
++    }
++
++    public Map<String, String> getDefinitions() {
++        return definitions;
++    }
++
++    public void setDefinitions(Map<String, String> definitions) {
++        this.definitions = definitions;
++    }
++
++    public ReportSummary getSummary() {
++        return summary;
++    }
++
++    public void setSummary(ReportSummary summary) {
++        this.summary = summary;
++    }
++
++    public List<MonthlyReport> getMonthly() {
++        return monthly;
++    }
++
++    public void setMonthly(List<MonthlyReport> monthly) {
++        this.monthly = monthly;
++    }
++
++    public List<ModelSalesReport> getModels() {
++        return models;
++    }
++
++    public void setModels(List<ModelSalesReport> models) {
++        this.models = models;
++    }
++
++    public List<EmployeeSalesReport> getEmployees() {
++        return employees;
++    }
++
++    public void setEmployees(List<EmployeeSalesReport> employees) {
++        this.employees = employees;
++    }
++
++    public List<StatusTotal> getOrderStatuses() {
++        return orderStatuses;
++    }
++
++    public void setOrderStatuses(List<StatusTotal> orderStatuses) {
++        this.orderStatuses = orderStatuses;
++    }
++
++    public List<StatusTotal> getPaymentStatuses() {
++        return paymentStatuses;
++    }
++
++    public void setPaymentStatuses(List<StatusTotal> paymentStatuses) {
++        this.paymentStatuses = paymentStatuses;
++    }
++
++    public List<StatusTotal> getInventory() {
++        return inventory;
++    }
++
++    public void setInventory(List<StatusTotal> inventory) {
++        this.inventory = inventory;
++    }
++
++    public List<SaleReport> getSales() {
++        return sales;
++    }
++
++    public void setSales(List<SaleReport> sales) {
++        this.sales = sales;
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/PermissionDTO.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/PermissionDTO.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/PermissionDTO.java
+new file mode 100644
+--- /dev/null	(date 1792389950525)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/PermissionDTO.java	(date 1792389950525)
+@@ -0,0 +1,30 @@
++package com.electriccarsales.model;
++
++public class PermissionDTO {
++    private String code;
++    private String description;
++
++    public PermissionDTO() {
++    }
++
++    public PermissionDTO(String code, String description) {
++        this.code = code;
++        this.description = description;
++    }
++
++    public String getCode() {
++        return code;
++    }
++
++    public void setCode(String code) {
++        this.code = code;
++    }
++
++    public String getDescription() {
++        return description;
++    }
++
++    public void setDescription(String description) {
++        this.description = description;
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/PromotionRequest.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/PromotionRequest.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/PromotionRequest.java
+new file mode 100644
+--- /dev/null	(date 1792389950546)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/PromotionRequest.java	(date 1792389950546)
+@@ -0,0 +1,102 @@
++package com.electriccarsales.model;
++
++import java.math.BigDecimal;
++import java.time.LocalDateTime;
++import java.util.List;
++
++public class PromotionRequest {
++    private String promotionName;
++    private String description;
++    private String discountType;
++    private BigDecimal discountValue;
++    private LocalDateTime startDate;
++    private LocalDateTime endDate;
++    private String status;
++    private List<Integer> modelIds;
++
++    public PromotionRequest() {
++    }
++
++    public PromotionRequest(String promotionName, String description, String discountType, BigDecimal discountValue,
++        LocalDateTime startDate, LocalDateTime endDate, String status, List<Integer> modelIds) {
++        this.promotionName = promotionName;
++        this.description = description;
++        this.discountType = discountType;
++        this.discountValue = discountValue;
++        this.startDate = startDate;
++        this.endDate = endDate;
++        this.status = status;
++        this.modelIds = modelIds;
++    }
++
++    public String getPromotionName() {
++        return promotionName;
++    }
++
++    public void setPromotionName(String promotionName) {
++        this.promotionName = promotionName;
++    }
++
++    public String getDescription() {
++        return description;
++    }
++
++    public void setDescription(String description) {
++        this.description = description;
++    }
++
++    public String getDiscountType() {
++        return discountType;
++    }
++
++    public void setDiscountType(String discountType) {
++        this.discountType = discountType;
++    }
++
++    public BigDecimal getDiscountValue() {
++        return discountValue;
++    }
++
++    public void setDiscountValue(BigDecimal discountValue) {
++        this.discountValue = discountValue;
++    }
++
++    public LocalDateTime getStartDate() {
++        return startDate;
++    }
++
++    public void setStartDate(LocalDateTime startDate) {
++        this.startDate = startDate;
++    }
++
++    public LocalDateTime getEndDate() {
++        return endDate;
++    }
++
++    public void setEndDate(LocalDateTime endDate) {
++        this.endDate = endDate;
++    }
++
++    public String getStatus() {
++        return status;
++    }
++
++    public void setStatus(String status) {
++        this.status = status;
++    }
++
++    public List<Integer> getModelIds() {
++        return modelIds;
++    }
++
++    public void setModelIds(List<Integer> modelIds) {
++        this.modelIds = modelIds;
++    }
++
++    @Override
++    public String toString() {
++        return "PromotionRequest[" + "promotionName=" + promotionName + ", description=" + description
++            + ", discountType=" + discountType + ", discountValue=" + discountValue + ", startDate=" + startDate
++            + ", endDate=" + endDate + ", status=" + status + ", modelIds=" + modelIds + "]";
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/AIRequest.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/AIRequest.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/AIRequest.java
+new file mode 100644
+--- /dev/null	(date 1792389950385)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/AIRequest.java	(date 1792389950385)
+@@ -0,0 +1,79 @@
++package com.electriccarsales.model;
++
++import java.math.BigDecimal;
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.List;
++
++/**
++ * Monetary values are VND, range is kilometres; intent may be omitted for text detection.
++ */
++public class AIRequest {
++    private String message;
++    private BigDecimal budget;
++    private BigDecimal minRange;
++    private Integer minSeats;
++    private List<Integer> modelIds;
++    private String intent;
++
++    public AIRequest() {
++    }
++
++    public AIRequest(String message, BigDecimal budget, BigDecimal minRange, Integer minSeats, List<Integer> modelIds,
++        String intent) {
++        setMessage(message);
++        setBudget(budget);
++        setMinRange(minRange);
++        setMinSeats(minSeats);
++        setModelIds(modelIds);
++        setIntent(intent);
++    }
++
++    public String getMessage() {
++        return message;
++    }
++
++    public void setMessage(String message) {
++        this.message = message;
++    }
++
++    public BigDecimal getBudget() {
++        return budget;
++    }
++
++    public void setBudget(BigDecimal budget) {
++        this.budget = budget;
++    }
++
++    public BigDecimal getMinRange() {
++        return minRange;
++    }
++
++    public void setMinRange(BigDecimal minRange) {
++        this.minRange = minRange;
++    }
++
++    public Integer getMinSeats() {
++        return minSeats;
++    }
++
++    public void setMinSeats(Integer minSeats) {
++        this.minSeats = minSeats;
++    }
++
++    public List<Integer> getModelIds() {
++        return modelIds;
++    }
++
++    public void setModelIds(List<Integer> modelIds) {
++        this.modelIds = modelIds == null ? null : Collections.unmodifiableList(new ArrayList<>(modelIds));
++    }
++
++    public String getIntent() {
++        return intent;
++    }
++
++    public void setIntent(String intent) {
++        this.intent = intent;
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/AIConstraints.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/AIConstraints.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/AIConstraints.java
+new file mode 100644
+--- /dev/null	(date 1792389950372)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/AIConstraints.java	(date 1792389950372)
+@@ -0,0 +1,97 @@
++package com.electriccarsales.model;
++
++import java.math.BigDecimal;
++import java.util.List;
++
++/**
++ * Product preferences derived from the current conversation only.
++ */
++public class AIConstraints {
++    private BigDecimal budget;
++    private BigDecimal minRange;
++    private Integer minSeats;
++    private String usagePurpose;
++    private String preferredBrand;
++    private BigDecimal dailyDistanceKm;
++    private List<String> notes = List.of();
++    private List<String> inferredFields = List.of();
++
++    public AIConstraints() {
++    }
++
++    public AIConstraints(BigDecimal budget, BigDecimal minRange, Integer minSeats, String usagePurpose,
++        String preferredBrand, BigDecimal dailyDistanceKm, List<String> notes, List<String> inferredFields) {
++        setBudget(budget);
++        setMinRange(minRange);
++        setMinSeats(minSeats);
++        setUsagePurpose(usagePurpose);
++        setPreferredBrand(preferredBrand);
++        setDailyDistanceKm(dailyDistanceKm);
++        setNotes(notes);
++        setInferredFields(inferredFields);
++    }
++
++    public BigDecimal getBudget() {
++        return budget;
++    }
++
++    public void setBudget(BigDecimal budget) {
++        this.budget = budget;
++    }
++
++    public BigDecimal getMinRange() {
++        return minRange;
++    }
++
++    public void setMinRange(BigDecimal minRange) {
++        this.minRange = minRange;
++    }
++
++    public Integer getMinSeats() {
++        return minSeats;
++    }
++
++    public void setMinSeats(Integer minSeats) {
++        this.minSeats = minSeats;
++    }
++
++    public String getUsagePurpose() {
++        return usagePurpose;
++    }
++
++    public void setUsagePurpose(String usagePurpose) {
++        this.usagePurpose = usagePurpose;
++    }
++
++    public String getPreferredBrand() {
++        return preferredBrand;
++    }
++
++    public void setPreferredBrand(String preferredBrand) {
++        this.preferredBrand = preferredBrand;
++    }
++
++    public BigDecimal getDailyDistanceKm() {
++        return dailyDistanceKm;
++    }
++
++    public void setDailyDistanceKm(BigDecimal dailyDistanceKm) {
++        this.dailyDistanceKm = dailyDistanceKm;
++    }
++
++    public List<String> getNotes() {
++        return notes;
++    }
++
++    public void setNotes(List<String> notes) {
++        this.notes = notes == null ? List.of() : List.copyOf(notes);
++    }
++
++    public List<String> getInferredFields() {
++        return inferredFields;
++    }
++
++    public void setInferredFields(List<String> inferredFields) {
++        this.inferredFields = inferredFields == null ? List.of() : List.copyOf(inferredFields);
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/ReportPeriod.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/ReportPeriod.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/ReportPeriod.java
+new file mode 100644
+--- /dev/null	(date 1792389950567)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/ReportPeriod.java	(date 1792389950567)
+@@ -0,0 +1,32 @@
++package com.electriccarsales.model;
++
++import java.time.LocalDate;
++
++public class ReportPeriod {
++    private LocalDate from;
++    private LocalDate to;
++
++    public ReportPeriod() {
++    }
++
++    public ReportPeriod(LocalDate from, LocalDate to) {
++        this.from = from;
++        this.to = to;
++    }
++
++    public LocalDate getFrom() {
++        return from;
++    }
++
++    public void setFrom(LocalDate from) {
++        this.from = from;
++    }
++
++    public LocalDate getTo() {
++        return to;
++    }
++
++    public void setTo(LocalDate to) {
++        this.to = to;
++    }
++}
+Index: ElectricCarSales/src/main/webapp/customer/my-payments.jsp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><%@ page contentType=\"text/html; charset=UTF-8\" pageEncoding=\"UTF-8\" %>\r\n<%@ taglib prefix=\"c\" uri=\"jakarta.tags.core\" %>\r\n<% request.setAttribute(\"customerTitle\", \"Thanh toán\"); request.setAttribute(\"customerEyebrow\", \"THANH TOÁN AN TOÀN\"); %>\r\n<%@ include file=\"../common/customer-shell.jspf\" %>\r\n<div class=\"page-intro\">\r\n    <p>Xem các khoản đặt cọc, thanh toán còn lại và kỳ trả góp được ghi nhận trong giao dịch của bạn.</p>\r\n</div>\r\n<section class=\"payment-highlight\">\r\n    <div>\r\n        <span class=\"section-overline\">TỔNG QUAN THANH TOÁN</span>\r\n        <h2>Các khoản cần thanh toán</h2>\r\n        <p>Số tiền và hạn thanh toán sẽ được hiển thị theo dữ liệu giao dịch đã xác nhận.</p>\r\n    </div>\r\n    <div class=\"payment-total\">\r\n        <span>Số dư cần thanh toán</span>\r\n        <strong><c:choose><c:when test=\"${not empty outstandingDebt}\"><c:out value=\"${outstandingDebt}\"/> ₫</c:when><c:otherwise>—</c:otherwise></c:choose></strong>\r\n        <small><c:choose><c:when test=\"${not empty orderBalance}\">Công nợ của đơn hàng đang xem</c:when><c:otherwise>Chọn đơn hàng để xem công nợ</c:otherwise></c:choose></small>\r\n    </div>\r\n    <div class=\"highlight-orbit\">₫</div>\r\n</section>\r\n<c:if test=\"${not empty orderBalance}\">\r\n    <section class=\"panel\">\r\n        <h2>Đơn hàng #<c:out value=\"${requestedOrderId}\"/></h2>\r\n        <p>Tổng giá trị: <c:out value=\"${orderBalance.totalAmount}\"/> ₫</p>\r\n        <p>Tiền đặt cọc theo đơn: <c:out value=\"${orderBalance.depositAmount}\"/> ₫</p>\r\n        <p>Đã thanh toán thành công: <c:out value=\"${orderBalance.successfulPayments}\"/> ₫</p>\r\n        <p>Công nợ còn lại: <c:out value=\"${outstandingDebt}\"/> ₫</p>\r\n    </section>\r\n</c:if>\r\n<div class=\"filter-tabs\" role=\"tablist\" aria-label=\"Lọc giao dịch thanh toán\">\r\n    <button class=\"filter-tab active\" type=\"button\" role=\"tab\" aria-selected=\"true\">Tất cả <span>0</span>\r\n    </button>\r\n    <button class=\"filter-tab\" type=\"button\" role=\"tab\" aria-selected=\"false\">Đang chờ <span>0</span>\r\n    </button>\r\n    <button class=\"filter-tab\" type=\"button\" role=\"tab\" aria-selected=\"false\">Đã hoàn tất <span>0</span>\r\n    </button>\r\n</div>\r\n<section class=\"panel table-panel\">\r\n    <div class=\"table-wrap\">\r\n        <table>\r\n            <thead>\r\n                <tr>\r\n                    <th>MÃ THANH TOÁN</th>\r\n                    <th>ĐƠN HÀNG</th>\r\n                    <th>LOẠI KHOẢN</th>\r\n                    <th>NGÀY</th>\r\n                    <th>SỐ TIỀN</th>\r\n                    <th>TRẠNG THÁI</th>\r\n                </tr>\r\n            </thead>\r\n            <tbody>\r\n                <c:choose>\r\n                    <c:when test=\"${not empty paymentHistory}\">\r\n                        <c:forEach var=\"payment\" items=\"${paymentHistory}\">\r\n                            <tr>\r\n                                <td><c:out value=\"${payment.referenceCode}\" default=\"—\"/></td>\r\n                                <td><c:out value=\"${payment.orderID}\"/></td>\r\n                                <td><c:out value=\"${payment.paymentTypeName}\" default=\"—\"/></td>\r\n                                <td><c:out value=\"${payment.paymentDate}\" default=\"—\"/></td>\r\n                                <td><c:out value=\"${payment.paymentAmount}\"/> ₫</td>\r\n                                <td><c:out value=\"${payment.paymentStatusCode}\" default=\"—\"/></td>\r\n                            </tr>\r\n                        </c:forEach>\r\n                    </c:when>\r\n                    <c:otherwise>\r\n                        <tr>\r\n                            <td colspan=\"6\">\r\n                                <div class=\"table-empty\">\r\n                                    <span>◉</span>\r\n                                    <strong>Chưa có khoản thanh toán</strong>\r\n                                    <p>Lịch sử đặt cọc, thanh toán và trả góp sẽ được cập nhật khi phát sinh.</p>\r\n                                </div>\r\n                            </td>\r\n                        </tr>\r\n                    </c:otherwise>\r\n                </c:choose>\r\n            </tbody>\r\n        </table>\r\n    </div>\r\n</section>\r\n<div class=\"info-note\">\r\n    <span>i</span>\r\n    <p>Trạng thái thanh toán phản ánh dữ liệu hệ thống. Với chuyển khoản hoặc thanh toán tiền mặt, nhân viên có thẩm quyền có thể cần xác minh trước khi giao dịch được xác nhận.</p>\r\n</div>\r\n<c:if test=\"${paymentTestMode}\"><div class=\"info-note\"><span>i</span><p>Chế độ kiểm thử đang bật. Khi tích hợp cổng thanh toán, số tiền gửi cổng sẽ được quy đổi riêng; số tiền nghiệp vụ trong lịch sử vẫn giữ nguyên.</p></div></c:if>\r\n<%@ include file=\"../common/customer-shell-end.jspf\" %>\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/ElectricCarSales/src/main/webapp/customer/my-payments.jsp b/ElectricCarSales/src/main/webapp/customer/my-payments.jsp
+--- a/ElectricCarSales/src/main/webapp/customer/my-payments.jsp	(revision 8f8b98f2737872a34bc3c81cd530b88feaa2f587)
++++ b/ElectricCarSales/src/main/webapp/customer/my-payments.jsp	(date 1792391246520)
+@@ -4,6 +4,7 @@
+ <%@ include file="../common/customer-shell.jspf" %>
+ <div class="page-intro">
+     <p>Xem các khoản đặt cọc, thanh toán còn lại và kỳ trả góp được ghi nhận trong giao dịch của bạn.</p>
++    <a class="button button-primary" href="<%= request.getContextPath() %>/customer/payment-demo.jsp">Mở demo cổng thanh toán <span>→</span></a>
+ </div>
+ <section class="payment-highlight">
+     <div>
+@@ -80,7 +81,7 @@
+ </section>
+ <div class="info-note">
+     <span>i</span>
+-    <p>Trạng thái thanh toán phản ánh dữ liệu hệ thống. Với chuyển khoản hoặc thanh toán tiền mặt, nhân viên có thẩm quyền có thể cần xác minh trước khi giao dịch được xác nhận.</p>
++    <p>Giao dịch qua cổng chỉ được ghi nhận thành công sau khi máy chủ xác minh phản hồi hợp lệ của nhà cung cấp. Việc quay lại website không tự xác nhận đã thanh toán.</p>
+ </div>
+ <c:if test="${paymentTestMode}"><div class="info-note"><span>i</span><p>Chế độ kiểm thử đang bật. Khi tích hợp cổng thanh toán, số tiền gửi cổng sẽ được quy đổi riêng; số tiền nghiệp vụ trong lịch sử vẫn giữ nguyên.</p></div></c:if>
+ <%@ include file="../common/customer-shell-end.jspf" %>
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/CatalogueResponse.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/CatalogueResponse.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/CatalogueResponse.java
+new file mode 100644
+--- /dev/null	(date 1792389950412)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/CatalogueResponse.java	(date 1792389950412)
+@@ -0,0 +1,35 @@
++package com.electriccarsales.model;
++
++import java.util.List;
++
++/**
++ * Public catalogue response for the assistant screen.
++ */
++public class CatalogueResponse {
++    private String mode;
++    private List<VehicleModel> models = List.of();
++
++    public CatalogueResponse() {
++    }
++
++    public CatalogueResponse(String mode, List<VehicleModel> models) {
++        setMode(mode);
++        setModels(models);
++    }
++
++    public String getMode() {
++        return mode;
++    }
++
++    public void setMode(String mode) {
++        this.mode = mode;
++    }
++
++    public List<VehicleModel> getModels() {
++        return models;
++    }
++
++    public void setModels(List<VehicleModel> models) {
++        this.models = models == null ? List.of() : List.copyOf(models);
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/ModelSalesReport.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/ModelSalesReport.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/ModelSalesReport.java
+new file mode 100644
+--- /dev/null	(date 1792389950496)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/ModelSalesReport.java	(date 1792389950496)
+@@ -0,0 +1,52 @@
++package com.electriccarsales.model;
++
++import java.math.BigDecimal;
++
++public class ModelSalesReport {
++    private int modelId;
++    private String modelName;
++    private long vehiclesSold;
++    private BigDecimal salesAmount;
++
++    public ModelSalesReport() {
++    }
++
++    public ModelSalesReport(int modelId, String modelName, long vehiclesSold, BigDecimal salesAmount) {
++        this.modelId = modelId;
++        this.modelName = modelName;
++        this.vehiclesSold = vehiclesSold;
++        this.salesAmount = salesAmount;
++    }
++
++    public int getModelId() {
++        return modelId;
++    }
++
++    public void setModelId(int modelId) {
++        this.modelId = modelId;
++    }
++
++    public String getModelName() {
++        return modelName;
++    }
++
++    public void setModelName(String modelName) {
++        this.modelName = modelName;
++    }
++
++    public long getVehiclesSold() {
++        return vehiclesSold;
++    }
++
++    public void setVehiclesSold(long vehiclesSold) {
++        this.vehiclesSold = vehiclesSold;
++    }
++
++    public BigDecimal getSalesAmount() {
++        return salesAmount;
++    }
++
++    public void setSalesAmount(BigDecimal salesAmount) {
++        this.salesAmount = salesAmount;
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/SystemConfiguration.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/SystemConfiguration.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/SystemConfiguration.java
+new file mode 100644
+--- /dev/null	(date 1792389950658)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/SystemConfiguration.java	(date 1792389950658)
+@@ -0,0 +1,103 @@
++package com.electriccarsales.model;
++
++import java.time.LocalDateTime;
++
++public class SystemConfiguration {
++    private String key;
++    private String name;
++    private String value;
++    private String type;
++    private int min;
++    private int max;
++    private String description;
++    private Integer updatedBy;
++    private LocalDateTime updatedDate;
++
++    public SystemConfiguration() {
++    }
++
++    public SystemConfiguration(String key, String name, String value, String type, int min, int max, String description,
++        Integer updatedBy, LocalDateTime updatedDate) {
++        this.key = key;
++        this.name = name;
++        this.value = value;
++        this.type = type;
++        this.min = min;
++        this.max = max;
++        this.description = description;
++        this.updatedBy = updatedBy;
++        this.updatedDate = updatedDate;
++    }
++
++    public String getKey() {
++        return key;
++    }
++
++    public void setKey(String key) {
++        this.key = key;
++    }
++
++    public String getName() {
++        return name;
++    }
++
++    public void setName(String name) {
++        this.name = name;
++    }
++
++    public String getValue() {
++        return value;
++    }
++
++    public void setValue(String value) {
++        this.value = value;
++    }
++
++    public String getType() {
++        return type;
++    }
++
++    public void setType(String type) {
++        this.type = type;
++    }
++
++    public int getMin() {
++        return min;
++    }
++
++    public void setMin(int min) {
++        this.min = min;
++    }
++
++    public int getMax() {
++        return max;
++    }
++
++    public void setMax(int max) {
++        this.max = max;
++    }
++
++    public String getDescription() {
++        return description;
++    }
++
++    public void setDescription(String description) {
++        this.description = description;
++    }
++
++    public Integer getUpdatedBy() {
++        return updatedBy;
++    }
++
++    public void setUpdatedBy(Integer updatedBy) {
++        this.updatedBy = updatedBy;
++    }
++
++    public LocalDateTime getUpdatedDate() {
++        return updatedDate;
++    }
++
++    public void setUpdatedDate(LocalDateTime updatedDate) {
++        this.updatedDate = updatedDate;
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/CreateRoleRequest.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/CreateRoleRequest.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/CreateRoleRequest.java
+new file mode 100644
+--- /dev/null	(date 1792389950443)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/CreateRoleRequest.java	(date 1792389950443)
+@@ -0,0 +1,42 @@
++package com.electriccarsales.model;
++
++import java.util.List;
++
++public class CreateRoleRequest {
++    private String roleName;
++    private List<String> permissions;
++    private Integer cloneRoleId;
++
++    public CreateRoleRequest() {
++    }
++
++    public CreateRoleRequest(String roleName, List<String> permissions, Integer cloneRoleId) {
++        this.roleName = roleName;
++        this.permissions = permissions;
++        this.cloneRoleId = cloneRoleId;
++    }
++
++    public String getRoleName() {
++        return roleName;
++    }
++
++    public void setRoleName(String roleName) {
++        this.roleName = roleName;
++    }
++
++    public List<String> getPermissions() {
++        return permissions;
++    }
++
++    public void setPermissions(List<String> permissions) {
++        this.permissions = permissions;
++    }
++
++    public Integer getCloneRoleId() {
++        return cloneRoleId;
++    }
++
++    public void setCloneRoleId(Integer cloneRoleId) {
++        this.cloneRoleId = cloneRoleId;
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/SessionUser.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/SessionUser.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/SessionUser.java
+new file mode 100644
+--- /dev/null	(date 1792389950636)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/SessionUser.java	(date 1792389950636)
+@@ -0,0 +1,44 @@
++package com.electriccarsales.model;
++
++import java.io.Serializable;
++
++public class SessionUser implements Serializable {
++    private static final long serialVersionUID = 1L;
++
++    private int userId;
++    private String username;
++    private String role;
++
++    public SessionUser() {
++    }
++
++    public SessionUser(int userId, String username, String role) {
++        this.userId = userId;
++        this.username = username;
++        this.role = role;
++    }
++
++    public int getUserId() {
++        return userId;
++    }
++
++    public void setUserId(int userId) {
++        this.userId = userId;
++    }
++
++    public String getUsername() {
++        return username;
++    }
++
++    public void setUsername(String username) {
++        this.username = username;
++    }
++
++    public String getRole() {
++        return role;
++    }
++
++    public void setRole(String role) {
++        this.role = role;
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/SystemLog.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/SystemLog.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/SystemLog.java
+new file mode 100644
+--- /dev/null	(date 1792389950667)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/SystemLog.java	(date 1792389950667)
+@@ -0,0 +1,93 @@
++package com.electriccarsales.model;
++
++import java.time.LocalDateTime;
++
++public class SystemLog {
++    private long logId;
++    private Integer userId;
++    private String username;
++    private String action;
++    private String targetType;
++    private String targetId;
++    private String detail;
++    private LocalDateTime createdDate;
++
++    public SystemLog() {
++    }
++
++    public SystemLog(long logId, Integer userId, String username, String action, String targetType, String targetId,
++        String detail, LocalDateTime createdDate) {
++        this.logId = logId;
++        this.userId = userId;
++        this.username = username;
++        this.action = action;
++        this.targetType = targetType;
++        this.targetId = targetId;
++        this.detail = detail;
++        this.createdDate = createdDate;
++    }
++
++    public long getLogId() {
++        return logId;
++    }
++
++    public void setLogId(long logId) {
++        this.logId = logId;
++    }
++
++    public Integer getUserId() {
++        return userId;
++    }
++
++    public void setUserId(Integer userId) {
++        this.userId = userId;
++    }
++
++    public String getUsername() {
++        return username;
++    }
++
++    public void setUsername(String username) {
++        this.username = username;
++    }
++
++    public String getAction() {
++        return action;
++    }
++
++    public void setAction(String action) {
++        this.action = action;
++    }
++
++    public String getTargetType() {
++        return targetType;
++    }
++
++    public void setTargetType(String targetType) {
++        this.targetType = targetType;
++    }
++
++    public String getTargetId() {
++        return targetId;
++    }
++
++    public void setTargetId(String targetId) {
++        this.targetId = targetId;
++    }
++
++    public String getDetail() {
++        return detail;
++    }
++
++    public void setDetail(String detail) {
++        this.detail = detail;
++    }
++
++    public LocalDateTime getCreatedDate() {
++        return createdDate;
++    }
++
++    public void setCreatedDate(LocalDateTime createdDate) {
++        this.createdDate = createdDate;
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/VehicleSpecifications.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/VehicleSpecifications.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/VehicleSpecifications.java
+new file mode 100644
+--- /dev/null	(date 1792389950719)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/VehicleSpecifications.java	(date 1792389950719)
+@@ -0,0 +1,127 @@
++package com.electriccarsales.model;
++
++import java.math.BigDecimal;
++
++/**
++ * Verified specification fields from the vehicle catalogue; unavailable values remain null.
++ */
++public class VehicleSpecifications {
++    private String dimensions;
++    private BigDecimal batteryCapacity;
++    private String wheelType;
++    private BigDecimal energyConsumption;
++    private BigDecimal rangeKM;
++    private BigDecimal maxPower;
++    private BigDecimal maxSpeed;
++    private Integer seatingCapacity;
++    private BigDecimal chargingTime;
++    private Integer airbagCount;
++    private String description;
++
++    public VehicleSpecifications() {
++    }
++
++    public VehicleSpecifications(String dimensions, BigDecimal batteryCapacity, String wheelType,
++        BigDecimal energyConsumption, BigDecimal rangeKM, BigDecimal maxPower, BigDecimal maxSpeed,
++        Integer seatingCapacity, BigDecimal chargingTime, Integer airbagCount, String description) {
++        setDimensions(dimensions);
++        setBatteryCapacity(batteryCapacity);
++        setWheelType(wheelType);
++        setEnergyConsumption(energyConsumption);
++        setRangeKM(rangeKM);
++        setMaxPower(maxPower);
++        setMaxSpeed(maxSpeed);
++        setSeatingCapacity(seatingCapacity);
++        setChargingTime(chargingTime);
++        setAirbagCount(airbagCount);
++        setDescription(description);
++    }
++
++    public String getDimensions() {
++        return dimensions;
++    }
++
++    public void setDimensions(String dimensions) {
++        this.dimensions = dimensions;
++    }
++
++    public BigDecimal getBatteryCapacity() {
++        return batteryCapacity;
++    }
++
++    public void setBatteryCapacity(BigDecimal batteryCapacity) {
++        this.batteryCapacity = batteryCapacity;
++    }
++
++    public String getWheelType() {
++        return wheelType;
++    }
++
++    public void setWheelType(String wheelType) {
++        this.wheelType = wheelType;
++    }
++
++    public BigDecimal getEnergyConsumption() {
++        return energyConsumption;
++    }
++
++    public void setEnergyConsumption(BigDecimal energyConsumption) {
++        this.energyConsumption = energyConsumption;
++    }
++
++    public BigDecimal getRangeKM() {
++        return rangeKM;
++    }
++
++    public void setRangeKM(BigDecimal rangeKM) {
++        this.rangeKM = rangeKM;
++    }
++
++    public BigDecimal getMaxPower() {
++        return maxPower;
++    }
++
++    public void setMaxPower(BigDecimal maxPower) {
++        this.maxPower = maxPower;
++    }
++
++    public BigDecimal getMaxSpeed() {
++        return maxSpeed;
++    }
++
++    public void setMaxSpeed(BigDecimal maxSpeed) {
++        this.maxSpeed = maxSpeed;
++    }
++
++    public Integer getSeatingCapacity() {
++        return seatingCapacity;
++    }
++
++    public void setSeatingCapacity(Integer seatingCapacity) {
++        this.seatingCapacity = seatingCapacity;
++    }
++
++    public BigDecimal getChargingTime() {
++        return chargingTime;
++    }
++
++    public void setChargingTime(BigDecimal chargingTime) {
++        this.chargingTime = chargingTime;
++    }
++
++    public Integer getAirbagCount() {
++        return airbagCount;
++    }
++
++    public void setAirbagCount(Integer airbagCount) {
++        this.airbagCount = airbagCount;
++    }
++
++    public String getDescription() {
++        return description;
++    }
++
++    public void setDescription(String description) {
++        this.description = description;
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/AdminSetupRequest.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/AdminSetupRequest.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/AdminSetupRequest.java
+new file mode 100644
+--- /dev/null	(date 1792389950351)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/AdminSetupRequest.java	(date 1792389950351)
+@@ -0,0 +1,34 @@
++package com.electriccarsales.model;
++
++public class AdminSetupRequest {
++    private String username;
++    private String password;
++    private String confirmPassword;
++
++    public AdminSetupRequest() {
++    }
++
++    public String getUsername() {
++        return username;
++    }
++
++    public void setUsername(String username) {
++        this.username = username;
++    }
++
++    public String getPassword() {
++        return password;
++    }
++
++    public void setPassword(String password) {
++        this.password = password;
++    }
++
++    public String getConfirmPassword() {
++        return confirmPassword;
++    }
++
++    public void setConfirmPassword(String confirmPassword) {
++        this.confirmPassword = confirmPassword;
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/StatusTotal.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/StatusTotal.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/StatusTotal.java
+new file mode 100644
+--- /dev/null	(date 1792389950648)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/StatusTotal.java	(date 1792389950648)
+@@ -0,0 +1,42 @@
++package com.electriccarsales.model;
++
++import java.math.BigDecimal;
++
++public class StatusTotal {
++    private String status;
++    private long count;
++    private BigDecimal amount;
++
++    public StatusTotal() {
++    }
++
++    public StatusTotal(String status, long count, BigDecimal amount) {
++        this.status = status;
++        this.count = count;
++        this.amount = amount;
++    }
++
++    public String getStatus() {
++        return status;
++    }
++
++    public void setStatus(String status) {
++        this.status = status;
++    }
++
++    public long getCount() {
++        return count;
++    }
++
++    public void setCount(long count) {
++        this.count = count;
++    }
++
++    public BigDecimal getAmount() {
++        return amount;
++    }
++
++    public void setAmount(BigDecimal amount) {
++        this.amount = amount;
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/VehicleModel.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/VehicleModel.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/VehicleModel.java
+new file mode 100644
+--- /dev/null	(date 1792389950702)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/VehicleModel.java	(date 1792389950702)
+@@ -0,0 +1,128 @@
++package com.electriccarsales.model;
++
++import java.math.BigDecimal;
++import java.util.List;
++
++/**
++ * Public catalogue projection. It excludes vehicle identifiers and business records.
++ */
++public class VehicleModel {
++    private int modelId;
++    private String modelName;
++    private String carLineName;
++    private String brandName;
++    private String description;
++    private BigDecimal minPrice;
++    private BigDecimal maxPrice;
++    private int availableCars;
++    private List<String> versions = List.of();
++    private List<String> colors = List.of();
++    private VehicleSpecifications specifications = new VehicleSpecifications();
++
++    public VehicleModel() {
++    }
++
++    public VehicleModel(int modelId, String modelName, String carLineName, String brandName, String description,
++        BigDecimal minPrice, BigDecimal maxPrice, int availableCars, List<String> versions, List<String> colors,
++        VehicleSpecifications specifications) {
++        setModelId(modelId);
++        setModelName(modelName);
++        setCarLineName(carLineName);
++        setBrandName(brandName);
++        setDescription(description);
++        setMinPrice(minPrice);
++        setMaxPrice(maxPrice);
++        setAvailableCars(availableCars);
++        setVersions(versions);
++        setColors(colors);
++        setSpecifications(specifications);
++    }
++
++    public int getModelId() {
++        return modelId;
++    }
++
++    public void setModelId(int modelId) {
++        this.modelId = modelId;
++    }
++
++    public String getModelName() {
++        return modelName;
++    }
++
++    public void setModelName(String modelName) {
++        this.modelName = modelName;
++    }
++
++    public String getCarLineName() {
++        return carLineName;
++    }
++
++    public void setCarLineName(String carLineName) {
++        this.carLineName = carLineName;
++    }
++
++    public String getBrandName() {
++        return brandName;
++    }
++
++    public void setBrandName(String brandName) {
++        this.brandName = brandName;
++    }
++
++    public String getDescription() {
++        return description;
++    }
++
++    public void setDescription(String description) {
++        this.description = description;
++    }
++
++    public BigDecimal getMinPrice() {
++        return minPrice;
++    }
++
++    public void setMinPrice(BigDecimal minPrice) {
++        this.minPrice = minPrice;
++    }
++
++    public BigDecimal getMaxPrice() {
++        return maxPrice;
++    }
++
++    public void setMaxPrice(BigDecimal maxPrice) {
++        this.maxPrice = maxPrice;
++    }
++
++    public int getAvailableCars() {
++        return availableCars;
++    }
++
++    public void setAvailableCars(int availableCars) {
++        this.availableCars = availableCars;
++    }
++
++    public List<String> getVersions() {
++        return versions;
++    }
++
++    public void setVersions(List<String> versions) {
++        this.versions = versions == null ? List.of() : List.copyOf(versions);
++    }
++
++    public List<String> getColors() {
++        return colors;
++    }
++
++    public void setColors(List<String> colors) {
++        this.colors = colors == null ? List.of() : List.copyOf(colors);
++    }
++
++    public VehicleSpecifications getSpecifications() {
++        return specifications;
++    }
++
++    public void setSpecifications(VehicleSpecifications specifications) {
++        this.specifications = specifications == null ? new VehicleSpecifications() : specifications;
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/RolesResponse.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/RolesResponse.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/RolesResponse.java
+new file mode 100644
+--- /dev/null	(date 1792389950597)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/RolesResponse.java	(date 1792389950597)
+@@ -0,0 +1,32 @@
++package com.electriccarsales.model;
++
++import java.util.List;
++
++public class RolesResponse {
++    private List<Role> roles;
++    private List<PermissionDTO> permissions;
++
++    public RolesResponse() {
++    }
++
++    public RolesResponse(List<Role> roles, List<PermissionDTO> permissions) {
++        this.roles = roles;
++        this.permissions = permissions;
++    }
++
++    public List<Role> getRoles() {
++        return roles;
++    }
++
++    public void setRoles(List<Role> roles) {
++        this.roles = roles;
++    }
++
++    public List<PermissionDTO> getPermissions() {
++        return permissions;
++    }
++
++    public void setPermissions(List<PermissionDTO> permissions) {
++        this.permissions = permissions;
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/ConfigurationRequest.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/ConfigurationRequest.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/ConfigurationRequest.java
+new file mode 100644
+--- /dev/null	(date 1792389950422)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/ConfigurationRequest.java	(date 1792389950422)
+@@ -0,0 +1,20 @@
++package com.electriccarsales.model;
++
++public class ConfigurationRequest {
++    private String value;
++
++    public ConfigurationRequest() {
++    }
++
++    public ConfigurationRequest(String value) {
++        this.value = value;
++    }
++
++    public String getValue() {
++        return value;
++    }
++
++    public void setValue(String value) {
++        this.value = value;
++    }
++}
+Index: ElectricCarSales/src/main/java/com/electriccarsales/model/VehicleRecommendation.java
+===================================================================
+diff --git a/ElectricCarSales/src/main/java/com/electriccarsales/model/VehicleRecommendation.java b/ElectricCarSales/src/main/java/com/electriccarsales/model/VehicleRecommendation.java
+new file mode 100644
+--- /dev/null	(date 1792389950708)
++++ b/ElectricCarSales/src/main/java/com/electriccarsales/model/VehicleRecommendation.java	(date 1792389950708)
+@@ -0,0 +1,35 @@
++package com.electriccarsales.model;
++
++import java.util.List;
++
++/**
++ * A catalogue recommendation and the product criteria supporting it.
++ */
++public class VehicleRecommendation {
++    private VehicleModel vehicle;
++    private List<String> reasons = List.of();
++
++    public VehicleRecommendation() {
++    }
++
++    public VehicleRecommendation(VehicleModel vehicle, List<String> reasons) {
++        setVehicle(vehicle);
++        setReasons(reasons);
++    }
++
++    public VehicleModel getVehicle() {
++        return vehicle;
++    }
++
++    public void setVehicle(VehicleModel vehicle) {
++        this.vehicle = vehicle;
++    }
++
++    public List<String> getReasons() {
++        return reasons;
++    }
++
++    public void setReasons(List<String> reasons) {
++        this.reasons = reasons == null ? List.of() : List.copyOf(reasons);
++    }
++}
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"ArtifactsWorkspaceSettings\">\r\n    <artifacts-to-build>\r\n      <artifact name=\"ElectricCarSales:war exploded\" />\r\n    </artifacts-to-build>\r\n  </component>\r\n  <component name=\"AutoImportSettings\">\r\n    <option name=\"autoReloadType\" value=\"SELECTIVE\" />\r\n  </component>\r\n  <component name=\"ChangeListManager\">\r\n    <list default=\"true\" id=\"740c799d-e83a-430a-aca5-6eb08e4227f1\" name=\"Changes\" comment=\"\">\r\n      <change beforePath=\"$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/PaymentController.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/PaymentController.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/PaymentDAO.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/PaymentDAO.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Payment.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Payment.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/PaymentService.java\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/PaymentService.java\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/ElectricCarSales/src/main/webapp/common/customer-shell.jspf\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/ElectricCarSales/src/main/webapp/common/customer-shell.jspf\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-contracts.jsp\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-contracts.jsp\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-payments.jsp\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-payments.jsp\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/ElectricCarSalesDB.sql\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/ElectricCarSalesDB.sql\" afterDir=\"false\" />\r\n    </list>\r\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\r\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\r\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\r\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\r\n  </component>\r\n  <component name=\"FileTemplateManagerImpl\">\r\n    <option name=\"RECENT_TEMPLATES\">\r\n      <list>\r\n        <option value=\"Class\" />\r\n      </list>\r\n    </option>\r\n  </component>\r\n  <component name=\"Git.Settings\">\r\n    <option name=\"RECENT_BRANCH_BY_REPOSITORY\">\r\n      <map>\r\n        <entry key=\"$PROJECT_DIR$\" value=\"main\" />\r\n      </map>\r\n    </option>\r\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\r\n  </component>\r\n  <component name=\"GitHubPullRequestSearchHistory\">{\r\n  &quot;lastFilter&quot;: {\r\n    &quot;state&quot;: &quot;OPEN&quot;,\r\n    &quot;assignee&quot;: &quot;datdt05&quot;\r\n  }\r\n}</component>\r\n  <component name=\"GithubPullRequestsUISettings\">{\r\n  &quot;selectedUrlAndAccountId&quot;: {\r\n    &quot;url&quot;: &quot;https://github.com/hoadthce190095/ElectricCarSales&quot;,\r\n    &quot;accountId&quot;: &quot;bbe44fc7-ea96-46e6-8307-822e5bc0fb0f&quot;\r\n  }\r\n}</component>\r\n  <component name=\"LogFilters\">\r\n    <option name=\"FILTER_ERRORS\" value=\"false\" />\r\n    <option name=\"FILTER_WARNINGS\" value=\"false\" />\r\n    <option name=\"FILTER_INFO\" value=\"true\" />\r\n    <option name=\"FILTER_DEBUG\" value=\"true\" />\r\n    <option name=\"CUSTOM_FILTER\" />\r\n  </component>\r\n  <component name=\"NextEditCompletionFeaturesState\">\r\n    <decayedCancelled>\r\n      <entry key=\"MS100\" value=\"1.0\" />\r\n      <entry key=\"MS500\" value=\"1.0000000007705991\" />\r\n      <entry key=\"S2\" value=\"1.0197338507617304\" />\r\n      <entry key=\"S5\" value=\"1.6164482185699607\" />\r\n      <entry key=\"S10\" value=\"3.006808581076603\" />\r\n      <entry key=\"S30\" value=\"5.92830589261342\" />\r\n      <entry key=\"S60\" value=\"7.702123550763976\" />\r\n      <entry key=\"M2\" value=\"9.135327344890912\" />\r\n      <entry key=\"M5\" value=\"10.500899327289611\" />\r\n      <entry key=\"M10\" value=\"11.253979690924519\" />\r\n      <entry key=\"M15\" value=\"11.631378996995199\" />\r\n      <entry key=\"M30\" value=\"12.164424677136182\" />\r\n      <entry key=\"H1\" value=\"12.53049110428127\" />\r\n      <entry key=\"H2\" value=\"12.749975095450713\" />\r\n      <entry key=\"H4\" value=\"12.870828612429937\" />\r\n      <entry key=\"D1\" value=\"12.97786222531102\" />\r\n      <entry key=\"W1\" value=\"12.996822110661746\" />\r\n    </decayedCancelled>\r\n    <decayedSelected>\r\n      <entry key=\"MS100\" value=\"0.0\" />\r\n      <entry key=\"MS500\" value=\"0.0\" />\r\n      <entry key=\"S2\" value=\"0.0\" />\r\n      <entry key=\"S5\" value=\"0.0\" />\r\n      <entry key=\"S10\" value=\"0.0\" />\r\n      <entry key=\"S30\" value=\"0.0\" />\r\n      <entry key=\"S60\" value=\"0.0\" />\r\n      <entry key=\"M2\" value=\"0.0\" />\r\n      <entry key=\"M5\" value=\"0.0\" />\r\n      <entry key=\"M10\" value=\"0.0\" />\r\n      <entry key=\"M15\" value=\"0.0\" />\r\n      <entry key=\"M30\" value=\"0.0\" />\r\n      <entry key=\"H1\" value=\"0.0\" />\r\n      <entry key=\"H2\" value=\"0.0\" />\r\n      <entry key=\"H4\" value=\"0.0\" />\r\n      <entry key=\"D1\" value=\"0.0\" />\r\n      <entry key=\"W1\" value=\"0.0\" />\r\n    </decayedSelected>\r\n    <decayedShown>\r\n      <entry key=\"MS100\" value=\"0.9592641193252643\" />\r\n      <entry key=\"MS500\" value=\"0.9917167314587368\" />\r\n      <entry key=\"S2\" value=\"1.0169764336534157\" />\r\n      <entry key=\"S5\" value=\"1.60587120229114\" />\r\n      <entry key=\"S10\" value=\"2.9902128452627785\" />\r\n      <entry key=\"S30\" value=\"5.915834044042582\" />\r\n      <entry key=\"S60\" value=\"7.6942849653682925\" />\r\n      <entry key=\"M2\" value=\"9.130858285808488\" />\r\n      <entry key=\"M5\" value=\"10.49891721086371\" />\r\n      <entry key=\"M10\" value=\"11.252936234337417\" />\r\n      <entry key=\"M15\" value=\"11.630666198547013\" />\r\n      <entry key=\"M30\" value=\"12.164056368695073\" />\r\n      <entry key=\"H1\" value=\"12.530302917241158\" />\r\n      <entry key=\"H2\" value=\"12.749879801343955\" />\r\n      <entry key=\"H4\" value=\"12.870780635964724\" />\r\n      <entry key=\"D1\" value=\"12.977854180709322\" />\r\n      <entry key=\"W1\" value=\"12.99682096020631\" />\r\n    </decayedShown>\r\n  </component>\r\n  <component name=\"ProjectColorInfo\">{\r\n  &quot;associatedIndex&quot;: 4,\r\n  &quot;fromUser&quot;: false\r\n}</component>\r\n  <component name=\"ProjectId\" id=\"3KYYXWT2WqrTsWznMhbo5jjEliq\" />\r\n  <component name=\"ProjectViewState\">\r\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\r\n    <option name=\"showLibraryContents\" value=\"true\" />\r\n  </component>\r\n  <component name=\"PropertiesComponent\"><![CDATA[{\r\n  \"keyToString\": {\r\n    \"RunOnceActivity.ShowReadmeOnStart\": \"true\",\r\n    \"RunOnceActivity.git.unshallow\": \"true\",\r\n    \"RunOnceActivity.typescript.service.memoryLimit.init\": \"true\",\r\n    \"TomEE Server.ElectricCarSale.executor\": \"Run\",\r\n    \"TomEE Server.TomEE 10.1.56.executor\": \"Run\",\r\n    \"TomEE Server.Unnamed.executor\": \"Run\",\r\n    \"Tomcat Server.Tomcat 10.1.56.executor\": \"Run\",\r\n    \"codeWithMe.voiceChat.enabledByDefault\": \"false\",\r\n    \"com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1\": \"true\",\r\n    \"git-widget-placeholder\": \"tandat/payment\",\r\n    \"junie.onboarding.icon.badge.shown\": \"true\",\r\n    \"kotlin-language-version-configured\": \"true\",\r\n    \"node.js.detected.package.eslint\": \"true\",\r\n    \"node.js.detected.package.jshint\": \"true\",\r\n    \"node.js.detected.package.tslint\": \"true\",\r\n    \"node.js.selected.package.eslint\": \"(autodetect)\",\r\n    \"node.js.selected.package.jshint\": \"\",\r\n    \"node.js.selected.package.tslint\": \"(autodetect)\",\r\n    \"nodejs_package_manager_path\": \"npm\",\r\n    \"project.structure.last.edited\": \"Project\",\r\n    \"project.structure.proportion\": \"0.0\",\r\n    \"project.structure.side.proportion\": \"0.0\",\r\n    \"run.code.analysis.last.selected.profile\": \"pProject Default\",\r\n    \"settings.editor.selected.configurable\": \"preferences.pluginManager\",\r\n    \"to.speed.mode.migration.done\": \"true\"\r\n  }\r\n}]]></component>\r\n  <component name=\"RecentsManager\">\r\n    <key name=\"MoveFile.RECENT_KEYS\">\r\n      <recent name=\"D:\\ElectricCarSales\\ElectricCarSales\\src\\main\\webapp\" />\r\n    </key>\r\n  </component>\r\n  <component name=\"RunDashboard\">\r\n    <option name=\"configurationStatuses\">\r\n      <map>\r\n        <entry key=\"#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory\">\r\n          <value>\r\n            <map>\r\n              <entry key=\"Tomcat 10.1.56\" value=\"STOPPED\" />\r\n            </map>\r\n          </value>\r\n        </entry>\r\n      </map>\r\n    </option>\r\n  </component>\r\n  <component name=\"RunManager\">\r\n    <configuration name=\"Tomcat 10.1.56\" type=\"#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory\" factoryName=\"Local\" APPLICATION_SERVER_NAME=\"Tomcat 10.1.56\" ALTERNATIVE_JRE_ENABLED=\"false\" nameIsGenerated=\"true\">\r\n      <option name=\"UPDATING_POLICY\" value=\"restart-server\" />\r\n      <deployment>\r\n        <artifact name=\"ElectricCarSales:war exploded\">\r\n          <settings>\r\n            <option name=\"CONTEXT_PATH\" value=\"/ElectricCarSales\" />\r\n          </settings>\r\n        </artifact>\r\n      </deployment>\r\n      <server-settings>\r\n        <option name=\"BASE_DIRECTORY_NAME\" value=\"525aa879-7ddb-48e6-b650-158f48f3c6aa\" />\r\n        <option name=\"HTTP_PORT\" value=\"8080\" />\r\n      </server-settings>\r\n      <predefined_log_file enabled=\"true\" id=\"Tomcat\" />\r\n      <predefined_log_file enabled=\"true\" id=\"Tomcat Catalina\" />\r\n      <predefined_log_file id=\"Tomcat Manager\" />\r\n      <predefined_log_file id=\"Tomcat Host Manager\" />\r\n      <predefined_log_file id=\"Tomcat Localhost Access\" />\r\n      <RunnerSettings RunnerId=\"Debug\">\r\n        <option name=\"DEBUG_PORT\" value=\"61807\" />\r\n      </RunnerSettings>\r\n      <ConfigurationWrapper VM_VAR=\"JAVA_OPTS\" RunnerId=\"Cover\">\r\n        <option name=\"USE_ENV_VARIABLES\" value=\"true\" />\r\n        <STARTUP>\r\n          <option name=\"USE_DEFAULT\" value=\"true\" />\r\n          <option name=\"SCRIPT\" value=\"\" />\r\n          <option name=\"VM_PARAMETERS\" value=\"\" />\r\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\r\n        </STARTUP>\r\n        <SHUTDOWN>\r\n          <option name=\"USE_DEFAULT\" value=\"true\" />\r\n          <option name=\"SCRIPT\" value=\"\" />\r\n          <option name=\"VM_PARAMETERS\" value=\"\" />\r\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\r\n        </SHUTDOWN>\r\n      </ConfigurationWrapper>\r\n      <ConfigurationWrapper VM_VAR=\"JAVA_OPTS\" RunnerId=\"Debug\">\r\n        <option name=\"USE_ENV_VARIABLES\" value=\"true\" />\r\n        <STARTUP>\r\n          <option name=\"USE_DEFAULT\" value=\"true\" />\r\n          <option name=\"SCRIPT\" value=\"\" />\r\n          <option name=\"VM_PARAMETERS\" value=\"\" />\r\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\r\n        </STARTUP>\r\n        <SHUTDOWN>\r\n          <option name=\"USE_DEFAULT\" value=\"true\" />\r\n          <option name=\"SCRIPT\" value=\"\" />\r\n          <option name=\"VM_PARAMETERS\" value=\"\" />\r\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\r\n        </SHUTDOWN>\r\n      </ConfigurationWrapper>\r\n      <ConfigurationWrapper VM_VAR=\"JAVA_OPTS\" RunnerId=\"Profile\">\r\n        <option name=\"USE_ENV_VARIABLES\" value=\"true\" />\r\n        <STARTUP>\r\n          <option name=\"USE_DEFAULT\" value=\"true\" />\r\n          <option name=\"SCRIPT\" value=\"\" />\r\n          <option name=\"VM_PARAMETERS\" value=\"\" />\r\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\r\n        </STARTUP>\r\n        <SHUTDOWN>\r\n          <option name=\"USE_DEFAULT\" value=\"true\" />\r\n          <option name=\"SCRIPT\" value=\"\" />\r\n          <option name=\"VM_PARAMETERS\" value=\"\" />\r\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\r\n        </SHUTDOWN>\r\n      </ConfigurationWrapper>\r\n      <ConfigurationWrapper VM_VAR=\"JAVA_OPTS\" RunnerId=\"Run\">\r\n        <option name=\"USE_ENV_VARIABLES\" value=\"true\" />\r\n        <STARTUP>\r\n          <option name=\"USE_DEFAULT\" value=\"true\" />\r\n          <option name=\"SCRIPT\" value=\"\" />\r\n          <option name=\"VM_PARAMETERS\" value=\"\" />\r\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\r\n        </STARTUP>\r\n        <SHUTDOWN>\r\n          <option name=\"USE_DEFAULT\" value=\"true\" />\r\n          <option name=\"SCRIPT\" value=\"\" />\r\n          <option name=\"VM_PARAMETERS\" value=\"\" />\r\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\r\n        </SHUTDOWN>\r\n      </ConfigurationWrapper>\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n        <option name=\"BuildArtifacts\" enabled=\"true\">\r\n          <artifact name=\"ElectricCarSales:war exploded\" />\r\n        </option>\r\n      </method>\r\n    </configuration>\r\n  </component>\r\n  <component name=\"SharedIndexes\">\r\n    <attachedChunks>\r\n      <set>\r\n        <option value=\"bundled-jdk-30f59d01ecdd-a203e0a19954-intellij.indexing.shared.core-IU-262.10968.63\" />\r\n        <option value=\"bundled-js-predefined-d6986cc7102b-4abd2a77f808-JavaScript-IU-262.10968.63\" />\r\n      </set>\r\n    </attachedChunks>\r\n  </component>\r\n  <component name=\"TaskManager\">\r\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\r\n      <changelist id=\"740c799d-e83a-430a-aca5-6eb08e4227f1\" name=\"Changes\" comment=\"\" />\r\n      <created>1791736008576</created>\r\n      <option name=\"number\" value=\"Default\" />\r\n      <option name=\"presentableId\" value=\"Default\" />\r\n      <updated>1791736008576</updated>\r\n    </task>\r\n    <servers />\r\n  </component>\r\n  <component name=\"TypeScriptGeneratedFilesManager\">\r\n    <option name=\"version\" value=\"3\" />\r\n  </component>\r\n  <component name=\"XSLT-Support.FileAssociations.UIState\">\r\n    <expand />\r\n    <select />\r\n  </component>\r\n</project>
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision 8f8b98f2737872a34bc3c81cd530b88feaa2f587)
++++ b/.idea/workspace.xml	(date 1792391240543)
+@@ -9,15 +9,85 @@
+     <option name="autoReloadType" value="SELECTIVE" />
+   </component>
+   <component name="ChangeListManager">
+-    <list default="true" id="740c799d-e83a-430a-aca5-6eb08e4227f1" name="Changes" comment="">
++    <list default="true" id="740c799d-e83a-430a-aca5-6eb08e4227f1" name="Changes" comment="cap nhat 19/10">
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/AIController.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/AdminSetupController.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/AdministrationController.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/AuthenticationController.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/JsonServlet.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/ReportController.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/SecurityFilter.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/AICatalogue.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/AIDAO.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/AdminRoleDAO.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/AdministrationDAO.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/AuthenticationDAO.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/ReportDAO.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/SystemConfigurationDAO.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/SystemLogDAO.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/AIConstraints.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/AIRequest.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/AIResponse.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Account.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/AdminPromotion.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/AdminRole.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/AdminSetupRequest.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/AdminUser.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/AdministrationLookupsDTO.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ApiException.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/CatalogueResponse.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ConfigurationRequest.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ConversationContext.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/CreateRoleRequest.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Employee.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/EmployeeRequest.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/EmployeeSalesReport.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/LoginRequest.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/LookupDTO.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ModelSalesReport.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/MonthlyReport.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/PageResponse.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/PermissionDTO.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/PromotionRequest.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ReportData.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ReportFilter.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ReportPeriod.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ReportSummary.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/RoleRequest.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/RolesResponse.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/SaleReport.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/SaleVehicle.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/SessionUser.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/StatusTotal.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/SystemConfiguration.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/SystemLog.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/UserRequest.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/VehicleModel.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/VehicleRecommendation.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/VehicleSpecifications.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/AIService.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/AdminSetupService.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/AdministrationService.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/AuthorizationService.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/BootstrapAdmin.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/PasswordChangeService.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/PasswordHasher.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/PasswordSession.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/ReportCsv.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/ReportService.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/ReportXlsx.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/SystemConfigurationService.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/FinanceControllerSupport.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/FinanceControllerSupport.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/InstallmentController.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/InstallmentController.java" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/PaymentController.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/PaymentController.java" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/PaymentDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/PaymentDAO.java" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Payment.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Payment.java" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/PaymentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/PaymentService.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/InstallmentPaymentDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/InstallmentPaymentDAO.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/css/payment-demo.css" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/css/payment-demo.css" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/js/payment-demo.js" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/js/payment-demo.js" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/common/customer-shell.jspf" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/common/customer-shell.jspf" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-contracts.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-contracts.jsp" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-payments.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-payments.jsp" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/ElectricCarSalesDB.sql" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSalesDB.sql" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/payment-demo.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/payment-demo.jsp" afterDir="false" />
+     </list>
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+@@ -126,35 +196,35 @@
+     <option name="hideEmptyMiddlePackages" value="true" />
+     <option name="showLibraryContents" value="true" />
+   </component>
+-  <component name="PropertiesComponent"><![CDATA[{
+-  "keyToString": {
+-    "RunOnceActivity.ShowReadmeOnStart": "true",
+-    "RunOnceActivity.git.unshallow": "true",
+-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+-    "TomEE Server.ElectricCarSale.executor": "Run",
+-    "TomEE Server.TomEE 10.1.56.executor": "Run",
+-    "TomEE Server.Unnamed.executor": "Run",
+-    "Tomcat Server.Tomcat 10.1.56.executor": "Run",
+-    "codeWithMe.voiceChat.enabledByDefault": "false",
+-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+-    "git-widget-placeholder": "tandat/payment",
+-    "junie.onboarding.icon.badge.shown": "true",
+-    "kotlin-language-version-configured": "true",
+-    "node.js.detected.package.eslint": "true",
+-    "node.js.detected.package.jshint": "true",
+-    "node.js.detected.package.tslint": "true",
+-    "node.js.selected.package.eslint": "(autodetect)",
+-    "node.js.selected.package.jshint": "",
+-    "node.js.selected.package.tslint": "(autodetect)",
+-    "nodejs_package_manager_path": "npm",
+-    "project.structure.last.edited": "Project",
+-    "project.structure.proportion": "0.0",
+-    "project.structure.side.proportion": "0.0",
+-    "run.code.analysis.last.selected.profile": "pProject Default",
+-    "settings.editor.selected.configurable": "preferences.pluginManager",
+-    "to.speed.mode.migration.done": "true"
++  <component name="PropertiesComponent">{
++  &quot;keyToString&quot;: {
++    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
++    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
++    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
++    &quot;TomEE Server.ElectricCarSale.executor&quot;: &quot;Run&quot;,
++    &quot;TomEE Server.TomEE 10.1.56.executor&quot;: &quot;Run&quot;,
++    &quot;TomEE Server.Unnamed.executor&quot;: &quot;Run&quot;,
++    &quot;Tomcat Server.Tomcat 10.1.56.executor&quot;: &quot;Run&quot;,
++    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
++    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
++    &quot;git-widget-placeholder&quot;: &quot;tandat/payment&quot;,
++    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
++    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
++    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
++    &quot;node.js.detected.package.jshint&quot;: &quot;true&quot;,
++    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
++    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
++    &quot;node.js.selected.package.jshint&quot;: &quot;&quot;,
++    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
++    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
++    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
++    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
++    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
++    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
++    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
++    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
+   }
+-}]]></component>
++}</component>
+   <component name="RecentsManager">
+     <key name="MoveFile.RECENT_KEYS">
+       <recent name="D:\ElectricCarSales\ElectricCarSales\src\main\webapp" />
+@@ -283,6 +353,10 @@
+   </component>
+   <component name="TypeScriptGeneratedFilesManager">
+     <option name="version" value="3" />
++  </component>
++  <component name="VcsManagerConfiguration">
++    <MESSAGE value="cap nhat 19/10" />
++    <option name="LAST_COMMIT_MESSAGE" value="cap nhat 19/10" />
+   </component>
+   <component name="XSLT-Support.FileAssociations.UIState">
+     <expand />
+Index: ElectricCarSales/src/main/webapp/customer/payment-demo.jsp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><%@ page contentType=\"text/html; charset=UTF-8\" pageEncoding=\"UTF-8\" %>\r\n<% request.setAttribute(\"customerTitle\", \"Demo thanh toán\"); request.setAttribute(\"customerEyebrow\", \"MÔ PHỎNG NGHIỆP VỤ PAYMENT & FINANCE\"); %>\r\n<%@ include file=\"../common/customer-shell.jspf\" %>\r\n<div class=\"demo-banner\" role=\"note\">\r\n    <span class=\"demo-banner-icon\">!</span>\r\n    <div><strong>Chế độ trình diễn — không phát sinh giao dịch thật</strong>\r\n        <p>QR bên dưới chỉ chứa nội dung giả lập. Không quét để chuyển tiền. Khi tích hợp ngân hàng/cổng thanh toán, tài khoản nhận tiền sẽ được cấu hình ở phía máy chủ.</p>\r\n    </div>\r\n    <span class=\"demo-mode\">DEMO</span>\r\n</div>\r\n\r\n<div class=\"demo-grid\">\r\n    <section class=\"demo-main-column\">\r\n        <section class=\"panel demo-panel\">\r\n            <div class=\"demo-panel-heading\">\r\n                <div><span class=\"section-overline\">01 · CHỌN KHOẢN THANH TOÁN</span><h2>Đơn hàng demo <span class=\"demo-order-id\">#EC-2026-001</span></h2></div>\r\n                <span class=\"demo-status\" id=\"demo-order-status\">CÒN CÔNG NỢ</span>\r\n            </div>\r\n            <div class=\"demo-order-summary\">\r\n                <div><span>Mẫu xe</span><strong>VinFast VF 8 Plus</strong></div>\r\n                <label><span>Giá trị đơn hàng</span><div class=\"demo-money-input\"><input id=\"vehicle-price\" type=\"number\" min=\"10000000\" step=\"1000000\" value=\"1200000000\" inputmode=\"numeric\" aria-label=\"Giá trị đơn hàng\"><b>₫</b></div></label>\r\n                <div><span>Đã thanh toán (demo)</span><strong id=\"paid-total\">0 ₫</strong></div>\r\n                <div><span>Công nợ còn lại</span><strong class=\"demo-debt\" id=\"debt-total\">1.200.000.000 ₫</strong></div>\r\n            </div>\r\n            <div class=\"demo-progress\"><span id=\"paid-progress\"></span></div>\r\n\r\n            <div class=\"demo-tabs\" role=\"tablist\" aria-label=\"Hình thức thanh toán\">\r\n                <button type=\"button\" class=\"demo-tab is-active\" data-tab=\"direct\" role=\"tab\" aria-selected=\"true\">Trả thẳng</button>\r\n                <button type=\"button\" class=\"demo-tab\" data-tab=\"installment\" role=\"tab\" aria-selected=\"false\">Trả góp</button>\r\n            </div>\r\n\r\n            <div class=\"demo-tab-content\" id=\"direct-panel\" role=\"tabpanel\">\r\n                <div class=\"demo-fields\">\r\n                    <label>Loại khoản\r\n                        <select id=\"payment-type\"><option value=\"deposit\">Đặt cọc 30%</option><option value=\"remaining\">Thanh toán toàn bộ công nợ</option><option value=\"custom\">Thanh toán một phần</option></select>\r\n                    </label>\r\n                    <label id=\"custom-amount-wrap\" class=\"is-hidden\">Số tiền thanh toán\r\n                        <div class=\"demo-money-input\"><input id=\"custom-amount\" type=\"number\" min=\"1000\" step=\"1000\" value=\"10000000\"><b>₫</b></div>\r\n                    </label>\r\n                    <label>Phương thức\r\n                        <select id=\"payment-method\"><option value=\"BANK_TRANSFER\">Chuyển khoản ngân hàng (QR demo)</option><option value=\"CASH\">Tiền mặt tại showroom (demo)</option></select>\r\n                    </label>\r\n                </div>\r\n                <div class=\"demo-amount-callout\"><span>Số tiền cần thanh toán</span><strong id=\"due-amount\">360.000.000 ₫</strong><small id=\"due-note\">Tiền cọc được tính bằng 30% giá trị đơn.</small></div>\r\n            </div>\r\n\r\n            <div class=\"demo-tab-content is-hidden\" id=\"installment-panel\" role=\"tabpanel\" aria-hidden=\"true\">\r\n                <div class=\"demo-fields\">\r\n                    <label>Khoản thanh toán\r\n                        <select id=\"installment-payment-kind\"><option value=\"down-payment\">Trả trước</option><option value=\"monthly\">Thanh toán kỳ tiếp theo</option></select>\r\n                    </label>\r\n                    <label>Trả trước\r\n                        <select id=\"down-payment-rate\"><option value=\"30\">30% · 360.000.000 ₫</option><option value=\"40\">40%</option><option value=\"50\">50%</option></select>\r\n                    </label>\r\n                    <label>Thời hạn vay\r\n                        <select id=\"installment-term\"><option value=\"12\">12 tháng</option><option value=\"24\" selected>24 tháng</option><option value=\"36\">36 tháng</option></select>\r\n                    </label>\r\n                    <label>Lãi suất năm (ước tính)\r\n                        <div class=\"demo-money-input\"><input id=\"annual-rate\" type=\"number\" min=\"0\" max=\"40\" step=\"0.1\" value=\"8.9\"><b>%</b></div>\r\n                    </label>\r\n                </div>\r\n                <div class=\"installment-results\">\r\n                    <div><span>Khoản vay dự kiến</span><strong id=\"loan-amount\">840.000.000 ₫</strong></div>\r\n                    <div><span>Trả góp mỗi tháng</span><strong class=\"demo-highlight\" id=\"monthly-payment\">36.700.000 ₫</strong></div>\r\n                    <div><span>Tổng lãi ước tính</span><strong id=\"interest-total\">40.800.000 ₫</strong></div>\r\n                </div>\r\n                <div class=\"schedule-wrap\"><table class=\"demo-schedule\"><thead><tr><th>Kỳ</th><th>Ngày đến hạn</th><th>Gốc</th><th>Lãi</th><th>Tổng kỳ</th><th>Trạng thái</th></tr></thead><tbody id=\"schedule-body\"></tbody></table></div>\r\n                <div class=\"demo-settlement\"><div><strong>Tất toán trước hạn (ước tính)</strong><span id=\"settlement-note\">Dư nợ gốc + phí tất toán mô phỏng 2%.</span></div><strong id=\"settlement-amount\">—</strong><button class=\"button button-secondary\" type=\"button\" id=\"settlement-button\">Tạo QR tất toán</button></div>\r\n            </div>\r\n        </section>\r\n\r\n        <section class=\"panel demo-history-panel\">\r\n            <div class=\"demo-panel-heading\"><div><span class=\"section-overline\">02 · LỊCH SỬ TRÊN THIẾT BỊ NÀY</span><h2>Giao dịch demo</h2></div><button class=\"demo-reset\" id=\"reset-demo\" type=\"button\">Đặt lại demo</button></div>\r\n            <div class=\"demo-history-empty\" id=\"history-empty\">Chưa có giao dịch. Tạo một QR và chọn “Mô phỏng đã thanh toán” để xem lịch sử cập nhật.</div>\r\n            <div class=\"demo-history-list\" id=\"history-list\"></div>\r\n        </section>\r\n    </section>\r\n\r\n    <aside class=\"demo-side-column\">\r\n        <section class=\"panel qr-panel\">\r\n            <div class=\"qr-heading\"><span class=\"section-overline\">03 · THÔNG TIN NHẬN TIỀN</span><span class=\"qr-live\"><i></i> ĐANG MÔ PHỎNG</span></div>\r\n            <div class=\"qr-frame\"><div id=\"demo-qr\" aria-label=\"QR nội dung thanh toán demo\"></div><div id=\"qr-fallback\" class=\"qr-fallback is-hidden\">Mã QR đang tải. Nội dung demo: <span id=\"qr-text-fallback\"></span></div></div>\r\n            <strong class=\"qr-caption\" id=\"qr-caption\">QR demo cho khoản đặt cọc</strong>\r\n            <div class=\"recipient-card\">\r\n                <div><span>Ngân hàng</span><strong>NGÂN HÀNG MÔ PHỎNG</strong></div>\r\n                <div><span>Chủ tài khoản</span><strong>ElectricCarSale Demo</strong></div>\r\n                <div><span>Số tài khoản</span><strong>DEMO-000000</strong></div>\r\n                <div><span>Số tiền</span><strong id=\"qr-amount\">360.000.000 ₫</strong></div>\r\n                <div><span>Nội dung</span><strong class=\"qr-reference\" id=\"qr-reference\">DEMO EC-2026-001 DATCOC</strong></div>\r\n            </div>\r\n            <button class=\"button button-primary qr-confirm\" id=\"simulate-payment\" type=\"button\">Mô phỏng đã thanh toán <span>→</span></button>\r\n            <p class=\"qr-disclaimer\">Nút trên chỉ đổi trạng thái dữ liệu trong trình duyệt. Hệ thống không gọi ngân hàng, không nhận tiền và không ghi vào cơ sở dữ liệu.</p>\r\n        </section>\r\n        <section class=\"panel demo-flow-card\">\r\n            <span class=\"section-overline\">LUỒNG NGHIỆP VỤ</span>\r\n            <ol><li><b>1</b><span>Tính số tiền từ công nợ đơn hàng</span></li><li><b>2</b><span>Tạo mã tham chiếu và QR demo</span></li><li><b>3</b><span>Cổng thanh toán xác thực giao dịch</span></li><li><b>4</b><span>Máy chủ cập nhật Payments và công nợ</span></li></ol>\r\n            <p>Ở bản demo, bước 3–4 được thay bằng nút mô phỏng. Khi làm thật, tiền về tài khoản doanh nghiệp cấu hình với ngân hàng/cổng thanh toán.</p>\r\n        </section>\r\n    </aside>\r\n</div>\r\n\r\n<script src=\"https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js\" defer></script>\r\n<script src=\"<%= request.getContextPath() %>/assets/js/payment-demo.js\" defer></script>\r\n<%@ include file=\"../common/customer-shell-end.jspf\" %>\r\n
+===================================================================
+diff --git a/ElectricCarSales/src/main/webapp/customer/payment-demo.jsp b/ElectricCarSales/src/main/webapp/customer/payment-demo.jsp
+--- a/ElectricCarSales/src/main/webapp/customer/payment-demo.jsp	(revision 8f8b98f2737872a34bc3c81cd530b88feaa2f587)
++++ b/ElectricCarSales/src/main/webapp/customer/payment-demo.jsp	(date 1792391384971)
+@@ -1,104 +1,116 @@
+ <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+-<% request.setAttribute("customerTitle", "Demo thanh toán"); request.setAttribute("customerEyebrow", "MÔ PHỎNG NGHIỆP VỤ PAYMENT & FINANCE"); %>
++<% request.setAttribute("customerTitle", "Cổng thanh toán điện tử"); request.setAttribute("customerEyebrow", "THANH TOÁN AN TOÀN"); %>
+ <%@ include file="../common/customer-shell.jspf" %>
++<div class="page-intro">
++    <p>Thanh toán đặt cọc, công nợ đơn hàng, kỳ trả góp hoặc tất toán qua trang thanh toán bảo mật của cổng được cấu hình.</p>
++</div>
++
++<section class="panel document-panel">
++    <span class="section-overline">PHƯƠNG THỨC THANH TOÁN</span>
++    <h2>Thanh toán qua cổng điện tử</h2>
++    <p>Cổng thanh toán có thể cung cấp thẻ Visa, Mastercard, Napas, thẻ ghi nợ, ví điện tử hoặc ngân hàng tùy nhà cung cấp và cấu hình tài khoản.</p>
++    <p>Thông tin thẻ được nhập trực tiếp tại trang bảo mật của nhà cung cấp. Website không nhận số thẻ hoặc mã bảo mật và không hiển thị mã QR thanh toán.</p>
++    <div class="info-note">
++        <span>i</span>
++        <p>Luồng chuyển hướng đang chờ cấu hình nhà cung cấp cổng thanh toán và thông tin tích hợp trên máy chủ. Chưa có giao dịch nào được tạo hoặc xác nhận tại trang này.</p>
++    </div>
++    <div style="display:flex;gap:10px;flex-wrap:wrap">
++        <a class="button button-primary" href="<%= request.getContextPath() %>/customer/my-orders.jsp">Xem đơn hàng <span>→</span></a>
++        <a class="button button-secondary" href="<%= request.getContextPath() %>/customer/my-contracts.jsp">Xem lịch trả góp</a>
++    </div>
++</section>
++
++<section class="panel document-panel">
++    <span class="section-overline">CÁC KHOẢN CÓ THỂ THANH TOÁN</span>
++    <ul>
++        <li>Trả thẳng: tiền đặt cọc hoặc phần công nợ còn lại của đơn hàng.</li>
++        <li>Trả góp: khoản trả trước và các kỳ đến hạn theo lịch trong hợp đồng.</li>
++        <li>Tất toán: chỉ thanh toán sau khi đơn vị tài chính cung cấp số tiền tất toán được xác nhận.</li>
++    </ul>
++    <p>Số tiền nghiệp vụ và công nợ luôn được lưu theo giá trị thực. Khi chế độ kiểm thử bật, phần quy đổi chỉ áp dụng cho số tiền gửi sang cổng.</p>
++</section>
++
+ <div class="demo-banner" role="note">
+-    <span class="demo-banner-icon">!</span>
+-    <div><strong>Chế độ trình diễn — không phát sinh giao dịch thật</strong>
+-        <p>QR bên dưới chỉ chứa nội dung giả lập. Không quét để chuyển tiền. Khi tích hợp ngân hàng/cổng thanh toán, tài khoản nhận tiền sẽ được cấu hình ở phía máy chủ.</p>
++    <span class="demo-banner-icon">i</span>
++    <div><strong>Khu mô phỏng cho phần trình diễn</strong>
++        <p>Không nhập thông tin thẻ thật. Thẻ chỉ lưu thương hiệu và 4 số cuối minh họa; giao dịch chỉ được ghi vào bộ nhớ trình duyệt.</p>
+     </div>
+-    <span class="demo-mode">DEMO</span>
++    <span class="demo-mode">SANDBOX</span>
+ </div>
+ 
+ <div class="demo-grid">
+     <section class="demo-main-column">
+         <section class="panel demo-panel">
+             <div class="demo-panel-heading">
+-                <div><span class="section-overline">01 · CHỌN KHOẢN THANH TOÁN</span><h2>Đơn hàng demo <span class="demo-order-id">#EC-2026-001</span></h2></div>
++                <div><span class="section-overline">MÔ PHỎNG ĐƠN HÀNG</span><h2>VinFast VF 8 Plus <span class="demo-order-id">#EC-2026-001</span></h2></div>
+                 <span class="demo-status" id="demo-order-status">CÒN CÔNG NỢ</span>
+             </div>
+             <div class="demo-order-summary">
+-                <div><span>Mẫu xe</span><strong>VinFast VF 8 Plus</strong></div>
+-                <label><span>Giá trị đơn hàng</span><div class="demo-money-input"><input id="vehicle-price" type="number" min="10000000" step="1000000" value="1200000000" inputmode="numeric" aria-label="Giá trị đơn hàng"><b>₫</b></div></label>
++                <label><span>Giá trị đơn hàng</span><div class="demo-money-input"><input id="vehicle-price" type="number" min="10000000" step="1000000" value="1200000000" aria-label="Giá trị đơn hàng"><b>₫</b></div></label>
+                 <div><span>Đã thanh toán (demo)</span><strong id="paid-total">0 ₫</strong></div>
+                 <div><span>Công nợ còn lại</span><strong class="demo-debt" id="debt-total">1.200.000.000 ₫</strong></div>
+             </div>
+             <div class="demo-progress"><span id="paid-progress"></span></div>
+-
+             <div class="demo-tabs" role="tablist" aria-label="Hình thức thanh toán">
+                 <button type="button" class="demo-tab is-active" data-tab="direct" role="tab" aria-selected="true">Trả thẳng</button>
+                 <button type="button" class="demo-tab" data-tab="installment" role="tab" aria-selected="false">Trả góp</button>
+             </div>
+-
+             <div class="demo-tab-content" id="direct-panel" role="tabpanel">
+                 <div class="demo-fields">
+-                    <label>Loại khoản
+-                        <select id="payment-type"><option value="deposit">Đặt cọc 30%</option><option value="remaining">Thanh toán toàn bộ công nợ</option><option value="custom">Thanh toán một phần</option></select>
+-                    </label>
+-                    <label id="custom-amount-wrap" class="is-hidden">Số tiền thanh toán
+-                        <div class="demo-money-input"><input id="custom-amount" type="number" min="1000" step="1000" value="10000000"><b>₫</b></div>
+-                    </label>
+-                    <label>Phương thức
+-                        <select id="payment-method"><option value="BANK_TRANSFER">Chuyển khoản ngân hàng (QR demo)</option><option value="CASH">Tiền mặt tại showroom (demo)</option></select>
+-                    </label>
++                    <label>Khoản thanh toán<select id="payment-type"><option value="deposit">Đặt cọc 30%</option><option value="remaining">Thanh toán toàn bộ công nợ</option><option value="custom">Thanh toán một phần</option></select></label>
++                    <label id="custom-amount-wrap" class="is-hidden">Số tiền thanh toán<div class="demo-money-input"><input id="custom-amount" type="number" min="1000" step="1000" value="10000000"><b>₫</b></div></label>
+                 </div>
+                 <div class="demo-amount-callout"><span>Số tiền cần thanh toán</span><strong id="due-amount">360.000.000 ₫</strong><small id="due-note">Tiền cọc được tính bằng 30% giá trị đơn.</small></div>
+             </div>
+-
+             <div class="demo-tab-content is-hidden" id="installment-panel" role="tabpanel" aria-hidden="true">
+                 <div class="demo-fields">
+-                    <label>Khoản thanh toán
+-                        <select id="installment-payment-kind"><option value="down-payment">Trả trước</option><option value="monthly">Thanh toán kỳ tiếp theo</option></select>
+-                    </label>
+-                    <label>Trả trước
+-                        <select id="down-payment-rate"><option value="30">30% · 360.000.000 ₫</option><option value="40">40%</option><option value="50">50%</option></select>
+-                    </label>
+-                    <label>Thời hạn vay
+-                        <select id="installment-term"><option value="12">12 tháng</option><option value="24" selected>24 tháng</option><option value="36">36 tháng</option></select>
+-                    </label>
+-                    <label>Lãi suất năm (ước tính)
+-                        <div class="demo-money-input"><input id="annual-rate" type="number" min="0" max="40" step="0.1" value="8.9"><b>%</b></div>
+-                    </label>
++                    <label>Khoản thanh toán<select id="installment-payment-kind"><option value="down-payment">Trả trước</option><option value="monthly">Thanh toán kỳ tiếp theo</option></select></label>
++                    <label>Tỷ lệ trả trước<select id="down-payment-rate"><option value="30">30%</option><option value="40">40%</option><option value="50">50%</option></select></label>
++                    <label>Thời hạn vay<select id="installment-term"><option value="12">12 tháng</option><option value="24" selected>24 tháng</option><option value="36">36 tháng</option></select></label>
++                    <label>Lãi suất năm (ước tính)<div class="demo-money-input"><input id="annual-rate" type="number" min="0" max="40" step="0.1" value="8.9"><b>%</b></div></label>
+                 </div>
+                 <div class="installment-results">
+                     <div><span>Khoản vay dự kiến</span><strong id="loan-amount">840.000.000 ₫</strong></div>
+                     <div><span>Trả góp mỗi tháng</span><strong class="demo-highlight" id="monthly-payment">36.700.000 ₫</strong></div>
+                     <div><span>Tổng lãi ước tính</span><strong id="interest-total">40.800.000 ₫</strong></div>
+                 </div>
+-                <div class="schedule-wrap"><table class="demo-schedule"><thead><tr><th>Kỳ</th><th>Ngày đến hạn</th><th>Gốc</th><th>Lãi</th><th>Tổng kỳ</th><th>Trạng thái</th></tr></thead><tbody id="schedule-body"></tbody></table></div>
+-                <div class="demo-settlement"><div><strong>Tất toán trước hạn (ước tính)</strong><span id="settlement-note">Dư nợ gốc + phí tất toán mô phỏng 2%.</span></div><strong id="settlement-amount">—</strong><button class="button button-secondary" type="button" id="settlement-button">Tạo QR tất toán</button></div>
++                <div class="schedule-wrap"><table class="demo-schedule"><thead><tr><th>Kỳ</th><th>Hạn thanh toán</th><th>Gốc</th><th>Lãi</th><th>Tổng kỳ</th><th>Trạng thái</th></tr></thead><tbody id="schedule-body"></tbody></table></div>
++                <div class="demo-settlement"><div><strong>Tất toán trước hạn (ước tính)</strong><span>Dư nợ còn lại và phí mô phỏng 2%.</span></div><strong id="settlement-amount">—</strong><button class="button button-secondary" type="button" id="settlement-button">Chọn tất toán</button></div>
+             </div>
+         </section>
+-
+         <section class="panel demo-history-panel">
+-            <div class="demo-panel-heading"><div><span class="section-overline">02 · LỊCH SỬ TRÊN THIẾT BỊ NÀY</span><h2>Giao dịch demo</h2></div><button class="demo-reset" id="reset-demo" type="button">Đặt lại demo</button></div>
+-            <div class="demo-history-empty" id="history-empty">Chưa có giao dịch. Tạo một QR và chọn “Mô phỏng đã thanh toán” để xem lịch sử cập nhật.</div>
+-            <div class="demo-history-list" id="history-list"></div>
++            <div class="demo-panel-heading"><div><span class="section-overline">LỊCH SỬ TRÊN THIẾT BỊ NÀY</span><h2>Giao dịch demo</h2></div><button class="demo-reset" id="reset-demo" type="button">Đặt lại demo</button></div>
++            <div class="demo-history-empty" id="history-empty">Chưa có giao dịch mô phỏng.</div><div class="demo-history-list" id="history-list"></div>
+         </section>
+     </section>
+-
+     <aside class="demo-side-column">
+-        <section class="panel qr-panel">
+-            <div class="qr-heading"><span class="section-overline">03 · THÔNG TIN NHẬN TIỀN</span><span class="qr-live"><i></i> ĐANG MÔ PHỎNG</span></div>
+-            <div class="qr-frame"><div id="demo-qr" aria-label="QR nội dung thanh toán demo"></div><div id="qr-fallback" class="qr-fallback is-hidden">Mã QR đang tải. Nội dung demo: <span id="qr-text-fallback"></span></div></div>
+-            <strong class="qr-caption" id="qr-caption">QR demo cho khoản đặt cọc</strong>
+-            <div class="recipient-card">
+-                <div><span>Ngân hàng</span><strong>NGÂN HÀNG MÔ PHỎNG</strong></div>
+-                <div><span>Chủ tài khoản</span><strong>ElectricCarSale Demo</strong></div>
+-                <div><span>Số tài khoản</span><strong>DEMO-000000</strong></div>
+-                <div><span>Số tiền</span><strong id="qr-amount">360.000.000 ₫</strong></div>
+-                <div><span>Nội dung</span><strong class="qr-reference" id="qr-reference">DEMO EC-2026-001 DATCOC</strong></div>
++        <section class="panel gateway-panel">
++            <div class="gateway-heading"><div><span class="section-overline">CHỌN KÊNH THANH TOÁN</span><h2>Cổng thanh toán điện tử</h2></div><span class="gateway-status"><i></i> DEMO</span></div>
++            <p class="gateway-intro">Mã QR không hiển thị ở trang này. Trong tích hợp thật, giao dịch sẽ được xử lý tại trang xác thực của nhà cung cấp.</p>
++            <div class="gateway-method-grid" role="radiogroup" aria-label="Chọn kênh thanh toán">
++                <button type="button" class="gateway-method" data-channel="card" aria-checked="false" role="radio"><span class="gateway-method-icon card-icon">▰</span><span><strong>Thẻ đã liên kết</strong><small>Visa · Mastercard · NAPAS</small></span><i class="gateway-radio"></i></button>
++                <button type="button" class="gateway-method is-selected" data-channel="momo" aria-checked="true" role="radio"><span class="gateway-method-icon momo-icon">M</span><span><strong>Ví MoMo</strong><small>Xác thực qua ứng dụng ví</small></span><i class="gateway-radio"></i></button>
++                <button type="button" class="gateway-method" data-channel="napas" aria-checked="false" role="radio"><span class="gateway-method-icon napas-icon">N</span><span><strong>NAPAS / thẻ nội địa</strong><small>Thẻ ghi nợ nội địa</small></span><i class="gateway-radio"></i></button>
++                <button type="button" class="gateway-method" data-channel="hosted" aria-checked="false" role="radio"><span class="gateway-method-icon hosted-icon">↗</span><span><strong>Ngân hàng / QR</strong><small>Mở tại cổng, không hiện QR ở website</small></span><i class="gateway-radio"></i></button>
+             </div>
+-            <button class="button button-primary qr-confirm" id="simulate-payment" type="button">Mô phỏng đã thanh toán <span>→</span></button>
+-            <p class="qr-disclaimer">Nút trên chỉ đổi trạng thái dữ liệu trong trình duyệt. Hệ thống không gọi ngân hàng, không nhận tiền và không ghi vào cơ sở dữ liệu.</p>
++            <div class="linked-card-area is-hidden" id="linked-card-area">
++                <div class="linked-card-heading"><strong>Thẻ đã liên kết</strong><button type="button" class="text-button" id="toggle-card-form">+ Liên kết thẻ</button></div>
++                <div id="linked-card-list" class="linked-card-list"></div><div id="card-empty" class="card-empty">Chưa có thẻ demo.</div>
++                <form id="card-link-form" class="card-link-form is-hidden">
++                    <p>Chỉ nhập dữ liệu giả lập. Website không nhận số thẻ hoặc mã CVV; tích hợp thật sẽ mở trang token hóa của cổng.</p>
++                    <label>Thương hiệu<select id="card-brand"><option value="Visa">Visa</option><option value="Mastercard">Mastercard</option><option value="NAPAS">NAPAS</option></select></label>
++                    <label>4 số cuối minh họa<input id="card-last-four" type="text" inputmode="numeric" autocomplete="off" maxlength="4" pattern="[0-9]{4}" placeholder="Ví dụ: 4242" required></label>
++                    <button class="button button-secondary" type="submit">Thêm thẻ demo</button>
++                </form>
++            </div>
++            <div class="selected-card-note" id="selected-card-note">Bạn sẽ tiếp tục tới luồng xác thực MoMo (mô phỏng).</div>
++            <div class="gateway-payment-summary"><span>Số tiền thanh toán</span><strong id="gateway-amount">360.000.000 ₫</strong></div>
++            <button class="button button-primary gateway-submit" id="simulate-payment" type="button">Mô phỏng thanh toán qua cổng <span>→</span></button>
++            <div class="gateway-result is-hidden" id="gateway-result" role="status" aria-live="polite"></div>
++            <p class="gateway-disclaimer">Nút demo không gọi ngân hàng, không thu tiền và không ghi vào cơ sở dữ liệu.</p>
+         </section>
+-        <section class="panel demo-flow-card">
+-            <span class="section-overline">LUỒNG NGHIỆP VỤ</span>
+-            <ol><li><b>1</b><span>Tính số tiền từ công nợ đơn hàng</span></li><li><b>2</b><span>Tạo mã tham chiếu và QR demo</span></li><li><b>3</b><span>Cổng thanh toán xác thực giao dịch</span></li><li><b>4</b><span>Máy chủ cập nhật Payments và công nợ</span></li></ol>
+-            <p>Ở bản demo, bước 3–4 được thay bằng nút mô phỏng. Khi làm thật, tiền về tài khoản doanh nghiệp cấu hình với ngân hàng/cổng thanh toán.</p>
+-        </section>
++        <section class="panel demo-flow-card"><span class="section-overline">LUỒNG KHI TÍCH HỢP THẬT</span><ol><li><b>1</b><span>Tạo yêu cầu thanh toán phía máy chủ</span></li><li><b>2</b><span>Khách chọn ví, ngân hàng hoặc thẻ</span></li><li><b>3</b><span>Nhà cung cấp xác thực giao dịch</span></li><li><b>4</b><span>Máy chủ xác minh và cập nhật Payments</span></li></ol><p>Giao diện này chỉ mô phỏng. Muốn thu tiền thật cần cấu hình tài khoản và adapter nhà cung cấp.</p></section>
+     </aside>
+ </div>
+-
+-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
+ <script src="<%= request.getContextPath() %>/assets/js/payment-demo.js" defer></script>
+ <%@ include file="../common/customer-shell-end.jspf" %>
+Index: ElectricCarSales/src/main/webapp/assets/js/payment-demo.js
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>(() => {\r\n    const orderCode = \"EC-2026-001\";\r\n    const storageKey = \"electricCarSales.paymentDemo.v1\";\r\n    const $ = (id) => document.getElementById(id);\r\n    const money = (amount) => `${Math.max(0, Math.round(amount)).toLocaleString(\"vi-VN\")} ₫`;\r\n    const state = loadState();\r\n    let activeTab = \"direct\";\r\n    let settlementMode = false;\r\n\r\n    function loadState() {\r\n        try {\r\n            const saved = JSON.parse(localStorage.getItem(storageKey) || \"{}\");\r\n            return { payments: Array.isArray(saved.payments) ? saved.payments : [], installmentsPaid: Number(saved.installmentsPaid) || 0 };\r\n        } catch (_) {\r\n            return { payments: [], installmentsPaid: 0 };\r\n        }\r\n    }\r\n\r\n    function persist() {\r\n        localStorage.setItem(storageKey, JSON.stringify(state));\r\n    }\r\n\r\n    function price() {\r\n        return Math.max(10000000, Number($(\"vehicle-price\").value) || 1200000000);\r\n    }\r\n\r\n    function paidTotal() {\r\n        return state.payments.reduce((sum, payment) => sum + payment.amount, 0);\r\n    }\r\n\r\n    function debt() {\r\n        const amountAppliedToOrder = state.payments.reduce((sum, payment) => sum + (payment.balanceApplied ?? payment.amount), 0);\r\n        return Math.max(0, price() - amountAppliedToOrder);\r\n    }\r\n\r\n    function quoteInstallment() {\r\n        const rate = Number($(\"down-payment-rate\").value) / 100;\r\n        const downPayment = price() * rate;\r\n        const principal = Math.max(0, price() - downPayment);\r\n        const months = Number($(\"installment-term\").value);\r\n        const annualRate = Math.max(0, Number($(\"annual-rate\").value) || 0) / 100;\r\n        const monthlyRate = annualRate / 12;\r\n        const monthly = monthlyRate === 0 ? principal / months : principal * monthlyRate / (1 - Math.pow(1 + monthlyRate, -months));\r\n        const totalInterest = Math.max(0, monthly * months - principal);\r\n        return { rate, downPayment, principal, months, annualRate, monthlyRate, monthly, totalInterest };\r\n    }\r\n\r\n    function principalForInstallment(plan, index) {\r\n        if (index >= plan.months) return 0;\r\n        const outstandingPrincipal = plan.monthlyRate === 0 ? plan.principal * (1 - index / plan.months) : plan.principal * Math.pow(1 + plan.monthlyRate, index) - plan.monthly * (Math.pow(1 + plan.monthlyRate, index) - 1) / plan.monthlyRate;\r\n        return Math.min(outstandingPrincipal, Math.max(0, plan.monthly - outstandingPrincipal * plan.monthlyRate));\r\n    }\r\n\r\n    function directAmount() {\r\n        const dueType = $(\"payment-type\").value;\r\n        if (dueType === \"deposit\") return Math.min(debt(), price() * 0.30);\r\n        if (dueType === \"remaining\") return debt();\r\n        return Math.min(debt(), Math.max(0, Number($(\"custom-amount\").value) || 0));\r\n    }\r\n\r\n    function currentQuote() {\r\n        if (activeTab === \"installment\" && settlementMode) {\r\n            return { amount: Math.max(0, debt() * 1.02), kind: \"settlement\", method: \"BANK_TRANSFER\", memo: \"TATTOAN\", caption: \"QR demo tất toán trước hạn\" };\r\n        }\r\n        if (activeTab === \"direct\") {\r\n            const type = $(\"payment-type\").value;\r\n            const typeNames = { deposit: \"DATCOC\", remaining: \"TATTOAN\", custom: \"THANHTOAN\" };\r\n            return { amount: directAmount(), kind: type, method: $(\"payment-method\").value, memo: typeNames[type], caption: type === \"deposit\" ? \"QR demo cho khoản đặt cọc\" : type === \"remaining\" ? \"QR demo thanh toán công nợ\" : \"QR demo thanh toán một phần\" };\r\n        }\r\n        const plan = quoteInstallment();\r\n        const isMonthly = $(\"installment-payment-kind\").value === \"monthly\";\r\n        const remainingDownPayment = Math.max(0, plan.downPayment - paidTotal());\r\n        return { amount: isMonthly ? (debt() > 0 ? plan.monthly : 0) : Math.min(debt(), remainingDownPayment), kind: isMonthly ? \"installment\" : \"down-payment\", method: \"BANK_TRANSFER\", memo: isMonthly ? `KY${state.installmentsPaid + 1}` : \"TRATRUOC\", caption: isMonthly ? `QR demo kỳ trả góp ${state.installmentsPaid + 1}` : \"QR demo khoản trả trước\" };\r\n    }\r\n\r\n    function updateQuote() {\r\n        const selectedType = $(\"payment-type\").value;\r\n        $(\"custom-amount-wrap\").classList.toggle(\"is-hidden\", selectedType !== \"custom\");\r\n        const plan = quoteInstallment();\r\n        $(\"down-payment-rate\").querySelector(\"option[value='30']\").textContent = `30% · ${money(price() * 0.30)}`;\r\n        $(\"down-payment-rate\").querySelector(\"option[value='40']\").textContent = `40% · ${money(price() * 0.40)}`;\r\n        $(\"down-payment-rate\").querySelector(\"option[value='50']\").textContent = `50% · ${money(price() * 0.50)}`;\r\n        $(\"loan-amount\").textContent = money(plan.principal);\r\n        $(\"monthly-payment\").textContent = money(plan.monthly);\r\n        $(\"interest-total\").textContent = money(plan.totalInterest);\r\n        $(\"settlement-amount\").textContent = money(Math.max(0, debt() * 1.02));\r\n\r\n        const quote = currentQuote();\r\n        $(\"due-amount\").textContent = money(quote.amount);\r\n        $(\"qr-amount\").textContent = money(quote.amount);\r\n        $(\"qr-caption\").textContent = quote.caption;\r\n        $(\"due-note\").textContent = activeTab === \"installment\" ? (quote.kind === \"installment\" ? `Kỳ ${state.installmentsPaid + 1} · lãi suất tham khảo ${($(\"annual-rate\").value || 0)}%/năm.` : `Trả trước ${(plan.rate * 100).toFixed(0)}% theo phương án trả góp.`) : (selectedType === \"deposit\" ? \"Tiền cọc được tính bằng 30% giá trị đơn.\" : selectedType === \"remaining\" ? \"Thanh toán phần công nợ còn lại của đơn.\" : \"Số tiền demo không vượt quá công nợ hiện tại.\");\r\n        const reference = `DEMO ${orderCode} ${quote.memo}`;\r\n        $(\"qr-reference\").textContent = reference;\r\n        renderQr(`${reference}|${Math.round(quote.amount)}|NO_REAL_PAYMENT`);\r\n        $(\"simulate-payment\").disabled = quote.amount <= 0;\r\n        $(\"simulate-payment\").innerHTML = quote.amount <= 0 ? \"Không còn công nợ\" : \"Mô phỏng đã thanh toán <span>→</span>\";\r\n        renderSchedule(plan);\r\n        renderSummary();\r\n    }\r\n\r\n    function renderQr(payload) {\r\n        const qr = $(\"demo-qr\");\r\n        const fallback = $(\"qr-fallback\");\r\n        qr.replaceChildren();\r\n        fallback.classList.add(\"is-hidden\");\r\n        $(\"qr-text-fallback\").textContent = payload;\r\n        if (typeof QRCode === \"undefined\") {\r\n            fallback.classList.remove(\"is-hidden\");\r\n            return;\r\n        }\r\n        new QRCode(qr, { text: payload, width: 208, height: 208, colorDark: \"#17191d\", colorLight: \"#ffffff\", correctLevel: QRCode.CorrectLevel.M });\r\n    }\r\n\r\n    function renderSchedule(plan) {\r\n        const body = $(\"schedule-body\");\r\n        body.replaceChildren();\r\n        const today = new Date();\r\n        for (let index = 0; index < plan.months; index += 1) {\r\n            const dueDate = new Date(today.getFullYear(), today.getMonth() + index + 1, 10);\r\n            const outstandingPrincipal = plan.monthlyRate === 0 ? plan.principal * (1 - index / plan.months) : plan.principal * Math.pow(1 + plan.monthlyRate, index) - plan.monthly * (Math.pow(1 + plan.monthlyRate, index) - 1) / plan.monthlyRate;\r\n            const interestPart = Math.max(0, outstandingPrincipal * plan.monthlyRate);\r\n            const principalPart = principalForInstallment(plan, index);\r\n            const row = document.createElement(\"tr\");\r\n            const status = index < state.installmentsPaid ? \"ĐÃ TRẢ\" : index === state.installmentsPaid ? \"KỲ TIẾP THEO\" : \"CHƯA ĐẾN HẠN\";\r\n            [String(index + 1).padStart(2, \"0\"), dueDate.toLocaleDateString(\"vi-VN\"), money(principalPart), money(interestPart), money(plan.monthly), status].forEach((value, cellIndex) => {\r\n                const cell = document.createElement(\"td\");\r\n                cell.textContent = value;\r\n                if (cellIndex === 5) cell.className = index < state.installmentsPaid ? \"schedule-paid\" : \"schedule-pending\";\r\n                row.appendChild(cell);\r\n            });\r\n            body.appendChild(row);\r\n        }\r\n    }\r\n\r\n    function renderSummary() {\r\n        const total = paidTotal();\r\n        $(\"paid-total\").textContent = money(total);\r\n        $(\"debt-total\").textContent = money(debt());\r\n        $(\"paid-progress\").style.width = `${Math.min(100, total / price() * 100)}%`;\r\n        $(\"demo-order-status\").textContent = debt() <= 0 ? \"ĐÃ THANH TOÁN\" : total > 0 ? \"ĐANG THANH TOÁN\" : \"CÒN CÔNG NỢ\";\r\n        $(\"history-empty\").classList.toggle(\"is-hidden\", state.payments.length > 0);\r\n        const history = $(\"history-list\");\r\n        history.replaceChildren();\r\n        [...state.payments].reverse().forEach((payment) => {\r\n            const item = document.createElement(\"div\");\r\n            item.className = \"demo-history-row\";\r\n            const description = document.createElement(\"div\");\r\n            const title = document.createElement(\"strong\");\r\n            title.textContent = payment.label;\r\n            const meta = document.createElement(\"span\");\r\n            meta.textContent = `${payment.reference} · ${new Date(payment.date).toLocaleString(\"vi-VN\")}`;\r\n            const amount = document.createElement(\"b\");\r\n            amount.textContent = money(payment.amount);\r\n            const badge = document.createElement(\"i\");\r\n            badge.textContent = \"DEMO ĐÃ GHI NHẬN\";\r\n            description.append(title, meta, badge);\r\n            item.append(description, amount);\r\n            history.appendChild(item);\r\n        });\r\n    }\r\n\r\n    document.querySelectorAll(\".demo-tab\").forEach((button) => button.addEventListener(\"click\", () => {\r\n        settlementMode = false;\r\n        activeTab = button.dataset.tab;\r\n        document.querySelectorAll(\".demo-tab\").forEach((tab) => {\r\n            const selected = tab === button;\r\n            tab.classList.toggle(\"is-active\", selected);\r\n            tab.setAttribute(\"aria-selected\", String(selected));\r\n        });\r\n        $(\"direct-panel\").classList.toggle(\"is-hidden\", activeTab !== \"direct\");\r\n        $(\"installment-panel\").classList.toggle(\"is-hidden\", activeTab !== \"installment\");\r\n        $(\"installment-panel\").setAttribute(\"aria-hidden\", String(activeTab !== \"installment\"));\r\n        updateQuote();\r\n    }));\r\n\r\n    [\"vehicle-price\", \"payment-type\", \"custom-amount\", \"payment-method\", \"down-payment-rate\", \"installment-term\", \"annual-rate\", \"installment-payment-kind\"].forEach((id) => $(id).addEventListener(\"input\", updateQuote));\r\n    [\"payment-type\", \"payment-method\", \"down-payment-rate\", \"installment-term\", \"installment-payment-kind\"].forEach((id) => $(id).addEventListener(\"change\", updateQuote));\r\n\r\n    $(\"simulate-payment\").addEventListener(\"click\", () => {\r\n        const quote = currentQuote();\r\n        if (!quote || quote.amount <= 0 || (quote.kind !== \"settlement\" && quote.kind !== \"installment\" && quote.amount > debt())) return;\r\n        const reference = `DEMO-${Date.now().toString().slice(-8)}`;\r\n        const plan = quoteInstallment();\r\n        const balanceApplied = quote.kind === \"installment\" ? principalForInstallment(plan, state.installmentsPaid) : quote.kind === \"settlement\" ? debt() : quote.amount;\r\n        state.payments.push({ amount: quote.amount, balanceApplied, date: new Date().toISOString(), label: quote.kind === \"installment\" ? `Kỳ trả góp ${state.installmentsPaid + 1}` : quote.kind === \"settlement\" ? \"Tất toán trước hạn\" : quote.kind === \"down-payment\" ? \"Trả trước hợp đồng trả góp\" : quote.kind === \"deposit\" ? \"Đặt cọc đơn hàng\" : quote.kind === \"remaining\" ? \"Thanh toán công nợ\" : \"Thanh toán một phần\", reference });\r\n        if (quote.kind === \"installment\") state.installmentsPaid += 1;\r\n        persist();\r\n        updateQuote();\r\n        $(\"qr-caption\").textContent = \"Đã mô phỏng ghi nhận · tạo QR mới để tiếp tục\";\r\n    });\r\n\r\n    $(\"settlement-button\").addEventListener(\"click\", () => {\r\n        activeTab = \"installment\";\r\n        document.querySelector(\".demo-tab[data-tab='installment']\").click();\r\n        settlementMode = true;\r\n        updateQuote();\r\n        $(\"due-note\").textContent = \"Dư nợ gốc còn lại cộng phí tất toán mô phỏng 2%.\";\r\n    });\r\n\r\n    $(\"reset-demo\").addEventListener(\"click\", () => {\r\n        state.payments = [];\r\n        state.installmentsPaid = 0;\r\n        settlementMode = false;\r\n        persist();\r\n        updateQuote();\r\n    });\r\n\r\n    updateQuote();\r\n})();\r\n
+===================================================================
+diff --git a/ElectricCarSales/src/main/webapp/assets/js/payment-demo.js b/ElectricCarSales/src/main/webapp/assets/js/payment-demo.js
+--- a/ElectricCarSales/src/main/webapp/assets/js/payment-demo.js	(revision 8f8b98f2737872a34bc3c81cd530b88feaa2f587)
++++ b/ElectricCarSales/src/main/webapp/assets/js/payment-demo.js	(date 1792391219827)
+@@ -1,18 +1,26 @@
+ (() => {
+     const orderCode = "EC-2026-001";
+-    const storageKey = "electricCarSales.paymentDemo.v1";
++    const storageKey = "electricCarSales.paymentGatewayDemo.v2";
+     const $ = (id) => document.getElementById(id);
+     const money = (amount) => `${Math.max(0, Math.round(amount)).toLocaleString("vi-VN")} ₫`;
++    const channelLabels = { card: "Thẻ đã liên kết", momo: "Ví MoMo", napas: "NAPAS / thẻ nội địa", hosted: "Ngân hàng / QR qua cổng" };
+     const state = loadState();
++    if (!state.selectedCardId && state.cards.length > 0) state.selectedCardId = state.cards[0].id;
+     let activeTab = "direct";
++    let activeChannel = "momo";
+     let settlementMode = false;
+ 
+     function loadState() {
+         try {
+             const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
+-            return { payments: Array.isArray(saved.payments) ? saved.payments : [], installmentsPaid: Number(saved.installmentsPaid) || 0 };
++            return {
++                payments: Array.isArray(saved.payments) ? saved.payments : [],
++                cards: Array.isArray(saved.cards) ? saved.cards : [],
++                selectedCardId: saved.selectedCardId || null,
++                installmentsPaid: Number(saved.installmentsPaid) || 0
++            };
+         } catch (_) {
+-            return { payments: [], installmentsPaid: 0 };
++            return { payments: [], cards: [], selectedCardId: null, installmentsPaid: 0 };
+         }
+     }
+ 
+@@ -28,9 +36,12 @@
+         return state.payments.reduce((sum, payment) => sum + payment.amount, 0);
+     }
+ 
++    function amountAppliedToOrder() {
++        return state.payments.reduce((sum, payment) => sum + (payment.balanceApplied ?? payment.amount), 0);
++    }
++
+     function debt() {
+-        const amountAppliedToOrder = state.payments.reduce((sum, payment) => sum + (payment.balanceApplied ?? payment.amount), 0);
+-        return Math.max(0, price() - amountAppliedToOrder);
++        return Math.max(0, price() - amountAppliedToOrder());
+     }
+ 
+     function quoteInstallment() {
+@@ -41,75 +52,87 @@
+         const annualRate = Math.max(0, Number($("annual-rate").value) || 0) / 100;
+         const monthlyRate = annualRate / 12;
+         const monthly = monthlyRate === 0 ? principal / months : principal * monthlyRate / (1 - Math.pow(1 + monthlyRate, -months));
+-        const totalInterest = Math.max(0, monthly * months - principal);
+-        return { rate, downPayment, principal, months, annualRate, monthlyRate, monthly, totalInterest };
++        return { rate, downPayment, principal, months, monthlyRate, monthly, totalInterest: Math.max(0, monthly * months - principal) };
+     }
+ 
+     function principalForInstallment(plan, index) {
+         if (index >= plan.months) return 0;
+-        const outstandingPrincipal = plan.monthlyRate === 0 ? plan.principal * (1 - index / plan.months) : plan.principal * Math.pow(1 + plan.monthlyRate, index) - plan.monthly * (Math.pow(1 + plan.monthlyRate, index) - 1) / plan.monthlyRate;
+-        return Math.min(outstandingPrincipal, Math.max(0, plan.monthly - outstandingPrincipal * plan.monthlyRate));
++        const outstanding = plan.monthlyRate === 0
++            ? plan.principal * (1 - index / plan.months)
++            : plan.principal * Math.pow(1 + plan.monthlyRate, index) - plan.monthly * (Math.pow(1 + plan.monthlyRate, index) - 1) / plan.monthlyRate;
++        return Math.min(outstanding, Math.max(0, plan.monthly - outstanding * plan.monthlyRate));
+     }
+ 
+     function directAmount() {
+-        const dueType = $("payment-type").value;
+-        if (dueType === "deposit") return Math.min(debt(), price() * 0.30);
+-        if (dueType === "remaining") return debt();
++        const type = $("payment-type").value;
++        if (type === "deposit") return Math.min(debt(), price() * 0.30);
++        if (type === "remaining") return debt();
+         return Math.min(debt(), Math.max(0, Number($("custom-amount").value) || 0));
+     }
+ 
+     function currentQuote() {
+         if (activeTab === "installment" && settlementMode) {
+-            return { amount: Math.max(0, debt() * 1.02), kind: "settlement", method: "BANK_TRANSFER", memo: "TATTOAN", caption: "QR demo tất toán trước hạn" };
++            return { amount: Math.max(0, debt() * 1.02), kind: "settlement", memo: "TATTOAN", caption: "Tất toán trước hạn" };
+         }
+         if (activeTab === "direct") {
+             const type = $("payment-type").value;
+-            const typeNames = { deposit: "DATCOC", remaining: "TATTOAN", custom: "THANHTOAN" };
+-            return { amount: directAmount(), kind: type, method: $("payment-method").value, memo: typeNames[type], caption: type === "deposit" ? "QR demo cho khoản đặt cọc" : type === "remaining" ? "QR demo thanh toán công nợ" : "QR demo thanh toán một phần" };
++            const labels = { deposit: "Đặt cọc đơn hàng", remaining: "Thanh toán công nợ", custom: "Thanh toán một phần" };
++            return { amount: directAmount(), kind: type, memo: type === "deposit" ? "DATCOC" : type === "remaining" ? "TATTOAN" : "THANHTOAN", caption: labels[type] };
+         }
+         const plan = quoteInstallment();
+         const isMonthly = $("installment-payment-kind").value === "monthly";
+-        const remainingDownPayment = Math.max(0, plan.downPayment - paidTotal());
+-        return { amount: isMonthly ? (debt() > 0 ? plan.monthly : 0) : Math.min(debt(), remainingDownPayment), kind: isMonthly ? "installment" : "down-payment", method: "BANK_TRANSFER", memo: isMonthly ? `KY${state.installmentsPaid + 1}` : "TRATRUOC", caption: isMonthly ? `QR demo kỳ trả góp ${state.installmentsPaid + 1}` : "QR demo khoản trả trước" };
++        const remainingDownPayment = Math.max(0, plan.downPayment - amountAppliedToOrder());
++        return {
++            amount: isMonthly ? (debt() > 0 ? plan.monthly : 0) : Math.min(debt(), remainingDownPayment),
++            kind: isMonthly ? "installment" : "down-payment",
++            memo: isMonthly ? `KY${state.installmentsPaid + 1}` : "TRATRUOC",
++            caption: isMonthly ? `Kỳ trả góp ${state.installmentsPaid + 1}` : "Trả trước hợp đồng trả góp"
++        };
+     }
+ 
+     function updateQuote() {
+         const selectedType = $("payment-type").value;
+         $("custom-amount-wrap").classList.toggle("is-hidden", selectedType !== "custom");
+         const plan = quoteInstallment();
+-        $("down-payment-rate").querySelector("option[value='30']").textContent = `30% · ${money(price() * 0.30)}`;
+-        $("down-payment-rate").querySelector("option[value='40']").textContent = `40% · ${money(price() * 0.40)}`;
+-        $("down-payment-rate").querySelector("option[value='50']").textContent = `50% · ${money(price() * 0.50)}`;
++        [30, 40, 50].forEach((rate) => {
++            $("down-payment-rate").querySelector(`option[value='${rate}']`).textContent = `${rate}% · ${money(price() * rate / 100)}`;
++        });
+         $("loan-amount").textContent = money(plan.principal);
+         $("monthly-payment").textContent = money(plan.monthly);
+         $("interest-total").textContent = money(plan.totalInterest);
+-        $("settlement-amount").textContent = money(Math.max(0, debt() * 1.02));
++        $("settlement-amount").textContent = money(debt() * 1.02);
+ 
+         const quote = currentQuote();
+         $("due-amount").textContent = money(quote.amount);
+-        $("qr-amount").textContent = money(quote.amount);
+-        $("qr-caption").textContent = quote.caption;
+-        $("due-note").textContent = activeTab === "installment" ? (quote.kind === "installment" ? `Kỳ ${state.installmentsPaid + 1} · lãi suất tham khảo ${($("annual-rate").value || 0)}%/năm.` : `Trả trước ${(plan.rate * 100).toFixed(0)}% theo phương án trả góp.`) : (selectedType === "deposit" ? "Tiền cọc được tính bằng 30% giá trị đơn." : selectedType === "remaining" ? "Thanh toán phần công nợ còn lại của đơn." : "Số tiền demo không vượt quá công nợ hiện tại.");
+-        const reference = `DEMO ${orderCode} ${quote.memo}`;
+-        $("qr-reference").textContent = reference;
+-        renderQr(`${reference}|${Math.round(quote.amount)}|NO_REAL_PAYMENT`);
+-        $("simulate-payment").disabled = quote.amount <= 0;
+-        $("simulate-payment").innerHTML = quote.amount <= 0 ? "Không còn công nợ" : "Mô phỏng đã thanh toán <span>→</span>";
++        $("gateway-amount").textContent = money(quote.amount);
++        $("due-note").textContent = activeTab === "installment"
++            ? (quote.kind === "installment" ? `Kỳ ${state.installmentsPaid + 1} · lãi suất tham khảo ${$("annual-rate").value || 0}%/năm.` : quote.kind === "settlement" ? "Dư nợ hiện tại cộng phí tất toán mô phỏng 2%." : `Trả trước ${(plan.rate * 100).toFixed(0)}% theo phương án trả góp.`)
++            : selectedType === "deposit" ? "Tiền cọc được tính bằng 30% giá trị đơn." : selectedType === "remaining" ? "Thanh toán phần công nợ còn lại của đơn." : "Số tiền demo không vượt quá công nợ hiện tại.";
++        $("gateway-result").classList.add("is-hidden");
++        $("simulate-payment").disabled = quote.amount <= 0 || (activeChannel === "card" && state.cards.length === 0);
++        $("simulate-payment").innerHTML = quote.amount <= 0 ? "Không còn khoản phải trả" : "Mô phỏng thanh toán qua cổng <span>→</span>";
++        updateChannelUI();
+         renderSchedule(plan);
+         renderSummary();
+     }
+ 
+-    function renderQr(payload) {
+-        const qr = $("demo-qr");
+-        const fallback = $("qr-fallback");
+-        qr.replaceChildren();
+-        fallback.classList.add("is-hidden");
+-        $("qr-text-fallback").textContent = payload;
+-        if (typeof QRCode === "undefined") {
+-            fallback.classList.remove("is-hidden");
+-            return;
+-        }
+-        new QRCode(qr, { text: payload, width: 208, height: 208, colorDark: "#17191d", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
++    function updateChannelUI() {
++        document.querySelectorAll(".gateway-method").forEach((button) => {
++            const selected = button.dataset.channel === activeChannel;
++            button.classList.toggle("is-selected", selected);
++            button.setAttribute("aria-checked", String(selected));
++        });
++        $("linked-card-area").classList.toggle("is-hidden", activeChannel !== "card");
++        const selectedCard = state.cards.find((card) => card.id === state.selectedCardId) || state.cards[0];
++        const cardText = selectedCard ? `${selectedCard.brand} •••• ${selectedCard.lastFour}` : "Chưa có thẻ liên kết";
++        const messages = {
++            card: selectedCard ? `Thanh toán bằng thẻ đã token hóa: ${cardText}.` : "Hãy liên kết một thẻ demo để tiếp tục.",
++            momo: "Bạn sẽ tiếp tục tới luồng xác thực MoMo (mô phỏng).",
++            napas: "Bạn sẽ tiếp tục tới luồng xác thực thẻ nội địa NAPAS (mô phỏng).",
++            hosted: "Ngân hàng hoặc QR sẽ được xử lý ở trang cổng thanh toán; website này không hiển thị mã QR."
++        };
++        $("selected-card-note").textContent = messages[activeChannel];
++        $("simulate-payment").disabled = currentQuote().amount <= 0 || (activeChannel === "card" && !selectedCard);
+     }
+ 
+     function renderSchedule(plan) {
+@@ -118,12 +141,14 @@
+         const today = new Date();
+         for (let index = 0; index < plan.months; index += 1) {
+             const dueDate = new Date(today.getFullYear(), today.getMonth() + index + 1, 10);
+-            const outstandingPrincipal = plan.monthlyRate === 0 ? plan.principal * (1 - index / plan.months) : plan.principal * Math.pow(1 + plan.monthlyRate, index) - plan.monthly * (Math.pow(1 + plan.monthlyRate, index) - 1) / plan.monthlyRate;
+-            const interestPart = Math.max(0, outstandingPrincipal * plan.monthlyRate);
+-            const principalPart = principalForInstallment(plan, index);
+-            const row = document.createElement("tr");
++            const outstanding = plan.monthlyRate === 0
++                ? plan.principal * (1 - index / plan.months)
++                : plan.principal * Math.pow(1 + plan.monthlyRate, index) - plan.monthly * (Math.pow(1 + plan.monthlyRate, index) - 1) / plan.monthlyRate;
++            const principal = principalForInstallment(plan, index);
++            const interest = Math.max(0, outstanding * plan.monthlyRate);
+             const status = index < state.installmentsPaid ? "ĐÃ TRẢ" : index === state.installmentsPaid ? "KỲ TIẾP THEO" : "CHƯA ĐẾN HẠN";
+-            [String(index + 1).padStart(2, "0"), dueDate.toLocaleDateString("vi-VN"), money(principalPart), money(interestPart), money(plan.monthly), status].forEach((value, cellIndex) => {
++            const row = document.createElement("tr");
++            [String(index + 1).padStart(2, "0"), dueDate.toLocaleDateString("vi-VN"), money(principal), money(interest), money(plan.monthly), status].forEach((value, cellIndex) => {
+                 const cell = document.createElement("td");
+                 cell.textContent = value;
+                 if (cellIndex === 5) cell.className = index < state.installmentsPaid ? "schedule-paid" : "schedule-pending";
+@@ -137,7 +162,7 @@
+         const total = paidTotal();
+         $("paid-total").textContent = money(total);
+         $("debt-total").textContent = money(debt());
+-        $("paid-progress").style.width = `${Math.min(100, total / price() * 100)}%`;
++        $("paid-progress").style.width = `${Math.min(100, amountAppliedToOrder() / price() * 100)}%`;
+         $("demo-order-status").textContent = debt() <= 0 ? "ĐÃ THANH TOÁN" : total > 0 ? "ĐANG THANH TOÁN" : "CÒN CÔNG NỢ";
+         $("history-empty").classList.toggle("is-hidden", state.payments.length > 0);
+         const history = $("history-list");
+@@ -149,17 +174,57 @@
+             const title = document.createElement("strong");
+             title.textContent = payment.label;
+             const meta = document.createElement("span");
+-            meta.textContent = `${payment.reference} · ${new Date(payment.date).toLocaleString("vi-VN")}`;
++            meta.textContent = `${payment.reference} · ${payment.channel} · ${new Date(payment.date).toLocaleString("vi-VN")}`;
++            const badge = document.createElement("i");
++            badge.textContent = "DEMO ĐÃ GHI NHẬN";
+             const amount = document.createElement("b");
+             amount.textContent = money(payment.amount);
+-            const badge = document.createElement("i");
+-            badge.textContent = "DEMO ĐÃ GHI NHẬN";
+             description.append(title, meta, badge);
+             item.append(description, amount);
+             history.appendChild(item);
+         });
+     }
+ 
++    function renderCards() {
++        const list = $("linked-card-list");
++        list.replaceChildren();
++        $("card-empty").classList.toggle("is-hidden", state.cards.length > 0);
++        state.cards.forEach((card) => {
++            const row = document.createElement("div");
++            row.className = "linked-card-row";
++            const select = document.createElement("input");
++            select.type = "radio";
++            select.name = "selected-card";
++            select.checked = card.id === state.selectedCardId;
++            select.setAttribute("aria-label", `Chọn ${card.brand} kết thúc bằng ${card.lastFour}`);
++            select.addEventListener("change", () => {
++                state.selectedCardId = card.id;
++                persist();
++                updateQuote();
++            });
++            const details = document.createElement("span");
++            const brand = document.createElement("strong");
++            brand.textContent = card.brand;
++            const masked = document.createElement("small");
++            masked.textContent = `•••• ${card.lastFour} · thẻ demo`;
++            details.append(brand, masked);
++            const remove = document.createElement("button");
++            remove.type = "button";
++            remove.className = "card-remove";
++            remove.textContent = "Gỡ";
++            remove.addEventListener("click", () => {
++                state.cards = state.cards.filter((item) => item.id !== card.id);
++                if (state.selectedCardId === card.id) state.selectedCardId = state.cards[0]?.id || null;
++                persist();
++                renderCards();
++                updateQuote();
++            });
++            row.append(select, details, remove);
++            list.appendChild(row);
++        });
++        updateChannelUI();
++    }
++
+     document.querySelectorAll(".demo-tab").forEach((button) => button.addEventListener("click", () => {
+         settlementMode = false;
+         activeTab = button.dataset.tab;
+@@ -174,20 +239,53 @@
+         updateQuote();
+     }));
+ 
+-    ["vehicle-price", "payment-type", "custom-amount", "payment-method", "down-payment-rate", "installment-term", "annual-rate", "installment-payment-kind"].forEach((id) => $(id).addEventListener("input", updateQuote));
+-    ["payment-type", "payment-method", "down-payment-rate", "installment-term", "installment-payment-kind"].forEach((id) => $(id).addEventListener("change", updateQuote));
++    document.querySelectorAll(".gateway-method").forEach((button) => button.addEventListener("click", () => {
++        activeChannel = button.dataset.channel;
++        $("gateway-result").classList.add("is-hidden");
++        updateChannelUI();
++    }));
++
++    ["vehicle-price", "payment-type", "custom-amount", "down-payment-rate", "installment-term", "annual-rate", "installment-payment-kind"].forEach((id) => $(id).addEventListener("input", updateQuote));
++    ["payment-type", "down-payment-rate", "installment-term", "installment-payment-kind"].forEach((id) => $(id).addEventListener("change", updateQuote));
++
++    $("toggle-card-form").addEventListener("click", () => {
++        const form = $("card-link-form");
++        form.classList.toggle("is-hidden");
++        $("toggle-card-form").textContent = form.classList.contains("is-hidden") ? "+ Liên kết thẻ" : "Đóng";
++    });
++
++    $("card-link-form").addEventListener("submit", (event) => {
++        event.preventDefault();
++        const lastFour = $("card-last-four").value.trim();
++        if (!/^\d{4}$/.test(lastFour)) return;
++        const card = { id: `demo-card-${Date.now()}`, brand: $("card-brand").value, lastFour };
++        state.cards.push(card);
++        state.selectedCardId = card.id;
++        activeChannel = "card";
++        persist();
++        event.currentTarget.reset();
++        event.currentTarget.classList.add("is-hidden");
++        $("toggle-card-form").textContent = "+ Liên kết thẻ";
++        renderCards();
++        updateQuote();
++    });
+ 
+     $("simulate-payment").addEventListener("click", () => {
+         const quote = currentQuote();
+-        if (!quote || quote.amount <= 0 || (quote.kind !== "settlement" && quote.kind !== "installment" && quote.amount > debt())) return;
+-        const reference = `DEMO-${Date.now().toString().slice(-8)}`;
++        const card = state.cards.find((item) => item.id === state.selectedCardId);
++        if (!quote || quote.amount <= 0 || (activeChannel === "card" && !card) || (quote.kind !== "settlement" && quote.kind !== "installment" && quote.amount > debt())) return;
+         const plan = quoteInstallment();
+-        const balanceApplied = quote.kind === "installment" ? principalForInstallment(plan, state.installmentsPaid) : quote.kind === "settlement" ? debt() : quote.amount;
+-        state.payments.push({ amount: quote.amount, balanceApplied, date: new Date().toISOString(), label: quote.kind === "installment" ? `Kỳ trả góp ${state.installmentsPaid + 1}` : quote.kind === "settlement" ? "Tất toán trước hạn" : quote.kind === "down-payment" ? "Trả trước hợp đồng trả góp" : quote.kind === "deposit" ? "Đặt cọc đơn hàng" : quote.kind === "remaining" ? "Thanh toán công nợ" : "Thanh toán một phần", reference });
++        const applied = quote.kind === "installment" ? principalForInstallment(plan, state.installmentsPaid) : quote.kind === "settlement" ? debt() : quote.amount;
++        const method = activeChannel === "card" && card ? `${card.brand} •••• ${card.lastFour}` : channelLabels[activeChannel];
++        const labels = { deposit: "Đặt cọc đơn hàng", remaining: "Thanh toán công nợ", custom: "Thanh toán một phần", installment: `Kỳ trả góp ${state.installmentsPaid + 1}`, "down-payment": "Trả trước hợp đồng trả góp", settlement: "Tất toán trước hạn" };
++        const payment = { amount: quote.amount, balanceApplied: applied, date: new Date().toISOString(), label: labels[quote.kind], channel: method, reference: `DEMO-${Date.now().toString().slice(-8)}` };
++        state.payments.push(payment);
+         if (quote.kind === "installment") state.installmentsPaid += 1;
+         persist();
+         updateQuote();
+-        $("qr-caption").textContent = "Đã mô phỏng ghi nhận · tạo QR mới để tiếp tục";
++        const result = $("gateway-result");
++        result.textContent = `Giao dịch demo thành công · ${payment.reference} · ${method}. Không có khoản tiền thật được chuyển.`;
++        result.classList.remove("is-hidden");
+     });
+ 
+     $("settlement-button").addEventListener("click", () => {
+@@ -195,16 +293,20 @@
+         document.querySelector(".demo-tab[data-tab='installment']").click();
+         settlementMode = true;
+         updateQuote();
+-        $("due-note").textContent = "Dư nợ gốc còn lại cộng phí tất toán mô phỏng 2%.";
+     });
+ 
+     $("reset-demo").addEventListener("click", () => {
+         state.payments = [];
++        state.cards = [];
++        state.selectedCardId = null;
+         state.installmentsPaid = 0;
+         settlementMode = false;
++        activeChannel = "momo";
+         persist();
++        renderCards();
+         updateQuote();
+     });
+ 
++    renderCards();
+     updateQuote();
+ })();
+Index: ElectricCarSales/src/main/webapp/assets/css/payment-demo.css
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>.demo-banner{display:flex;align-items:flex-start;gap:14px;padding:17px 19px;margin:0 0 23px;border:1px solid #f2d79f;border-radius:10px;background:#fff9eb;color:#57431f}.demo-banner-icon{display:grid;place-items:center;flex:0 0 25px;height:25px;border-radius:50%;background:#f2d79f;color:#6e4c10;font-weight:800}.demo-banner strong{display:block;font-size:12px}.demo-banner p{margin:4px 0 0;color:#806b42;font-size:10px;line-height:1.65}.demo-mode{margin-left:auto;padding:4px 8px;border:1px solid #ecc76f;border-radius:5px;color:#916315;font-size:9px;font-weight:800;letter-spacing:1px}.demo-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,.85fr);align-items:start;gap:20px}.demo-main-column,.demo-side-column{display:grid;gap:20px;min-width:0}.demo-panel,.demo-history-panel,.qr-panel,.demo-flow-card{padding:24px}.demo-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.demo-panel-heading h2{margin:5px 0 0;font:700 18px/1.35 var(--display);letter-spacing:-.4px}.demo-order-id{color:#8c9199;font:500 12px var(--font)}.demo-status{padding:6px 9px;border-radius:5px;background:#fff3dd;color:#a06a12;font-size:8px;font-weight:800;letter-spacing:.5px}.section-overline{color:#91959d;font-size:9px;font-weight:700;letter-spacing:1.2px}.demo-order-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:23px 0 14px}.demo-order-summary>div,.demo-order-summary>label{min-width:0;padding:12px;border:1px solid #eff0f1;border-radius:7px}.demo-order-summary span,.demo-order-summary>label>span{display:block;margin-bottom:5px;color:#8c9199;font-size:9px}.demo-order-summary strong{font-size:11px}.demo-order-summary .demo-debt{color:var(--red)}.demo-money-input{display:flex;align-items:center;gap:7px;border-bottom:1px solid #dfe1e4}.demo-money-input input{width:100%;min-width:0;padding:0;border:0;outline:0;background:transparent;color:var(--ink);font-weight:700;font-size:11px}.demo-money-input input::-webkit-inner-spin-button,.demo-money-input input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.demo-money-input input[type=number]{-moz-appearance:textfield}.demo-money-input b{color:#858a92;font-size:10px}.demo-progress{height:5px;overflow:hidden;border-radius:5px;background:#f0f1f2}.demo-progress span{display:block;width:0;height:100%;border-radius:inherit;background:var(--green);transition:width .25s}.demo-tabs{display:flex;gap:18px;margin:22px 0 0;border-bottom:1px solid var(--line)}.demo-tab{position:relative;padding:0 2px 12px;border:0;background:transparent;color:#858a92;font-size:11px;font-weight:600}.demo-tab.is-active{color:var(--red)}.demo-tab.is-active:after{position:absolute;right:0;bottom:-1px;left:0;height:2px;background:var(--red);content:\"\"}.demo-tab-content{padding-top:18px}.demo-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.demo-fields label{display:grid;gap:7px;color:#555b63;font-size:10px;font-weight:600}.demo-fields select,.demo-fields>.demo-money-input{height:39px;padding:0 10px;border:1px solid #e4e6e8;border-radius:6px;background:#fff;color:#282b30;font-size:10px}.demo-fields>.demo-money-input{display:flex;padding:0 10px}.demo-fields>.demo-money-input input{font-size:11px}.demo-fields label:has(.demo-money-input){gap:7px}.demo-amount-callout{display:flex;align-items:center;gap:10px;margin-top:17px;padding:13px 15px;border-radius:7px;background:#f8f8f8}.demo-amount-callout span{color:#777c84;font-size:10px}.demo-amount-callout strong{margin-left:auto;color:var(--red);font:800 17px var(--display)}.demo-amount-callout small{display:block;flex-basis:100%;margin-top:25px;margin-left:-100%;color:#91959d;font-size:9px}.installment-results{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:17px 0}.installment-results>div{padding:12px;border:1px solid #eceef0;border-radius:7px}.installment-results span{display:block;margin-bottom:5px;color:#8c9199;font-size:9px}.installment-results strong{font-size:11px}.installment-results .demo-highlight{color:var(--red);font-size:13px}.schedule-wrap{max-height:270px;overflow:auto;border:1px solid #eceef0;border-radius:7px}.demo-schedule{width:100%;border-collapse:collapse;white-space:nowrap;font-size:9px}.demo-schedule th{position:sticky;top:0;background:#f8f8f8;color:#858a92;text-align:left}.demo-schedule th,.demo-schedule td{padding:9px 10px;border-bottom:1px solid #eff0f1}.demo-schedule td:nth-child(3),.demo-schedule td:nth-child(4),.demo-schedule td:nth-child(5){text-align:right}.schedule-paid{color:var(--green);font-weight:700}.schedule-pending{color:#9a721e;font-size:8px;font-weight:700}.demo-settlement{display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px;border:1px solid #f0e5e3;border-radius:7px;background:#fffafa}.demo-settlement div{flex:1}.demo-settlement div strong,.demo-settlement div span{display:block}.demo-settlement div strong{font-size:10px}.demo-settlement div span{margin-top:4px;color:#8b8f96;font-size:9px}.demo-settlement>strong{white-space:nowrap;color:var(--red);font-size:11px}.button-secondary{padding:8px 10px;border:1px solid #e4d5d5;border-radius:6px;background:white;color:#a61b31;font-size:9px;font-weight:700}.qr-panel{position:sticky;top:18px}.qr-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}.qr-live{display:inline-flex;align-items:center;gap:6px;color:var(--green);font-size:8px;font-weight:700}.qr-live i{width:6px;height:6px;border-radius:50%;background:#32a579}.qr-frame{display:grid;place-items:center;min-height:240px;margin:18px 0 10px;border:1px dashed #d8dadd;border-radius:9px;background:#fcfcfc}.qr-frame #demo-qr{width:224px;height:224px;display:grid;place-items:center}.qr-frame canvas,.qr-frame img{max-width:100%;border-radius:4px}.qr-fallback{max-width:220px;padding:15px;color:#717780;text-align:center;font-size:9px;overflow-wrap:anywhere}.qr-fallback span{display:block;margin-top:8px;color:#a71d32}.qr-caption{display:block;text-align:center;font-size:11px}.recipient-card{display:grid;gap:0;margin-top:18px;padding:0 13px;border:1px solid #eceef0;border-radius:8px}.recipient-card div{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #f0f1f2}.recipient-card div:last-child{border-bottom:0}.recipient-card span{color:#858a92;font-size:9px}.recipient-card strong{font-size:9px;text-align:right}.recipient-card .qr-reference{max-width:175px;color:#a51b30;font-size:9px;overflow-wrap:anywhere}.qr-confirm{width:100%;justify-content:center;margin-top:16px}.qr-confirm:disabled{cursor:not-allowed;opacity:.55}.qr-disclaimer{margin:10px 0 0;color:#969aa0;font-size:8px;line-height:1.6;text-align:center}.demo-flow-card .section-overline{display:block;margin-bottom:14px}.demo-flow-card ol{display:grid;gap:12px;margin:0;padding:0;list-style:none}.demo-flow-card li{display:flex;align-items:center;gap:10px;color:#555b63;font-size:10px}.demo-flow-card li b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#f5e8eb;color:var(--red);font-size:9px}.demo-flow-card p{margin:14px 0 0;padding-top:12px;border-top:1px solid #eceef0;color:#8c9199;font-size:9px;line-height:1.6}.demo-reset{padding:6px 9px;border:1px solid #e6e7e9;border-radius:5px;background:#fff;color:#747982;font-size:9px}.demo-history-empty{padding:20px 8px;color:#92969d;text-align:center;font-size:10px}.demo-history-list{display:grid}.demo-history-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 0;border-bottom:1px solid #eff0f1}.demo-history-row:last-child{border-bottom:0}.demo-history-row>div{display:grid;gap:3px}.demo-history-row strong{font-size:10px}.demo-history-row span{color:#8c9199;font-size:8px}.demo-history-row i{width:max-content;padding:3px 5px;border-radius:3px;background:#e8f5f0;color:#268060;font-size:7px;font-style:normal;font-weight:700}.demo-history-row>b{white-space:nowrap;font-size:11px}.is-hidden{display:none!important}\r\n@media(max-width:1100px){.demo-grid{grid-template-columns:minmax(0,1fr)}.qr-panel{position:static}.demo-side-column{grid-template-columns:minmax(0,1fr) minmax(250px,.8fr)}}\r\n@media(max-width:700px){.demo-panel,.demo-history-panel,.qr-panel,.demo-flow-card{padding:17px}.demo-order-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.demo-fields{grid-template-columns:1fr}.installment-results{grid-template-columns:1fr}.demo-side-column{grid-template-columns:1fr}.demo-amount-callout{flex-wrap:wrap}.demo-amount-callout small{flex-basis:100%;margin:0}.demo-settlement{flex-wrap:wrap}.demo-settlement div{flex-basis:60%}.demo-settlement>strong{margin-left:auto}.demo-panel-heading h2{font-size:15px}}\r\n.demo-amount-callout{display:grid;grid-template-columns:1fr auto;align-items:center;gap:5px 10px}.demo-amount-callout strong{margin-left:0}.demo-amount-callout small{grid-column:1/-1;display:block;margin:0}\r\n
+===================================================================
+diff --git a/ElectricCarSales/src/main/webapp/assets/css/payment-demo.css b/ElectricCarSales/src/main/webapp/assets/css/payment-demo.css
+--- a/ElectricCarSales/src/main/webapp/assets/css/payment-demo.css	(revision 8f8b98f2737872a34bc3c81cd530b88feaa2f587)
++++ b/ElectricCarSales/src/main/webapp/assets/css/payment-demo.css	(date 1792391203134)
+@@ -1,4 +1,3 @@
+-.demo-banner{display:flex;align-items:flex-start;gap:14px;padding:17px 19px;margin:0 0 23px;border:1px solid #f2d79f;border-radius:10px;background:#fff9eb;color:#57431f}.demo-banner-icon{display:grid;place-items:center;flex:0 0 25px;height:25px;border-radius:50%;background:#f2d79f;color:#6e4c10;font-weight:800}.demo-banner strong{display:block;font-size:12px}.demo-banner p{margin:4px 0 0;color:#806b42;font-size:10px;line-height:1.65}.demo-mode{margin-left:auto;padding:4px 8px;border:1px solid #ecc76f;border-radius:5px;color:#916315;font-size:9px;font-weight:800;letter-spacing:1px}.demo-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,.85fr);align-items:start;gap:20px}.demo-main-column,.demo-side-column{display:grid;gap:20px;min-width:0}.demo-panel,.demo-history-panel,.qr-panel,.demo-flow-card{padding:24px}.demo-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.demo-panel-heading h2{margin:5px 0 0;font:700 18px/1.35 var(--display);letter-spacing:-.4px}.demo-order-id{color:#8c9199;font:500 12px var(--font)}.demo-status{padding:6px 9px;border-radius:5px;background:#fff3dd;color:#a06a12;font-size:8px;font-weight:800;letter-spacing:.5px}.section-overline{color:#91959d;font-size:9px;font-weight:700;letter-spacing:1.2px}.demo-order-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:23px 0 14px}.demo-order-summary>div,.demo-order-summary>label{min-width:0;padding:12px;border:1px solid #eff0f1;border-radius:7px}.demo-order-summary span,.demo-order-summary>label>span{display:block;margin-bottom:5px;color:#8c9199;font-size:9px}.demo-order-summary strong{font-size:11px}.demo-order-summary .demo-debt{color:var(--red)}.demo-money-input{display:flex;align-items:center;gap:7px;border-bottom:1px solid #dfe1e4}.demo-money-input input{width:100%;min-width:0;padding:0;border:0;outline:0;background:transparent;color:var(--ink);font-weight:700;font-size:11px}.demo-money-input input::-webkit-inner-spin-button,.demo-money-input input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.demo-money-input input[type=number]{-moz-appearance:textfield}.demo-money-input b{color:#858a92;font-size:10px}.demo-progress{height:5px;overflow:hidden;border-radius:5px;background:#f0f1f2}.demo-progress span{display:block;width:0;height:100%;border-radius:inherit;background:var(--green);transition:width .25s}.demo-tabs{display:flex;gap:18px;margin:22px 0 0;border-bottom:1px solid var(--line)}.demo-tab{position:relative;padding:0 2px 12px;border:0;background:transparent;color:#858a92;font-size:11px;font-weight:600}.demo-tab.is-active{color:var(--red)}.demo-tab.is-active:after{position:absolute;right:0;bottom:-1px;left:0;height:2px;background:var(--red);content:""}.demo-tab-content{padding-top:18px}.demo-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.demo-fields label{display:grid;gap:7px;color:#555b63;font-size:10px;font-weight:600}.demo-fields select,.demo-fields>.demo-money-input{height:39px;padding:0 10px;border:1px solid #e4e6e8;border-radius:6px;background:#fff;color:#282b30;font-size:10px}.demo-fields>.demo-money-input{display:flex;padding:0 10px}.demo-fields>.demo-money-input input{font-size:11px}.demo-fields label:has(.demo-money-input){gap:7px}.demo-amount-callout{display:flex;align-items:center;gap:10px;margin-top:17px;padding:13px 15px;border-radius:7px;background:#f8f8f8}.demo-amount-callout span{color:#777c84;font-size:10px}.demo-amount-callout strong{margin-left:auto;color:var(--red);font:800 17px var(--display)}.demo-amount-callout small{display:block;flex-basis:100%;margin-top:25px;margin-left:-100%;color:#91959d;font-size:9px}.installment-results{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:17px 0}.installment-results>div{padding:12px;border:1px solid #eceef0;border-radius:7px}.installment-results span{display:block;margin-bottom:5px;color:#8c9199;font-size:9px}.installment-results strong{font-size:11px}.installment-results .demo-highlight{color:var(--red);font-size:13px}.schedule-wrap{max-height:270px;overflow:auto;border:1px solid #eceef0;border-radius:7px}.demo-schedule{width:100%;border-collapse:collapse;white-space:nowrap;font-size:9px}.demo-schedule th{position:sticky;top:0;background:#f8f8f8;color:#858a92;text-align:left}.demo-schedule th,.demo-schedule td{padding:9px 10px;border-bottom:1px solid #eff0f1}.demo-schedule td:nth-child(3),.demo-schedule td:nth-child(4),.demo-schedule td:nth-child(5){text-align:right}.schedule-paid{color:var(--green);font-weight:700}.schedule-pending{color:#9a721e;font-size:8px;font-weight:700}.demo-settlement{display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px;border:1px solid #f0e5e3;border-radius:7px;background:#fffafa}.demo-settlement div{flex:1}.demo-settlement div strong,.demo-settlement div span{display:block}.demo-settlement div strong{font-size:10px}.demo-settlement div span{margin-top:4px;color:#8b8f96;font-size:9px}.demo-settlement>strong{white-space:nowrap;color:var(--red);font-size:11px}.button-secondary{padding:8px 10px;border:1px solid #e4d5d5;border-radius:6px;background:white;color:#a61b31;font-size:9px;font-weight:700}.qr-panel{position:sticky;top:18px}.qr-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}.qr-live{display:inline-flex;align-items:center;gap:6px;color:var(--green);font-size:8px;font-weight:700}.qr-live i{width:6px;height:6px;border-radius:50%;background:#32a579}.qr-frame{display:grid;place-items:center;min-height:240px;margin:18px 0 10px;border:1px dashed #d8dadd;border-radius:9px;background:#fcfcfc}.qr-frame #demo-qr{width:224px;height:224px;display:grid;place-items:center}.qr-frame canvas,.qr-frame img{max-width:100%;border-radius:4px}.qr-fallback{max-width:220px;padding:15px;color:#717780;text-align:center;font-size:9px;overflow-wrap:anywhere}.qr-fallback span{display:block;margin-top:8px;color:#a71d32}.qr-caption{display:block;text-align:center;font-size:11px}.recipient-card{display:grid;gap:0;margin-top:18px;padding:0 13px;border:1px solid #eceef0;border-radius:8px}.recipient-card div{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #f0f1f2}.recipient-card div:last-child{border-bottom:0}.recipient-card span{color:#858a92;font-size:9px}.recipient-card strong{font-size:9px;text-align:right}.recipient-card .qr-reference{max-width:175px;color:#a51b30;font-size:9px;overflow-wrap:anywhere}.qr-confirm{width:100%;justify-content:center;margin-top:16px}.qr-confirm:disabled{cursor:not-allowed;opacity:.55}.qr-disclaimer{margin:10px 0 0;color:#969aa0;font-size:8px;line-height:1.6;text-align:center}.demo-flow-card .section-overline{display:block;margin-bottom:14px}.demo-flow-card ol{display:grid;gap:12px;margin:0;padding:0;list-style:none}.demo-flow-card li{display:flex;align-items:center;gap:10px;color:#555b63;font-size:10px}.demo-flow-card li b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#f5e8eb;color:var(--red);font-size:9px}.demo-flow-card p{margin:14px 0 0;padding-top:12px;border-top:1px solid #eceef0;color:#8c9199;font-size:9px;line-height:1.6}.demo-reset{padding:6px 9px;border:1px solid #e6e7e9;border-radius:5px;background:#fff;color:#747982;font-size:9px}.demo-history-empty{padding:20px 8px;color:#92969d;text-align:center;font-size:10px}.demo-history-list{display:grid}.demo-history-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 0;border-bottom:1px solid #eff0f1}.demo-history-row:last-child{border-bottom:0}.demo-history-row>div{display:grid;gap:3px}.demo-history-row strong{font-size:10px}.demo-history-row span{color:#8c9199;font-size:8px}.demo-history-row i{width:max-content;padding:3px 5px;border-radius:3px;background:#e8f5f0;color:#268060;font-size:7px;font-style:normal;font-weight:700}.demo-history-row>b{white-space:nowrap;font-size:11px}.is-hidden{display:none!important}
+-@media(max-width:1100px){.demo-grid{grid-template-columns:minmax(0,1fr)}.qr-panel{position:static}.demo-side-column{grid-template-columns:minmax(0,1fr) minmax(250px,.8fr)}}
+-@media(max-width:700px){.demo-panel,.demo-history-panel,.qr-panel,.demo-flow-card{padding:17px}.demo-order-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.demo-fields{grid-template-columns:1fr}.installment-results{grid-template-columns:1fr}.demo-side-column{grid-template-columns:1fr}.demo-amount-callout{flex-wrap:wrap}.demo-amount-callout small{flex-basis:100%;margin:0}.demo-settlement{flex-wrap:wrap}.demo-settlement div{flex-basis:60%}.demo-settlement>strong{margin-left:auto}.demo-panel-heading h2{font-size:15px}}
+-.demo-amount-callout{display:grid;grid-template-columns:1fr auto;align-items:center;gap:5px 10px}.demo-amount-callout strong{margin-left:0}.demo-amount-callout small{grid-column:1/-1;display:block;margin:0}
++.demo-banner{display:flex;align-items:flex-start;gap:14px;padding:17px 19px;margin:0 0 23px;border:1px solid #cfe3f5;border-radius:10px;background:#f2f8fd;color:#24415a}.demo-banner-icon{display:grid;place-items:center;flex:0 0 25px;height:25px;border-radius:50%;background:#d8eafa;color:#22577b;font-weight:800}.demo-banner strong{display:block;font-size:12px}.demo-banner p{margin:4px 0 0;color:#61778b;font-size:10px;line-height:1.65}.demo-mode{margin-left:auto;padding:4px 8px;border:1px solid #bdd8ee;border-radius:5px;color:#28638c;font-size:9px;font-weight:800;letter-spacing:1px}.demo-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,.85fr);align-items:start;gap:20px}.demo-main-column,.demo-side-column{display:grid;gap:20px;min-width:0}.demo-panel,.demo-history-panel,.gateway-panel,.demo-flow-card{padding:24px}.demo-panel-heading,.gateway-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.demo-panel-heading h2,.gateway-heading h2{margin:5px 0 0;font:700 18px/1.35 var(--display);letter-spacing:-.4px}.demo-order-id{color:#8c9199;font:500 12px var(--font)}.demo-status{padding:6px 9px;border-radius:5px;background:#fff3dd;color:#a06a12;font-size:8px;font-weight:800;letter-spacing:.5px}.section-overline{color:#91959d;font-size:9px;font-weight:700;letter-spacing:1.2px}.demo-order-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:23px 0 14px}.demo-order-summary>div,.demo-order-summary>label{min-width:0;padding:12px;border:1px solid #eff0f1;border-radius:7px}.demo-order-summary span,.demo-order-summary>label>span{display:block;margin-bottom:5px;color:#8c9199;font-size:9px}.demo-order-summary strong{font-size:11px}.demo-order-summary .demo-debt{color:var(--red)}.demo-money-input{display:flex;align-items:center;gap:7px;border-bottom:1px solid #dfe1e4}.demo-money-input input{width:100%;min-width:0;padding:0;border:0;outline:0;background:transparent;color:var(--ink);font-weight:700;font-size:11px}.demo-money-input input::-webkit-inner-spin-button,.demo-money-input input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.demo-money-input input[type=number]{-moz-appearance:textfield}.demo-money-input b{color:#858a92;font-size:10px}.demo-progress{height:5px;overflow:hidden;border-radius:5px;background:#f0f1f2}.demo-progress span{display:block;width:0;height:100%;border-radius:inherit;background:var(--green);transition:width .25s}.demo-tabs{display:flex;gap:18px;margin:22px 0 0;border-bottom:1px solid var(--line)}.demo-tab{position:relative;padding:0 2px 12px;border:0;background:transparent;color:#858a92;font-size:11px;font-weight:600}.demo-tab.is-active{color:var(--red)}.demo-tab.is-active:after{position:absolute;right:0;bottom:-1px;left:0;height:2px;background:var(--red);content:""}.demo-tab-content{padding-top:18px}.demo-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.demo-fields label,.card-link-form label{display:grid;gap:7px;color:#555b63;font-size:10px;font-weight:600}.demo-fields select,.demo-fields>.demo-money-input,.card-link-form select,.card-link-form input{height:39px;padding:0 10px;border:1px solid #e4e6e8;border-radius:6px;background:#fff;color:#282b30;font-size:10px}.demo-fields>.demo-money-input{display:flex;padding:0 10px}.demo-fields>.demo-money-input input{font-size:11px}.demo-fields label:has(.demo-money-input){gap:7px}.demo-amount-callout{display:grid;grid-template-columns:1fr auto;align-items:center;gap:5px 10px;margin-top:17px;padding:13px 15px;border-radius:7px;background:#f8f8f8}.demo-amount-callout span{color:#777c84;font-size:10px}.demo-amount-callout strong{color:var(--red);font:800 17px var(--display)}.demo-amount-callout small{grid-column:1/-1;color:#91959d;font-size:9px}.installment-results{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:17px 0}.installment-results>div{padding:12px;border:1px solid #eceef0;border-radius:7px}.installment-results span{display:block;margin-bottom:5px;color:#8c9199;font-size:9px}.installment-results strong{font-size:11px}.installment-results .demo-highlight{color:var(--red);font-size:13px}.schedule-wrap{max-height:270px;overflow:auto;border:1px solid #eceef0;border-radius:7px}.demo-schedule{width:100%;border-collapse:collapse;white-space:nowrap;font-size:9px}.demo-schedule th{position:sticky;top:0;background:#f8f8f8;color:#858a92;text-align:left}.demo-schedule th,.demo-schedule td{padding:9px 10px;border-bottom:1px solid #eff0f1}.demo-schedule td:nth-child(3),.demo-schedule td:nth-child(4),.demo-schedule td:nth-child(5){text-align:right}.schedule-paid{color:var(--green);font-weight:700}.schedule-pending{color:#9a721e;font-size:8px;font-weight:700}.demo-settlement{display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px;border:1px solid #f0e5e3;border-radius:7px;background:#fffafa}.demo-settlement div{flex:1}.demo-settlement div strong,.demo-settlement div span{display:block}.demo-settlement div strong{font-size:10px}.demo-settlement div span{margin-top:4px;color:#8b8f96;font-size:9px}.demo-settlement>strong{white-space:nowrap;color:var(--red);font-size:11px}.button-secondary{padding:8px 10px;border:1px solid #e4d5d5;border-radius:6px;background:white;color:#a61b31;font-size:9px;font-weight:700}.gateway-panel{position:sticky;top:18px}.gateway-status{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:5px;background:#f1f5f8;color:#49718f;font-size:8px;font-weight:800;letter-spacing:.6px}.gateway-status i{width:6px;height:6px;border-radius:50%;background:#4c9acc}.gateway-intro{margin:12px 0 16px;color:#858a92;font-size:9px;line-height:1.65}.gateway-method-grid{display:grid;gap:8px}.gateway-method{display:flex;align-items:center;gap:10px;width:100%;padding:11px;border:1px solid #e7e9eb;border-radius:7px;background:#fff;text-align:left;transition:border-color .18s,background .18s}.gateway-method:hover,.gateway-method.is-selected{border-color:#d75a6d;background:#fffafb}.gateway-method>span:nth-child(2){display:grid;flex:1;gap:3px}.gateway-method strong{color:#31353b;font-size:10px}.gateway-method small{color:#8c9199;font-size:8px}.gateway-method-icon{display:grid;place-items:center;flex:0 0 31px;height:31px;border-radius:7px;font-size:14px;font-weight:800}.card-icon{background:#edf0f6;color:#354965}.momo-icon{background:#fce9f7;color:#a8178d}.napas-icon{background:#e8f2fd;color:#2164ae}.hosted-icon{background:#e9f4f2;color:#277c6a}.gateway-radio{display:grid;place-items:center;width:15px;height:15px;border:1px solid #c7cbd0;border-radius:50%}.is-selected .gateway-radio{border-color:var(--red)}.is-selected .gateway-radio:after{width:7px;height:7px;border-radius:50%;background:var(--red);content:""}.linked-card-area{margin-top:13px;padding:13px;border:1px solid #e9eaec;border-radius:8px;background:#fcfcfc}.linked-card-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}.linked-card-heading strong{font-size:10px}.text-button{padding:0;border:0;background:transparent;color:#af2138;font-size:9px;font-weight:700}.linked-card-list{display:grid;gap:7px;margin-top:9px}.linked-card-row{display:flex;align-items:center;gap:9px;padding:9px;border:1px solid #eceef0;border-radius:6px;background:#fff}.linked-card-row input{accent-color:var(--red)}.linked-card-row>span{display:grid;flex:1;gap:3px}.linked-card-row strong{font-size:9px}.linked-card-row small{color:#858a92;font-size:8px}.card-remove{padding:4px 6px;border:0;background:transparent;color:#8c9199;font-size:8px}.card-empty{padding:12px 2px;color:#92969d;font-size:9px}.card-link-form{display:grid;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid #e9eaec}.card-link-form p{margin:0;color:#858a92;font-size:8px;line-height:1.6}.card-link-form .button{justify-content:center}.selected-card-note{margin:13px 0;padding:10px;border-left:2px solid #d9e7f2;background:#f7fafc;color:#627788;font-size:9px;line-height:1.6}.gateway-payment-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 0;border-top:1px solid #eceef0}.gateway-payment-summary span{color:#777c84;font-size:10px}.gateway-payment-summary strong{color:var(--red);font:800 16px var(--display)}.gateway-submit{width:100%;justify-content:center}.gateway-submit:disabled{cursor:not-allowed;opacity:.55}.gateway-result{margin-top:12px;padding:11px;border:1px solid #cce9dc;border-radius:6px;background:#f0fbf5;color:#247551;font-size:9px;line-height:1.6}.gateway-disclaimer{margin:9px 0 0;color:#999da3;font-size:8px;line-height:1.6;text-align:center}.demo-flow-card .section-overline{display:block;margin-bottom:14px}.demo-flow-card ol{display:grid;gap:12px;margin:0;padding:0;list-style:none}.demo-flow-card li{display:flex;align-items:center;gap:10px;color:#555b63;font-size:10px}.demo-flow-card li b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#f5e8eb;color:var(--red);font-size:9px}.demo-flow-card p{margin:14px 0 0;padding-top:12px;border-top:1px solid #eceef0;color:#8c9199;font-size:9px;line-height:1.6}.demo-reset{padding:6px 9px;border:1px solid #e6e7e9;border-radius:5px;background:#fff;color:#747982;font-size:9px}.demo-history-empty{padding:20px 8px;color:#92969d;text-align:center;font-size:10px}.demo-history-list{display:grid}.demo-history-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 0;border-bottom:1px solid #eff0f1}.demo-history-row:last-child{border-bottom:0}.demo-history-row>div{display:grid;gap:3px}.demo-history-row strong{font-size:10px}.demo-history-row span{color:#8c9199;font-size:8px}.demo-history-row i{width:max-content;padding:3px 5px;border-radius:3px;background:#e8f5f0;color:#268060;font-size:7px;font-style:normal;font-weight:700}.demo-history-row>b{white-space:nowrap;font-size:11px}.is-hidden{display:none!important}
++@media(max-width:1100px){.demo-grid{grid-template-columns:minmax(0,1fr)}.gateway-panel{position:static}.demo-side-column{grid-template-columns:minmax(0,1fr) minmax(250px,.8fr)}}
++@media(max-width:700px){.demo-panel,.demo-history-panel,.gateway-panel,.demo-flow-card{padding:17px}.demo-order-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.demo-fields{grid-template-columns:1fr}.installment-results{grid-template-columns:1fr}.demo-side-column{grid-template-columns:1fr}.demo-settlement{flex-wrap:wrap}.demo-settlement div{flex-basis:60%}.demo-settlement>strong{margin-left:auto}.demo-panel-heading h2,.gateway-heading h2{font-size:15px}}
