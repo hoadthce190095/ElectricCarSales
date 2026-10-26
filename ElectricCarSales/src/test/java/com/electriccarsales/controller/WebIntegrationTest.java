@@ -123,10 +123,10 @@ class WebIntegrationTest {
 
     @Test
     void anonymousRoutesAndMatrixParametersCannotBypassAuthorization() throws Exception {
-        var page = get("/tan.jsp");
+        var page = get("/admin.jsp");
         assertEquals(200, page.statusCode(), page.body());
         assertTrue(page.body().contains("name=\"app-context-path\" content=\"\""));
-        assertTrue(page.body().contains("src=\"/assets/tan.js\""));
+        assertTrue(page.body().contains("src=\"/assets/admin-dashboard.js\""));
         assertFalse(page.body().contains("<%@"), "JSP directives must be rendered by Jasper");
         assertFalse(page.body().contains("<c:url"), "JSTL URLs must be rendered");
         assertEquals(200, get("/api/ai").statusCode());

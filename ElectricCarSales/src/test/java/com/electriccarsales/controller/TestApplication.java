@@ -135,7 +135,7 @@ public final class TestApplication implements AutoCloseable {
 
     public static void main(String[] args) throws Exception {
         TestApplication app = new TestApplication(args.length == 0 ? 18081 : Integer.parseInt(args[0]));
-        System.out.println("TEST PREVIEW " + app.base + "/tan.jsp (disposable test data)");
+        System.out.println("TEST PREVIEW " + app.base + "/admin.jsp (disposable test data)");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 app.close();

@@ -45,7 +45,7 @@ const context = vm.createContext({
 });
 const assets = path.resolve(__dirname, "../../main/webapp/assets");
 vm.runInContext(
-    ["tan-common.js", "tan-admin.js", "tan-report.js"]
+    ["admin-common.js", "admin-management.js", "sales-reports.js"]
         .map((name) => fs.readFileSync(path.join(assets, name), "utf8"))
         .join("\n"),
     context

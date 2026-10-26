@@ -21,7 +21,17 @@ public class OtpController extends HttpServlet {
         req.setCharacterEncoding("UTF-8");
         try {
             int userId = Integer.parseInt(req.getParameter("userId"));
+            if (userId <= 0) {
+                resp.sendRedirect(req.getContextPath() + "/register");
+                return;
+            }
+            req.setAttribute("userId", userId);
             String code = req.getParameter("otp");
+            if (code == null || !code.matches("[0-9]{6}")) {
+                req.setAttribute("error", "Vui lòng nhập mã OTP gồm 6 chữ số.");
+                req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);
+                return;
+            }
             if (!new OtpService().verifyRegistration(userId, code)) {
                 req.setAttribute("error", "OTP không đúng hoặc đã hết hạn. Hãy đăng ký lại để nhận mã mới.");
                 req.setAttribute("userId", userId);

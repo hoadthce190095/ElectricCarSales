@@ -1,7 +1,7 @@
 package com.electriccarsales.service.order;
 
 import com.electriccarsales.dao.order.OrderDAO;
-import com.electriccarsales.model.order.Order;
+import com.electriccarsales.model.Order;
 import java.math.BigDecimal;
 import java.util.List;
 

@@ -14,8 +14,8 @@ src/main/java/
     DBContext.java
 src/main/webapp/
   index.jsp       Trang chủ VinFast xanh dương theo main
-  preview-main.jsp  Forward tới /index.jsp
-  tan.jsp         Quản trị, báo cáo, danh mục và trợ lý xe
+  login.jsp       Đăng nhập từ trang chủ
+  admin.jsp       Quản trị, báo cáo, danh mục và trợ lý xe
   assets/         CSS, JavaScript và dữ liệu danh mục bổ sung
   WEB-INF/web.xml
 ```
@@ -27,7 +27,7 @@ src/main/webapp/
 ## Luồng xử lý
 
 ```text
-tan.jsp + assets/tan-*.js
+admin.jsp + assets/admin-dashboard.js và các script chức năng
     → controller.SecurityFilter: phiên, trạng thái, quyền, CSRF
     → controller: đọc request và trả JSON / file
     → service: kiểm tra dữ liệu, nghiệp vụ, transaction
@@ -52,13 +52,13 @@ Controller và service nhận dependency qua constructor; constructor không tha
 
 ## JSP và đường dẫn
 
-Trang gốc dùng welcome `index.jsp`, hiển thị trang chủ VinFast xanh dương lấy theo `origin/main` tại commit `69deda1`. `preview-main.jsp` forward nội bộ tới `/index.jsp` để dùng cùng một trang chủ. `tan.jsp` giữ các màn hình quản trị, báo cáo, danh mục và trợ lý xe; liên kết `tan.jsp?login=1` mở form đăng nhập khi chưa có phiên.
+Trang gốc dùng welcome `index.jsp`, hiển thị trang chủ VinFast xanh dương theo `main`; nút đăng nhập công khai mở `login.jsp`. `admin.jsp` giữ các màn hình quản trị, báo cáo, danh mục và trợ lý xe; liên kết `admin.jsp?login=1` mở form đăng nhập quản trị khi chưa có phiên.
 
-`assets/css/theme.css` chứa màu và kiểu chữ dùng chung, được tải trước `assets/css/home.css` ở trang chủ và `assets/tan.css` ở không gian làm việc. `assets/js/home.js` xử lý tìm kiếm, bộ lọc, sắp xếp và so sánh tối đa 3 xe từ `assets/vinfast-catalogue.json`.
+`assets/css/theme.css` chứa màu và kiểu chữ dùng chung, được tải trước `assets/css/home.css` ở trang chủ và `assets/admin-dashboard.css` ở không gian làm việc. `assets/js/home.js` xử lý tìm kiếm, bộ lọc, sắp xếp và so sánh tối đa 3 xe từ `assets/vinfast-catalogue.json`.
 
-JSP dùng JSTL `c:url` cho CSS, JavaScript và link về trang chính. Meta `app-context-path` cung cấp context cho JavaScript; các script `tan-*.js` dùng hàm `appUrl()` khi gọi API, đọc JSON danh mục và tải CSV/XLSX. Vì vậy deploy ở `/ElectricCarSales`, `/showroom` hoặc context gốc vẫn tạo URL đúng.
+JSP dùng JSTL `c:url` cho CSS, JavaScript và link về trang chính. Meta `app-context-path` cung cấp context cho JavaScript; các script quản trị dùng hàm `appUrl()` khi gọi API, đọc JSON danh mục và tải CSV/XLSX. Vì vậy deploy ở `/ElectricCarSales`, `/showroom` hoặc context gốc vẫn tạo URL đúng.
 
-Khi ghép với trang JSP của nhóm, thêm link bằng `<c:url value="/tan.jsp" />`; tránh đường dẫn `../` phụ thuộc độ sâu của trang. Sau khi đổi package phải chạy `mvn clean verify` để loại class cũ khỏi WAR.
+Khi ghép với trang JSP của nhóm, thêm link bằng `<c:url value="/admin.jsp" />`; tránh đường dẫn `../` phụ thuộc độ sâu của trang. Sau khi đổi package phải chạy `mvn clean verify` để loại class cũ khỏi WAR.
 
 ## API
 

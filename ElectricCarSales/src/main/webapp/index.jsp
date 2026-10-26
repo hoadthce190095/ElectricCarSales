@@ -1,7 +1,13 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="com.electriccarsales.model.SessionUser" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%
-boolean customerView = "customer".equals(request.getParameter("view"));
+Object authenticatedUser = session.getAttribute("user");
+Object legacyUserId = session.getAttribute("userID");
+boolean customerView = authenticatedUser instanceof SessionUser
+    ? "CUSTOMER".equalsIgnoreCase(((SessionUser) authenticatedUser).getRole())
+    : legacyUserId instanceof Number && ((Number) legacyUserId).intValue() > 0
+        && "CUSTOMER".equalsIgnoreCase(String.valueOf(session.getAttribute("roleName")));
 %>
 <!doctype html>
 <html lang="vi">
@@ -31,8 +37,8 @@ boolean customerView = "customer".equals(request.getParameter("view"));
             <a class="nav-link current" href="#models">Mua xe <span aria-hidden="true">⌄</span></a>
             <a class="nav-link" href="#about">Giới thiệu</a>
             <a class="nav-link" href="#contact">Tư vấn</a>
-            <a class="nav-link" href="<c:url value='/tan.jsp' />#ai">Trợ lý xe</a>
-            <a class="nav-link" href="<c:url value='/tan.jsp'><c:param name='login' value='1' /></c:url>">Quản trị</a>
+            <a class="nav-link" href="<c:url value='/admin.jsp' />#ai">Trợ lý xe</a>
+            <a class="nav-link" href="<c:url value='/admin.jsp'><c:param name='login' value='1' /></c:url>">Quản trị</a>
         </nav>
         <div class="header-actions">
             <a class="header-contact" href="mailto:hotro@electriccarsale.vn?subject=Yeu%20cau%20tu%20van%20xe%20VinFast">

@@ -4,9 +4,9 @@ Ngày tham khảo: 05/10/2026; đồng bộ giao diện theo nhánh `main` ngày
 
 ## Giao diện chung theo main của nhóm
 
-Trang chủ `index.jsp` lấy bố cục VinFast xanh dương từ `origin/main`, commit `69deda1`: header trắng, banner navy, bộ lọc bên trái, lưới xe và thanh so sánh. `preview-main.jsp` forward tới trang chủ để không duy trì hai bản giao diện. Trang chủ so sánh tối đa 3 xe; chức năng so sánh trong không gian làm việc `tan.jsp` vẫn hỗ trợ 2–4 xe.
+Trang chủ `index.jsp` lấy bố cục VinFast xanh dương từ `origin/main`, commit `69deda1`: header trắng, banner navy, bộ lọc bên trái, lưới xe và thanh so sánh. Trang chủ so sánh tối đa 3 xe; chức năng so sánh trong không gian làm việc `admin.jsp` vẫn hỗ trợ 2–4 xe.
 
-`assets/css/theme.css` định nghĩa bảng màu và kiểu chữ chung cho trang chủ và `tan.jsp`: xanh dương `#315b9d`, navy `#16365f`, nền sáng `#f7f8fa`, chữ `#17233a`, font Be Vietnam Pro và Manrope. CSS riêng giữ bố cục tương ứng cho danh mục công khai và các màn hình quản trị/báo cáo. Logo VinFast và liên kết **Trang chủ** nối hai phần; nút **Đăng nhập** trên trang chủ đi tới form hiện có tại `tan.jsp?login=1`.
+`assets/css/theme.css` định nghĩa bảng màu và kiểu chữ chung cho trang chủ và `admin.jsp`: xanh dương `#315b9d`, navy `#16365f`, nền sáng `#f7f8fa`, chữ `#17233a`, font Be Vietnam Pro và Manrope. CSS riêng giữ bố cục tương ứng cho danh mục công khai và các màn hình quản trị/báo cáo. Logo VinFast và liên kết **Trang chủ** nối hai phần; nút **Đăng nhập** trên trang chủ đi tới `login.jsp`, còn mục **Quản trị** mở `admin.jsp?login=1`.
 
 ## Shopify: tổng quan và so sánh báo cáo
 
@@ -44,11 +44,11 @@ Các file được tải tuần tự bằng `defer`, sử dụng cùng các hàm
 
 | File               | Trách nhiệm                                                                              |
 | ------------------ | ---------------------------------------------------------------------------------------- |
-| `tan-common.js`    | Trạng thái trang, gọi API, kiểm tra quyền, bảng, form, dialog, đăng nhập và đổi mật khẩu |
-| `tan-admin.js`     | Tài khoản, nhân viên, vai trò, cấu hình, khuyến mãi và nhật ký                           |
-| `tan-report.js`    | Tổng quan, báo cáo, biểu đồ, ngày và phép tính so sánh kỳ                                |
-| `tan-catalogue.js` | Danh mục, nguồn VinFast, chi tiết xe và bảng so sánh                                     |
-| `tan-ai.js`        | Hội thoại, gợi ý nhu cầu và cuộc trò chuyện mới                                          |
-| `tan.js`           | Khởi động trang và tạo Admin lần đầu khi được bật                                        |
+| `admin-common.js`    | Trạng thái trang, gọi API, kiểm tra quyền, bảng, form, dialog, đăng nhập và đổi mật khẩu |
+| `admin-management.js`     | Tài khoản, nhân viên, vai trò, cấu hình, khuyến mãi và nhật ký                           |
+| `sales-reports.js`    | Tổng quan, báo cáo, biểu đồ, ngày và phép tính so sánh kỳ                                |
+| `vehicle-catalogue.js` | Danh mục, nguồn VinFast, chi tiết xe và bảng so sánh                                     |
+| `vehicle-assistant.js`        | Hội thoại, gợi ý nhu cầu và cuộc trò chuyện mới                                          |
+| `admin-dashboard.js`           | Khởi động trang và tạo Admin lần đầu khi được bật                                        |
 
 Phép tính thử khuyến mãi chỉ minh họa giá giảm, giới hạn mức giảm không vượt quá giá xe; không ghi vào đơn hàng. Đổi mật khẩu dùng xác nhận mật khẩu hiện tại, cập nhật phiên và CSRF từ máy chủ. Quyền truy cập luôn được kiểm tra lại ở phía Java.

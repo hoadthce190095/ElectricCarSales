@@ -16,7 +16,7 @@ public final class Main {
         try (Connection connection = DBContext.openConnection()) {
             System.out.println("Database connected: " + connection.getCatalog());
             System.out.println("Deploy ElectricCarSales:war exploded on Tomcat 10.1.");
-            System.out.println("Open http://localhost:8080/ElectricCarSales/tan.jsp");
+            System.out.println("Open http://localhost:8080/ElectricCarSales/admin.jsp");
         }
     }
 }

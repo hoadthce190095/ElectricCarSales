@@ -69,7 +69,7 @@ DLL và file cấu hình riêng của máy này không được đưa vào ZIP. 
 
 ## 4. Tạo Admin đầu tiên
 
-**Tự đặt ngay trên web:** chạy `docs/Chay-Web.ps1`, mở `http://localhost:8081/ElectricCarSales/tan.jsp`, chọn **Tạo Admin đầu tiên** và nhập mật khẩu hai lần. Sau đó đăng nhập bằng tài khoản vừa tạo. Màn hình chỉ được bật ở máy chủ cục bộ, yêu cầu CSRF, không còn dùng được khi có bất kỳ Admin nào và không trả mật khẩu/hash ra API. Không cần gửi mật khẩu trong chat.
+**Tự đặt ngay trên web:** chạy `docs/Chay-Web.ps1`, mở `http://localhost:8081/ElectricCarSales/admin.jsp`, chọn **Tạo Admin đầu tiên** và nhập mật khẩu hai lần. Sau đó đăng nhập bằng tài khoản vừa tạo. Màn hình chỉ được bật ở máy chủ cục bộ, yêu cầu CSRF, không còn dùng được khi có bất kỳ Admin nào và không trả mật khẩu/hash ra API. Không cần gửi mật khẩu trong chat.
 
 Nếu chạy bằng cấu hình Tomcat của IntelliJ, thêm VM option `-Dapp.adminSetup.enabled=true` để bật màn hình này trên localhost khi DB chưa có Admin. Mặc định trong WAR là tắt. Khi đã tạo Admin, có thể bỏ option. Công cụ PowerShell bên dưới vẫn dùng được nếu bạn thích đặt mật khẩu trong Terminal.
 
@@ -79,7 +79,7 @@ Nếu chạy bằng cấu hình Tomcat của IntelliJ, thêm VM option `-Dapp.ad
 .\docs\Tao-Admin.ps1
 ```
 
-Script hỏi mật khẩu hai lần với nội dung được che; nhập 10–128 ký tự. Tên đăng nhập mặc định là `admin`; có thể đổi bằng `-Username ten_dang_nhap`. Script dùng lớp `BootstrapAdmin` từ bản WAR đã build, cấu hình DB cục bộ hoặc biến `DB_*` hiện có, và DLL Windows Authentication khi có trong `tool/jdbc-auth`. Mật khẩu chỉ được truyền tạm qua môi trường tiến trình Java, không được in hay ghi vào file; các biến môi trường trước đó được khôi phục sau khi chạy. Khi thấy `Created initial Admin: admin`, mở giao diện đăng nhập tại `http://localhost:8080/ElectricCarSales/tan.jsp` nếu chạy IntelliJ, hoặc `http://localhost:8081/ElectricCarSales/tan.jsp` nếu chạy script, và dùng mật khẩu vừa tự nhập. Không cần gửi mật khẩu trong chat.
+Script hỏi mật khẩu hai lần với nội dung được che; nhập 10–128 ký tự. Tên đăng nhập mặc định là `admin`; có thể đổi bằng `-Username ten_dang_nhap`. Script dùng lớp `BootstrapAdmin` từ bản WAR đã build, cấu hình DB cục bộ hoặc biến `DB_*` hiện có, và DLL Windows Authentication khi có trong `tool/jdbc-auth`. Mật khẩu chỉ được truyền tạm qua môi trường tiến trình Java, không được in hay ghi vào file; các biến môi trường trước đó được khôi phục sau khi chạy. Khi thấy `Created initial Admin: admin`, mở giao diện đăng nhập tại `http://localhost:8080/ElectricCarSales/admin.jsp` nếu chạy IntelliJ, hoặc `http://localhost:8081/ElectricCarSales/admin.jsp` nếu chạy script, và dùng mật khẩu vừa tự nhập. Không cần gửi mật khẩu trong chat.
 
 Nếu chưa có bản build, chạy Maven `verify` trước. Script tìm JDK 24 từ `JAVA_HOME`; máy khác có thể chỉ định `-JavaHome 'C:\duong-dan\jdk-24'`. Nếu PowerShell báo script bị chặn, có thể chạy một lần bằng `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\docs\Tao-Admin.ps1`; lệnh này không đổi execution policy được lưu trên máy.
 
@@ -112,13 +112,13 @@ File đầu ra là `ElectricCarSales/target/ElectricCarSales.war`.
 
 1. Mở **Run → Edit Configurations**, chọn cấu hình **Tomcat Server → Local** hiện có hoặc tạo mới. Chọn Tomcat **10.1**, JRE **24**.
 2. Trong tab **Deployment**, bấm **+ → Artifact → ElectricCarSales:war exploded**. Đặt **Application context** là `/ElectricCarSales`.
-3. Nếu danh sách đang có artifact `unnamed` chỉ chứa module output ở gốc, thiếu `WEB-INF/classes`, `WEB-INF/lib` và tài nguyên web, bỏ mục `unnamed` khỏi **Deployment**. Dùng artifact `ElectricCarSales:war exploded` do Maven import tạo để có Servlet, dependency, `web.xml`, `tan.jsp` và assets trong đúng cấu trúc WAR.
+3. Nếu danh sách đang có artifact `unnamed` chỉ chứa module output ở gốc, thiếu `WEB-INF/classes`, `WEB-INF/lib` và tài nguyên web, bỏ mục `unnamed` khỏi **Deployment**. Dùng artifact `ElectricCarSales:war exploded` do Maven import tạo để có Servlet, dependency, `web.xml`, `admin.jsp` và assets trong đúng cấu trúc WAR.
 4. Trong **Before launch**, thêm hoặc chọn **Build Artifacts → ElectricCarSales:war exploded**; bỏ tác vụ build `unnamed` cũ. Giữ tác vụ **Build/Make** nếu đã có.
 5. Đặt biến DB trong cấu hình chạy, bấm **Apply**, rồi **Run**. Nếu chưa thấy artifact `ElectricCarSales:war exploded`, trở lại cửa sổ **Maven**, bấm **Reload All Maven Projects** và chờ đồng bộ xong trước khi chọn lại.
 
 **IntelliJ Community:** build WAR như trên, sao chép WAR vào thư mục `webapps` của Tomcat 10.1. Đặt JAVA_HOME vào JDK 24 và các biến DB trong môi trường chạy Tomcat; khởi động bằng `bin/catalina.bat run` trong terminal của bạn. Tránh chạy đồng thời hai Tomcat cùng cổng 8080. Không dùng Tomcat 9 vì dự án sử dụng Jakarta Servlet.
 
-Mở [trang chủ](http://localhost:8080/ElectricCarSales/). Welcome file `index.jsp` hiển thị giao diện VinFast xanh dương theo `main`, gồm banner, danh mục, bộ lọc và so sánh tối đa 3 xe. Nút **Quản trị** và **Trợ lý xe** dẫn sang [không gian làm việc](http://localhost:8080/ElectricCarSales/tan.jsp); nút **Đăng nhập** mở form qua `tan.jsp?login=1`. Cả hai trang dùng chung bảng màu và kiểu chữ từ `assets/css/theme.css`. Đường dẫn xem thử cũ `preview-main.jsp` forward tới trang chủ này.
+Mở [trang chủ](http://localhost:8080/ElectricCarSales/). Welcome file `index.jsp` hiển thị giao diện VinFast xanh dương theo `main`, gồm banner, danh mục, bộ lọc và so sánh tối đa 3 xe. Nút **Quản trị** và **Trợ lý xe** dẫn sang [không gian làm việc](http://localhost:8080/ElectricCarSales/admin.jsp); nút **Đăng nhập** trên trang chủ mở [trang đăng nhập](http://localhost:8080/ElectricCarSales/login.jsp). Liên kết `admin.jsp?login=1` mở form đăng nhập quản trị khi chưa có phiên. Trang chủ và không gian quản trị dùng chung bảng màu và kiểu chữ từ `assets/css/theme.css`.
 
 ## 6. Các chức năng
 
@@ -167,6 +167,6 @@ Sau khi cấu hình SQL Server, kiểm tra:
 5. Đổi REPORT_MAX_DAYS, kiểm tra khoảng vượt giới hạn bị từ chối; khôi phục giá trị mong muốn.
 6. Hỏi thông số xe thật, so sánh hai mẫu, gợi ý theo ngân sách; yêu cầu thanh toán hoặc tạo hợp đồng phải bị từ chối.
 
-Lỗi HTTP 404 tại `/ElectricCarSales/tan.jsp`: kiểm tra tab **Deployment** dùng `ElectricCarSales:war exploded`, context `/ElectricCarSales`, tác vụ **Before launch** build đúng artifact và log Tomcat báo triển khai thành công. Artifact `unnamed` chỉ chứa lớp Java ở gốc không có trang web hoặc cấu trúc WAR đầy đủ nên có thể khiến Tomcat khởi động nhưng URL vẫn trả 404.
+Lỗi HTTP 404 tại `/ElectricCarSales/admin.jsp`: kiểm tra tab **Deployment** dùng `ElectricCarSales:war exploded`, context `/ElectricCarSales`, tác vụ **Before launch** build đúng artifact và log Tomcat báo triển khai thành công. Artifact `unnamed` chỉ chứa lớp Java ở gốc không có trang web hoặc cấu trúc WAR đầy đủ nên có thể khiến Tomcat khởi động nhưng URL vẫn trả 404.
 
 Lỗi HTTP 503: kiểm tra DB_URL/DB_USER/DB_PASSWORD, TCP/cổng SQL Server và các bảng từ `ElectricCarSalesDB.sql`. Lỗi 401: đăng nhập hoặc kiểm tra ACTIVE/mật khẩu. Lỗi 403: quyền vai trò hoặc CSRF; tải lại trang để lấy phiên mới. Nếu cổng 8080 đã dùng, chọn cổng khác và thay URL trình duyệt tương ứng.

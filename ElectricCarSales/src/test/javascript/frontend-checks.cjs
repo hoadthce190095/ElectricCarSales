@@ -4,7 +4,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 
 const assets = path.resolve(__dirname, "../../main/webapp/assets");
-const files = ["tan-common.js", "tan-admin.js", "tan-report.js", "tan-catalogue.js", "tan-ai.js"];
+const files = ["admin-common.js", "admin-management.js", "sales-reports.js", "vehicle-catalogue.js", "vehicle-assistant.js"];
 let contextPath = "";
 const requests = [];
 const document = {
@@ -67,9 +67,9 @@ assert.equal(read("canView('users')"), false);
     // Cùng API/asset phải hoạt động từ welcome, trang JSP trực tiếp và trang JSP lồng thư mục.
     for (const [deployedContext, pagePath] of [
         ["", "/"],
-        ["", "/tan.jsp"],
+        ["", "/admin.jsp"],
         ["/ElectricCarSales", "/ElectricCarSales/"],
-        ["/ElectricCarSales", "/ElectricCarSales/tan.jsp"],
+        ["/ElectricCarSales", "/ElectricCarSales/admin.jsp"],
         ["/nhom-xe-dien", "/nhom-xe-dien/pages/catalogue.jsp"]
     ]) {
         contextPath = deployedContext;

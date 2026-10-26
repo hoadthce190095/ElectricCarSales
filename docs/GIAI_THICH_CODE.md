@@ -40,7 +40,7 @@ Giao diện tính trạng thái hiệu lực từ trạng thái lưu trong DB v�
 
 `ReportXlsx` dùng Apache POI: tạo workbook → tạo sheet → tạo row → tạo cell → ghi file. Tiền được xuất thành ô số; dữ liệu tên khách hàng được xuất thành ô văn bản. Các phép tính trước khi xuất vẫn dùng BigDecimal.
 
-Trang Tổng quan dùng cùng API báo cáo, nên tài khoản cần quyền `VIEW_REPORTS`. Khi chọn so sánh, `tan-report.js` tính kỳ liền trước có cùng số ngày rồi gọi API thêm một lần. Hai khoảng không chồng ngày. Nếu giá trị kỳ trước bằng 0, giao diện không chia phần trăm cho 0; nếu API kỳ trước lỗi, báo cáo chính vẫn giữ được.
+Trang Tổng quan dùng cùng API báo cáo, nên tài khoản cần quyền `VIEW_REPORTS`. Khi chọn so sánh, `sales-reports.js` tính kỳ liền trước có cùng số ngày rồi gọi API thêm một lần. Hai khoảng không chồng ngày. Nếu giá trị kỳ trước bằng 0, giao diện không chia phần trăm cho 0; nếu API kỳ trước lỗi, báo cáo chính vẫn giữ được.
 
 ## 5. Trợ lý xe
 
@@ -77,21 +77,21 @@ Danh sách tài khoản gửi `q`, `roleId`, `statusId`, `page`. Service kiểm 
 
 ## 8. Các file giao diện
 
-`index.jsp` là trang chủ VinFast xanh dương theo giao diện `main`, dùng `assets/css/home.css` và `assets/js/home.js`. Script trang chủ đọc `vinfast-catalogue.json` để tìm kiếm, lọc, sắp xếp và so sánh tối đa 3 xe. `preview-main.jsp` forward tới `/index.jsp`. Nút **Đăng nhập** dẫn sang `tan.jsp?login=1` để mở form đăng nhập hiện có.
+`index.jsp` là trang chủ VinFast xanh dương theo giao diện `main`, dùng `assets/css/home.css` và `assets/js/home.js`. Script trang chủ đọc `vinfast-catalogue.json` để tìm kiếm, lọc, sắp xếp và so sánh tối đa 3 xe. Nút **Đăng nhập** dẫn sang `login.jsp`; mục **Quản trị** mở `admin.jsp?login=1` để đăng nhập vào không gian quản trị.
 
-`index.jsp` và `tan.jsp` tải `assets/css/theme.css` trước CSS riêng, dùng chung màu xanh dương/navy và kiểu chữ. JSP dùng `c:url` cho CSS/JavaScript/link và meta `app-context-path` để tạo URL theo context đang deploy; các script của `tan.jsp` dùng hàm `appUrl()` cho API, danh mục và file xuất. `tan.jsp` tải script bằng `defer`, theo thứ tự dưới đây. Các file dùng JavaScript thông thường với hàm và biến dùng chung, không cần npm hoặc framework.
+`index.jsp` và `admin.jsp` tải `assets/css/theme.css` trước CSS riêng, dùng chung màu xanh dương/navy và kiểu chữ. JSP dùng `c:url` cho CSS/JavaScript/link và meta `app-context-path` để tạo URL theo context đang deploy; các script của `admin.jsp` dùng hàm `appUrl()` cho API, danh mục và file xuất. `admin.jsp` tải script bằng `defer`, theo thứ tự dưới đây. Các file dùng JavaScript thông thường với hàm và biến dùng chung, không cần npm hoặc framework.
 
 | File             | Nội dung                                                         |
 | ---------------- | ---------------------------------------------------------------- |
-| tan-common.js    | Gọi API, session/CSRF, thông báo, form đăng nhập và đổi mật khẩu |
-| tan-admin.js     | Tài khoản, nhân viên, vai trò, khuyến mãi, nhật ký, cấu hình     |
-| tan-report.js    | Tổng quan, bộ lọc báo cáo, so sánh kỳ và xuất file               |
-| tan-catalogue.js | Danh mục, chi tiết và so sánh xe                                 |
-| tan-ai.js        | Gửi câu hỏi và hiển thị tư vấn                                   |
-| tan.js           | Gắn sự kiện và khởi động trang                                   |
+| admin-common.js    | Gọi API, session/CSRF, thông báo, form đăng nhập và đổi mật khẩu |
+| admin-management.js     | Tài khoản, nhân viên, vai trò, khuyến mãi, nhật ký, cấu hình     |
+| sales-reports.js    | Tổng quan, bộ lọc báo cáo, so sánh kỳ và xuất file               |
+| vehicle-catalogue.js | Danh mục, chi tiết và so sánh xe                                 |
+| vehicle-assistant.js        | Gửi câu hỏi và hiển thị tư vấn                                   |
+| admin-dashboard.js           | Gắn sự kiện và khởi động trang                                   |
 
 ## 9. Kiểm tra khi chỉnh bài
 
-Chạy `mvn clean verify` trong `ElectricCarSales`. Các test dùng database H2 riêng và Tomcat để kiểm tra nghiệp vụ, API và WAR. Chạy thêm ba bộ kiểm tra JavaScript theo [quy tắc format](FORMAT_CODE.md). Sau đó chạy cấu hình **ElectricCarSales - Tomcat 10.1** trong IntelliJ, mở `/ElectricCarSales/`, thử bộ lọc/so sánh xe rồi chuyển sang `/ElectricCarSales/tan.jsp` để thử với dữ liệu thật của nhóm.
+Chạy `mvn clean verify` trong `ElectricCarSales`. Các test dùng database H2 riêng và Tomcat để kiểm tra nghiệp vụ, API và WAR. Chạy thêm ba bộ kiểm tra JavaScript theo [quy tắc format](FORMAT_CODE.md). Sau đó chạy cấu hình **ElectricCarSales - Tomcat 10.1** trong IntelliJ, mở `/ElectricCarSales/`, thử bộ lọc/so sánh xe rồi chuyển sang `/ElectricCarSales/admin.jsp` để thử với dữ liệu thật của nhóm.
 
-Nếu sửa tên thuộc tính DTO, cần kiểm tra file `assets/tan-*.js` của chức năng tương ứng: giao diện sử dụng tên trường JSON từ getter. Nếu sửa cách tính báo cáo, đối chiếu ReportServiceTest trước khi thay đổi để giữ quy tắc không đếm trùng xe và tiền.
+Nếu sửa tên thuộc tính DTO, cần kiểm tra script chức năng tương ứng trong `assets/`, chẳng hạn `admin-management.js` hoặc `sales-reports.js`: giao diện sử dụng tên trường JSON từ getter. Nếu sửa cách tính báo cáo, đối chiếu ReportServiceTest trước khi thay đổi để giữ quy tắc không đếm trùng xe và tiền.

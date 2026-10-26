@@ -1,7 +1,7 @@
 package com.electriccarsales.service.order;
 
 import com.electriccarsales.dao.order.OrderStatusHistoryDAO;
-import com.electriccarsales.model.order.OrderStatusHistory;
+import com.electriccarsales.model.OrderStatusHistory;
 
 public class OrderStatusService {
     private OrderStatusHistoryDAO historyDAO = new OrderStatusHistoryDAO();

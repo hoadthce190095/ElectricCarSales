@@ -1,11 +1,13 @@
 # Kết quả kiểm tra
 
+Các mục theo ngày bên dưới ghi lại lịch sử kiểm tra. Tên trang và tài nguyên được cập nhật theo tên hiện tại để tiện tra cứu; việc đổi tên không có nghĩa các kiểm tra cũ đã được chạy lại.
+
 ## Cập nhật ngày 17/10/2026: đồng bộ giao diện VinFast xanh dương theo main
 
-- Trang chủ `index.jsp` dùng bố cục VinFast xanh dương theo `origin/main` tại commit `69deda1`; `preview-main.jsp` forward tới trang chủ. Trang chủ và không gian làm việc `tan.jsp` dùng chung màu, kiểu chữ và biến CSS trong `assets/css/theme.css`. Liên kết đăng nhập đi tới `tan.jsp?login=1`.
+- Trang chủ `index.jsp` dùng bố cục VinFast xanh dương theo `origin/main` tại commit `69deda1`; trang chủ và không gian làm việc `admin.jsp` dùng chung màu, kiểu chữ và biến CSS trong `assets/css/theme.css`. Liên kết đăng nhập quản trị đi tới `admin.jsp?login=1`.
 - Chạy `mvn clean verify` trên JDK 24: **BUILD SUCCESS**, 88 kiểm thử unit/HTTP và 4 kiểm thử `PackagedWarIT`, tổng **92 đạt, 0 failures, 0 errors**. Kiểm thử WAR xác nhận trang chủ, đường dẫn xem thử, không gian làm việc và assets ở cả `/ElectricCarSales` và `/showroom`, cùng đăng nhập, API và xuất báo cáo.
 - Cả ba bộ kiểm tra JavaScript `frontend-checks.cjs`, `admin-report-checks.cjs` và `homepage-checks.cjs` đều đạt. Kiểm tra trang chủ bao gồm tìm kiếm, kết hợp bộ lọc, sắp xếp, đặt lại, so sánh tối đa 3 xe, context triển khai, menu di động và tải lại sau HTTP 503 để hiển thị đủ 10 phiên bản xe.
-- Khởi động bằng cấu hình native **ElectricCarSales - Tomcat 10.1** trong IntelliJ: Tomcat **10.1.60**, cổng **8080**, dùng Catalina base do JetBrains quản lý. Trang gốc, `index.jsp`, `preview-main.jsp`, `tan.jsp`, `tan.jsp?login=1` và các assets theme/home/tan đều trả **HTTP 200**.
+- Khởi động bằng cấu hình native **ElectricCarSales - Tomcat 10.1** trong IntelliJ: Tomcat **10.1.60**, cổng **8080**, dùng Catalina base do JetBrains quản lý. Trang gốc, `index.jsp`, `admin.jsp`, `admin.jsp?login=1` và các assets theme/home/admin đều trả **HTTP 200**.
 - API trợ lý đọc SQL Server cục bộ, trả **10 phiên bản xe** trong chế độ **CATALOG_RULES**. Đã xem giao diện desktop của trang chủ, không gian làm việc với sidebar navy và form đăng nhập xanh dương; không gửi form đăng nhập trên SQL Server.
 
 Các mục bên dưới giữ lại kết quả của các lần kiểm tra trước đó; mô tả welcome forward trong lần chuyển JSP đã được thay bằng trang chủ ở bản hiện tại.
@@ -13,7 +15,7 @@ Các mục bên dưới giữ lại kết quả của các lần kiểm tra trư
 ## Cập nhật ngày 17/10/2026: JSP và sườn chung của nhóm
 
 - Chuyển toàn bộ Java về `com.electriccarsales` với bốn package `controller`, `dao`, `model`, `service`; khôi phục `Main.java` và `util.DBContext` dùng chung. Đổi các lớp Repository thành DAO và cập nhật import/test.
-- Đổi `tan.html` thành `tan.jsp`, welcome `index.jsp` forward tới JSP. JSP dùng UTF-8/JSTL và cung cấp context cho các link API/assets/CSV/XLSX.
+- Chuyển giao diện HTML tĩnh sang JSP; welcome `index.jsp` forward tới JSP. JSP dùng UTF-8/JSTL và cung cấp context cho các link API/assets/CSV/XLSX.
 - Chạy `formatter:format clean verify formatter:validate`: **BUILD SUCCESS**, 87 kiểm thử unit/HTTP và 4 kiểm thử WAR, tổng **91 đạt, 0 failures, 0 errors, 0 skipped**. Format 84 file Java hợp lệ.
 - Kiểm thử Tomcat biên dịch JSP thực ở context gốc, `/ElectricCarSales` và `/showroom`, kiểm tra welcome, trang trực tiếp, assets, đăng nhập, danh mục và xuất CSV/XLSX dưới context đổi tên.
 - `node ElectricCarSales/src/test/javascript/frontend-checks.cjs` đạt; kiểm tra thêm URL theo context gốc, context đổi tên và trang lồng thư mục. Các file JavaScript đã qua `node --check`; ba script PowerShell không có lỗi cú pháp.
@@ -69,7 +71,7 @@ Sửa lỗi chạy trong IntelliJ ngày 05/10/2026:
 - POM hiện tại thiếu các thư viện của mã nguồn hoàn chỉnh. Đã khôi phục dependency Jackson, Apache POI, driver SQL Server 13.4.0 và cấu hình compiler/kiểm thử/WAR từ bản đã kiểm tra; lưu riêng POM trước khi sửa trong công cụ cục bộ.
 - Chạy lại `mvn clean verify`: **BUILD SUCCESS**, **90 kiểm thử đạt, 0 lỗi**; **21 kiểm tra JavaScript đạt**.
 - Đồng bộ Maven trong IntelliJ, đặt **Project SDK = 24** để hết thông báo **Project JDK is not defined**. Chạy cấu hình **Tomcat 10.1.60**, **JRE 24**, deploy **ElectricCarSales:war exploded**, context **/ElectricCarSales**.
-- Kiểm tra bản chạy bằng nút Run của IntelliJ tại cổng **8080**: trang gốc, `tan.jsp`, `index.jsp`, CSS và 6 script đều trả HTTP 200. API AI đọc SQL Server thật, chế độ CATALOG_RULES, có 10 phiên bản xe.
+- Kiểm tra bản chạy bằng nút Run của IntelliJ tại cổng **8080**: trang gốc, `admin.jsp`, `index.jsp`, CSS và 6 script đều trả HTTP 200. API AI đọc SQL Server thật, chế độ CATALOG_RULES, có 10 phiên bản xe.
 - Xác nhận **Simple methods in one line** đã bỏ chọn. Tắt **Code Folding → One-line methods**, mở các hàm đã thu gọn trong `ConfigurationRequest.java`; `return value;` và setter hiển thị ở dòng riêng trong IntelliJ.
 - WAR được kiểm tra có trang welcome/assets đầy đủ và không chứa `db.properties` riêng của máy.
 

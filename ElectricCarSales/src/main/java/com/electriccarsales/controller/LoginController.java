@@ -50,7 +50,7 @@ public class LoginController extends HttpServlet {
             }
             String role = roleName.toUpperCase(java.util.Locale.ROOT);
             if ("CUSTOMER".equals(role)) resp.sendRedirect(req.getContextPath() + "/index.jsp");
-            else if ("ADMIN".equals(role)) resp.sendRedirect(req.getContextPath() + "/admin/admin.html");
+            else if ("ADMIN".equals(role)) resp.sendRedirect(req.getContextPath() + "/admin.jsp");
             else resp.sendRedirect(req.getContextPath() + "/staff/dashboard.jsp");
         } catch (SQLException | RuntimeException e) {
             log("Login failed", e);

@@ -6,6 +6,7 @@ public class ConsultationRequest {
     private int id;
     private int customerId;
     private int staffId;
+    private Integer modelId;
     private String content;
     private String status;
     private Timestamp createdAt;
@@ -16,6 +17,8 @@ public class ConsultationRequest {
     public void setCustomerId(int customerId) { this.customerId = customerId; }
     public int getStaffId() { return staffId; }
     public void setStaffId(int staffId) { this.staffId = staffId; }
+    public Integer getModelId() { return modelId; }
+    public void setModelId(Integer modelId) { this.modelId = modelId; }
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
     public String getStatus() { return status; }

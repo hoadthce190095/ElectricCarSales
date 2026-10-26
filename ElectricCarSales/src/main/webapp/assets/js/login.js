@@ -1,6 +1,5 @@
 "use strict";
 
-const loginForm = document.querySelector("#login-form");
 const loginMessage = document.querySelector("#form-message");
 const passwordInput = document.querySelector("#password");
 
@@ -19,13 +18,6 @@ document.querySelector("[data-forgot-password]").addEventListener("click", () =>
 });
 
 document.querySelector("[data-register]").addEventListener("click", () => {
-    loginMessage.textContent = "Đăng ký tài khoản sẽ được mở khi hệ thống kết nối chức năng xác thực.";
-    loginMessage.hidden = false;
-});
-
-loginForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    if (!loginForm.reportValidity()) return;
-    loginMessage.textContent = "Giao diện đã sẵn sàng. Cần kết nối Servlet/DAO để xác thực và chuyển đến trang theo vai trò.";
+    loginMessage.textContent = "Chức năng đăng ký chưa sẵn sàng. Vui lòng liên hệ quản trị viên để được hỗ trợ.";
     loginMessage.hidden = false;
 });

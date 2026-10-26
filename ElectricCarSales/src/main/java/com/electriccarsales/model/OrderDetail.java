@@ -1,4 +1,4 @@
-package com.electriccarsales.model.order;
+package com.electriccarsales.model;
 
 import java.math.BigDecimal;
 

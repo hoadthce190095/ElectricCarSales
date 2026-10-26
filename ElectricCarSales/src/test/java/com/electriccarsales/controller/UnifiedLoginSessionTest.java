@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.electriccarsales.dao.UserDAO;
 import com.electriccarsales.model.SessionUser;
+import com.electriccarsales.service.PasswordHasher;
 import com.electriccarsales.service.PasswordSession;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -63,6 +64,12 @@ class UnifiedLoginSessionTest {
             statement.setString(1, mainHash);
             statement.executeUpdate();
         }
+        int bridgeUserId;
+        try (Connection connection = application.connection(); Statement statement = connection.createStatement();
+            var result = statement.executeQuery("SELECT UserID FROM Users WHERE Username='bridgesales'")) {
+            assertTrue(result.next());
+            bridgeUserId = result.getInt("UserID");
+        }
         Browser browser = new Browser();
         browser.get("/api/auth");
         String previousId = browser.sessionId();
@@ -73,7 +80,7 @@ class UnifiedLoginSessionTest {
         assertNotEquals(previousId, browser.sessionId());
         HttpSession session = browser.session();
         SessionUser user = assertInstanceOf(SessionUser.class, session.getAttribute("user"));
-        assertEquals(4, user.getUserId());
+        assertEquals(bridgeUserId, user.getUserId());
         assertEquals("SALES", user.getRole());
         assertTrue(PasswordSession.matches(session.getAttribute(PasswordSession.ATTRIBUTE), mainHash));
         JsonNode state = JSON.readTree(browser.get("/api/auth").body());
@@ -87,7 +94,7 @@ class UnifiedLoginSessionTest {
         response = browser.post("/api/auth", "application/json", body, state.get("csrfToken").asText());
         assertEquals(200, response.statusCode(), response.body());
         assertNotEquals(beforePasswordChange, browser.sessionId());
-        assertEquals(4, browser.session().getAttribute("userID"));
+        assertEquals(bridgeUserId, browser.session().getAttribute("userID"));
         assertEquals("SALES", browser.session().getAttribute("roleName"));
         assertTrue(JSON.readTree(other.get("/api/auth").body()).get("user").isNull());
 
@@ -116,6 +123,46 @@ class UnifiedLoginSessionTest {
         admin.apiLogin("webadmin");
         assertNull(admin.session().getAttribute("employeeId"));
         assertNull(admin.session().getAttribute("role"));
+    }
+
+    @Test
+    void homepageUsesCustomerSessionAfterEitherLoginRouteAndSupportsLegacySessions() throws Exception {
+        Browser guest = new Browser();
+        guest.get("/api/auth");
+        HttpResponse<String> homepage = guest.get("/index.jsp?view=customer");
+        assertEquals(200, homepage.statusCode(), homepage.body());
+        assertTrue(homepage.body().contains("href=\"/login.jsp\""));
+        assertFalse(homepage.body().contains("href=\"/customer/my-account.jsp\""));
+
+        try (Connection connection = application.connection();
+            PreparedStatement statement = connection.prepareStatement(
+                "INSERT INTO Users(Username,PasswordHash,Email,Phone,RoleID,StatusID)"
+                    + " SELECT 'webcustomer',?,'customer@test.local','0900000005',RoleID,1 FROM Roles WHERE RoleName='CUSTOMER'")) {
+            statement.setString(1, PasswordHasher.hash(PASSWORD));
+            statement.executeUpdate();
+        }
+        Browser customer = new Browser();
+        HttpResponse<String> login = customer.post("/login", "application/x-www-form-urlencoded",
+            "username=webcustomer&password=" + PASSWORD, null);
+        assertEquals(302, login.statusCode(), login.body());
+        assertEquals("/index.jsp", login.headers().firstValue("Location").orElseThrow());
+        assertCustomerHomepage(customer.get("/index.jsp"));
+
+        Browser apiCustomer = new Browser();
+        apiCustomer.apiLogin("webcustomer");
+        assertCustomerHomepage(apiCustomer.get("/index.jsp"));
+
+        HttpSession legacy = customer.session();
+        legacy.removeAttribute("user");
+        assertCustomerHomepage(customer.get("/index.jsp"));
+        legacy.removeAttribute("userID");
+        assertFalse(customer.get("/index.jsp?view=customer").body().contains("href=\"/customer/my-account.jsp\""));
+    }
+
+    private static void assertCustomerHomepage(HttpResponse<String> response) {
+        assertEquals(200, response.statusCode(), response.body());
+        assertTrue(response.body().contains("href=\"/customer/my-account.jsp\""));
+        assertFalse(response.body().contains("href=\"/login.jsp\""));
     }
 
     private static class Browser {

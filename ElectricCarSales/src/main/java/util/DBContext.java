@@ -3,6 +3,7 @@ package util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
@@ -61,6 +62,16 @@ public class DBContext implements AutoCloseable {
 
     public Connection getConnection() {
         return conn;
+    }
+
+    public static void main(String[] args) throws SQLException {
+        try (DBContext database = new DBContext()) {
+            DatabaseMetaData metadata = database.getConnection().getMetaData();
+            System.out.println("Driver name: " + metadata.getDriverName());
+            System.out.println("Driver version: " + metadata.getDriverVersion());
+            System.out.println("Product name: " + metadata.getDatabaseProductName());
+            System.out.println("Product version: " + metadata.getDatabaseProductVersion());
+        }
     }
 
     @Override
