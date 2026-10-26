@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" session="false" %>
 <%
     jakarta.servlet.http.HttpSession authSession = request.getSession(false);
@@ -24,24 +25,43 @@
         accountLabel = "Khu vực quản lý";
     }
 %>
+=======
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+>>>>>>> origin/Phuc-Tan
 <!doctype html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f7f8fa">
+<<<<<<< HEAD
+=======
+    <meta name="app-context-path" content="<c:out value='${pageContext.request.contextPath}' />">
+>>>>>>> origin/Phuc-Tan
     <meta name="description" content="Khám phá, tìm kiếm và so sánh các mẫu xe điện VinFast tại ElectricCarSale.">
     <title>VinFast - ElectricCarSale</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<<<<<<< HEAD
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/home.css">
     <script src="<%= request.getContextPath() %>/assets/js/home.js" defer></script>
+=======
+
+    <link rel="stylesheet" href="<c:url value='/assets/css/theme.css'><c:param name='v' value='main-blue-20261017' /></c:url>">
+    <link rel="stylesheet" href="<c:url value='/assets/css/home.css'><c:param name='v' value='main-blue-20261017' /></c:url>">
+    <script src="<c:url value='/assets/js/home.js'><c:param name='v' value='main-blue-20261017' /></c:url>" defer></script>
+>>>>>>> origin/Phuc-Tan
 </head>
 <body class="home-page">
 <header class="site-header">
     <div class="header-inner">
+<<<<<<< HEAD
         <a class="brand" href="<%= request.getContextPath() %>/index.jsp" aria-label="VinFast ElectricCarSale - Trang chủ">
+=======
+        <a class="brand" href="<c:url value='/index.jsp' />" aria-label="VinFast ElectricCarSale - Trang chủ">
+>>>>>>> origin/Phuc-Tan
             <span class="brand-mark" aria-hidden="true">V</span>
             <span class="brand-copy"><strong>VinFast</strong><small>ELECTRIC CAR SALE</small></span>
         </a>
@@ -49,6 +69,7 @@
         <nav class="primary-nav" id="primary-nav" aria-label="Điều hướng chính">
             <a class="nav-link current" href="#models">Mua xe <span aria-hidden="true">⌄</span></a>
             <a class="nav-link" href="#about">Giới thiệu</a>
+<<<<<<< HEAD
             <a class="nav-link" href="<%= request.getContextPath() %>/customer/consultation">Tư vấn</a>
         </nav>
         <div class="header-actions">
@@ -62,6 +83,17 @@
             <a class="account-link" href="<%= request.getContextPath() %>/login"><span class="account-icon" aria-hidden="true">♙</span>Đăng nhập</a>
             <a class="account-link" href="<%= request.getContextPath() %>/register">Đăng ký</a>
             <% } %>
+=======
+            <a class="nav-link" href="#contact">Tư vấn</a>
+            <a class="nav-link" href="<c:url value='/tan.jsp' />#ai">Trợ lý xe</a>
+            <a class="nav-link" href="<c:url value='/tan.jsp' />">Quản trị</a>
+        </nav>
+        <div class="header-actions">
+            <a class="header-contact" href="mailto:hotro@electriccarsale.vn?subject=Yeu%20cau%20tu%20van%20xe%20VinFast">
+                <span aria-hidden="true">✉</span><span>Liên hệ tư vấn</span>
+            </a>
+            <a class="account-link" href="<c:url value='/tan.jsp'><c:param name='login' value='1' /></c:url>"><span class="account-icon" aria-hidden="true">♙</span>Đăng nhập</a>
+>>>>>>> origin/Phuc-Tan
         </div>
     </div>
 </header>
@@ -107,7 +139,11 @@
             <div class="select-wrap"><span aria-hidden="true">◉</span><select id="color-filter"><option value="">Tất cả màu sắc</option></select><b aria-hidden="true">⌄</b></div>
 
             <div class="filter-note"><span aria-hidden="true">i</span><p>Giá và quãng đường là thông tin tham khảo theo cấu hình được ghi trong danh mục.</p></div>
+<<<<<<< HEAD
             <a class="filter-contact" href="<%= request.getContextPath() %>/customer/consultation">Cần tư vấn chọn xe? <span>Gửi yêu cầu tư vấn ↗</span></a>
+=======
+            <a class="filter-contact" href="mailto:hotro@electriccarsale.vn?subject=Tu%20van%20chon%20xe%20VinFast">Cần tư vấn chọn xe? <span>Liên hệ với chúng tôi ↗</span></a>
+>>>>>>> origin/Phuc-Tan
         </aside>
 
         <div class="catalog-main">
@@ -134,7 +170,11 @@
 
     <section class="about-strip" id="about">
         <div class="about-icon" aria-hidden="true">⚡</div><div><span class="eyebrow">VINFAST · ELECTRIC CAR SALE</span><h2>Thông tin xe rõ ràng, lựa chọn dễ dàng</h2><p>Tìm hiểu mẫu xe, cấu hình và thông số trước khi quyết định. Đội ngũ tư vấn sẵn sàng hỗ trợ khi bạn cần.</p></div>
+<<<<<<< HEAD
         <a href="<%= request.getContextPath() %>/customer/consultation" id="contact">Gửi yêu cầu tư vấn <span>↗</span></a>
+=======
+        <a href="mailto:hotro@electriccarsale.vn?subject=Yeu%20cau%20tu%20van%20xe%20VinFast" id="contact">Gửi yêu cầu tư vấn <span>↗</span></a>
+>>>>>>> origin/Phuc-Tan
     </section>
 </main>
 
@@ -145,6 +185,10 @@
     <div class="dialog-heading"><div><span class="eyebrow">ĐỐI CHIẾU THÔNG SỐ</span><h2 id="compare-title">So sánh xe</h2></div><button type="button" class="dialog-close" id="compare-close" aria-label="Đóng">×</button></div>
     <div class="compare-table-wrap" id="compare-table-wrap"></div>
 </dialog>
+<<<<<<< HEAD
 <footer class="site-footer"><a class="footer-brand" href="<%= request.getContextPath() %>/index.jsp">VinFast - ElectricCarSale</a><span>© <span id="copyright-year">2026</span> · Thông tin sản phẩm mang tính tham khảo.</span><a href="mailto:hotro@electriccarsale.vn">hotro@electriccarsale.vn</a></footer>
+=======
+<footer class="site-footer"><a class="footer-brand" href="<c:url value='/index.jsp' />">VinFast - ElectricCarSale</a><span>© <span id="copyright-year">2026</span> · Thông tin sản phẩm mang tính tham khảo.</span><a href="mailto:hotro@electriccarsale.vn">hotro@electriccarsale.vn</a></footer>
+>>>>>>> origin/Phuc-Tan
 </body>
 </html>

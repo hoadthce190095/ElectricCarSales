@@ -16,6 +16,7 @@
         <maven.compiler.source>24</maven.compiler.source>
         <maven.compiler.target>24</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>24</maven.compiler.release>
     </properties>
 
     <dependencies>
@@ -48,6 +49,7 @@
             <version>13.4.0.jre11</version>
         </dependency>
 
+<<<<<<< HEAD
         <!-- Jakarta Mail API and Eclipse Angus SMTP provider; packaged in the WAR. -->
         <dependency>
             <groupId>jakarta.mail</groupId>
@@ -65,6 +67,52 @@
             <artifactId>jakarta.servlet.jsp-api</artifactId>
             <version>3.1.1</version>
             <scope>provided</scope>
+=======
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.21.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>2.21.4</version>
+        </dependency>
+        <!-- Excel export, as used in the reference project -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.5.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-to-jul</artifactId>
+            <version>2.24.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.12.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>2.3.232</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-core</artifactId>
+            <version>10.1.55</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-jasper</artifactId>
+            <version>10.1.55</version>
+            <scope>test</scope>
+>>>>>>> origin/Phuc-Tan
         </dependency>
 
     </dependencies>
@@ -73,15 +121,120 @@
         <finalName>ElectricCarSales</finalName>
 
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.14.1</version>
+            </plugin>
+            <plugin>
+                <groupId>net.revelc.code.formatter</groupId>
+                <artifactId>formatter-maven-plugin</artifactId>
+                <version>2.29.0</version>
+                <configuration>
+                    <configFile>${project.basedir}/config/java-formatter.xml</configFile>
+                    <encoding>UTF-8</encoding>
+                    <lineEnding>LF</lineEnding>
+                    <includes>
+                        <include>**/*.java</include>
+                    </includes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.4</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.4</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 
             <!-- Build WAR for Tomcat -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>3.4.0</version>
+                <configuration>
+                    <packagingExcludes>WEB-INF/classes/db.properties</packagingExcludes>
+                </configuration>
             </plugin>
 
         </plugins>
     </build>
 
+<<<<<<< HEAD
+=======
+    <profiles>
+        <profile>
+            <id>local-web</id>
+            <properties>
+                <web.port>8080</web.port>
+                <web.javaHome>${java.home}</web.javaHome>
+                <web.tomcatHome>${env.CATALINA_HOME}</web.tomcatHome>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.6.4</version>
+                        <executions>
+                            <execution>
+                                <id>start-web</id>
+                                <configuration>
+                                    <executable>powershell.exe</executable>
+                                    <inheritIo>true</inheritIo>
+                                    <arguments>
+                                        <argument>-NoProfile</argument>
+                                        <argument>-ExecutionPolicy</argument>
+                                        <argument>Bypass</argument>
+                                        <argument>-File</argument>
+                                        <argument>${project.basedir}/../docs/Chay-Web.ps1</argument>
+                                        <argument>-Port</argument>
+                                        <argument>${web.port}</argument>
+                                        <argument>-JavaHome</argument>
+                                        <argument>${web.javaHome}</argument>
+                                        <argument>-TomcatHome</argument>
+                                        <argument>${web.tomcatHome}</argument>
+                                        <argument>-MavenHome</argument>
+                                        <argument>${maven.home}</argument>
+                                        <argument>-Restart</argument>
+                                        <argument>-Build</argument>
+                                        <argument>-OpenBrowser</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>stop-web</id>
+                                <configuration>
+                                    <executable>powershell.exe</executable>
+                                    <inheritIo>true</inheritIo>
+                                    <arguments>
+                                        <argument>-NoProfile</argument>
+                                        <argument>-ExecutionPolicy</argument>
+                                        <argument>Bypass</argument>
+                                        <argument>-File</argument>
+                                        <argument>${project.basedir}/../docs/Dung-Web.ps1</argument>
+                                        <argument>-Port</argument>
+                                        <argument>${web.port}</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+>>>>>>> origin/Phuc-Tan
 </project>

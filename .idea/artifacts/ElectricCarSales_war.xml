@@ -1,0 +1,14 @@
+<component name="ArtifactManager">
+  <artifact type="war" external-system-id="Maven" name="ElectricCarSales:war">
+    <output-path>$PROJECT_DIR$/ElectricCarSales/target</output-path>
+    <properties id="maven-jee-properties">
+      <options>
+        <module>ElectricCarSales</module>
+        <packaging>war</packaging>
+      </options>
+    </properties>
+    <root id="archive" name="ElectricCarSales.war">
+      <element id="artifact" artifact-name="ElectricCarSales:war exploded" />
+    </root>
+  </artifact>
+</component>

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 :root {
     --home-ink: #17233a;
     --home-muted: #758093;
@@ -16,11 +17,19 @@
     box-sizing: border-box;
 }
 
+=======
+* {
+    box-sizing: border-box;
+}
+>>>>>>> origin/Phuc-Tan
 html {
     scroll-behavior: smooth;
     scroll-padding-top: 90px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 body {
     margin: 0;
     background: var(--home-bg);
@@ -28,11 +37,15 @@ body {
     font: 14px/1.6 var(--home-font);
     -webkit-font-smoothing: antialiased;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 a {
     color: inherit;
     text-decoration: none;
 }
+<<<<<<< HEAD
 
 button, input, select {
     font: inherit;
@@ -50,15 +63,39 @@ button {
     min-height: 100vh;
 }
 
+=======
+button,
+input,
+select {
+    font: inherit;
+}
+button,
+a,
+select {
+    outline-offset: 3px;
+}
+button {
+    cursor: pointer;
+}
+.home-page {
+    min-height: 100vh;
+}
+>>>>>>> origin/Phuc-Tan
 .site-header {
     position: sticky;
     z-index: 20;
     top: 0;
     border-bottom: 1px solid #e9ecf1;
+<<<<<<< HEAD
     background: rgba(255, 255, 255, .96);
     backdrop-filter: blur(14px);
 }
 
+=======
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(14px);
+}
+>>>>>>> origin/Phuc-Tan
 .header-inner {
     width: min(1440px, calc(100% - 72px));
     min-height: 78px;
@@ -67,14 +104,20 @@ button {
     align-items: center;
     gap: clamp(30px, 5vw, 76px);
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .brand {
     display: inline-flex;
     align-items: center;
     gap: 10px;
     flex: 0 0 auto;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .brand-mark {
     width: 38px;
     height: 38px;
@@ -86,14 +129,22 @@ button {
     font: 800 23px/1 var(--home-display);
     transform: skew(-5deg);
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .brand-copy strong {
     display: block;
     color: var(--home-blue-dark);
     font: 800 20px/1.05 var(--home-display);
+<<<<<<< HEAD
     letter-spacing: -.7px;
 }
 
+=======
+    letter-spacing: -0.7px;
+}
+>>>>>>> origin/Phuc-Tan
 .brand-copy small {
     display: block;
     margin-top: 4px;
@@ -102,14 +153,20 @@ button {
     font-weight: 700;
     letter-spacing: 1.5px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .primary-nav {
     display: flex;
     align-items: center;
     gap: clamp(23px, 3vw, 42px);
     height: 78px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .nav-link {
     display: inline-flex;
     align-items: center;
@@ -117,6 +174,7 @@ button {
     color: #414c5e;
     font-size: 14px;
     font-weight: 600;
+<<<<<<< HEAD
     transition: color .18s;
 }
 
@@ -128,14 +186,30 @@ button {
     font-size: 18px;
 }
 
+=======
+    transition: color 0.18s;
+}
+.nav-link:hover,
+.nav-link.current {
+    color: var(--home-blue);
+}
+.nav-link span {
+    font-size: 18px;
+}
+>>>>>>> origin/Phuc-Tan
 .header-actions {
     display: flex;
     align-items: center;
     gap: 22px;
     margin-left: auto;
 }
+<<<<<<< HEAD
 
 .header-contact, .account-link {
+=======
+.header-contact,
+.account-link {
+>>>>>>> origin/Phuc-Tan
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -144,29 +218,48 @@ button {
     font-weight: 600;
     white-space: nowrap;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .header-contact span:first-child {
     color: var(--home-blue);
     font-size: 17px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .account-link {
     padding: 10px 15px;
     border: 1px solid var(--home-line);
     border-radius: 7px;
+<<<<<<< HEAD
     transition: border-color .18s, background .18s;
 }
 
+=======
+    transition:
+        border-color 0.18s,
+        background 0.18s;
+}
+>>>>>>> origin/Phuc-Tan
 .account-link:hover {
     border-color: #b7c9e5;
     background: #f4f7fc;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .account-icon {
     color: var(--home-blue);
     font-size: 17px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .mobile-menu-toggle {
     display: none;
     border: 0;
@@ -174,16 +267,25 @@ button {
     color: var(--home-ink);
     font-size: 22px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 main {
     width: min(1440px, calc(100% - 72px));
     margin: 0 auto;
 }
+<<<<<<< HEAD
 
 .showcase {
     padding: 31px 0 25px;
 }
 
+=======
+.showcase {
+    padding: 31px 0 25px;
+}
+>>>>>>> origin/Phuc-Tan
 .showcase-heading {
     display: flex;
     align-items: end;
@@ -191,13 +293,17 @@ main {
     gap: 28px;
     margin: 0 0 20px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .eyebrow {
     color: #8995a8;
     font-size: 9px;
     font-weight: 800;
     letter-spacing: 1.65px;
 }
+<<<<<<< HEAD
 
 .showcase-heading h1 {
     margin: 6px 0 0;
@@ -206,20 +312,34 @@ main {
     letter-spacing: -1.25px;
 }
 
+=======
+.showcase-heading h1 {
+    margin: 6px 0 0;
+    color: #1c2b43;
+    font: 800 clamp(26px, 3vw, 36px) / 1.18 var(--home-display);
+    letter-spacing: -1.25px;
+}
+>>>>>>> origin/Phuc-Tan
 .showcase-heading p {
     max-width: 390px;
     margin: 0 0 3px;
     color: var(--home-muted);
     font-size: 12px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .banner-track {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 13px;
     overflow: hidden;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .feature-banner {
     position: relative;
     min-height: 155px;
@@ -231,7 +351,10 @@ main {
     background: linear-gradient(120deg, #17375f, #245589);
     color: white;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .feature-banner > img {
     position: absolute;
     z-index: -2;
@@ -241,6 +364,7 @@ main {
     object-fit: cover;
     object-position: center;
     mix-blend-mode: screen;
+<<<<<<< HEAD
     opacity: .9;
     transition: transform .45s;
 }
@@ -249,10 +373,19 @@ main {
     transform: scale(1.05);
 }
 
+=======
+    opacity: 0.9;
+    transition: transform 0.45s;
+}
+.feature-banner:hover > img {
+    transform: scale(1.05);
+}
+>>>>>>> origin/Phuc-Tan
 .banner-shade {
     position: absolute;
     z-index: -1;
     inset: 0;
+<<<<<<< HEAD
     background: linear-gradient(90deg, rgba(13, 39, 70, .98) 0%, rgba(20, 52, 88, .91) 41%, rgba(18, 49, 83, .15) 100%);
 }
 
@@ -268,6 +401,24 @@ main {
     background-color: #17385e;
 }
 
+=======
+    background: linear-gradient(
+        90deg,
+        rgba(13, 39, 70, 0.98) 0%,
+        rgba(20, 52, 88, 0.91) 41%,
+        rgba(18, 49, 83, 0.15) 100%
+    );
+}
+.banner-city {
+    background-color: #203c61;
+}
+.banner-family {
+    background-color: #294d75;
+}
+.banner-long {
+    background-color: #17385e;
+}
+>>>>>>> origin/Phuc-Tan
 .banner-copy {
     position: relative;
     z-index: 1;
@@ -276,7 +427,10 @@ main {
     align-items: flex-start;
     padding: 20px 23px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .banner-copy small {
     margin-bottom: 8px;
     color: #cfdaea;
@@ -284,24 +438,37 @@ main {
     font-weight: 700;
     letter-spacing: 1.3px;
 }
+<<<<<<< HEAD
 
 .banner-copy strong {
     font: 700 17px/1.38 var(--home-display);
     letter-spacing: -.3px;
 }
 
+=======
+.banner-copy strong {
+    font: 700 17px/1.38 var(--home-display);
+    letter-spacing: -0.3px;
+}
+>>>>>>> origin/Phuc-Tan
 .banner-link {
     margin-top: 11px;
     color: #dce7f6;
     font-size: 10px;
     font-weight: 600;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .banner-link b {
     margin-left: 3px;
     color: #9fc0f0;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .catalog-layout {
     display: grid;
     grid-template-columns: 258px minmax(0, 1fr);
@@ -309,7 +476,10 @@ main {
     align-items: start;
     padding: 0 0 32px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .filter-panel {
     position: sticky;
     top: 98px;
@@ -317,15 +487,21 @@ main {
     border: 1px solid var(--home-line);
     border-radius: 11px;
     background: #fff;
+<<<<<<< HEAD
     box-shadow: 0 5px 20px rgba(29, 42, 62, .025);
 }
 
+=======
+    box-shadow: 0 5px 20px rgba(29, 42, 62, 0.025);
+}
+>>>>>>> origin/Phuc-Tan
 .filter-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 21px;
 }
+<<<<<<< HEAD
 
 .filter-heading h2 {
     margin: 3px 0 0;
@@ -337,6 +513,16 @@ main {
     font-size: 8px;
 }
 
+=======
+.filter-heading h2 {
+    margin: 3px 0 0;
+    font: 800 19px/1.2 var(--home-display);
+    letter-spacing: -0.4px;
+}
+.filter-heading .eyebrow {
+    font-size: 8px;
+}
+>>>>>>> origin/Phuc-Tan
 .reset-filters {
     padding: 0;
     border: 0;
@@ -345,7 +531,10 @@ main {
     font-size: 10px;
     font-weight: 700;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .filter-label {
     display: block;
     margin: 16px 0 7px;
@@ -353,7 +542,10 @@ main {
     font-size: 10px;
     font-weight: 700;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .select-wrap {
     height: 40px;
     display: flex;
@@ -365,14 +557,20 @@ main {
     background: #fff;
     color: #70809a;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .select-wrap > span {
     width: 17px;
     color: #6a7da1;
     font-size: 14px;
     text-align: center;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .select-wrap select {
     width: 100%;
     min-width: 0;
@@ -383,14 +581,20 @@ main {
     color: #526078;
     font-size: 10px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .select-wrap b {
     color: #7c8799;
     font-size: 14px;
     font-weight: 500;
     pointer-events: none;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .filter-note {
     display: flex;
     gap: 9px;
@@ -399,7 +603,10 @@ main {
     border-radius: 6px;
     background: #f3f6fb;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .filter-note > span {
     width: 15px;
     height: 15px;
@@ -412,14 +619,20 @@ main {
     color: #6980a2;
     font: 700 9px/1 var(--home-display);
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .filter-note p {
     margin: 0;
     color: #748096;
     font-size: 9px;
     line-height: 1.55;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .filter-contact {
     display: block;
     padding-top: 12px;
@@ -427,18 +640,27 @@ main {
     color: #737f92;
     font-size: 9px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .filter-contact span {
     display: block;
     margin-top: 4px;
     color: var(--home-blue);
     font-weight: 700;
 }
+<<<<<<< HEAD
 
 .catalog-main {
     min-width: 0;
 }
 
+=======
+.catalog-main {
+    min-width: 0;
+}
+>>>>>>> origin/Phuc-Tan
 .search-form {
     height: 52px;
     display: flex;
@@ -448,6 +670,7 @@ main {
     border: 1px solid #dce2ea;
     border-radius: 7px;
     background: #fff;
+<<<<<<< HEAD
     box-shadow: 0 2px 5px rgba(21, 40, 69, .02);
 }
 
@@ -457,6 +680,17 @@ main {
     transform: rotate(-20deg);
 }
 
+=======
+    box-shadow: 0 2px 5px rgba(21, 40, 69, 0.02);
+}
+.search-icon {
+    color: #5c6d87;
+    font:
+        400 26px/1 Arial,
+        sans-serif;
+    transform: rotate(-20deg);
+}
+>>>>>>> origin/Phuc-Tan
 .search-form input {
     width: 100%;
     min-width: 0;
@@ -466,11 +700,17 @@ main {
     color: var(--home-ink);
     font-size: 12px;
 }
+<<<<<<< HEAD
 
 .search-form input::placeholder {
     color: #98a1af;
 }
 
+=======
+.search-form input::placeholder {
+    color: #98a1af;
+}
+>>>>>>> origin/Phuc-Tan
 .search-form button {
     padding: 10px 17px;
     border: 0;
@@ -480,6 +720,7 @@ main {
     font-size: 10px;
     font-weight: 700;
     white-space: nowrap;
+<<<<<<< HEAD
     transition: background .2s;
 }
 
@@ -487,6 +728,13 @@ main {
     background: #24487d;
 }
 
+=======
+    transition: background 0.2s;
+}
+.search-form button:hover {
+    background: #24487d;
+}
+>>>>>>> origin/Phuc-Tan
 .catalog-title-row {
     display: flex;
     align-items: end;
@@ -494,6 +742,7 @@ main {
     gap: 18px;
     margin: 23px 0 14px;
 }
+<<<<<<< HEAD
 
 .blue-eyebrow {
     color: #5d7eb1;
@@ -505,12 +754,25 @@ main {
     letter-spacing: -.6px;
 }
 
+=======
+.blue-eyebrow {
+    color: #5d7eb1;
+}
+.catalog-title-row h2 {
+    margin: 4px 0 3px;
+    font: 800 21px/1.35 var(--home-display);
+    letter-spacing: -0.6px;
+}
+>>>>>>> origin/Phuc-Tan
 .catalog-title-row p {
     margin: 0;
     color: #818b9b;
     font-size: 10px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .sort-control {
     display: flex;
     align-items: center;
@@ -520,7 +782,10 @@ main {
     font-size: 10px;
     white-space: nowrap;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .sort-control select {
     border: 0;
     background: transparent;
@@ -528,18 +793,27 @@ main {
     font-size: 10px;
     font-weight: 700;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .active-filters {
     min-height: 0;
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
 }
+<<<<<<< HEAD
 
 .active-filters:not(:empty) {
     margin-bottom: 12px;
 }
 
+=======
+.active-filters:not(:empty) {
+    margin-bottom: 12px;
+}
+>>>>>>> origin/Phuc-Tan
 .filter-chip {
     display: inline-flex;
     align-items: center;
@@ -551,7 +825,10 @@ main {
     color: #45628e;
     font-size: 9px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .filter-chip button {
     padding: 0;
     border: 0;
@@ -559,28 +836,45 @@ main {
     color: #6d83a4;
     line-height: 1;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .vehicle-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 15px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .vehicle-card {
     min-width: 0;
     overflow: hidden;
     border: 1px solid #e6eaf0;
     border-radius: 9px;
     background: #fff;
+<<<<<<< HEAD
     box-shadow: 0 4px 16px rgba(26, 42, 66, .045);
     transition: box-shadow .2s, transform .2s;
 }
 
+=======
+    box-shadow: 0 4px 16px rgba(26, 42, 66, 0.045);
+    transition:
+        box-shadow 0.2s,
+        transform 0.2s;
+}
+>>>>>>> origin/Phuc-Tan
 .vehicle-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--home-shadow);
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .vehicle-photo {
     position: relative;
     height: 154px;
@@ -589,6 +883,7 @@ main {
     place-items: center;
     background: linear-gradient(135deg, #f2f4f6, #e9edf1);
 }
+<<<<<<< HEAD
 
 .vehicle-photo::after {
     position: absolute;
@@ -598,11 +893,21 @@ main {
     pointer-events: none;
 }
 
+=======
+.vehicle-photo::after {
+    position: absolute;
+    inset: 62% 0 0;
+    background: linear-gradient(0deg, rgba(19, 32, 50, 0.09), transparent);
+    content: "";
+    pointer-events: none;
+}
+>>>>>>> origin/Phuc-Tan
 .vehicle-photo img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: center;
+<<<<<<< HEAD
     transition: transform .45s;
 }
 
@@ -610,6 +915,13 @@ main {
     transform: scale(1.035);
 }
 
+=======
+    transition: transform 0.45s;
+}
+.vehicle-card:hover .vehicle-photo img {
+    transform: scale(1.035);
+}
+>>>>>>> origin/Phuc-Tan
 .model-badge {
     position: absolute;
     z-index: 1;
@@ -623,7 +935,10 @@ main {
     font-size: 8px;
     font-weight: 700;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .compare-check {
     position: absolute;
     z-index: 2;
@@ -640,34 +955,53 @@ main {
     font-size: 8px;
     font-weight: 600;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .compare-check input {
     width: 12px;
     height: 12px;
     margin: 0;
     accent-color: var(--home-blue);
 }
+<<<<<<< HEAD
 
 .vehicle-card-body {
     padding: 13px 13px 12px;
 }
 
+=======
+.vehicle-card-body {
+    padding: 13px 13px 12px;
+}
+>>>>>>> origin/Phuc-Tan
 .vehicle-name {
     overflow: hidden;
     margin: 0;
     color: #243753;
     font: 800 15px/1.35 var(--home-display);
+<<<<<<< HEAD
     letter-spacing: -.35px;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
+=======
+    letter-spacing: -0.35px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+>>>>>>> origin/Phuc-Tan
 .vehicle-version {
     margin: 4px 0 0;
     color: #8b94a2;
     font-size: 9px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .vehicle-specs {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -677,16 +1011,25 @@ main {
     border-top: 1px solid #edf0f4;
     border-bottom: 1px solid #edf0f4;
 }
+<<<<<<< HEAD
 
 .spec-item {
     min-width: 0;
 }
 
+=======
+.spec-item {
+    min-width: 0;
+}
+>>>>>>> origin/Phuc-Tan
 .spec-item + .spec-item {
     padding-left: 8px;
     border-left: 1px solid #edf0f4;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .spec-item span {
     display: block;
     overflow: hidden;
@@ -695,7 +1038,10 @@ main {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .spec-item strong {
     display: block;
     overflow: hidden;
@@ -705,21 +1051,32 @@ main {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .vehicle-price-label {
     display: block;
     color: #8d96a4;
     font-size: 8px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .vehicle-price {
     display: block;
     margin-top: 2px;
     color: #203f70;
     font: 800 16px/1.35 var(--home-display);
+<<<<<<< HEAD
     letter-spacing: -.3px;
 }
 
+=======
+    letter-spacing: -0.3px;
+}
+>>>>>>> origin/Phuc-Tan
 .vehicle-card-footer {
     display: flex;
     align-items: center;
@@ -727,7 +1084,10 @@ main {
     gap: 7px;
     margin-top: 11px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .vehicle-source {
     overflow: hidden;
     color: #748096;
@@ -735,12 +1095,18 @@ main {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .vehicle-source:hover {
     color: var(--home-blue);
     text-decoration: underline;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .quick-compare {
     flex: 0 0 auto;
     padding: 6px 9px;
@@ -751,12 +1117,20 @@ main {
     font-size: 8px;
     font-weight: 700;
 }
+<<<<<<< HEAD
 
 .quick-compare:hover, .quick-compare.selected {
     border-color: #9bb2d5;
     background: #eff4fb;
 }
 
+=======
+.quick-compare:hover,
+.quick-compare.selected {
+    border-color: #9bb2d5;
+    background: #eff4fb;
+}
+>>>>>>> origin/Phuc-Tan
 .loading-card {
     grid-column: 1/-1;
     min-height: 170px;
@@ -770,22 +1144,33 @@ main {
     color: #8390a4;
     font-size: 11px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .loading-orbit {
     width: 22px;
     height: 22px;
     border: 2px solid #dbe3ef;
     border-top-color: var(--home-blue);
     border-radius: 50%;
+<<<<<<< HEAD
     animation: spin .8s linear infinite;
 }
 
+=======
+    animation: spin 0.8s linear infinite;
+}
+>>>>>>> origin/Phuc-Tan
 @keyframes spin {
     to {
         transform: rotate(360deg);
     }
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .empty-state {
     padding: 38px 15px;
     border: 1px dashed #d7dee8;
@@ -793,24 +1178,39 @@ main {
     background: #fff;
     text-align: center;
 }
+<<<<<<< HEAD
 
 .empty-state > span {
     color: #6e85a9;
     font: 400 32px/1 Arial, sans-serif;
 }
 
+=======
+.empty-state > span {
+    color: #6e85a9;
+    font:
+        400 32px/1 Arial,
+        sans-serif;
+}
+>>>>>>> origin/Phuc-Tan
 .empty-state h3 {
     margin: 8px 0 4px;
     color: #334762;
     font: 700 15px var(--home-display);
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .empty-state p {
     margin: 0 0 13px;
     color: #8993a2;
     font-size: 10px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .empty-state button {
     padding: 7px 12px;
     border: 0;
@@ -820,14 +1220,20 @@ main {
     font-size: 9px;
     font-weight: 700;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .catalog-disclaimer {
     margin: 14px 1px 0;
     color: #9aa2ae;
     font-size: 8px;
     line-height: 1.7;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .about-strip {
     display: grid;
     grid-template-columns: 47px minmax(0, 1fr) auto;
@@ -839,7 +1245,10 @@ main {
     border-radius: 9px;
     background: linear-gradient(105deg, #fff, #f4f7fb);
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .about-icon {
     width: 43px;
     height: 43px;
@@ -850,23 +1259,35 @@ main {
     color: #4b6e9f;
     font-size: 20px;
 }
+<<<<<<< HEAD
 
 .about-strip .eyebrow {
     font-size: 8px;
 }
 
+=======
+.about-strip .eyebrow {
+    font-size: 8px;
+}
+>>>>>>> origin/Phuc-Tan
 .about-strip h2 {
     margin: 3px 0;
     color: #263b59;
     font: 800 15px/1.4 var(--home-display);
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .about-strip p {
     margin: 0;
     color: #8590a0;
     font-size: 9px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .about-strip > a {
     padding: 10px 13px;
     border-radius: 5px;
@@ -876,11 +1297,17 @@ main {
     font-weight: 700;
     white-space: nowrap;
 }
+<<<<<<< HEAD
 
 .about-strip > a span {
     margin-left: 7px;
 }
 
+=======
+.about-strip > a span {
+    margin-left: 7px;
+}
+>>>>>>> origin/Phuc-Tan
 .site-footer {
     min-height: 61px;
     display: flex;
@@ -893,16 +1320,25 @@ main {
     color: #8a93a1;
     font-size: 9px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .footer-brand {
     color: #455c7f;
     font-weight: 700;
 }
+<<<<<<< HEAD
 
 .site-footer a:last-child {
     color: #617da5;
 }
 
+=======
+.site-footer a:last-child {
+    color: #617da5;
+}
+>>>>>>> origin/Phuc-Tan
 .compare-dock {
     position: fixed;
     z-index: 30;
@@ -920,20 +1356,32 @@ main {
     box-shadow: 0 8px 30px #172b471c;
     transform: translateX(50%);
 }
+<<<<<<< HEAD
 
 .compare-dock[hidden] {
     display: none;
 }
 
+=======
+.compare-dock[hidden] {
+    display: none;
+}
+>>>>>>> origin/Phuc-Tan
 .compare-dock > span {
     color: #526178;
     font-size: 10px;
 }
+<<<<<<< HEAD
 
 .compare-dock > span b {
     color: var(--home-blue);
 }
 
+=======
+.compare-dock > span b {
+    color: var(--home-blue);
+}
+>>>>>>> origin/Phuc-Tan
 .compare-dock > button:not(.compare-clear) {
     padding: 8px 12px;
     border: 0;
@@ -943,11 +1391,17 @@ main {
     font-size: 9px;
     font-weight: 700;
 }
+<<<<<<< HEAD
 
 .compare-dock > button span {
     margin-left: 7px;
 }
 
+=======
+.compare-dock > button span {
+    margin-left: 7px;
+}
+>>>>>>> origin/Phuc-Tan
 .compare-clear {
     width: 24px;
     height: 24px;
@@ -957,7 +1411,10 @@ main {
     color: #778398;
     font-size: 16px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .compare-dialog {
     width: min(850px, calc(100% - 28px));
     max-height: min(82vh, 720px);
@@ -969,12 +1426,19 @@ main {
     color: var(--home-ink);
     box-shadow: 0 22px 80px #15274145;
 }
+<<<<<<< HEAD
 
 .compare-dialog::backdrop {
     background: rgba(17, 30, 49, .48);
     backdrop-filter: blur(3px);
 }
 
+=======
+.compare-dialog::backdrop {
+    background: rgba(17, 30, 49, 0.48);
+    backdrop-filter: blur(3px);
+}
+>>>>>>> origin/Phuc-Tan
 .dialog-heading {
     display: flex;
     align-items: center;
@@ -982,12 +1446,18 @@ main {
     padding: 19px 22px;
     border-bottom: 1px solid #e9edf2;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .dialog-heading h2 {
     margin: 3px 0 0;
     font: 800 20px var(--home-display);
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .dialog-close {
     width: 31px;
     height: 31px;
@@ -998,42 +1468,67 @@ main {
     font-size: 20px;
     line-height: 1;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .compare-table-wrap {
     max-height: calc(82vh - 82px);
     overflow: auto;
     padding: 18px 22px 22px;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .compare-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 11px;
 }
+<<<<<<< HEAD
 
 .compare-table th, .compare-table td {
+=======
+.compare-table th,
+.compare-table td {
+>>>>>>> origin/Phuc-Tan
     min-width: 120px;
     padding: 11px 12px;
     border-bottom: 1px solid #edf0f4;
     text-align: left;
     vertical-align: top;
 }
+<<<<<<< HEAD
 
 .compare-table th:first-child, .compare-table td:first-child {
+=======
+.compare-table th:first-child,
+.compare-table td:first-child {
+>>>>>>> origin/Phuc-Tan
     min-width: 130px;
     color: #7e8999;
     font-weight: 600;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 .compare-table th:not(:first-child) {
     color: #294a7c;
     font: 800 13px var(--home-display);
 }
+<<<<<<< HEAD
 
 .compare-table td:not(:first-child) {
     color: #4f5e74;
 }
 
+=======
+.compare-table td:not(:first-child) {
+    color: #4f5e74;
+}
+>>>>>>> origin/Phuc-Tan
 .sr-only {
     position: absolute;
     width: 1px;
@@ -1046,6 +1541,7 @@ main {
 }
 
 @media (max-width: 1050px) {
+<<<<<<< HEAD
     .header-inner, main {
         width: min(100% - 40px, 900px);
     }
@@ -1062,10 +1558,26 @@ main {
         display: none;
     }
 
+=======
+    .header-inner,
+    main {
+        width: min(100% - 40px, 900px);
+    }
+    .header-inner {
+        gap: 26px;
+    }
+    .primary-nav {
+        gap: 20px;
+    }
+    .header-contact span:last-child {
+        display: none;
+    }
+>>>>>>> origin/Phuc-Tan
     .catalog-layout {
         grid-template-columns: 225px minmax(0, 1fr);
         gap: 17px;
     }
+<<<<<<< HEAD
 
     .vehicle-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1079,35 +1591,66 @@ main {
         padding: 17px;
     }
 
+=======
+    .vehicle-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .vehicle-photo {
+        height: 165px;
+    }
+    .banner-copy {
+        padding: 17px;
+    }
+>>>>>>> origin/Phuc-Tan
     .banner-copy strong {
         font-size: 15px;
     }
 }
+<<<<<<< HEAD
 
 @media (max-width: 700px) {
     .header-inner, main {
         width: calc(100% - 30px);
     }
 
+=======
+@media (max-width: 700px) {
+    .header-inner,
+    main {
+        width: calc(100% - 30px);
+    }
+>>>>>>> origin/Phuc-Tan
     .header-inner {
         min-height: 65px;
         gap: 12px;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
     .brand-mark {
         width: 34px;
         height: 34px;
     }
+<<<<<<< HEAD
 
     .brand-copy strong {
         font-size: 18px;
     }
 
+=======
+    .brand-copy strong {
+        font-size: 18px;
+    }
+>>>>>>> origin/Phuc-Tan
     .mobile-menu-toggle {
         display: block;
         margin-left: auto;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
     .primary-nav {
         position: absolute;
         top: 64px;
@@ -1123,6 +1666,7 @@ main {
         background: #fff;
         box-shadow: 0 12px 20px #182f4d12;
     }
+<<<<<<< HEAD
 
     .primary-nav.open {
         display: flex;
@@ -1140,62 +1684,107 @@ main {
         display: none;
     }
 
+=======
+    .primary-nav.open {
+        display: flex;
+    }
+    .nav-link {
+        padding: 10px 4px;
+    }
+    .header-actions {
+        margin-left: 0;
+    }
+    .header-contact {
+        display: none;
+    }
+>>>>>>> origin/Phuc-Tan
     .account-link {
         padding: 8px 10px;
         font-size: 10px;
     }
+<<<<<<< HEAD
 
     .showcase {
         padding: 24px 0 19px;
     }
 
+=======
+    .showcase {
+        padding: 24px 0 19px;
+    }
+>>>>>>> origin/Phuc-Tan
     .showcase-heading {
         display: block;
         margin-bottom: 15px;
     }
+<<<<<<< HEAD
 
     .showcase-heading h1 {
         font-size: 27px;
     }
 
+=======
+    .showcase-heading h1 {
+        font-size: 27px;
+    }
+>>>>>>> origin/Phuc-Tan
     .showcase-heading p {
         margin-top: 8px;
         font-size: 11px;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
     .banner-track {
         grid-template-columns: repeat(3, minmax(230px, 1fr));
         overflow-x: auto;
         padding-bottom: 4px;
         scroll-snap-type: x mandatory;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
     .feature-banner {
         min-height: 145px;
         scroll-snap-align: start;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
     .catalog-layout {
         display: flex;
         flex-direction: column;
         gap: 15px;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
     .filter-panel {
         position: static;
         width: 100%;
         padding: 16px;
     }
+<<<<<<< HEAD
 
     .filter-heading {
         margin-bottom: 13px;
     }
 
+=======
+    .filter-heading {
+        margin-bottom: 13px;
+    }
+>>>>>>> origin/Phuc-Tan
     .filter-panel {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0 11px;
     }
+<<<<<<< HEAD
 
     .filter-heading, .filter-note, .filter-contact {
         grid-column: 1/-1;
@@ -1217,50 +1806,94 @@ main {
         width: 100%;
     }
 
+=======
+    .filter-heading,
+    .filter-note,
+    .filter-contact {
+        grid-column: 1/-1;
+    }
+    .filter-label {
+        margin-top: 11px;
+    }
+    .filter-note {
+        margin: 13px 0 4px;
+    }
+    .filter-contact {
+        margin-top: 9px;
+    }
+    .catalog-main {
+        width: 100%;
+    }
+>>>>>>> origin/Phuc-Tan
     .search-form {
         height: 47px;
         gap: 8px;
         padding-left: 11px;
     }
+<<<<<<< HEAD
 
     .search-form input {
         font-size: 10px;
     }
 
+=======
+    .search-form input {
+        font-size: 10px;
+    }
+>>>>>>> origin/Phuc-Tan
     .search-form button {
         padding: 9px 10px;
         font-size: 9px;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
     .catalog-title-row {
         align-items: start;
         margin-top: 19px;
     }
+<<<<<<< HEAD
 
     .catalog-title-row h2 {
         font-size: 17px;
     }
 
+=======
+    .catalog-title-row h2 {
+        font-size: 17px;
+    }
+>>>>>>> origin/Phuc-Tan
     .catalog-title-row p {
         max-width: 215px;
         font-size: 9px;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
     .sort-control {
         display: grid;
         gap: 2px;
         font-size: 8px;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
     .sort-control select {
         max-width: 120px;
         font-size: 9px;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
     .vehicle-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 10px;
     }
+<<<<<<< HEAD
 
     .vehicle-photo {
         height: clamp(105px, 31vw, 155px);
@@ -1278,10 +1911,25 @@ main {
         font-size: 8px;
     }
 
+=======
+    .vehicle-photo {
+        height: clamp(105px, 31vw, 155px);
+    }
+    .vehicle-card-body {
+        padding: 10px;
+    }
+    .vehicle-name {
+        font-size: 12px;
+    }
+    .vehicle-version {
+        font-size: 8px;
+    }
+>>>>>>> origin/Phuc-Tan
     .vehicle-specs {
         margin: 9px 0;
         padding: 8px 0;
     }
+<<<<<<< HEAD
 
     .spec-item + .spec-item {
         padding-left: 5px;
@@ -1295,46 +1943,76 @@ main {
         font-size: 13px;
     }
 
+=======
+    .spec-item + .spec-item {
+        padding-left: 5px;
+    }
+    .spec-item strong {
+        font-size: 9px;
+    }
+    .vehicle-price {
+        font-size: 13px;
+    }
+>>>>>>> origin/Phuc-Tan
     .vehicle-card-footer {
         align-items: flex-start;
         flex-direction: column;
     }
+<<<<<<< HEAD
 
     .quick-compare {
         align-self: flex-end;
     }
 
+=======
+    .quick-compare {
+        align-self: flex-end;
+    }
+>>>>>>> origin/Phuc-Tan
     .compare-check {
         top: 6px;
         right: 6px;
         padding: 4px 5px;
         font-size: 7px;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
     .compare-check input {
         width: 11px;
         height: 11px;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
     .model-badge {
         top: 6px;
         left: 6px;
         padding: 3px 5px;
         font-size: 7px;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
     .about-strip {
         grid-template-columns: 38px minmax(0, 1fr);
         gap: 10px;
         margin-bottom: 22px;
         padding: 14px;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
     .about-icon {
         width: 36px;
         height: 36px;
         font-size: 17px;
     }
+<<<<<<< HEAD
 
     .about-strip h2 {
         font-size: 12px;
@@ -1344,13 +2022,24 @@ main {
         font-size: 8px;
     }
 
+=======
+    .about-strip h2 {
+        font-size: 12px;
+    }
+    .about-strip p {
+        font-size: 8px;
+    }
+>>>>>>> origin/Phuc-Tan
     .about-strip > a {
         grid-column: 2;
         justify-self: start;
         padding: 8px 10px;
         font-size: 8px;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
     .site-footer {
         flex-wrap: wrap;
         justify-content: flex-start;
@@ -1358,38 +2047,59 @@ main {
         padding: 13px 15px;
         font-size: 8px;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
     .compare-dock {
         bottom: 9px;
         gap: 8px;
         padding: 8px;
     }
+<<<<<<< HEAD
 
     .compare-dock > span {
         font-size: 8px;
     }
 
+=======
+    .compare-dock > span {
+        font-size: 8px;
+    }
+>>>>>>> origin/Phuc-Tan
     .compare-dock > button:not(.compare-clear) {
         padding: 7px 8px;
         font-size: 8px;
     }
+<<<<<<< HEAD
 
     .compare-table th, .compare-table td {
+=======
+    .compare-table th,
+    .compare-table td {
+>>>>>>> origin/Phuc-Tan
         min-width: 105px;
         padding: 8px;
         font-size: 9px;
     }
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
 @media (max-width: 390px) {
     .brand-copy small {
         letter-spacing: 1px;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
     .account-link {
         gap: 5px;
         padding: 7px;
     }
+<<<<<<< HEAD
 
     .vehicle-grid {
         grid-template-columns: 1fr;
@@ -1399,17 +2109,69 @@ main {
         height: 180px;
     }
 
+=======
+    .vehicle-grid {
+        grid-template-columns: 1fr;
+    }
+    .vehicle-photo {
+        height: 180px;
+    }
+>>>>>>> origin/Phuc-Tan
     .vehicle-card-footer {
         align-items: center;
         flex-direction: row;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
     .catalog-title-row {
         flex-direction: column;
         gap: 8px;
     }
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/Phuc-Tan
     .sort-control {
         display: flex;
     }
 }
+<<<<<<< HEAD
+=======
+
+/* The preview includes AI and administration links in the shared navigation. */
+@media (min-width: 701px) and (max-width: 900px) {
+    .mobile-menu-toggle {
+        display: block;
+        margin-left: auto;
+    }
+    .primary-nav {
+        position: absolute;
+        top: 77px;
+        right: 0;
+        left: 0;
+        height: auto;
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        padding: 8px 18px 13px;
+        border-bottom: 1px solid var(--home-line);
+        background: #fff;
+        box-shadow: 0 12px 20px #182f4d12;
+    }
+    .primary-nav.open {
+        display: flex;
+    }
+    .nav-link {
+        padding: 10px 4px;
+    }
+    .header-actions {
+        margin-left: 0;
+    }
+    .header-contact {
+        display: none;
+    }
+}
+>>>>>>> origin/Phuc-Tan
