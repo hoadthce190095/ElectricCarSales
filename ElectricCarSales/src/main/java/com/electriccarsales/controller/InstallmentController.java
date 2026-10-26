@@ -71,6 +71,8 @@ public class InstallmentController extends HttpServlet {
 
             if (contract != null) {
                 request.setAttribute("installmentContract", contract);
+                request.setAttribute("installmentCompany",
+                        installmentService.getFinancialCompany(contract.getCompanyID()));
                 request.setAttribute("installmentSchedule",
                         installmentService.getSchedule(contract.getInstallmentContractID()));
                 request.setAttribute("installmentPaymentHistory",

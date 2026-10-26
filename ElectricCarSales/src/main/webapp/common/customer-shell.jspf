@@ -21,6 +21,7 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
         <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="<%= customerContext %>/assets/css/customer.css">
         <link rel="stylesheet" href="<%= customerContext %>/assets/css/customer-ai.css">
+        <% if (customerPage.equals("payment-demo.jsp")) { %><link rel="stylesheet" href="<%= customerContext %>/assets/css/payment-demo.css"><% } %>
         <script src="<%= customerContext %>/assets/js/customer.js" defer>
         </script>
     </head>

@@ -11,6 +11,18 @@
   <component name="ChangeListManager">
     <list default="true" id="740c799d-e83a-430a-aca5-6eb08e4227f1" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/ElectricCarSalesDB.sql" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/ElectricCarSalesDB.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/InstallmentController.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/InstallmentController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/FinancialCompanyDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/FinancialCompanyDAO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/InstallmentPlanDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/InstallmentPlanDAO.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/FinancialCompany.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/FinancialCompany.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/InstallmentPlan.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/InstallmentPlan.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/InstallmentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/InstallmentService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/common/customer-shell.jspf" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/common/customer-shell.jspf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-contracts.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-contracts.jsp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-payments.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-payments.jsp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSalesDB.sql" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSalesDB.sql" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

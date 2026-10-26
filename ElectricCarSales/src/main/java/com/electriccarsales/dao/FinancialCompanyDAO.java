@@ -10,7 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FinancialCompanyDAO extends FinanceDAOBase {
-    private static final String COLUMNS = "CompanyID, CompanyName, Phone, Email, Address, Description";
+    private static final String COLUMNS = "CompanyID, CompanyName, Phone, Email, Address, Description, "
+            + "PaymentDueDay, PaymentCutoffTime, LateFeeDailyPercent, EarlySettlementFeePercent";
 
     public FinancialCompanyDAO() { super(); }
     public FinancialCompanyDAO(Connection transactionConnection) { super(transactionConnection); }
@@ -43,7 +44,9 @@ public class FinancialCompanyDAO extends FinanceDAOBase {
 
     public int insert(FinancialCompany company) {
         return withConnection(connection -> {
-            String sql = "INSERT INTO FinancialCompanies (CompanyName, Phone, Email, Address, Description) VALUES (?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO FinancialCompanies (CompanyName, Phone, Email, Address, Description, "
+                    + "PaymentDueDay, PaymentCutoffTime, LateFeeDailyPercent, EarlySettlementFeePercent) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             try (PreparedStatement statement = FinanceJDBC.insertStatement(connection, sql)) {
                 bind(statement, company);
                 statement.executeUpdate();
@@ -56,10 +59,12 @@ public class FinancialCompanyDAO extends FinanceDAOBase {
 
     public boolean update(FinancialCompany company) {
         return withConnection(connection -> {
-            String sql = "UPDATE FinancialCompanies SET CompanyName = ?, Phone = ?, Email = ?, Address = ?, Description = ? WHERE CompanyID = ?";
+            String sql = "UPDATE FinancialCompanies SET CompanyName = ?, Phone = ?, Email = ?, Address = ?, Description = ?, "
+                    + "PaymentDueDay = ?, PaymentCutoffTime = ?, LateFeeDailyPercent = ?, "
+                    + "EarlySettlementFeePercent = ? WHERE CompanyID = ?";
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 bind(statement, company);
-                statement.setInt(6, company.getCompanyID());
+                statement.setInt(10, company.getCompanyID());
                 return statement.executeUpdate() == 1;
             }
         });
@@ -73,6 +78,12 @@ public class FinancialCompanyDAO extends FinanceDAOBase {
         statement.setString(3, company.getEmail());
         statement.setString(4, company.getAddress());
         statement.setString(5, company.getDescription());
+        if (company.getPaymentDueDay() == null) statement.setNull(6, java.sql.Types.TINYINT);
+        else statement.setInt(6, company.getPaymentDueDay());
+        if (company.getPaymentCutoffTime() == null) statement.setNull(7, java.sql.Types.TIME);
+        else statement.setTime(7, java.sql.Time.valueOf(company.getPaymentCutoffTime()));
+        statement.setBigDecimal(8, company.getLateFeeDailyPercent());
+        statement.setBigDecimal(9, company.getEarlySettlementFeePercent());
     }
 
     private static FinancialCompany one(Connection connection, String sql, int id) throws SQLException {
@@ -94,7 +105,14 @@ public class FinancialCompanyDAO extends FinanceDAOBase {
     }
 
     private static FinancialCompany map(ResultSet rs) throws SQLException {
-        return new FinancialCompany(rs.getInt("CompanyID"), rs.getString("CompanyName"),
+        FinancialCompany company = new FinancialCompany(rs.getInt("CompanyID"), rs.getString("CompanyName"),
                 rs.getString("Phone"), rs.getString("Email"), rs.getString("Address"), rs.getString("Description"));
+        int dueDay = rs.getInt("PaymentDueDay");
+        company.setPaymentDueDay(rs.wasNull() ? null : dueDay);
+        java.sql.Time cutoff = rs.getTime("PaymentCutoffTime");
+        company.setPaymentCutoffTime(cutoff == null ? null : cutoff.toLocalTime());
+        company.setLateFeeDailyPercent(rs.getBigDecimal("LateFeeDailyPercent"));
+        company.setEarlySettlementFeePercent(rs.getBigDecimal("EarlySettlementFeePercent"));
+        return company;
     }
 }

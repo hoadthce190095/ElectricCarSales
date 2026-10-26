@@ -19,6 +19,9 @@
     <p>Đơn hàng #<c:out value="${installmentContract.orderID}"/> · <c:out value="${installmentContract.companyName}" default="Đơn vị tài chính"/> · <c:out value="${installmentContract.planName}" default="Gói trả góp"/></p>
     <p>Giá xe: <c:out value="${installmentContract.vehiclePrice}"/> ₫ · Trả trước: <c:out value="${installmentContract.downPayment}"/> ₫</p>
     <p>Số tiền vay: <c:out value="${installmentContract.loanAmount}"/> ₫ · Lãi: <c:out value="${installmentContract.totalInterest}"/> ₫</p>
+    <c:if test="${not empty installmentCompany.paymentDueDay}">
+        <p>Ngày đến hạn: trước <c:out value="${installmentCompany.paymentCutoffTime}"/> ngày <c:out value="${installmentCompany.paymentDueDay}"/> hằng tháng · Phí trễ hạn: <c:out value="${installmentCompany.lateFeeDailyPercent}"/>% số tiền kỳ/tháng trễ.</p>
+    </c:if>
     <p>Tổng nghĩa vụ trả góp: <c:out value="${installmentContract.totalInstallmentAmount}"/> ₫ · Còn nợ: <c:out value="${outstandingDebt}"/> ₫</p>
     <h3>Lịch thanh toán</h3>
     <div class="table-wrap"><table>
@@ -40,13 +43,13 @@
 <section class="panel document-panel">
     <div class="panel-heading"><div><span class="section-overline">KẾ HOẠCH TÀI CHÍNH</span><h2>Các gói trả góp</h2></div></div>
     <div class="table-wrap"><table>
-        <thead><tr><th>GÓI</th><th>KỲ HẠN</th><th>LÃI SUẤT</th><th>MÔ TẢ</th></tr></thead>
+        <thead><tr><th>ĐƠN VỊ</th><th>GÓI</th><th>KỲ HẠN</th><th>LÃI SUẤT NĂM</th><th>MÔ TẢ</th></tr></thead>
         <tbody><c:forEach var="plan" items="${installmentPlans}">
-            <tr><td><c:out value="${plan.planName}"/></td><td><c:out value="${plan.loanTermMonths}"/> tháng</td><td><c:out value="${plan.interestRate}"/></td><td><c:out value="${plan.description}" default="—"/></td></tr>
+            <tr><td><c:out value="${plan.companyName}"/></td><td><c:out value="${plan.planName}"/></td><td><c:out value="${plan.loanTermMonths}"/> tháng</td><td><c:out value="${plan.interestRate}"/>%</td><td><c:out value="${plan.description}" default="—"/></td></tr>
         </c:forEach></tbody>
     </table></div>
     <h3>Đơn vị tài chính</h3>
-    <ul><c:forEach var="company" items="${financialCompanies}"><li><c:out value="${company.companyName}"/> · <c:out value="${company.phone}" default="Chưa có số điện thoại"/> · <c:out value="${company.email}" default="Chưa có email"/></li></c:forEach></ul>
+    <ul><c:forEach var="company" items="${financialCompanies}"><li><c:out value="${company.companyName}"/> · Hạn trước <c:out value="${company.paymentCutoffTime}"/> ngày <c:out value="${company.paymentDueDay}"/> hằng tháng · Trễ hạn <c:out value="${company.lateFeeDailyPercent}"/>%/ngày · Phí tất toán: <c:choose><c:when test="${not empty company.earlySettlementFeePercent}"><c:out value="${company.earlySettlementFeePercent}"/>% gốc còn lại</c:when><c:otherwise>chưa được đơn vị tài chính xác nhận</c:otherwise></c:choose></li></c:forEach></ul>
 </section>
 </c:if>
 <section class="panel document-panel">

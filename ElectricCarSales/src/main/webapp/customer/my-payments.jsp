@@ -4,6 +4,7 @@
 <%@ include file="../common/customer-shell.jspf" %>
 <div class="page-intro">
     <p>Xem các khoản đặt cọc, thanh toán còn lại và kỳ trả góp được ghi nhận trong giao dịch của bạn.</p>
+    <a class="button button-primary" href="<%= request.getContextPath() %>/customer/payment-demo.jsp">Mở demo cổng thanh toán <span>→</span></a>
 </div>
 <section class="payment-highlight">
     <div>
