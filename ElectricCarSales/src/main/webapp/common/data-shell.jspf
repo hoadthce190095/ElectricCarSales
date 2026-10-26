@@ -1,0 +1,33 @@
+<%@ page pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="app-context-path" content="<c:out value='${pageContext.request.contextPath}' />">
+    <title><c:out value="${screenTitle}" /> · ElectricCarSales</title>
+    <link rel="stylesheet" href="<c:url value='/assets/css/data-pages.css' />">
+</head>
+<body>
+<header class="data-header">
+    <nav aria-label="Điều hướng chính">
+        <a class="data-brand" href="<c:url value='/index.jsp' />">VinFast</a>
+        <c:choose>
+            <c:when test="${authScreen}">
+                <a href="<c:url value='/index.jsp' />">Trang chủ</a>
+                <a href="<c:url value='/login' />">Đăng nhập</a>
+            </c:when>
+            <c:otherwise>
+                <a href="<c:url value='/car' />">Kho xe</a>
+                <a href="<c:url value='/contract' />">Hợp đồng</a>
+                <a href="<c:url value='/delivery' />">Giao xe</a>
+                <a href="<c:url value='/admin.jsp' />">Quản trị</a>
+            </c:otherwise>
+        </c:choose>
+    </nav>
+</header>
+<main class="data-main${authScreen ? ' auth-main' : ''}">
+    <h1><c:out value="${screenTitle}" /></h1>
+    <p class="data-intro"><c:out value="${screenDescription}" /></p>

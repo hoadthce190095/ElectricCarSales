@@ -114,6 +114,7 @@ public class AdministrationService {
 
     public AdminUser updateUser(int actor, int id, UserRequest raw) throws SQLException {
         UserRequest input = validateUser(raw, false);
+        boolean profile = input.getEmail() != null || input.getPhone() != null || input.getEmployeeName() != null;
         String hash = input.getPassword() == null || input.getPassword().isBlank()
             ? null
             : PasswordHasher.hash(input.getPassword());
@@ -136,7 +137,7 @@ public class AdministrationService {
                         throw new IllegalArgumentException("Trạng thái không hợp lệ.");
                     }
                 } else {
-                    validateReferences(connection, input);
+                    validateReferences(connection, input, profile);
                 }
                 if (actor == id && (!old.getRole().equals(role) || !"ACTIVE".equals(status))) {
                     throw new IllegalArgumentException("Bạn không thể tự khóa hoặc đổi vai trò tài khoản đang dùng.");
@@ -147,10 +148,10 @@ public class AdministrationService {
                     throw new IllegalArgumentException("Phải giữ ít nhất một Admin đang hoạt động.");
                 }
                 repository.updateUser(connection, id, input, hash);
-                if (!"CUSTOMER".equals(role)) {
+                if (profile && !"CUSTOMER".equals(role)) {
                     repository.saveEmployee(connection, id, input.getEmployeeName(), input.getPhone(),
                         input.getEmail());
-                } else {
+                } else if (profile) {
                     try (java.sql.PreparedStatement statement = connection
                         .prepareStatement("UPDATE Customers SET Phone=?,Email=? WHERE UserID=?")) {
                         statement.setString(1, input.getPhone());
@@ -176,6 +177,10 @@ public class AdministrationService {
     }
 
     private void validateReferences(Connection connection, UserRequest input) throws SQLException {
+        validateReferences(connection, input, true);
+    }
+
+    private void validateReferences(Connection connection, UserRequest input, boolean profile) throws SQLException {
         String role = repository.role(connection, input.getRoleId());
         String status = repository.status(connection, input.getStatusId());
         if (role == null || "CUSTOMER".equals(role)) {
@@ -184,7 +189,7 @@ public class AdministrationService {
         if (!Set.of("ACTIVE", "INACTIVE", "LOCKED").contains(status == null ? "" : status)) {
             throw new IllegalArgumentException("Trạng thái không hợp lệ.");
         }
-        if (input.getEmployeeName() == null || input.getEmployeeName().isBlank()) {
+        if (profile && (input.getEmployeeName() == null || input.getEmployeeName().isBlank())) {
             throw new IllegalArgumentException("Nhập họ tên nhân viên.");
         }
     }
@@ -239,6 +244,16 @@ public class AdministrationService {
                 }
                 if (!validModels.containsAll(input.getModelIds())) {
                     throw new IllegalArgumentException("Có mẫu xe không tồn tại.");
+                }
+                if ("FIXED".equals(input.getDiscountType())) {
+                    var prices = repository.modelMinPrices(connection);
+                    for (Integer modelId : input.getModelIds()) {
+                        BigDecimal minimum = prices.get(modelId);
+                        if (minimum != null && input.getDiscountValue().compareTo(minimum) > 0) {
+                            throw new IllegalArgumentException("Giá trị giảm giá không được vượt giá xe thấp nhất của mẫu áp dụng ("
+                                + minimum.toPlainString() + " VND).");
+                        }
+                    }
                 }
                 int key = repository.savePromotion(connection, id, input);
                 logs.record(connection, actor, id == null ? "PROMOTION_CREATE" : "PROMOTION_UPDATE", "PROMOTION",
@@ -385,7 +400,8 @@ public class AdministrationService {
         if (create || raw.getPassword() != null && !raw.getPassword().isBlank()) {
             PasswordHasher.validate(raw.getPassword());
         }
-        return new UserRequest(username, raw.getPassword(), email(raw.getEmail()), phone(raw.getPhone()),
+        boolean profile = create || raw.getEmail() != null || raw.getPhone() != null || raw.getEmployeeName() != null;
+        return new UserRequest(username, raw.getPassword(), profile ? email(raw.getEmail()) : null, profile ? phone(raw.getPhone()) : null,
             raw.getRoleId(), raw.getStatusId(), optional(raw.getEmployeeName(), "Họ tên", 100));
     }
 
@@ -400,19 +416,22 @@ public class AdministrationService {
             throw new IllegalArgumentException("Loại giảm giá phải là PERCENTAGE hoặc FIXED.");
         }
         BigDecimal value = promotion.getDiscountValue();
-        if (value == null || value.signum() < 0 || value.compareTo(new BigDecimal("9999999999999999.99")) > 0
+        if (value == null || value.signum() <= 0 || value.compareTo(new BigDecimal("9999999999999999.99")) > 0
             || value.stripTrailingZeros().scale() > 2) {
-            throw new IllegalArgumentException("Giá trị giảm giá không hợp lệ, tối đa 2 chữ số thập phân.");
+            throw new IllegalArgumentException("Giá trị giảm giá phải lớn hơn 0, tối đa 2 chữ số thập phân.");
         }
         if ("PERCENTAGE".equals(promotion.getDiscountType()) && value.compareTo(new BigDecimal("100")) > 0) {
-            throw new IllegalArgumentException("Phần trăm giảm giá từ 0 đến 100.");
+            throw new IllegalArgumentException("Phần trăm giảm giá phải lớn hơn 0 và không vượt quá 100.");
         }
         if (promotion.getStartDate() == null || promotion.getEndDate() == null
-            || promotion.getEndDate().isBefore(promotion.getStartDate())) {
-            throw new IllegalArgumentException("Ngày kết thúc phải từ ngày bắt đầu trở đi.");
+            || !promotion.getEndDate().isAfter(promotion.getStartDate())) {
+            throw new IllegalArgumentException("Ngày kết thúc phải sau ngày bắt đầu.");
         }
         if (promotion.getStartDate().getYear() < 1 || promotion.getEndDate().getYear() > 9999) {
             throw new IllegalArgumentException("Ngày khuyến mãi phải nằm trong năm 1–9999.");
+        }
+        if (promotion.getEndDate().isAfter(promotion.getStartDate().plusMonths(3))) {
+            throw new IllegalArgumentException("Ngày kết thúc không được vượt quá 3 tháng lịch kể từ ngày bắt đầu.");
         }
         if (!Set.of("ACTIVE", "INACTIVE").contains(promotion.getStatus() == null ? "" : promotion.getStatus())) {
             throw new IllegalArgumentException("Trạng thái khuyến mãi không hợp lệ.");
