@@ -1,4 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib uri="jakarta.tags.core" prefix="c" %>
 <!doctype html>
 <html lang="vi">
 <head>
@@ -37,8 +38,10 @@
                 <span class="form-eyebrow">TÀI KHOẢN VINFAST</span>
                 <h1 id="login-title">Đăng nhập</h1>
                 <p class="form-intro">Nhập tên đăng nhập và mật khẩu để tiếp tục.</p>
+                <c:if test="${not empty success}"><p class="form-message" role="status"><c:out value="${success}"/></p></c:if>
+                <c:if test="${not empty error}"><p class="form-message" role="alert"><c:out value="${error}"/></p></c:if>
 
-                <form id="login-form" class="auth-form" novalidate>
+                <form id="login-form" class="auth-form" action="${pageContext.request.contextPath}/login" method="post">
                     <label class="sr-only" for="username">Tên đăng nhập</label>
                     <div class="input-wrap">
                         <input id="username" name="username" type="text" autocomplete="username" placeholder="TÊN ĐĂNG NHẬP" required maxlength="50">
@@ -60,8 +63,8 @@
                     <button class="submit-button" type="submit">Đăng nhập <span aria-hidden="true">→</span></button>
                 </form>
 
-                <div class="form-bottom"><span>Bạn chưa có tài khoản?</span><button class="text-button" type="button" data-register>Đăng ký</button></div>
-                <p class="role-note">Sau khi xác thực, hệ thống sẽ mở giao diện phù hợp với vai trò tài khoản của bạn.</p>
+                <div class="form-bottom"><span>Bạn chưa có tài khoản?</span><a href="${pageContext.request.contextPath}/register" class="text-button" type="button" data-register>Đăng ký</a></div>
+
             </div>
 
             <footer class="panel-footer"><span>© VinFast ElectricCarSale</span><span>Đăng nhập an toàn</span></footer>

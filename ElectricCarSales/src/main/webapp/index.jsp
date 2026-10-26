@@ -1,6 +1,28 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" session="false" %>
 <%
-boolean customerView = "customer".equals(request.getParameter("view"));
+    jakarta.servlet.http.HttpSession authSession = request.getSession(false);
+    Object sessionUserId = authSession == null ? null : authSession.getAttribute("userID");
+    Object sessionRoleAttribute = authSession == null ? null : authSession.getAttribute("roleName");
+    boolean authenticated = sessionUserId instanceof Integer && ((Integer) sessionUserId) > 0
+            && sessionRoleAttribute instanceof String && !((String) sessionRoleAttribute).isBlank();
+    String sessionRole = authenticated ? ((String) sessionRoleAttribute).trim().toUpperCase(java.util.Locale.ROOT) : "";
+    String accountUrl = request.getContextPath() + "/staff/dashboard.jsp";
+    String accountLabel = "Khu vực nội bộ";
+    if ("CUSTOMER".equals(sessionRole)) {
+        accountUrl = request.getContextPath() + "/customer/profile";
+        accountLabel = "Tài khoản của tôi";
+    } else if ("ADMIN".equals(sessionRole)) {
+        accountUrl = request.getContextPath() + "/admin/admin.html";
+        accountLabel = "Trang quản trị";
+    } else if ("SALES".equals(sessionRole)) {
+        accountLabel = "Khu vực bán hàng";
+    } else if ("OPERATIONS".equals(sessionRole)) {
+        accountLabel = "Khu vực vận hành";
+    } else if ("ACCOUNTANT".equals(sessionRole)) {
+        accountLabel = "Khu vực kế toán";
+    } else if ("MANAGER".equals(sessionRole)) {
+        accountLabel = "Khu vực quản lý";
+    }
 %>
 <!doctype html>
 <html lang="vi">
@@ -33,10 +55,12 @@ boolean customerView = "customer".equals(request.getParameter("view"));
             <a class="header-contact" href="mailto:hotro@electriccarsale.vn?subject=Yeu%20cau%20tu%20van%20xe%20VinFast">
                 <span aria-hidden="true">✉</span><span>Liên hệ tư vấn</span>
             </a>
-            <% if (customerView) { %>
-            <a class="account-link" href="<%= request.getContextPath() %>/customer/my-account.jsp"><span class="account-icon" aria-hidden="true">KH</span>Tài khoản của tôi</a>
+            <% if (authenticated) { %>
+            <a class="account-link" href="<%= accountUrl %>"><span class="account-icon" aria-hidden="true"><%= "CUSTOMER".equals(sessionRole) ? "KH" : "♙" %></span><%= accountLabel %></a>
+            <a class="account-link" href="<%= request.getContextPath() %>/logout">Đăng xuất</a>
             <% } else { %>
-            <a class="account-link" href="<%= request.getContextPath() %>/login.jsp"><span class="account-icon" aria-hidden="true">♙</span>Đăng nhập</a>
+            <a class="account-link" href="<%= request.getContextPath() %>/login"><span class="account-icon" aria-hidden="true">♙</span>Đăng nhập</a>
+            <a class="account-link" href="<%= request.getContextPath() %>/register">Đăng ký</a>
             <% } %>
         </div>
     </div>

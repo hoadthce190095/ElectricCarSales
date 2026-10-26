@@ -24,11 +24,13 @@ public class CustomerService {
         name = clean(name);
         phone = clean(phone);
         email = clean(email);
+        if (email.isEmpty()) email = null;
+        else email = email.toLowerCase(java.util.Locale.ROOT);
         address = clean(address);
         if (userId <= 0 || name.isEmpty() || name.length() > 100)
             throw new IllegalArgumentException("Họ tên không hợp lệ.");
         if (!PHONE.matcher(phone).matches()) throw new IllegalArgumentException("Số điện thoại không hợp lệ.");
-        if (email.isEmpty() || email.length() > 100 || !EMAIL.matcher(email).matches())
+        if (email != null && (email.length() > 100 || !EMAIL.matcher(email).matches()))
             throw new IllegalArgumentException("Email không hợp lệ.");
         if (address.length() > 255) throw new IllegalArgumentException("Địa chỉ vượt quá giới hạn.");
         return customerDAO.updateOwnedProfile(userId, name, phone, email, address);
