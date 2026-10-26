@@ -10,7 +10,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="740c799d-e83a-430a-aca5-6eb08e4227f1" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/artifacts/ElectricCarSales_war.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/artifacts/ElectricCarSales_war_exploded.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/ElectricCarSales_Run_Web.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/ElectricCarSales_Stop_Web.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/runConfigurations/ElectricCarSales_Tomcat.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/util/DBContext.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/util/DBContext.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -53,61 +59,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0000000007705991" />
-      <entry key="S2" value="1.0197338507617304" />
-      <entry key="S5" value="1.6164482185699607" />
-      <entry key="S10" value="3.006808581076603" />
-      <entry key="S30" value="5.92830589261342" />
-      <entry key="S60" value="7.702123550763976" />
-      <entry key="M2" value="9.135327344890912" />
-      <entry key="M5" value="10.500899327289611" />
-      <entry key="M10" value="11.253979690924519" />
-      <entry key="M15" value="11.631378996995199" />
-      <entry key="M30" value="12.164424677136182" />
-      <entry key="H1" value="12.53049110428127" />
-      <entry key="H2" value="12.749975095450713" />
-      <entry key="H4" value="12.870828612429937" />
-      <entry key="D1" value="12.97786222531102" />
-      <entry key="W1" value="12.996822110661746" />
+      <entry key="MS100" value="9.127540050410333E-275" />
+      <entry key="MS500" value="1.556219129369464E-55" />
+      <entry key="S2" value="1.9861758060117533E-14" />
+      <entry key="S5" value="3.3052710133172635E-6" />
+      <entry key="S10" value="0.0018180404331339592" />
+      <entry key="S30" value="0.12244239033432401" />
+      <entry key="S60" value="0.41209060839305767" />
+      <entry key="M2" value="1.4155332901890603" />
+      <entry key="M5" value="4.822738903427331" />
+      <entry key="M10" value="7.8567632449601525" />
+      <entry key="M15" value="9.37259267278777" />
+      <entry key="M30" value="11.327823452987632" />
+      <entry key="H1" value="12.547735608367391" />
+      <entry key="H2" value="13.240261767277786" />
+      <entry key="H4" value="13.611053989675915" />
+      <entry key="D1" value="13.933851895513675" />
+      <entry key="W1" value="13.990516987034558" />
     </decayedCancelled>
     <decayedSelected>
-      <entry key="MS100" value="0.0" />
-      <entry key="MS500" value="0.0" />
-      <entry key="S2" value="0.0" />
-      <entry key="S5" value="0.0" />
-      <entry key="S10" value="0.0" />
-      <entry key="S30" value="0.0" />
-      <entry key="S60" value="0.0" />
-      <entry key="M2" value="0.0" />
-      <entry key="M5" value="0.0" />
-      <entry key="M10" value="0.0" />
-      <entry key="M15" value="0.0" />
-      <entry key="M30" value="0.0" />
-      <entry key="H1" value="0.0" />
-      <entry key="H2" value="0.0" />
-      <entry key="H4" value="0.0" />
-      <entry key="D1" value="0.0" />
-      <entry key="W1" value="0.0" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0" />
+      <entry key="S5" value="1.0" />
+      <entry key="S10" value="1.0" />
+      <entry key="S30" value="1.0" />
+      <entry key="S60" value="1.0" />
+      <entry key="M2" value="1.0" />
+      <entry key="M5" value="1.0" />
+      <entry key="M10" value="1.0" />
+      <entry key="M15" value="1.0" />
+      <entry key="M30" value="1.0" />
+      <entry key="H1" value="1.0" />
+      <entry key="H2" value="1.0" />
+      <entry key="H4" value="1.0" />
+      <entry key="D1" value="1.0" />
+      <entry key="W1" value="1.0" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9592641193252643" />
-      <entry key="MS500" value="0.9917167314587368" />
-      <entry key="S2" value="1.0169764336534157" />
-      <entry key="S5" value="1.60587120229114" />
-      <entry key="S10" value="2.9902128452627785" />
-      <entry key="S30" value="5.915834044042582" />
-      <entry key="S60" value="7.6942849653682925" />
-      <entry key="M2" value="9.130858285808488" />
-      <entry key="M5" value="10.49891721086371" />
-      <entry key="M10" value="11.252936234337417" />
-      <entry key="M15" value="11.630666198547013" />
-      <entry key="M30" value="12.164056368695073" />
-      <entry key="H1" value="12.530302917241158" />
-      <entry key="H2" value="12.749879801343955" />
-      <entry key="H4" value="12.870780635964724" />
-      <entry key="D1" value="12.977854180709322" />
-      <entry key="W1" value="12.99682096020631" />
+      <entry key="MS100" value="6.65065606284335E-7" />
+      <entry key="MS500" value="0.058153103606438446" />
+      <entry key="S2" value="0.4910697976317055" />
+      <entry key="S5" value="0.7524172263457477" />
+      <entry key="S10" value="0.8689980564752682" />
+      <entry key="S30" value="1.0705497475239323" />
+      <entry key="S60" value="1.3805102081228642" />
+      <entry key="M2" value="2.3964636804007067" />
+      <entry key="M5" value="5.813463638175879" />
+      <entry key="M10" value="8.851643987842607" />
+      <entry key="M15" value="10.369041303824643" />
+      <entry key="M30" value="12.325966084291636" />
+      <entry key="H1" value="13.546783290349502" />
+      <entry key="H2" value="14.23977917613818" />
+      <entry key="H4" value="14.610811009973615" />
+      <entry key="D1" value="14.933811157935539" />
+      <entry key="W1" value="14.990511161383068" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -119,35 +125,35 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;TomEE Server.ElectricCarSale.executor&quot;: &quot;Run&quot;,
-    &quot;TomEE Server.TomEE 10.1.56.executor&quot;: &quot;Run&quot;,
-    &quot;TomEE Server.Unnamed.executor&quot;: &quot;Run&quot;,
-    &quot;Tomcat Server.Tomcat 10.1.56.executor&quot;: &quot;Run&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;tandat/payment&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.jshint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.jshint&quot;: &quot;&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "TomEE Server.ElectricCarSale.executor": "Run",
+    "TomEE Server.TomEE 10.1.56.executor": "Run",
+    "TomEE Server.Unnamed.executor": "Run",
+    "Tomcat Server.Tomcat 10.1.56.executor": "Run",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "main",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.jshint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.jshint": "",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "to.speed.mode.migration.done": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\ElectricCarSales\ElectricCarSales\src\main\webapp" />
