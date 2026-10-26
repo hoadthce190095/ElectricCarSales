@@ -1,0 +1,112 @@
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"ArtifactsWorkspaceSettings\">\r\n    <artifacts-to-build>\r\n      <artifact name=\"ElectricCarSales:war exploded\" />\r\n    </artifacts-to-build>\r\n  </component>\r\n  <component name=\"AutoImportSettings\">\r\n    <option name=\"autoReloadType\" value=\"SELECTIVE\" />\r\n  </component>\r\n  <component name=\"ChangeListManager\">\r\n    <list default=\"true\" id=\"740c799d-e83a-430a-aca5-6eb08e4227f1\" name=\"Changes\" comment=\"\">\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml\" afterDir=\"false\" />\r\n    </list>\r\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\r\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\r\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\r\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\r\n  </component>\r\n  <component name=\"FileTemplateManagerImpl\">\r\n    <option name=\"RECENT_TEMPLATES\">\r\n      <list>\r\n        <option value=\"Class\" />\r\n      </list>\r\n    </option>\r\n  </component>\r\n  <component name=\"Git.Settings\">\r\n    <option name=\"RECENT_BRANCH_BY_REPOSITORY\">\r\n      <map>\r\n        <entry key=\"$PROJECT_DIR$\" value=\"main\" />\r\n      </map>\r\n    </option>\r\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\r\n  </component>\r\n  <component name=\"GitHubPullRequestSearchHistory\">{\r\n  &quot;lastFilter&quot;: {\r\n    &quot;state&quot;: &quot;OPEN&quot;,\r\n    &quot;assignee&quot;: &quot;datdt05&quot;\r\n  }\r\n}</component>\r\n  <component name=\"GithubPullRequestsUISettings\">{\r\n  &quot;selectedUrlAndAccountId&quot;: {\r\n    &quot;url&quot;: &quot;https://github.com/hoadthce190095/ElectricCarSales&quot;,\r\n    &quot;accountId&quot;: &quot;bbe44fc7-ea96-46e6-8307-822e5bc0fb0f&quot;\r\n  }\r\n}</component>\r\n  <component name=\"LogFilters\">\r\n    <option name=\"FILTER_ERRORS\" value=\"false\" />\r\n    <option name=\"FILTER_WARNINGS\" value=\"false\" />\r\n    <option name=\"FILTER_INFO\" value=\"true\" />\r\n    <option name=\"FILTER_DEBUG\" value=\"true\" />\r\n    <option name=\"CUSTOM_FILTER\" />\r\n  </component>\r\n  <component name=\"NextEditCompletionFeaturesState\">\r\n    <decayedCancelled>\r\n      <entry key=\"MS100\" value=\"1.0\" />\r\n      <entry key=\"MS500\" value=\"1.0000000007705991\" />\r\n      <entry key=\"S2\" value=\"1.0197338507617304\" />\r\n      <entry key=\"S5\" value=\"1.6164482185699607\" />\r\n      <entry key=\"S10\" value=\"3.006808581076603\" />\r\n      <entry key=\"S30\" value=\"5.92830589261342\" />\r\n      <entry key=\"S60\" value=\"7.702123550763976\" />\r\n      <entry key=\"M2\" value=\"9.135327344890912\" />\r\n      <entry key=\"M5\" value=\"10.500899327289611\" />\r\n      <entry key=\"M10\" value=\"11.253979690924519\" />\r\n      <entry key=\"M15\" value=\"11.631378996995199\" />\r\n      <entry key=\"M30\" value=\"12.164424677136182\" />\r\n      <entry key=\"H1\" value=\"12.53049110428127\" />\r\n      <entry key=\"H2\" value=\"12.749975095450713\" />\r\n      <entry key=\"H4\" value=\"12.870828612429937\" />\r\n      <entry key=\"D1\" value=\"12.97786222531102\" />\r\n      <entry key=\"W1\" value=\"12.996822110661746\" />\r\n    </decayedCancelled>\r\n    <decayedSelected>\r\n      <entry key=\"MS100\" value=\"0.0\" />\r\n      <entry key=\"MS500\" value=\"0.0\" />\r\n      <entry key=\"S2\" value=\"0.0\" />\r\n      <entry key=\"S5\" value=\"0.0\" />\r\n      <entry key=\"S10\" value=\"0.0\" />\r\n      <entry key=\"S30\" value=\"0.0\" />\r\n      <entry key=\"S60\" value=\"0.0\" />\r\n      <entry key=\"M2\" value=\"0.0\" />\r\n      <entry key=\"M5\" value=\"0.0\" />\r\n      <entry key=\"M10\" value=\"0.0\" />\r\n      <entry key=\"M15\" value=\"0.0\" />\r\n      <entry key=\"M30\" value=\"0.0\" />\r\n      <entry key=\"H1\" value=\"0.0\" />\r\n      <entry key=\"H2\" value=\"0.0\" />\r\n      <entry key=\"H4\" value=\"0.0\" />\r\n      <entry key=\"D1\" value=\"0.0\" />\r\n      <entry key=\"W1\" value=\"0.0\" />\r\n    </decayedSelected>\r\n    <decayedShown>\r\n      <entry key=\"MS100\" value=\"0.9592641193252643\" />\r\n      <entry key=\"MS500\" value=\"0.9917167314587368\" />\r\n      <entry key=\"S2\" value=\"1.0169764336534157\" />\r\n      <entry key=\"S5\" value=\"1.60587120229114\" />\r\n      <entry key=\"S10\" value=\"2.9902128452627785\" />\r\n      <entry key=\"S30\" value=\"5.915834044042582\" />\r\n      <entry key=\"S60\" value=\"7.6942849653682925\" />\r\n      <entry key=\"M2\" value=\"9.130858285808488\" />\r\n      <entry key=\"M5\" value=\"10.49891721086371\" />\r\n      <entry key=\"M10\" value=\"11.252936234337417\" />\r\n      <entry key=\"M15\" value=\"11.630666198547013\" />\r\n      <entry key=\"M30\" value=\"12.164056368695073\" />\r\n      <entry key=\"H1\" value=\"12.530302917241158\" />\r\n      <entry key=\"H2\" value=\"12.749879801343955\" />\r\n      <entry key=\"H4\" value=\"12.870780635964724\" />\r\n      <entry key=\"D1\" value=\"12.977854180709322\" />\r\n      <entry key=\"W1\" value=\"12.99682096020631\" />\r\n    </decayedShown>\r\n  </component>\r\n  <component name=\"ProjectColorInfo\">{\r\n  &quot;associatedIndex&quot;: 4,\r\n  &quot;fromUser&quot;: false\r\n}</component>\r\n  <component name=\"ProjectId\" id=\"3KYYXWT2WqrTsWznMhbo5jjEliq\" />\r\n  <component name=\"ProjectViewState\">\r\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\r\n    <option name=\"showLibraryContents\" value=\"true\" />\r\n  </component>\r\n  <component name=\"PropertiesComponent\">{\r\n  &quot;keyToString&quot;: {\r\n    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,\r\n    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,\r\n    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,\r\n    &quot;TomEE Server.ElectricCarSale.executor&quot;: &quot;Run&quot;,\r\n    &quot;TomEE Server.TomEE 10.1.56.executor&quot;: &quot;Run&quot;,\r\n    &quot;TomEE Server.Unnamed.executor&quot;: &quot;Run&quot;,\r\n    &quot;Tomcat Server.Tomcat 10.1.56.executor&quot;: &quot;Run&quot;,\r\n    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,\r\n    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,\r\n    &quot;git-widget-placeholder&quot;: &quot;tandat/payment&quot;,\r\n    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,\r\n    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,\r\n    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,\r\n    &quot;node.js.detected.package.jshint&quot;: &quot;true&quot;,\r\n    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,\r\n    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,\r\n    &quot;node.js.selected.package.jshint&quot;: &quot;&quot;,\r\n    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,\r\n    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,\r\n    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,\r\n    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,\r\n    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,\r\n    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,\r\n    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,\r\n    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;\r\n  }\r\n}</component>\r\n  <component name=\"RecentsManager\">\r\n    <key name=\"MoveFile.RECENT_KEYS\">\r\n      <recent name=\"D:\\ElectricCarSales\\ElectricCarSales\\src\\main\\webapp\" />\r\n    </key>\r\n  </component>\r\n  <component name=\"RunDashboard\">\r\n    <option name=\"configurationStatuses\">\r\n      <map>\r\n        <entry key=\"#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory\">\r\n          <value>\r\n            <map>\r\n              <entry key=\"Tomcat 10.1.56\" value=\"STOPPED\" />\r\n            </map>\r\n          </value>\r\n        </entry>\r\n      </map>\r\n    </option>\r\n  </component>\r\n  <component name=\"RunManager\">\r\n    <configuration name=\"Tomcat 10.1.56\" type=\"#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory\" factoryName=\"Local\" APPLICATION_SERVER_NAME=\"Tomcat 10.1.56\" ALTERNATIVE_JRE_ENABLED=\"false\" nameIsGenerated=\"true\">\r\n      <option name=\"UPDATING_POLICY\" value=\"restart-server\" />\r\n      <deployment>\r\n        <artifact name=\"ElectricCarSales:war exploded\">\r\n          <settings>\r\n            <option name=\"CONTEXT_PATH\" value=\"/ElectricCarSales\" />\r\n          </settings>\r\n        </artifact>\r\n      </deployment>\r\n      <server-settings>\r\n        <option name=\"BASE_DIRECTORY_NAME\" value=\"525aa879-7ddb-48e6-b650-158f48f3c6aa\" />\r\n        <option name=\"HTTP_PORT\" value=\"8080\" />\r\n      </server-settings>\r\n      <predefined_log_file enabled=\"true\" id=\"Tomcat\" />\r\n      <predefined_log_file enabled=\"true\" id=\"Tomcat Catalina\" />\r\n      <predefined_log_file id=\"Tomcat Manager\" />\r\n      <predefined_log_file id=\"Tomcat Host Manager\" />\r\n      <predefined_log_file id=\"Tomcat Localhost Access\" />\r\n      <RunnerSettings RunnerId=\"Debug\">\r\n        <option name=\"DEBUG_PORT\" value=\"61807\" />\r\n      </RunnerSettings>\r\n      <ConfigurationWrapper VM_VAR=\"JAVA_OPTS\" RunnerId=\"Cover\">\r\n        <option name=\"USE_ENV_VARIABLES\" value=\"true\" />\r\n        <STARTUP>\r\n          <option name=\"USE_DEFAULT\" value=\"true\" />\r\n          <option name=\"SCRIPT\" value=\"\" />\r\n          <option name=\"VM_PARAMETERS\" value=\"\" />\r\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\r\n        </STARTUP>\r\n        <SHUTDOWN>\r\n          <option name=\"USE_DEFAULT\" value=\"true\" />\r\n          <option name=\"SCRIPT\" value=\"\" />\r\n          <option name=\"VM_PARAMETERS\" value=\"\" />\r\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\r\n        </SHUTDOWN>\r\n      </ConfigurationWrapper>\r\n      <ConfigurationWrapper VM_VAR=\"JAVA_OPTS\" RunnerId=\"Debug\">\r\n        <option name=\"USE_ENV_VARIABLES\" value=\"true\" />\r\n        <STARTUP>\r\n          <option name=\"USE_DEFAULT\" value=\"true\" />\r\n          <option name=\"SCRIPT\" value=\"\" />\r\n          <option name=\"VM_PARAMETERS\" value=\"\" />\r\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\r\n        </STARTUP>\r\n        <SHUTDOWN>\r\n          <option name=\"USE_DEFAULT\" value=\"true\" />\r\n          <option name=\"SCRIPT\" value=\"\" />\r\n          <option name=\"VM_PARAMETERS\" value=\"\" />\r\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\r\n        </SHUTDOWN>\r\n      </ConfigurationWrapper>\r\n      <ConfigurationWrapper VM_VAR=\"JAVA_OPTS\" RunnerId=\"Profile\">\r\n        <option name=\"USE_ENV_VARIABLES\" value=\"true\" />\r\n        <STARTUP>\r\n          <option name=\"USE_DEFAULT\" value=\"true\" />\r\n          <option name=\"SCRIPT\" value=\"\" />\r\n          <option name=\"VM_PARAMETERS\" value=\"\" />\r\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\r\n        </STARTUP>\r\n        <SHUTDOWN>\r\n          <option name=\"USE_DEFAULT\" value=\"true\" />\r\n          <option name=\"SCRIPT\" value=\"\" />\r\n          <option name=\"VM_PARAMETERS\" value=\"\" />\r\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\r\n        </SHUTDOWN>\r\n      </ConfigurationWrapper>\r\n      <ConfigurationWrapper VM_VAR=\"JAVA_OPTS\" RunnerId=\"Run\">\r\n        <option name=\"USE_ENV_VARIABLES\" value=\"true\" />\r\n        <STARTUP>\r\n          <option name=\"USE_DEFAULT\" value=\"true\" />\r\n          <option name=\"SCRIPT\" value=\"\" />\r\n          <option name=\"VM_PARAMETERS\" value=\"\" />\r\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\r\n        </STARTUP>\r\n        <SHUTDOWN>\r\n          <option name=\"USE_DEFAULT\" value=\"true\" />\r\n          <option name=\"SCRIPT\" value=\"\" />\r\n          <option name=\"VM_PARAMETERS\" value=\"\" />\r\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\r\n        </SHUTDOWN>\r\n      </ConfigurationWrapper>\r\n      <method v=\"2\">\r\n        <option name=\"Make\" enabled=\"true\" />\r\n        <option name=\"BuildArtifacts\" enabled=\"true\">\r\n          <artifact name=\"ElectricCarSales:war exploded\" />\r\n        </option>\r\n      </method>\r\n    </configuration>\r\n  </component>\r\n  <component name=\"SharedIndexes\">\r\n    <attachedChunks>\r\n      <set>\r\n        <option value=\"bundled-jdk-30f59d01ecdd-a203e0a19954-intellij.indexing.shared.core-IU-262.10968.63\" />\r\n        <option value=\"bundled-js-predefined-d6986cc7102b-4abd2a77f808-JavaScript-IU-262.10968.63\" />\r\n      </set>\r\n    </attachedChunks>\r\n  </component>\r\n  <component name=\"TaskManager\">\r\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\r\n      <changelist id=\"740c799d-e83a-430a-aca5-6eb08e4227f1\" name=\"Changes\" comment=\"\" />\r\n      <created>1791736008576</created>\r\n      <option name=\"number\" value=\"Default\" />\r\n      <option name=\"presentableId\" value=\"Default\" />\r\n      <updated>1791736008576</updated>\r\n    </task>\r\n    <servers />\r\n  </component>\r\n  <component name=\"TypeScriptGeneratedFilesManager\">\r\n    <option name=\"version\" value=\"3\" />\r\n  </component>\r\n  <component name=\"XSLT-Support.FileAssociations.UIState\">\r\n    <expand />\r\n    <select />\r\n  </component>\r\n</project>
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision ebab0ee36832ccfb86a5c9a132e8d84679de5288)
++++ b/.idea/workspace.xml	(date 1792989924416)
+@@ -9,9 +9,7 @@
+     <option name="autoReloadType" value="SELECTIVE" />
+   </component>
+   <component name="ChangeListManager">
+-    <list default="true" id="740c799d-e83a-430a-aca5-6eb08e4227f1" name="Changes" comment="">
+-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" afterDir="false" />
+-    </list>
++    <list default="true" id="740c799d-e83a-430a-aca5-6eb08e4227f1" name="Changes" comment="xoa demo" />
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+@@ -53,23 +51,23 @@
+   </component>
+   <component name="NextEditCompletionFeaturesState">
+     <decayedCancelled>
+-      <entry key="MS100" value="1.0" />
+-      <entry key="MS500" value="1.0000000007705991" />
+-      <entry key="S2" value="1.0197338507617304" />
+-      <entry key="S5" value="1.6164482185699607" />
+-      <entry key="S10" value="3.006808581076603" />
+-      <entry key="S30" value="5.92830589261342" />
+-      <entry key="S60" value="7.702123550763976" />
+-      <entry key="M2" value="9.135327344890912" />
+-      <entry key="M5" value="10.500899327289611" />
+-      <entry key="M10" value="11.253979690924519" />
+-      <entry key="M15" value="11.631378996995199" />
+-      <entry key="M30" value="12.164424677136182" />
+-      <entry key="H1" value="12.53049110428127" />
+-      <entry key="H2" value="12.749975095450713" />
+-      <entry key="H4" value="12.870828612429937" />
+-      <entry key="D1" value="12.97786222531102" />
+-      <entry key="W1" value="12.996822110661746" />
++      <entry key="MS100" value="1.0722930114940805" />
++      <entry key="MS500" value="1.5913155001220711" />
++      <entry key="S2" value="1.8769095823601964" />
++      <entry key="S5" value="1.9488158398459803" />
++      <entry key="S10" value="1.9740816725564168" />
++      <entry key="S30" value="2.0794426012899025" />
++      <entry key="S60" value="2.934886714302144" />
++      <entry key="M2" value="5.187960621095334" />
++      <entry key="M5" value="8.892963923191168" />
++      <entry key="M10" value="11.118063355855956" />
++      <entry key="M15" value="12.10873675562367" />
++      <entry key="M30" value="13.340314370169036" />
++      <entry key="H1" value="14.098597473586079" />
++      <entry key="H2" value="14.528320326671205" />
++      <entry key="H4" value="14.758460546036895" />
++      <entry key="D1" value="14.958909458204007" />
++      <entry key="W1" value="14.99410891951869" />
+     </decayedCancelled>
+     <decayedSelected>
+       <entry key="MS100" value="0.0" />
+@@ -91,23 +89,23 @@
+       <entry key="W1" value="0.0" />
+     </decayedSelected>
+     <decayedShown>
+-      <entry key="MS100" value="0.9592641193252643" />
+-      <entry key="MS500" value="0.9917167314587368" />
+-      <entry key="S2" value="1.0169764336534157" />
+-      <entry key="S5" value="1.60587120229114" />
+-      <entry key="S10" value="2.9902128452627785" />
+-      <entry key="S30" value="5.915834044042582" />
+-      <entry key="S60" value="7.6942849653682925" />
+-      <entry key="M2" value="9.130858285808488" />
+-      <entry key="M5" value="10.49891721086371" />
+-      <entry key="M10" value="11.252936234337417" />
+-      <entry key="M15" value="11.630666198547013" />
+-      <entry key="M30" value="12.164056368695073" />
+-      <entry key="H1" value="12.530302917241158" />
+-      <entry key="H2" value="12.749879801343955" />
+-      <entry key="H4" value="12.870780635964724" />
+-      <entry key="D1" value="12.977854180709322" />
+-      <entry key="W1" value="12.99682096020631" />
++      <entry key="MS100" value="0.9867245797081563" />
++      <entry key="MS500" value="1.5160166280263003" />
++      <entry key="S2" value="1.8492753464269354" />
++      <entry key="S5" value="1.9368526816892462" />
++      <entry key="S10" value="1.9679393897741442" />
++      <entry key="S30" value="2.077173141532605" />
++      <entry key="S60" value="2.932884195224124" />
++      <entry key="M2" value="5.185875508612757" />
++      <entry key="M5" value="8.891452595734954" />
++      <entry key="M10" value="11.117112817777409" />
++      <entry key="M15" value="12.108047186248369" />
++      <entry key="M30" value="13.339935972053135" />
++      <entry key="H1" value="14.098398251845394" />
++      <entry key="H2" value="14.528217928666836" />
++      <entry key="H4" value="14.758408608135431" />
++      <entry key="D1" value="14.958900695300096" />
++      <entry key="W1" value="14.994107665010448" />
+     </decayedShown>
+   </component>
+   <component name="ProjectColorInfo">{
+@@ -276,6 +274,10 @@
+   </component>
+   <component name="TypeScriptGeneratedFilesManager">
+     <option name="version" value="3" />
++  </component>
++  <component name="VcsManagerConfiguration">
++    <MESSAGE value="xoa demo" />
++    <option name="LAST_COMMIT_MESSAGE" value="xoa demo" />
+   </component>
+   <component name="XSLT-Support.FileAssociations.UIState">
+     <expand />
