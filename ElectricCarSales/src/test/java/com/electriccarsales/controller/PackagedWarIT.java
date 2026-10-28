@@ -95,7 +95,7 @@ class PackagedWarIT {
         assertEquals(200, workspace.statusCode(), workspace.body());
         assertWorkspaceLinks(workspace.body(), "/ElectricCarSales");
         String[] scripts = {"admin-common.js", "admin-management.js", "sales-reports.js", "vehicle-catalogue.js",
-            "vehicle-assistant.js", "admin-dashboard.js"};
+            "admin-dashboard.js"};
         int lastScript = -1;
         for (String script : scripts) {
             int position = workspace.body().indexOf("assets/" + script);
@@ -140,7 +140,7 @@ class PackagedWarIT {
             assertFalse(response.body().contains("/ElectricCarSales/"), "Links must follow the deployed context");
         }
         for (String asset : new String[]{"css/theme.css", "css/home.css", "js/home.js", "admin-dashboard.css",
-            "admin-common.js", "admin-management.js", "sales-reports.js", "vehicle-catalogue.js", "vehicle-assistant.js",
+            "admin-common.js", "admin-management.js", "sales-reports.js", "vehicle-catalogue.js", "js/customer-ai.js",
             "admin-dashboard.js", "vinfast-catalogue.json"}) {
             var response = showroomClient.send(
                 HttpRequest.newBuilder(URI.create(showroomBase + "/assets/" + asset)).GET().build(),
@@ -234,6 +234,9 @@ class PackagedWarIT {
         assertTrue(body.contains("id=\"vehicle-grid\""));
         assertTrue(body.contains("id=\"compare-dialog\""));
         assertTrue(body.contains("href=\"" + contextPath + "/index.jsp\""));
+        assertTrue(body.contains("href=\"" + contextPath + "/customer/ai-assistant.jsp\""),
+            "Homepage assistant must open the public customer page");
+        assertFalse(body.contains("/admin.jsp#ai"));
         assertTrue(body.contains("href=\"" + contextPath + "/admin.jsp?login=1\""),
             "Homepage sign-in must open the workspace login");
         assertVersionedAsset(body, "href", contextPath + "/assets/css/theme.css");
@@ -377,6 +380,8 @@ class PackagedWarIT {
         assertVersionedAsset(body, "href", contextPath + "/assets/css/theme.css");
         assertVersionedAsset(body, "href", contextPath + "/assets/admin-dashboard.css");
         assertTrue(body.contains("src=\"" + contextPath + "/assets/admin-dashboard.js"));
+        assertFalse(body.contains("vehicle-assistant.js"), "Admin must not load the customer chat module");
+        assertFalse(body.contains("data-view=\"ai\""), "Chat belongs in the customer experience");
     }
 
     private static void assertVersionedAsset(String body, String attribute, String expectedPath) {
@@ -384,7 +389,9 @@ class PackagedWarIT {
         while (resources.find()) {
             URI resource = URI.create(resources.group(1));
             if (expectedPath.equals(resource.getPath())) {
-                assertEquals(UI_VERSION, resource.getQuery(), "Asset cache version: " + expectedPath);
+                String version = expectedPath.endsWith("/admin-dashboard.css") ? "v=dashboard-20261028"
+                    : expectedPath.endsWith("/js/home.js") ? "v=home-ai-20261028" : UI_VERSION;
+                assertEquals(version, resource.getQuery(), "Asset cache version: " + expectedPath);
                 return;
             }
         }
@@ -423,5 +430,101 @@ class PackagedWarIT {
         JsonNode answer = JSON.readTree(reply.body());
         assertEquals("CATALOG_RULES", answer.get("mode").asText());
         assertEquals("EV Test", answer.get("recommendations").get(0).get("vehicle").get("modelName").asText());
+    }
+
+    @Test
+    void publicCustomerAssistantRendersAndSupportsGuestConversationComparisonAndResetInBothContexts() throws Exception {
+        for (String deployment : new String[]{base, showroomBase}) {
+            String contextPath = URI.create(deployment).getPath();
+            HttpClient browser = HttpClient.newBuilder()
+                .cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL)).build();
+            var page = browser.send(HttpRequest.newBuilder(URI.create(deployment
+                + "/customer/ai-assistant.jsp?prompt=%3Cscript%3Ealert(1)%3C%2Fscript%3E")).GET().build(),
+                HttpResponse.BodyHandlers.ofString());
+            assertEquals(200, page.statusCode(), page.body());
+            assertRenderedJsp(page.body(), contextPath);
+            assertTrue(page.body().contains("data-customer-ai"));
+            assertTrue(page.body().contains("id=\"ai-question-form\""));
+            assertTrue(page.body().contains("id=\"ai-needs-form\""));
+            assertTrue(page.body().contains("id=\"ai-compare-form\""));
+            assertTrue(page.body().contains(contextPath + "/assets/js/customer-ai.js?v=customer-ai-20261028"));
+            assertTrue(page.body().contains(contextPath + "/assets/css/customer-ai.css?v=customer-ai-20261028"));
+            assertFalse(page.body().contains("<script>alert(1)</script>"), "Prompt query must never be rendered as HTML");
+            assertFalse(page.body().contains("Cần kết nối dịch vụ AI"));
+            for (String asset : new String[]{"js/customer-ai.js", "css/customer-ai.css"}) {
+                assertEquals(200, browser.send(HttpRequest.newBuilder(URI.create(deployment + "/assets/" + asset))
+                    .GET().build(), HttpResponse.BodyHandlers.ofString()).statusCode());
+            }
+            var auth = browser.send(HttpRequest.newBuilder(URI.create(deployment + "/api/auth")).GET().build(),
+                HttpResponse.BodyHandlers.ofString());
+            JsonNode guest = JSON.readTree(auth.body());
+            assertTrue(guest.get("user").isNull());
+            String token = guest.get("csrfToken").asText();
+            var recommended = assistantPost(browser, deployment, token, "/api/ai",
+                "{\"message\":\"Gợi ý xe dưới 600 triệu, 5 chỗ\",\"intent\":\"RECOMMEND\"}");
+            assertEquals("EV Test", recommended.get("recommendations").get(0).get("vehicle").get("modelName").asText());
+            var followUp = assistantPost(browser, deployment, token, "/api/ai",
+                "{\"message\":\"Thông số xe đó\",\"intent\":\"PRODUCT_QA\"}");
+            assertEquals(recommended.get("conversationId"), followUp.get("conversationId"));
+            assertEquals("EV Test", followUp.get("comparison").get(0).get("modelName").asText());
+            var compared = assistantPost(browser, deployment, token, "/api/ai",
+                "{\"message\":\"So sánh EV Test và EV Family\",\"intent\":\"COMPARE\",\"modelIds\":[1,2]}");
+            assertEquals(2, compared.get("comparison").size());
+            var reset = assistantPost(browser, deployment, token, "/api/ai?action=reset", "{}");
+            assertTrue(reset.get("cleared").asBoolean());
+            assertNotEquals(recommended.get("conversationId"), reset.get("conversationId"));
+            var afterReset = assistantPost(browser, deployment, token, "/api/ai",
+                "{\"message\":\"Thông số xe đó\",\"intent\":\"PRODUCT_QA\"}");
+            assertTrue(afterReset.get("comparison").isEmpty());
+        }
+    }
+
+    @Test
+    void signedInCustomerCanUsePublicAssistantWithoutAdministrationPermission() throws Exception {
+        int originalRole;
+        try (var connection = fixture.connection(); var statement = connection.createStatement();
+            var rows = statement.executeQuery("SELECT RoleID FROM Users WHERE Username='websales'")) {
+            assertTrue(rows.next());
+            originalRole = rows.getInt("RoleID");
+        }
+        try {
+            try (var connection = fixture.connection(); var statement = connection.createStatement()) {
+                statement.executeUpdate("UPDATE Users SET RoleID=(SELECT RoleID FROM Roles WHERE RoleName='CUSTOMER')"
+                    + " WHERE Username='websales'");
+            }
+            for (String deployment : new String[]{base, showroomBase}) {
+                HttpClient browser = HttpClient.newBuilder()
+                    .cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL)).build();
+                var auth = browser.send(HttpRequest.newBuilder(URI.create(deployment + "/api/auth")).GET().build(),
+                    HttpResponse.BodyHandlers.ofString());
+                String token = JSON.readTree(auth.body()).get("csrfToken").asText();
+                var login = assistantPost(browser, deployment, token, "/api/auth",
+                    "{\"action\":\"login\",\"username\":\"websales\",\"password\":\"web-test-password-123\"}");
+                assertEquals("CUSTOMER", login.get("user").get("role").asText());
+                token = login.get("csrfToken").asText();
+                var response = assistantPost(browser, deployment, token, "/api/ai",
+                    "{\"message\":\"Thông số EV Family\",\"intent\":\"PRODUCT_QA\"}");
+                assertEquals("EV Family", response.get("comparison").get(0).get("modelName").asText());
+                var page = browser.send(HttpRequest.newBuilder(URI.create(deployment + "/customer/ai-assistant.jsp"))
+                    .GET().build(), HttpResponse.BodyHandlers.ofString());
+                assertEquals(200, page.statusCode(), page.body());
+                assertTrue(page.body().contains("data-customer-ai"));
+            }
+        } finally {
+            try (var connection = fixture.connection(); var statement = connection.prepareStatement(
+                "UPDATE Users SET RoleID=? WHERE Username='websales'")) {
+                statement.setInt(1, originalRole);
+                statement.executeUpdate();
+            }
+        }
+    }
+
+    private static JsonNode assistantPost(HttpClient browser, String deployment, String token, String path, String body)
+        throws Exception {
+        var response = browser.send(HttpRequest.newBuilder(URI.create(deployment + path))
+            .header("Content-Type", "application/json").header("X-CSRF-Token", token)
+            .POST(HttpRequest.BodyPublishers.ofString(body)).build(), HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, response.statusCode(), response.body());
+        return JSON.readTree(response.body());
     }
 }

@@ -23,7 +23,7 @@ boolean customerView = authenticatedUser instanceof SessionUser
 
     <link rel="stylesheet" href="<c:url value='/assets/css/theme.css'><c:param name='v' value='main-blue-20261017' /></c:url>">
     <link rel="stylesheet" href="<c:url value='/assets/css/home.css'><c:param name='v' value='main-blue-20261017' /></c:url>">
-    <script src="<c:url value='/assets/js/home.js'><c:param name='v' value='main-blue-20261017' /></c:url>" defer></script>
+    <script src="<c:url value='/assets/js/home.js'><c:param name='v' value='home-ai-20261028' /></c:url>" defer></script>
 </head>
 <body class="home-page">
 <header class="site-header">
@@ -37,7 +37,7 @@ boolean customerView = authenticatedUser instanceof SessionUser
             <a class="nav-link current" href="#models">Mua xe <span aria-hidden="true">⌄</span></a>
             <a class="nav-link" href="#about">Giới thiệu</a>
             <a class="nav-link" href="#contact">Tư vấn</a>
-            <a class="nav-link" href="<c:url value='/admin.jsp' />#ai">Trợ lý xe</a>
+            <a class="nav-link" href="<c:url value='/customer/ai-assistant.jsp' />">Trợ lý xe</a>
             <a class="nav-link" href="<c:url value='/admin.jsp'><c:param name='login' value='1' /></c:url>">Quản trị</a>
         </nav>
         <div class="header-actions">

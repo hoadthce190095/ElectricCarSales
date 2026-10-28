@@ -15,6 +15,7 @@ class Node {
     }
     setAttribute(name, value) {
         this.attributes[name] = value;
+        if (name === "value" || name === "name") this[name] = value;
     }
     append(...children) {
         this.children.push(...children);
@@ -24,6 +25,10 @@ class Node {
     }
     addEventListener(name, listener) {
         this.listeners[name] = listener;
+    }
+    querySelector(selector) {
+        const match = /^(\w+)\[name=(\w+)\]$/.exec(selector);
+        return match ? flatten(this).find((node) => node.tag === match[1] && node.attributes.name === match[2]) : null;
     }
 }
 
@@ -102,7 +107,7 @@ const report = (from, to = from) => ({ period: { from, to }, summary: {}, models
     const comparison = deferred();
     const comparedRequest = deferred();
     request = (url) => {
-        if (url === "ai") {
+        if (url === "catalogue") {
             return Promise.resolve({ models: [] });
         }
         const query = new URLSearchParams(url.split("?")[1]);
@@ -130,7 +135,7 @@ const report = (from, to = from) => ({ period: { from, to }, summary: {}, models
 
     let reportRequests = 0;
     request = (url) => {
-        if (url === "ai") {
+        if (url === "catalogue") {
             return Promise.resolve({ models: [] });
         }
         reportRequests++;
@@ -149,7 +154,7 @@ const report = (from, to = from) => ({ period: { from, to }, summary: {}, models
 
     const requestedPeriods = [];
     request = async (url) => {
-        if (url === "ai") {
+        if (url === "catalogue") {
             return { models: [] };
         }
         const query = new URLSearchParams(url.split("?")[1]);
@@ -160,6 +165,53 @@ const report = (from, to = from) => ({ period: { from, to }, summary: {}, models
     await run("loadReports({from:'2026-10-03',to:'2026-10-03'})");
     assert.equal(read("state.reportComparison"), "NONE", "a reset or preset must not inherit the old comparison");
     assert.deepEqual(requestedPeriods, ["2026-10-03"]);
+
+    run("state.view='overview'; state.overviewFilters={};");
+    const overviewRequests = [];
+    request = async (url) => {
+        overviewRequests.push(url);
+        const query = new URLSearchParams(url.split("?")[1]);
+        return {
+            ...report(query.get("from"), query.get("to")),
+            sales: [{ orderId: 4, customerName: "Test customer", totalAmount: 500000000, status: "PAID" }],
+            inventory: [{ status: "AVAILABLE", count: 2, amount: 1000000000 }]
+        };
+    };
+    await run("loadOverview({from:'2026-10-01',to:'2026-10-07',preset:'CUSTOM'})");
+    assert.deepEqual(read("state.overviewFilters"), { from: "2026-10-01", to: "2026-10-07", preset: "CUSTOM" });
+    assert.equal(nodes.get("#content").children[0].attributes["aria-label"], "Khoảng thời gian tổng quan");
+    const overviewNodes = flatten(nodes.get("#content"));
+    assert.ok(overviewNodes.some((node) => node.className === "overview-details" && node.children.length === 2));
+    assert.ok(overviewNodes.some((node) => node.textContent === "Test customer"));
+    assert.equal(overviewNodes.filter((node) => node.tag === "article").length, 4, "overview must retain four KPIs");
+    assert.equal(
+        overviewNodes.filter((node) => node.tag === "button" && node.textContent === "Làm mới").length,
+        0,
+        "refresh is provided once in the topbar"
+    );
+    const overviewForm = overviewNodes.find((node) => node.className === "overview-period-form");
+    const presetInput = overviewForm.querySelector("select[name=preset]");
+    presetInput.value = "YEAR";
+    overviewForm.listeners.change({ target: presetInput });
+    assert.equal(overviewForm.querySelector("input[name=from]").value, `${read("isoToday().slice(0,4)")}-01-01`);
+    overviewForm.listeners.change({ target: overviewForm.querySelector("input[name=from]") });
+    assert.equal(presetInput.value, "CUSTOM", "editing a date must stop claiming a preset period");
+    await run("loadOverview()");
+    assert.equal(overviewRequests[1], overviewRequests[0], "refresh must preserve the selected overview period");
+    await assert.rejects(run("loadOverview({from:'2026-10-08',to:'2026-10-07'})"), /Ngày bắt đầu/);
+    assert.equal(overviewRequests.length, 2, "invalid overview dates must fail before a request");
+
+    const oldOverview = deferred();
+    request = (url) => (url.includes("2026-10-01") ? oldOverview.promise : Promise.resolve(report("2026-10-09")));
+    const pendingOverview = run("loadOverview({from:'2026-10-01',to:'2026-10-01'})");
+    await run("loadOverview({from:'2026-10-09',to:'2026-10-09'})");
+    oldOverview.resolve(report("2026-10-01"));
+    await pendingOverview;
+    assert.equal(
+        read("state.overviewFilters.from"),
+        "2026-10-09",
+        "a late overview result must not replace the active period"
+    );
 
     run("state.view='logs'; state.logFilters={}; state.logPage=1;");
     const logs = [];
@@ -201,7 +253,7 @@ const report = (from, to = from) => ({ period: { from, to }, summary: {}, models
 
     await flush();
     console.log(
-        "Admin/report checks passed: request races, atomic report filters/exports, explicit errors, log details and saved-state refresh."
+        "Admin/report checks passed: request races, overview presets/filter persistence/layout, atomic report filters/exports, explicit errors and log details."
     );
 })().catch((error) => {
     console.error(error);

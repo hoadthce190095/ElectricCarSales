@@ -4,7 +4,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 
 const assets = path.resolve(__dirname, "../../main/webapp/assets");
-const files = ["admin-common.js", "admin-management.js", "sales-reports.js", "vehicle-catalogue.js", "vehicle-assistant.js"];
+const files = ["admin-common.js", "admin-management.js", "sales-reports.js", "vehicle-catalogue.js"];
 let contextPath = "";
 const requests = [];
 const document = {
@@ -59,8 +59,16 @@ assert.equal(
     "INACTIVE"
 );
 assert.equal(read("canView('overview')"), false);
+assert.equal(read("canView('ai')"), false, "customer AI must not be an admin route");
+assert.equal(read("defaultView()"), "overview", "guest entry must display the management sign-in view");
+assert.deepEqual(read("overviewPeriod('MONTH','2026-10-28')"), { from: "2026-10-01", to: "2026-10-28" });
+assert.deepEqual(read("overviewPeriod('QUARTER','2026-10-28')"), { from: "2026-10-01", to: "2026-10-28" });
+assert.deepEqual(read("overviewPeriod('QUARTER','2026-01-04')"), { from: "2026-01-01", to: "2026-01-04" });
+assert.deepEqual(read("overviewPeriod('SIX_MONTHS','2026-01-04')"), { from: "2025-08-01", to: "2026-01-04" });
+assert.deepEqual(read("overviewPeriod('YEAR','2024-02-29')"), { from: "2024-01-01", to: "2024-02-29" });
 vm.runInContext("state.permissions=['VIEW_REPORTS'];state.user={username:'manager',role:'MANAGER'};", context);
 assert.equal(read("canView('overview')"), true);
+assert.equal(read("defaultView()"), "overview");
 assert.equal(read("canView('users')"), false);
 
 (async () => {

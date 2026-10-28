@@ -175,6 +175,10 @@
         const priceLabel = make("span", "vehicle-price-label", "Giá tham khảo · đã gồm pin");
         const priceValue = make("strong", "vehicle-price", price(model.priceVnd));
         const footer = make("div", "vehicle-card-footer");
+        const assistant = make("a", "vehicle-source", "Hỏi trợ lý ↗");
+        const prompt = `Cho tôi biết thông số và ưu điểm của ${text(model.modelName)}.`;
+        assistant.href = `${contextPath}/customer/ai-assistant.jsp?${new URLSearchParams({ prompt, intent: "PRODUCT_QA" })}`;
+        footer.append(assistant);
         const sourceUrl = safeOfficialUrl(model.priceSourceUrl || catalogueMetadata.pricePolicyPageUrl);
         if (sourceUrl) {
             const source = make("a", "vehicle-source", "Nguồn giá VinFast ↗");

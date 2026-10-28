@@ -108,7 +108,7 @@ main { width: min(1440px, calc(100% - 72px)); margin: 0 auto; }
 .spec-item strong { display: block; overflow: hidden; margin-top: 3px; color: #43546f; font: 700 10px/1.35 var(--home-display); text-overflow: ellipsis; white-space: nowrap; }
 .vehicle-price-label { display: block; color: #8d96a4; font-size: 8px; }
 .vehicle-price { display: block; margin-top: 2px; color: #203f70; font: 800 16px/1.35 var(--home-display); letter-spacing: -.3px; }
-.vehicle-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 7px; margin-top: 11px; }
+.vehicle-card-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 7px; margin-top: 11px; }
 .vehicle-source { overflow: hidden; color: #748096; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
 .vehicle-source:hover { color: var(--home-blue); text-decoration: underline; }
 .quick-compare { flex: 0 0 auto; padding: 6px 9px; border: 1px solid #dce4ef; border-radius: 5px; background: #fff; color: #48648e; font-size: 8px; font-weight: 700; }

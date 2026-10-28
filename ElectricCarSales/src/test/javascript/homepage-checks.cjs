@@ -118,6 +118,7 @@ async function load(contextPath, available = true) {
     const errors = [];
     const context = vm.createContext({
         URL,
+        URLSearchParams,
         Intl,
         console: { error: (...args) => errors.push(args) },
         Option: function (text, value) {

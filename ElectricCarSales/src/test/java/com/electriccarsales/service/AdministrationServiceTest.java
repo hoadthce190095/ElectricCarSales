@@ -43,6 +43,8 @@ class AdministrationServiceTest {
                 + " KEY(RoleID,PermissionCode))");
             s.execute("CREATE TABLE CarModels(ModelID INT PRIMARY KEY,ModelName NVARCHAR(100))");
             s.execute("INSERT INTO CarModels VALUES(1,'VF Test'),(2,'EV Test')");
+            s.execute("CREATE TABLE Cars(CarID INT PRIMARY KEY,ModelID INT REFERENCES CarModels(ModelID),Price DECIMAL(18,2))");
+            s.execute("INSERT INTO Cars VALUES(1,1,500000000),(2,1,450000000),(3,2,800000000)");
             s.execute("CREATE TABLE Promotions(PromotionID INT IDENTITY PRIMARY KEY,PromotionName"
                 + " NVARCHAR(150),Description NVARCHAR(500),DiscountType"
                 + " VARCHAR(30),DiscountValue DECIMAL(18,2),StartDate TIMESTAMP,EndDate"
@@ -213,6 +215,109 @@ class AdministrationServiceTest {
             () -> AdministrationService
                 .validatePromotion(new PromotionRequest(p.getPromotionName(), p.getDescription(), p.getDiscountType(),
                     new BigDecimal("0.001"), p.getStartDate(), p.getEndDate(), p.getStatus(), p.getModelIds())));
+    }
+
+    @Test
+    void accountOnlyUpdatePreservesLatestEmployeeProfileAndContact() throws Exception {
+        AdminUser created = service.createUser(1, staff("staff", 3, 1));
+        service.updateEmployee(1, created.getEmployeeId(),
+            new EmployeeRequest("Tên nhân viên mới", "0900000012", "latest@test.local"));
+        AdminUser changed = service.updateUser(1, created.getUserId(),
+            new UserRequest(null, null, null, null, 2, 2, null));
+        assertEquals(created.getUserId(), changed.getUserId());
+        assertEquals(created.getEmployeeId(), changed.getEmployeeId());
+        assertEquals("Tên nhân viên mới", changed.getEmployeeName());
+        assertEquals("latest@test.local", changed.getEmail());
+        assertEquals("0900000012", changed.getPhone());
+        var employee = service.employees().getFirst();
+        assertEquals(changed.getEmail(), employee.getEmail());
+        assertEquals(changed.getPhone(), employee.getPhone());
+        assertEquals("MANAGER", employee.getRole());
+        assertEquals("LOCKED", employee.getStatus());
+    }
+
+    @Test
+    void legacyFullAccountUpdateStillSynchronizesEmployeeContact() throws Exception {
+        AdminUser created = service.createUser(1, staff("staff", 3, 1));
+        service.updateUser(1, created.getUserId(),
+            new UserRequest(null, null, "new@test.local", "0900000013", 3, 1, "Tên mới"));
+        var employee = service.employees().getFirst();
+        assertEquals(created.getUserId(), employee.getUserId());
+        assertEquals("Tên mới", employee.getEmployeeName());
+        assertEquals("new@test.local", employee.getEmail());
+        assertEquals("0900000013", employee.getPhone());
+    }
+
+    @Test
+    void employeeUpdateRollsBackBothTablesWhenAuditFails() throws Exception {
+        AdminUser created = service.createUser(1, staff("staff", 3, 1));
+        try (Connection connection = connection(); Statement statement = connection.createStatement()) {
+            statement.execute("DROP TABLE SystemLogs");
+        }
+        assertThrows(SQLException.class, () -> service.updateEmployee(1, created.getEmployeeId(),
+            new EmployeeRequest("Không được lưu", "0900000014", "rollback@test.local")));
+        AdminUser unchanged = service.users("staff", 1).getItems().getFirst();
+        var employee = service.employees().getFirst();
+        assertEquals(created.getEmployeeName(), employee.getEmployeeName());
+        assertEquals(created.getEmail(), unchanged.getEmail());
+        assertEquals(created.getEmail(), employee.getEmail());
+        assertEquals(created.getPhone(), unchanged.getPhone());
+        assertEquals(created.getPhone(), employee.getPhone());
+    }
+
+    @Test
+    void promotionUsesThreeCalendarMonthsIncludingMonthEndAndLeapYears() {
+        for (String start : List.of("2026-01-31T10:30", "2023-11-30T10:30", "2024-02-29T10:30", "2026-08-31T10:30")) {
+            PromotionRequest request = promotion(List.of(1));
+            request.setStartDate(LocalDateTime.parse(start));
+            request.setEndDate(request.getStartDate().plusMonths(3));
+            assertDoesNotThrow(() -> AdministrationService.validatePromotion(request));
+            request.setEndDate(request.getEndDate().plusMinutes(1));
+            assertThrows(IllegalArgumentException.class, () -> AdministrationService.validatePromotion(request));
+        }
+        PromotionRequest request = promotion(List.of(1));
+        request.setEndDate(request.getStartDate());
+        assertThrows(IllegalArgumentException.class, () -> AdministrationService.validatePromotion(request));
+        request.setEndDate(request.getStartDate().minusMinutes(1));
+        assertThrows(IllegalArgumentException.class, () -> AdministrationService.validatePromotion(request));
+    }
+
+    @Test
+    void promotionRejectsZeroNegativeOverPercentageAndSubCentDiscounts() {
+        PromotionRequest request = promotion(List.of(1));
+        for (String value : List.of("0", "-1", "100.01", "0.001")) {
+            request.setDiscountValue(new BigDecimal(value));
+            assertThrows(IllegalArgumentException.class, () -> AdministrationService.validatePromotion(request));
+        }
+        request.setDiscountValue(new BigDecimal("100.00"));
+        assertDoesNotThrow(() -> AdministrationService.validatePromotion(request));
+        request.setDiscountValue(new BigDecimal("0.01"));
+        assertDoesNotThrow(() -> AdministrationService.validatePromotion(request));
+    }
+
+    @Test
+    void fixedDiscountUsesCheapestSelectedModelPriceAndRollsBackInvalidEdit() throws Exception {
+        PromotionRequest request = promotion(List.of(1, 2));
+        request.setDiscountType("FIXED");
+        request.setDiscountValue(new BigDecimal("450000000.00"));
+        AdminPromotion created = service.savePromotion(1, null, request);
+        request.setDiscountValue(new BigDecimal("450000000.01"));
+        assertThrows(IllegalArgumentException.class, () -> service.savePromotion(1, created.getPromotionId(), request));
+        assertEquals(new BigDecimal("450000000.00"), service.promotions().getFirst().getDiscountValue());
+        assertEquals(List.of(1, 2), service.promotions().getFirst().getModelIds());
+        assertEquals(1, count("SystemLogs"));
+        assertEquals(new BigDecimal("450000000.00"), service.lookups().getModelMinPrices().get(1));
+    }
+
+    @Test
+    void fixedDiscountAllowsModelsWithNoKnownPrice() throws Exception {
+        try (Connection connection = connection(); Statement statement = connection.createStatement()) {
+            statement.execute("INSERT INTO CarModels VALUES(3,'Chưa nhập xe')");
+        }
+        PromotionRequest request = promotion(List.of(3));
+        request.setDiscountType("FIXED");
+        request.setDiscountValue(new BigDecimal("1000000"));
+        assertDoesNotThrow(() -> service.savePromotion(1, null, request));
     }
 
     @Test

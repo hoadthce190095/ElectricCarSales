@@ -15,7 +15,8 @@ src/main/java/
 src/main/webapp/
   index.jsp       Trang chủ VinFast xanh dương theo main
   login.jsp       Đăng nhập từ trang chủ
-  admin.jsp       Quản trị, báo cáo, danh mục và trợ lý xe
+  admin.jsp       Quản trị, báo cáo và tra cứu danh mục
+  customer/ai-assistant.jsp  Trợ lý tư vấn xe công khai cho khách hàng
   assets/         CSS, JavaScript và dữ liệu danh mục bổ sung
   WEB-INF/web.xml
 ```
@@ -52,7 +53,7 @@ Controller và service nhận dependency qua constructor; constructor không tha
 
 ## JSP và đường dẫn
 
-Trang gốc dùng welcome `index.jsp`, hiển thị trang chủ VinFast xanh dương theo `main`; nút đăng nhập công khai mở `login.jsp`. `admin.jsp` giữ các màn hình quản trị, báo cáo, danh mục và trợ lý xe; liên kết `admin.jsp?login=1` mở form đăng nhập quản trị khi chưa có phiên.
+Trang gốc dùng welcome `index.jsp`, hiển thị trang chủ VinFast xanh dương; nút đăng nhập công khai mở `login.jsp`. `admin.jsp` giữ các màn hình quản trị, báo cáo và tra cứu danh mục; liên kết `admin.jsp?login=1` mở form đăng nhập quản trị khi chưa có phiên. Trợ lý đặt tại `customer/ai-assistant.jsp`, dùng `assets/js/customer-ai.js` gọi `/api/auth` lấy CSRF rồi gửi câu hỏi tới `/api/ai`. Khách chưa đăng nhập cũng tư vấn được. Trang Admin không tải module hội thoại.
 
 `assets/css/theme.css` chứa màu và kiểu chữ dùng chung, được tải trước `assets/css/home.css` ở trang chủ và `assets/admin-dashboard.css` ở không gian làm việc. `assets/js/home.js` xử lý tìm kiếm, bộ lọc, sắp xếp và so sánh tối đa 3 xe từ `assets/vinfast-catalogue.json`.
 

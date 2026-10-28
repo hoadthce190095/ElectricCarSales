@@ -9,13 +9,12 @@
         <meta name="app-context-path" content="<c:out value='${pageContext.request.contextPath}' />" />
         <title>VinFast — Không gian quản lý xe điện</title>
         <link rel="stylesheet" href="<c:url value='/assets/css/theme.css'><c:param name='v' value='main-blue-20261017' /></c:url>" />
-        <link rel="stylesheet" href="<c:url value='/assets/admin-dashboard.css'><c:param name='v' value='main-blue-20261017' /></c:url>" />
-        <script src="<c:url value='/assets/admin-common.js' />" defer></script>
+        <link rel="stylesheet" href="<c:url value='/assets/admin-dashboard.css'><c:param name='v' value='dashboard-20261028' /></c:url>" />
+        <script src="<c:url value='/assets/admin-common.js'><c:param name='v' value='dashboard-20261028' /></c:url>" defer></script>
         <script src="<c:url value='/assets/admin-management.js' />" defer></script>
-        <script src="<c:url value='/assets/sales-reports.js' />" defer></script>
+        <script src="<c:url value='/assets/sales-reports.js'><c:param name='v' value='dashboard-20261028' /></c:url>" defer></script>
         <script src="<c:url value='/assets/vehicle-catalogue.js' />" defer></script>
-        <script src="<c:url value='/assets/vehicle-assistant.js' />" defer></script>
-        <script src="<c:url value='/assets/admin-dashboard.js' />" defer></script>
+        <script src="<c:url value='/assets/admin-dashboard.js'><c:param name='v' value='dashboard-20261028' /></c:url>" defer></script>
     </head>
     <body>
         <a class="skip-link" href="#main">Đi tới nội dung chính</a>
@@ -31,52 +30,56 @@
                 </a>
                 <div class="workspace-label">KHÔNG GIAN LÀM VIỆC</div>
                 <nav id="navigation">
-                    <button class="nav-item" data-view="overview" data-access="report" hidden>
-                        <span class="nav-icon">⌂</span>
-                        Tổng quan
-                    </button>
-                    <button class="nav-item" data-view="catalogue">
-                        <span class="nav-icon">▱</span>
-                        Danh mục xe
-                    </button>
-                    <button class="nav-item" data-view="users" data-access="admin" hidden>
-                        <span class="nav-icon">▤</span>
-                        Tài khoản
-                    </button>
-                    <button class="nav-item" data-view="employees" data-access="admin" hidden>
-                        <span class="nav-icon">♙</span>
-                        Nhân viên
-                    </button>
-                    <button class="nav-item" data-view="roles" data-access="admin" hidden>
-                        <span class="nav-icon">◇</span>
-                        Phân quyền
-                    </button>
-                    <button class="nav-item" data-view="configurations" data-access="admin" hidden>
-                        <span class="nav-icon">⚙</span>
-                        Cấu hình hệ thống
-                    </button>
-                    <button class="nav-item" data-view="promotions" data-access="admin" hidden>
-                        <span class="nav-icon">%</span>
-                        Khuyến mãi
-                    </button>
-                    <button class="nav-item" data-view="reports" data-access="report" hidden>
-                        <span class="nav-icon">▥</span>
-                        Báo cáo
-                    </button>
-                    <button class="nav-item" data-view="logs" data-access="admin" hidden>
-                        <span class="nav-icon">◷</span>
-                        Nhật ký hệ thống
-                    </button>
-                    <button class="nav-item" data-view="ai">
-                        <span class="nav-icon">✧</span>
-                        Trợ lý xe
-                        <span class="nav-new">AI</span>
-                    </button>
+                    <section class="nav-group" aria-labelledby="nav-reports" data-nav-group>
+                        <h2 class="nav-group-title" id="nav-reports">Báo cáo</h2>
+                        <button class="nav-item" data-view="overview" data-access="report" hidden>
+                            <span class="nav-icon">⌂</span>
+                            Tổng quan
+                        </button>
+                        <button class="nav-item" data-view="reports" data-access="report" hidden>
+                            <span class="nav-icon">▥</span>
+                            Báo cáo kinh doanh
+                        </button>
+                    </section>
+                    <section class="nav-group" aria-labelledby="nav-operations" data-nav-group>
+                        <h2 class="nav-group-title" id="nav-operations">Vận hành</h2>
+                        <button class="nav-item" data-view="catalogue">
+                            <span class="nav-icon">▱</span>
+                            Danh mục xe
+                        </button>
+                        <button class="nav-item" data-view="promotions" data-access="admin" hidden>
+                            <span class="nav-icon">%</span>
+                            Khuyến mãi
+                        </button>
+                    </section>
+                    <section class="nav-group" aria-labelledby="nav-administration" data-nav-group>
+                        <h2 class="nav-group-title" id="nav-administration">Quản trị</h2>
+                        <button class="nav-item" data-view="users" data-access="admin" hidden>
+                            <span class="nav-icon">▤</span>
+                            Tài khoản
+                        </button>
+                        <button class="nav-item" data-view="employees" data-access="admin" hidden>
+                            <span class="nav-icon">♙</span>
+                            Nhân viên
+                        </button>
+                        <button class="nav-item" data-view="roles" data-access="admin" hidden>
+                            <span class="nav-icon">◇</span>
+                            Phân quyền
+                        </button>
+                        <button class="nav-item" data-view="configurations" data-access="admin" hidden>
+                            <span class="nav-icon">⚙</span>
+                            Cấu hình hệ thống
+                        </button>
+                        <button class="nav-item" data-view="logs" data-access="admin" hidden>
+                            <span class="nav-icon">◷</span>
+                            Nhật ký hệ thống
+                        </button>
+                    </section>
                 </nav>
                 <div class="sidebar-bottom">
                     <span class="live-dot"></span>
                     VinFast Electric Cars
-                    <small>Quản trị · Báo cáo · Tư vấn AI</small>
+                    <small>Quản trị · Vận hành · Báo cáo</small>
                 </div>
             </aside>
             <button type="button" id="navigation-backdrop" class="navigation-backdrop" aria-label="Đóng menu" tabindex="-1" hidden></button>
@@ -86,12 +89,12 @@
                     <span class="breadcrumb">
                         Showroom
                         <span>/</span>
-                        <strong id="breadcrumb-title">Danh mục xe</strong>
+                        <strong id="breadcrumb-title">Không gian quản lý</strong>
                     </span>
                     <div class="topbar-right">
                         <a class="home-link" href="<c:url value='/index.jsp' />">Trang chủ <span aria-hidden="true">↗</span></a>
                         <span class="today" id="today"></span>
-                        <button type="button" id="refresh-view" class="icon-button" aria-label="Tải lại màn hình" title="Tải lại màn hình">↻</button>
+                        <button type="button" id="refresh-view" class="button secondary small" aria-label="Làm mới dữ liệu" title="Làm mới dữ liệu">↻ Làm mới</button>
                         <button id="setup-button" class="button secondary small" hidden>Tạo Admin đầu tiên</button>
                         <button id="session-button" class="session-button">
                             <span class="avatar" id="avatar">G</span>
@@ -101,7 +104,7 @@
                     </div>
                 </header>
                 <main id="main" tabindex="-1">
-                    <noscript><p class="notice error">Hãy bật JavaScript trong trình duyệt để đăng nhập và sử dụng các chức năng quản trị, báo cáo, tư vấn xe.</p></noscript>
+                    <noscript><p class="notice error">Hãy bật JavaScript trong trình duyệt để đăng nhập và sử dụng các chức năng quản trị, báo cáo.</p></noscript>
                     <div class="demo-banner">
                         <span class="pill">BẢN DEMO BÁO CÁO</span>
                         <p>
@@ -111,10 +114,10 @@
                     </div>
                     <div class="page-heading">
                         <div>
-                            <p class="eyebrow" id="page-eyebrow">KHÁM PHÁ XE ĐIỆN</p>
-                            <h1 id="page-title">Danh mục xe VinFast</h1>
+                            <p class="eyebrow" id="page-eyebrow">VẬN HÀNH SHOWROOM</p>
+                            <h1 id="page-title">Không gian quản lý</h1>
                             <p id="page-description">
-                                Khám phá thông số, đối chiếu các phiên bản và hỏi trợ lý tư vấn.
+                                Đăng nhập để quản lý showroom và theo dõi kết quả kinh doanh.
                             </p>
                         </div>
                         <div id="page-actions"></div>
@@ -126,7 +129,7 @@
                 </main>
                 <footer>
                     VINFAST / Electric Cars
-                    <span>Quản trị / Báo cáo / Tư vấn AI</span>
+                    <span>Quản trị / Vận hành / Báo cáo</span>
                 </footer>
             </div>
         </div>

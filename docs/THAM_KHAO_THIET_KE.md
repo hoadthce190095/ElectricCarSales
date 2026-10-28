@@ -48,7 +48,7 @@ Các file được tải tuần tự bằng `defer`, sử dụng cùng các hàm
 | `admin-management.js`     | Tài khoản, nhân viên, vai trò, cấu hình, khuyến mãi và nhật ký                           |
 | `sales-reports.js`    | Tổng quan, báo cáo, biểu đồ, ngày và phép tính so sánh kỳ                                |
 | `vehicle-catalogue.js` | Danh mục, nguồn VinFast, chi tiết xe và bảng so sánh                                     |
-| `vehicle-assistant.js`        | Hội thoại, gợi ý nhu cầu và cuộc trò chuyện mới                                          |
+| `js/customer-ai.js`        | Hội thoại, gợi ý nhu cầu và cuộc trò chuyện mới tại trang khách hàng                     |
 | `admin-dashboard.js`           | Khởi động trang và tạo Admin lần đầu khi được bật                                        |
 
-Phép tính thử khuyến mãi chỉ minh họa giá giảm, giới hạn mức giảm không vượt quá giá xe; không ghi vào đơn hàng. Đổi mật khẩu dùng xác nhận mật khẩu hiện tại, cập nhật phiên và CSRF từ máy chủ. Quyền truy cập luôn được kiểm tra lại ở phía Java.
+Khuyến mãi kiểm tra mức giảm và thời hạn tối đa 3 tháng lịch ở giao diện lẫn Java; không có tính thử. Tài khoản quản lý quyền truy cập, Nhân viên quản lý hồ sơ, tạo một lần và liên kết qua UserID. Đổi mật khẩu dùng xác nhận mật khẩu hiện tại, cập nhật phiên và CSRF từ máy chủ. Quyền truy cập luôn được kiểm tra lại ở phía Java.

@@ -387,63 +387,91 @@ async function loadPromotions(filters = state.promotionFilters) {
     );
 }
 
-function previewPromotion(promotion) {
-    const result = el("div", { class: "field full promotion-preview-result", "aria-live": "polite" });
-    const priceField = field("basePrice", "Giá xe để tính thử (VND)", "number", "", {
-        required: true,
-        full: true,
-        min: 0,
-        step: 1000,
-        help: "Nhập giá tham khảo của một mẫu xe thuộc chương trình."
-    });
-    const input = $("input", priceField);
-    input.addEventListener("input", () => {
-        if (input.value === "") {
-            result.replaceChildren(el("p", { text: "Nhập giá xe để xem mức giảm và giá sau ưu đãi." }));
-            return;
-        }
-        const basePrice = Number(input.value);
-        if (!Number.isFinite(basePrice) || basePrice < 0) {
-            result.replaceChildren(el("p", { text: "Giá xe phải là số không âm." }));
-            return;
-        }
-        const calculatedDiscount =
-            promotion.discountType === "PERCENTAGE"
-                ? (basePrice * Number(promotion.discountValue)) / 100
-                : Number(promotion.discountValue);
-        // Ưu đãi cố định lớn hơn giá xe cũng không tạo ra giá bán âm.
-        const discount = Math.min(basePrice, Math.max(0, calculatedDiscount));
-        result.replaceChildren(
-            el("p", { text: `Mức giảm mô phỏng: ${money(discount)}` }),
-            el("strong", { text: `Sau ưu đãi: ${money(basePrice - discount)}` })
-        );
-    });
-    result.append(el("p", { text: "Nhập giá xe để xem mức giảm và giá sau ưu đãi." }));
-    modal(
-        "Tính thử ưu đãi",
-        [
-            el("div", { class: "field full" }, [
-                el("strong", { text: promotion.promotionName }),
-                promotionPill(promotion)
-            ]),
-            priceField,
-            result,
-            el("p", {
-                class: "field full section-note",
-                text: "Đây là phép tính mô phỏng, chưa tính thuế và chi phí lăn bánh. Không tạo giao dịch, không áp dụng ưu đãi vào đơn hàng. Chương trình hết hạn hoặc đã ngừng chỉ được xem để đối chiếu."
-            })
-        ],
-        async () => {},
-        "Đóng"
-    );
-    input.required = false;
-}
-
 function localDatetime(value) {
     if (!value) {
         return "";
     }
     return String(value).slice(0, 16);
+}
+
+// Match LocalDateTime.plusMonths: preserve the time and clamp to the target month's last day.
+function promotionEndLimit(value) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(String(value));
+    if (!match) return "";
+    const [year, month, day, hour, minute] = match.slice(1).map(Number);
+    const days = (y, m) => [31, y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1];
+    if (year < 1 || month < 1 || month > 12 || day < 1 || day > days(year, month) || hour > 23 || minute > 59) return "";
+    const index = year * 12 + month - 1 + 3;
+    const targetYear = Math.floor(index / 12);
+    const targetMonth = index % 12 + 1;
+    if (targetYear > 9999) return "9999-12-31T23:59";
+    return `${String(targetYear).padStart(4, "0")}-${String(targetMonth).padStart(2, "0")}-${String(Math.min(day, days(targetYear, targetMonth))).padStart(2, "0")}T${match[4]}:${match[5]}`;
+}
+
+function promotionCents(value) {
+    const match = /^(\d+)(?:\.(\d+))?$/.exec(String(value));
+    if (!match || (match[2] || "").replace(/0+$/, "").length > 2) return null;
+    return BigInt(match[1]) * 100n + BigInt(((match[2] || "") + "00").slice(0, 2));
+}
+
+function promotionValidation(input, modelMinPrices = {}) {
+    const errors = {};
+    const value = promotionCents(input.discountValue);
+    if (value === null || value <= 0n || value > 999999999999999999n) {
+        errors.discountValue = "Nhập mức giảm lớn hơn 0, tối đa 2 chữ số thập phân.";
+    } else if (input.discountType === "PERCENTAGE" && value > 10000n) {
+        errors.discountValue = "Phần trăm giảm giá không được vượt quá 100%.";
+    } else if (input.discountType === "FIXED") {
+        for (const id of input.modelIds || []) {
+            const price = modelMinPrices[id] == null ? null : promotionCents(modelMinPrices[id]);
+            if (price !== null && value > price) {
+                errors.discountValue = `Mức giảm không được vượt giá xe thấp nhất của mẫu đã chọn (${money(modelMinPrices[id])}).`;
+                break;
+            }
+        }
+    }
+    const limit = promotionEndLimit(input.startDate);
+    if (!limit) errors.startDate = "Nhập ngày và giờ bắt đầu hợp lệ.";
+    if (!promotionEndLimit(input.endDate)) errors.endDate = "Nhập ngày và giờ kết thúc hợp lệ.";
+    else if (limit && input.endDate <= input.startDate) errors.endDate = "Ngày kết thúc phải sau ngày bắt đầu.";
+    else if (limit && input.endDate > limit) errors.endDate = "Thời gian khuyến mãi tối đa 3 tháng lịch kể từ ngày bắt đầu.";
+    if (!input.modelIds?.length) errors.modelIds = "Chọn ít nhất một mẫu xe áp dụng.";
+    return errors;
+}
+
+function configurePromotionForm(form, lookup) {
+    const names = ["discountValue", "discountType", "startDate", "endDate", "modelIds"];
+    const controls = Object.fromEntries(names.map((name) => [name, $(`[name=${name}]`, form)]));
+    const messages = {};
+    for (const name of ["discountValue", "startDate", "endDate", "modelIds"]) {
+        const message = el("small", { class: "form-error", id: `promotion-${name}-error`, "aria-live": "polite", hidden: true });
+        controls[name].parentElement.append(message);
+        controls[name].setAttribute("aria-describedby", message.id);
+        messages[name] = message;
+    }
+    const check = () => {
+        const input = Object.fromEntries(names.map((name) => [name, controls[name].value]));
+        input.modelIds = [...controls.modelIds.selectedOptions].map((option) => Number(option.value));
+        const errors = promotionValidation(input, lookup.modelMinPrices);
+        controls.discountValue.min = "0.01";
+        const selectedPrices = input.modelIds.map((id) => lookup.modelMinPrices?.[id]).filter((price) => price != null);
+        controls.discountValue.max = input.discountType === "PERCENTAGE" ? "100" : selectedPrices.length ? String(Math.min(...selectedPrices.map(Number))) : "9999999999999999.99";
+        controls.endDate.min = controls.startDate.value;
+        controls.endDate.max = promotionEndLimit(controls.startDate.value) || "9999-12-31T23:59";
+        for (const [name, message] of Object.entries(messages)) {
+            message.textContent = errors[name] || "";
+            message.hidden = !errors[name];
+            controls[name].setCustomValidity(errors[name] || "");
+            controls[name].setAttribute("aria-invalid", String(Boolean(errors[name])));
+        }
+        return errors;
+    };
+    for (const control of Object.values(controls)) {
+        control.addEventListener("input", check);
+        control.addEventListener("change", check);
+    }
+    check();
+    return check;
 }
 
 async function editPromotion(promotion) {
@@ -470,14 +498,15 @@ async function editPromotion(promotion) {
             }),
             field("discountValue", "Giá trị ưu đãi", "number", promotion?.discountValue ?? "", {
                 required: true,
-                min: 0,
+                min: "0.01",
                 step: "0.01"
             }),
             field("startDate", "Bắt đầu", "datetime-local", localDatetime(promotion?.startDate), {
                 required: true
             }),
             field("endDate", "Kết thúc", "datetime-local", localDatetime(promotion?.endDate), {
-                required: true
+                required: true,
+                help: "Sau ngày bắt đầu, tối đa 3 tháng lịch; ngày cuối tháng được giữ trong tháng đích."
             }),
             field("status", "Trạng thái", "select", promotion?.status || "ACTIVE", {
                 required: true,
@@ -489,29 +518,35 @@ async function editPromotion(promotion) {
             field("modelIds", "Mẫu xe áp dụng", "select", promotion?.modelIds || [], {
                 choices: lookup.models.map((m) => ({ value: m.id, label: m.name })),
                 multiple: true,
+                required: true,
                 full: true,
                 help: "Giữ Ctrl (Windows) để chọn nhiều mẫu xe."
             })
         ],
         async (input, form) => {
-            input.discountValue = Number(input.discountValue);
             input.modelIds = [...$("[name=modelIds]", form).selectedOptions].map((o) => Number(o.value));
-            if (!input.modelIds.length) {
-                throw new Error("Chọn ít nhất một mẫu xe cho chương trình.");
+            const errors = promotionValidation(input, lookup.modelMinPrices);
+            if (Object.keys(errors).length) {
+                throw new Error(Object.values(errors)[0]);
             }
-            if (input.discountType === "PERCENTAGE" && input.discountValue > 100) {
-                throw new Error("Ưu đãi phần trăm phải nằm trong khoảng 0–100.");
+            try {
+                await api(promotion ? `admin/promotions/${promotion.promotionId}` : "admin/promotions", {
+                    method: promotion ? "PUT" : "POST",
+                    body: input
+                });
+            } catch (error) {
+                if (/giảm giá|giá trị|thập phân/i.test(error.message)) {
+                    const message = $("#promotion-discountValue-error", form);
+                    message.textContent = error.message;
+                    message.hidden = false;
+                    $("[name=discountValue]", form).setAttribute("aria-invalid", "true");
+                }
+                throw error;
             }
-            if (input.endDate < input.startDate) {
-                throw new Error("Thời gian kết thúc phải bằng hoặc sau thời gian bắt đầu.");
-            }
-            await api(promotion ? `admin/promotions/${promotion.promotionId}` : "admin/promotions", {
-                method: promotion ? "PUT" : "POST",
-                body: input
-            });
             await refreshAdminAfterSave(loadPromotions, "Đã lưu chương trình khuyến mãi.");
         }
     );
+    configurePromotionForm($("#dialog-form"), lookup);
 }
 
 function deactivatePromotion(promotion) {

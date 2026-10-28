@@ -134,7 +134,7 @@ function restoreView() {
     if (!requested && window.location.hash) {
         return;
     }
-    const name = requested || "catalogue";
+    const name = requested || defaultView();
     if (name !== state.view) {
         showView(name, { history: false, focus: true });
     }
@@ -158,7 +158,7 @@ $("#today").textContent = new Intl.DateTimeFormat("vi-VN", {
     }
     updateSession();
     await refreshSetup();
-    await showView(viewFromLocation() || (canReport() ? "overview" : canView("users") ? "users" : "catalogue"));
+    await showView(viewFromLocation() || defaultView());
     const entryUrl = new URL(window.location.href);
     if (entryUrl.searchParams.get("login") === "1") {
         entryUrl.searchParams.delete("login");

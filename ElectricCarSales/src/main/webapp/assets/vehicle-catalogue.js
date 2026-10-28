@@ -155,13 +155,16 @@ function vehicleImage(vehicle) {
     return el("div", { class: "vehicle-image" }, image);
 }
 
-async function askAboutVehicle(vehicle) {
-    state.cataloguePrompt = {
-        message: `Cho tôi biết thông số và ưu điểm của ${vehicle.modelName}.`,
-        intent: "PRODUCT_QA",
-        criteria: { modelIds: [vehicle.modelId] }
-    };
-    await showView("ai");
+function openCustomerAssistant(message = "", intent = "AUTO", modelIds = []) {
+    const params = new URLSearchParams();
+    if (message) params.set("prompt", message);
+    if (intent !== "AUTO") params.set("intent", intent);
+    if (modelIds.length) params.set("models", modelIds.join(","));
+    window.location.assign(`${appUrl("customer/ai-assistant.jsp")}${params.size ? `?${params}` : ""}`);
+}
+
+function askAboutVehicle(vehicle) {
+    openCustomerAssistant(`Cho tôi biết thông số và ưu điểm của ${vehicle.modelName}.`, "PRODUCT_QA", [vehicle.modelId]);
 }
 
 function vehicleDetails(vehicle) {
@@ -287,7 +290,7 @@ async function loadCatalogue(filters = state.catalogueFilters, refresh = true) {
     }
     state.catalogueFilters = { ...filters };
     state.comparedIds = state.comparedIds.filter((id) => state.models.some((model) => model.modelId === id));
-    $("#page-actions").replaceChildren(button("✧ Tư vấn chọn xe", () => showView("ai"), "button"));
+    $("#page-actions").replaceChildren(button("✧ Tư vấn chọn xe", () => openCustomerAssistant(), "button"));
     const selectedText = el("strong");
     const compareButton = button(
         "So sánh đã chọn",
@@ -306,12 +309,8 @@ async function loadCatalogue(filters = state.catalogueFilters, refresh = true) {
                 button(
                     "✧ Hỏi trợ lý về các xe này",
                     () => {
-                        state.cataloguePrompt = {
-                            message: `So sánh ${selected.map((model) => model.modelName).join(" và ")}.`,
-                            intent: "COMPARE",
-                            criteria: { modelIds: selected.map((model) => model.modelId) }
-                        };
-                        task(() => showView("ai"));
+                        openCustomerAssistant(`So sánh ${selected.map((model) => model.modelName).join(" và ")}.`,
+                            "COMPARE", selected.map((model) => model.modelId));
                     },
                     "button secondary"
                 )

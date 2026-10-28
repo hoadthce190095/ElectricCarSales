@@ -4,7 +4,7 @@ const state = {
     user: null,
     permissions: [],
     csrf: "",
-    view: "catalogue",
+    view: "overview",
     viewGeneration: 0,
     loadSequence: 0,
     sessionGeneration: 0,
@@ -20,11 +20,10 @@ const state = {
     reportFilters: {},
     reportComparison: "NONE",
     reportEmployees: [],
-    aiHistory: [],
+    overviewFilters: {},
     catalogueMetadata: null,
     catalogueFilters: {},
-    comparedIds: [],
-    cataloguePrompt: null
+    comparedIds: []
 };
 const money = (value) =>
     value == null
@@ -85,16 +84,15 @@ const statusLabels = {
     FAILED: "Thất bại"
 };
 const views = {
-    overview: ["Tổng quan showroom", "Nhìn nhanh kết quả kinh doanh và mở những chức năng thường dùng."],
-    catalogue: ["Danh mục xe VinFast", "Khám phá thông số, đối chiếu các phiên bản và hỏi trợ lý tư vấn."],
+    overview: ["Tổng quan showroom", "Theo dõi kết quả kinh doanh, giao dịch và tồn kho."],
+    catalogue: ["Danh mục xe VinFast", "Tra cứu thông số và đối chiếu các phiên bản xe trong showroom."],
     users: ["Tài khoản", "Quản lý tài khoản, vai trò và quyền truy cập hệ thống."],
     employees: ["Nhân viên", "Thông tin liên hệ của đội ngũ showroom."],
     roles: ["Phân quyền", "Thiết lập những chức năng mỗi vai trò được phép sử dụng."],
     configurations: ["Cấu hình hệ thống", "Điều chỉnh thời gian phiên đăng nhập và phạm vi truy vấn báo cáo."],
     promotions: ["Khuyến mãi", "Tạo ưu đãi và lựa chọn những mẫu xe tham gia chương trình."],
     reports: ["Báo cáo kinh doanh", "Theo dõi doanh thu, xe bán ra và tiến độ giao dịch."],
-    logs: ["Nhật ký hệ thống", "Theo dõi hoạt động và truy vết những thay đổi quan trọng."],
-    ai: ["Trợ lý xe", "Tìm hiểu, so sánh và chọn chiếc xe phù hợp với bạn."]
+    logs: ["Nhật ký hệ thống", "Theo dõi hoạt động và truy vết những thay đổi quan trọng."]
 };
 
 function el(tag, attrs = {}, children = []) {
@@ -271,8 +269,11 @@ function canReport() {
 }
 
 function canView(name) {
+    if (!Object.hasOwn(views, name)) {
+        return false;
+    }
     return (
-        ["catalogue", "ai"].includes(name) ||
+        name === "catalogue" ||
         (["roles", "configurations"].includes(name)
             ? isAdmin()
             : allowed(
@@ -293,6 +294,9 @@ function updateSession() {
     $("#avatar").textContent = (state.user?.username || "G").slice(0, 1).toUpperCase();
     for (const node of document.querySelectorAll("[data-access]")) {
         node.hidden = !canView(node.dataset.view);
+    }
+    for (const group of document.querySelectorAll("[data-nav-group]")) {
+        group.hidden = ![...group.querySelectorAll("[data-view]")].some((node) => !node.hidden);
     }
 }
 
@@ -420,11 +424,7 @@ function applySession(result) {
 function clearPrivateState() {
     state.sessionGeneration++;
     state.viewGeneration++;
-    state.aiHistory = [];
-    if (typeof resetAIState === "function") {
-        resetAIState();
-    }
-    state.cataloguePrompt = null;
+    state.overviewFilters = {};
     state.report = null;
     state.reportEmployees = [];
     state.reportFilters = {};
@@ -512,7 +512,7 @@ function login() {
                 const result = await api("auth", { method: "POST", body: { action: "logout" } });
                 applySession(result);
                 clearPrivateState();
-                await showView("catalogue");
+                await showView("overview");
                 toast("Đã đăng xuất.");
             },
             "Đăng xuất"
@@ -588,12 +588,7 @@ function changePassword() {
                 body: { action: "changePassword", ...input }
             });
             applySession(result);
-            // Server tạo session mới, nên ngữ cảnh tư vấn cũ cũng đã hết hiệu lực.
             state.sessionGeneration++;
-            resetAIState();
-            if (state.view === "ai") {
-                await loadAI();
-            }
             toast(result.message || "Đã đổi mật khẩu cá nhân.");
         },
         "Đổi mật khẩu"
@@ -612,8 +607,15 @@ function viewFromLocation() {
     return Object.hasOwn(views, name) ? name : null;
 }
 
+function defaultView() {
+    if (!state.user || canReport()) {
+        return "overview";
+    }
+    return canView("users") ? "users" : "catalogue";
+}
+
 async function showView(name, options = {}) {
-    name = Object.hasOwn(views, name) ? name : "catalogue";
+    name = Object.hasOwn(views, name) ? name : defaultView();
     const generation = ++state.viewGeneration;
     state.view = name;
     if (options.history !== false && window.location.hash !== `#${name}`) {
@@ -633,7 +635,7 @@ async function showView(name, options = {}) {
         $("#main").focus({ preventScroll: true });
     }
     notice("");
-    $("#page-eyebrow").textContent = ["catalogue", "ai"].includes(name) ? "KHÁM PHÁ XE ĐIỆN" : "VẬN HÀNH SHOWROOM";
+    $("#page-eyebrow").textContent = name === "catalogue" ? "DANH MỤC SHOWROOM" : "VẬN HÀNH SHOWROOM";
     for (const nav of document.querySelectorAll("[data-view]")) {
         nav.classList.toggle("active", nav.dataset.view === name);
         if (nav.dataset.view === name) {
@@ -642,7 +644,7 @@ async function showView(name, options = {}) {
             nav.removeAttribute("aria-current");
         }
     }
-    if (!["catalogue", "ai"].includes(name) && (!state.user || !canView(name))) {
+    if (name !== "catalogue" && (!state.user || !canView(name))) {
         $("#content").replaceChildren(accessNeeded());
         return;
     }
@@ -659,8 +661,7 @@ async function showView(name, options = {}) {
                 configurations: loadConfigurations,
                 promotions: loadPromotions,
                 reports: loadReports,
-                logs: loadLogs,
-                ai: loadAI
+                logs: loadLogs
             })[name] || loadCatalogue
         )()
     );

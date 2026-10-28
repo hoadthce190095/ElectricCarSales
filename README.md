@@ -4,9 +4,9 @@ Dự án SWP391 quản lý cửa hàng ô tô điện. Phần của **Phạm Tr�
 
 Chức năng gồm quản trị tài khoản/nhân viên, tạo và sao chép vai trò, phân quyền, khuyến mãi, báo cáo kinh doanh, nhật ký và cấu hình hệ thống, trợ lý tư vấn danh mục xe.
 
-Đã bổ sung tổng quan kinh doanh, đối chiếu báo cáo với kỳ trước, lọc tài khoản theo vai trò/trạng thái, lọc nhân viên, xem hiệu lực và tính thử khuyến mãi, đổi mật khẩu cá nhân và bắt đầu cuộc tư vấn mới. Cách tổ chức giao diện tham khảo Shopify, Salesforce và VinFast; xem [nguồn tham khảo và cách áp dụng](docs/THAM_KHAO_THIET_KE.md).
+Tài khoản quản lý đăng nhập, mật khẩu, vai trò và trạng thái; Nhân viên quản lý hồ sơ và liên hệ. Chỉ tạo nhân viên kèm tài khoản tại mục Nhân viên, liên kết qua UserID. Dashboard có bộ chọn kỳ, chỉ số, biểu đồ và giao dịch gần đây. Khuyến mãi không còn tính thử; mức giảm phải lớn hơn 0, phần trăm không vượt 100%, thời hạn không vượt 3 tháng lịch từ ngày bắt đầu. Cách tổ chức giao diện tham khảo Shopify, Salesforce và VinFast; xem [nguồn tham khảo và cách áp dụng](docs/THAM_KHAO_THIET_KE.md).
 
-Đọc [hướng dẫn chạy trên IntelliJ](docs/HUONG_DAN_INTELLIJ.md) trước khi triển khai. Mở `ElectricCarSales/pom.xml` dưới dạng Maven project. Trang chủ `/ElectricCarSales/` dùng giao diện VinFast xanh dương theo `main`; không gian quản trị và trợ lý xe ở `/ElectricCarSales/admin.jsp` dùng chung bảng màu và kiểu chữ. Nút **Đăng nhập** trên trang chủ mở `/ElectricCarSales/login.jsp`; mục **Quản trị** mở không gian quản trị.
+Đọc [hướng dẫn chạy trên IntelliJ](docs/HUONG_DAN_INTELLIJ.md) trước khi triển khai. Mở `ElectricCarSales/pom.xml` dưới dạng Maven project. Trang chủ `/ElectricCarSales/` dùng giao diện VinFast xanh dương; không gian quản trị ở `/ElectricCarSales/admin.jsp`. Trợ lý xe dành cho khách hàng tại `/ElectricCarSales/customer/ai-assistant.jsp`, mở từ trang chủ và không yêu cầu đăng nhập để tư vấn sản phẩm. Nút **Đăng nhập** trên trang chủ mở `/ElectricCarSales/login.jsp`; mục **Quản trị** mở không gian quản trị.
 
 Chỉ cần chạy `ElectricCarSalesDB.sql` ở thư mục gốc trong SSMS cho cả database mới và database đã có. File này tạo `ElectricCarSalesDB` nếu thiếu, bổ sung schema chung, rồi nạp danh mục VinFast và 30 xe kho DEMO, tiếp theo là bộ báo cáo giả lập gồm 9 đơn cùng thanh toán, trả góp và khuyến mãi. Khi phát hiện đơn hàng, thanh toán hoặc trả góp không thuộc bộ DEMO, script thông báo bằng `PRINT` và bỏ qua phần nạp báo cáo DEMO; schema và danh mục vẫn chạy. Chạy lại giữ dữ liệu hiện có, không xóa database và không thêm bản ghi trùng. Script không tạo tài khoản hay mật khẩu Admin; tự tạo Admin theo hướng dẫn.
 
@@ -38,7 +38,9 @@ ElectricCarSales/src/main/webapp/index.jsp, login.jsp, admin.jsp
 ElectricCarSales/src/main/webapp/assets/css/theme.css, home.css
 ElectricCarSales/src/main/webapp/assets/js/home.js
 ElectricCarSales/src/main/webapp/assets/admin-dashboard.css
-ElectricCarSales/src/main/webapp/assets/admin-common.js, admin-management.js, sales-reports.js, vehicle-catalogue.js, vehicle-assistant.js, admin-dashboard.js
+ElectricCarSales/src/main/webapp/assets/admin-common.js, admin-management.js, sales-reports.js, vehicle-catalogue.js, admin-dashboard.js
+ElectricCarSales/src/main/webapp/customer/ai-assistant.jsp
+ElectricCarSales/src/main/webapp/assets/js/customer-ai.js
 ElectricCarSalesDB.sql
 ```
 

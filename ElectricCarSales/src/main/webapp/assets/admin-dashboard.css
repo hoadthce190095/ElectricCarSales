@@ -1533,22 +1533,6 @@ dialog::backdrop {
     color: var(--muted);
     font-size: 12px;
 }
-.promotion-preview-result {
-    background: var(--surface-soft);
-    border: 1px solid var(--border-blue);
-    border-radius: 8px;
-    padding: 16px;
-}
-.promotion-preview-result p {
-    margin: 0;
-    font-size: 12px;
-    color: var(--muted);
-}
-.promotion-preview-result strong {
-    margin-top: 5px;
-    font-size: 18px;
-    color: var(--primary);
-}
 .report-comparison-warning {
     margin-top: 0;
 }
@@ -1952,5 +1936,201 @@ dialog::backdrop {
     .skip-link,
     #refresh-view {
         display: none !important;
+    }
+}
+
+/* Tổng quan: bộ lọc, chỉ số và dữ liệu nghiệp vụ theo thứ tự đọc. */
+.nav-group {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 15px;
+}
+.nav-group-title {
+    margin: 4px 14px 5px;
+    color: #9fb4d0;
+    font: 600 9px/1.5 var(--font-body);
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+.sidebar .brand {
+    margin-bottom: 26px;
+}
+.sidebar-bottom {
+    padding-top: 22px;
+}
+.overview-period {
+    padding: 22px 24px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--white);
+    margin-bottom: 20px;
+}
+.overview-period-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+.overview-period-heading h2 {
+    margin: 0 0 3px;
+    font-size: 17px;
+}
+.overview-period-heading p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 11px;
+}
+.overview-period-form {
+    display: grid;
+    grid-template-columns: minmax(160px, 1.2fr) minmax(140px, 1fr) minmax(140px, 1fr) auto;
+    align-items: end;
+    gap: 14px;
+    max-width: 850px;
+}
+.overview-period-form .button {
+    min-height: 38px;
+}
+.overview-stats .stat {
+    min-width: 0;
+    padding: 22px 20px;
+}
+.overview-stats .stat strong {
+    font-size: clamp(18px, 1.6vw, 25px);
+    overflow-wrap: anywhere;
+}
+.overview-charts {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+}
+.overview-charts .card {
+    min-width: 0;
+}
+.overview-details {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(290px, 1fr);
+    align-items: start;
+    gap: 20px;
+}
+.overview-details > .card {
+    min-width: 0;
+}
+.overview-details th,
+.overview-details td {
+    padding: 14px 16px;
+}
+.overview-details td {
+    font-size: 11px;
+}
+.overview-details .cell-title {
+    max-width: 180px;
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+.overview-details .cell-subtitle {
+    max-width: 180px;
+    white-space: normal;
+}
+.overview-details .empty {
+    min-height: 200px;
+    display: grid;
+    align-content: center;
+}
+.overview-charts .bar-row {
+    grid-template-columns: minmax(75px, 100px) minmax(25px, 1fr) minmax(80px, 115px);
+}
+@media (min-width: 761px) and (max-width: 1150px) {
+    .overview-details {
+        grid-template-columns: minmax(0, 1.3fr) minmax(240px, 1fr);
+        gap: 14px;
+    }
+    .overview-details th,
+    .overview-details td {
+        padding: 12px;
+    }
+    .overview-charts .bar-row {
+        grid-template-columns: 75px minmax(20px, 1fr) 95px;
+        gap: 8px;
+    }
+}
+@media (min-width: 761px) and (max-width: 950px) {
+    .overview-period-form {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+    .overview-period-form .field:first-child {
+        grid-column: 1 / -1;
+    }
+    .overview-period-form .button {
+        grid-column: 1 / -1;
+    }
+}
+@media (max-width: 760px) {
+    .sidebar .nav-group {
+        display: grid;
+        width: 100%;
+    }
+    .overview-period {
+        padding: 18px;
+    }
+    .overview-period-heading {
+        align-items: start;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .overview-period-form {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 12px;
+    }
+    .overview-period-form .field:first-child {
+        grid-column: 1 / -1;
+    }
+    .overview-period-form .button {
+        grid-column: 1 / -1;
+        min-height: 44px;
+    }
+    .overview-period-form input,
+    .overview-period-form select {
+        font-size: 16px;
+        min-height: 44px;
+    }
+    .overview-details,
+    .overview-charts {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+    }
+    .overview-stats .stat {
+        padding: 18px 15px;
+    }
+    .overview-stats .stat strong {
+        font-size: 19px;
+    }
+    .overview-updated {
+        text-align: left;
+    }
+    #refresh-view {
+        font-size: 0;
+        padding: 8px 10px;
+        min-height: 38px;
+        min-width: 38px;
+    }
+    #refresh-view::before {
+        content: "↻";
+        font-size: 20px;
+    }
+}
+@media (max-width: 380px) {
+    .overview-stats {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+@media print {
+    .overview-period-form {
+        display: none;
+    }
+    .overview-details {
+        display: block;
+    }
+    .overview-period {
+        padding: 0;
+        border: 0;
     }
 }

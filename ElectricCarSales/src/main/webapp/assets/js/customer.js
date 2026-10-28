@@ -49,22 +49,6 @@
         event.currentTarget.reset();
     });
 
-    const aiForm = document.querySelector("[data-ai-form]");
-    const aiQuestion = aiForm?.querySelector("textarea");
-    aiForm?.addEventListener("submit", (event) => {
-        event.preventDefault();
-        if (!aiForm.reportValidity()) return;
-        notify("Giao diện đã sẵn sàng. Cần kết nối dịch vụ AI để nhận câu trả lời.");
-    });
-    document.querySelectorAll("[data-ai-prompt]").forEach((prompt) => {
-        prompt.addEventListener("click", () => {
-            if (aiQuestion) {
-                aiQuestion.value = prompt.dataset.aiPrompt || "";
-                aiQuestion.focus();
-            }
-        });
-    });
-
     document.querySelectorAll("[data-cart-count]").forEach((count) => {
         count.textContent = "0";
     });

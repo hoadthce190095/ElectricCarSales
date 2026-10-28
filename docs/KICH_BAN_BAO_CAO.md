@@ -31,7 +31,7 @@ Mở Tài khoản: các tài khoản `demo_customer_01`…`06` và `demo_employe
 
 Lọc vai trò CUSTOMER và trạng thái INACTIVE để thấy 6 tài khoản khách hàng mô phỏng; xóa bộ lọc, chọn SALES để xem nhân viên. Màn hình Nhân viên hỗ trợ tìm tên không dấu, vai trò và trạng thái.
 
-Tạo một tài khoản nhân viên mới với dữ liệu do bạn tự nhập. Chọn vai trò SALES, đặt mật khẩu đủ 10 ký tự, lưu. Mở Nhân viên để kiểm tra họ tên và thông tin đã tạo. Đổi trạng thái thành INACTIVE để minh họa khóa tài khoản. Có thể đăng xuất Admin và đăng nhập một tài khoản nhân viên riêng để chứng minh những mục không đủ quyền sẽ bị ẩn hoặc bị API từ chối.
+Tại Nhân viên, tạo nhân viên kèm tài khoản mới với dữ liệu do bạn tự nhập. Chọn vai trò SALES, đặt mật khẩu đủ 10 ký tự, lưu. Hồ sơ có EmployeeID và UserID liên kết. Sửa họ tên/liên hệ tại Nhân viên; chuyển sang Tài khoản để đổi vai trò, mật khẩu hoặc trạng thái INACTIVE. Có thể đăng xuất Admin và đăng nhập một tài khoản nhân viên riêng để chứng minh những mục không đủ quyền sẽ bị ẩn hoặc bị API từ chối.
 
 Mở Phân quyền, tạo vai trò mới hoặc điều chỉnh quyền của vai trò dùng thử. Giải thích: hệ thống kiểm tra quyền ở máy chủ; đổi giao diện hoặc gọi URL trực tiếp không tự cấp quyền. Admin cuối cùng không được tự khóa để tránh mất quyền quản trị.
 
@@ -41,7 +41,7 @@ Mở Khuyến mãi. Bộ dữ liệu có một ưu đãi DEMO đang hoạt độ
 
 Tạo hoặc sửa khuyến mãi dùng thử, chọn loại giảm tiền hoặc phần trăm, kiểm tra khoảng ngày. Vô hiệu hóa để minh họa giữ lịch sử. Sau đó mở System Log, lọc hành động vừa thực hiện. Nhật ký chỉ được thêm, không có chức năng sửa/xóa lịch sử.
 
-Lọc **Đang áp dụng** hoặc **Đã hết hạn** để phân biệt trạng thái lưu và hiệu lực theo ngày. Chọn **Tính thử**, nhập giá xe để minh họa mức giảm; giải thích phép tính không tạo đơn hàng.
+Lọc **Đang áp dụng** hoặc **Đã hết hạn** để phân biệt trạng thái lưu và hiệu lực theo ngày. Thử mức giảm 0, phần trăm trên 100 hoặc ngày kết thúc vượt 3 tháng để minh họa lỗi kiểm tra. Ví dụ bắt đầu 31/01/2027 lúc 09:00: kết thúc 30/04/2027 lúc 09:00 được phép; 09:01 bị từ chối. Không có chức năng tính thử.
 
 ## 5. Báo cáo với số liệu có thể giải thích
 

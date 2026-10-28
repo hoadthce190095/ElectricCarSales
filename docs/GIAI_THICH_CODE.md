@@ -24,7 +24,7 @@ Trong `com.electriccarsales`, `controller` nhận yêu cầu từ giao diện; `
 
 `deactivatePromotion()` đổi trạng thái thành INACTIVE. Giữ lại bản ghi giúp các đơn hàng cũ và nhật ký vẫn tham chiếu được khuyến mãi.
 
-Giao diện tính trạng thái hiệu lực từ trạng thái lưu trong DB và ngày bắt đầu/kết thúc: chưa bắt đầu, đang áp dụng, đã hết hạn hoặc đã ngừng. Nút tính thử chỉ hiển thị số tiền giảm và giá dự kiến, không tạo đơn hoặc sửa giá xe. Giá sau giảm không âm.
+Giao diện tính trạng thái hiệu lực từ trạng thái lưu trong DB và ngày bắt đầu/kết thúc: chưa bắt đầu, đang áp dụng, đã hết hạn hoặc đã ngừng. Không còn tính thử. Mức giảm phải lớn hơn 0, tối đa 2 chữ số thập phân; phần trăm không vượt 100%. Giảm cố định được đối chiếu giá xe áp dụng. Ngày kết thúc phải sau ngày bắt đầu và không vượt `startDate.plusMonths(3)`: đúng 3 tháng được phép, vượt một phút bị từ chối. Phép cộng tháng giữ giờ và chốt ngày cuối tháng khi tháng đích thiếu ngày tương ứng, ví dụ 31/01 đến 30/04. Cả JavaScript và service Java đều kiểm tra, nên gọi API trực tiếp cũng không bỏ qua quy tắc.
 
 ## 4. Báo cáo
 
@@ -87,7 +87,7 @@ Danh sách tài khoản gửi `q`, `roleId`, `statusId`, `page`. Service kiểm 
 | admin-management.js     | Tài khoản, nhân viên, vai trò, khuyến mãi, nhật ký, cấu hình     |
 | sales-reports.js    | Tổng quan, bộ lọc báo cáo, so sánh kỳ và xuất file               |
 | vehicle-catalogue.js | Danh mục, chi tiết và so sánh xe                                 |
-| vehicle-assistant.js        | Gửi câu hỏi và hiển thị tư vấn                                   |
+| js/customer-ai.js           | Chỉ tải tại trang khách hàng để gửi câu hỏi và hiển thị tư vấn    |
 | admin-dashboard.js           | Gắn sự kiện và khởi động trang                                   |
 
 ## 9. Kiểm tra khi chỉnh bài

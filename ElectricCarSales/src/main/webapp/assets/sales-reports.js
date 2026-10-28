@@ -99,64 +99,122 @@ async function readDefaultReport(filters) {
     }
 }
 
-async function loadOverview() {
+function overviewPeriod(preset, today = isoToday()) {
+    const year = today.slice(0, 4);
+    const month = today.slice(5, 7);
+    switch (preset) {
+        case "TODAY":
+            return { from: today, to: today };
+        case "QUARTER": {
+            const start = String(Math.floor((Number(month) - 1) / 3) * 3 + 1).padStart(2, "0");
+            return { from: `${year}-${start}-01`, to: today };
+        }
+        case "YEAR":
+            return { from: `${year}-01-01`, to: today };
+        case "SIX_MONTHS": {
+            const first = new Date(Date.UTC(Number(year), Number(month) - 6, 1));
+            return { from: first.toISOString().slice(0, 10), to: today };
+        }
+        default:
+            return { from: `${year}-${month}-01`, to: today };
+    }
+}
+
+function overviewPeriodForm(period, preset) {
+    const form = el(
+        "form",
+        {
+            class: "overview-period-form",
+            onsubmit: (event) => {
+                event.preventDefault();
+                const input = values(form);
+                task(() => loadOverview({ from: input.from, to: input.to, preset: input.preset }));
+            }
+        },
+        [
+            field("preset", "Kỳ xem", "select", preset, {
+                choices: [
+                    { value: "MONTH", label: "Tháng này" },
+                    { value: "TODAY", label: "Hôm nay" },
+                    { value: "QUARTER", label: "Quý này" },
+                    { value: "SIX_MONTHS", label: "6 tháng gần nhất" },
+                    { value: "YEAR", label: "Năm nay" },
+                    { value: "CUSTOM", label: "Tùy chọn" }
+                ]
+            }),
+            field("from", "Từ ngày", "date", period.from, { required: true, min: "0001-01-01", max: "9998-12-31" }),
+            field("to", "Đến ngày", "date", period.to, { required: true, min: "0001-01-01", max: "9998-12-31" }),
+            el("button", { type: "submit", class: "button", text: "Áp dụng" })
+        ]
+    );
+    form.addEventListener("change", (event) => {
+        const presetInput = $("select[name=preset]", form);
+        if (event.target.name === "preset" && presetInput.value !== "CUSTOM") {
+            const dates = overviewPeriod(presetInput.value);
+            $("input[name=from]", form).value = dates.from;
+            $("input[name=to]", form).value = dates.to;
+        } else if (["from", "to"].includes(event.target.name)) {
+            presetInput.value = "CUSTOM";
+        }
+    });
+    return form;
+}
+
+async function loadOverview(filters = state.overviewFilters) {
     if (state.view !== "overview" || !canReport()) {
         return;
     }
     const token = beginViewLoad("overview");
-    const filters = lastSixMonths();
-    const loaded = await readViewData(token, () => readDefaultReport(filters));
+    const usingDefaultPeriod = !Object.keys(filters).length;
+    const { preset = "CUSTOM", ...periodFilters } = usingDefaultPeriod
+        ? { ...overviewPeriod("MONTH"), preset: "MONTH" }
+        : filters;
+    if (!periodFilters.from || !periodFilters.to || periodFilters.from > periodFilters.to) {
+        throw new Error("Ngày bắt đầu phải bằng hoặc trước ngày kết thúc.");
+    }
+    const loaded = await readViewData(token, () =>
+        usingDefaultPeriod
+            ? readDefaultReport(periodFilters)
+            : api(`reports?${query(periodFilters)}`).then((data) => ({ data, warning: "" }))
+    );
     if (!isViewCurrent(token) || !canReport()) {
         return;
     }
     const { data, warning } = loaded;
-    $("#page-actions").replaceChildren(button("Làm mới", () => task(() => loadOverview()), "button secondary"));
+    state.overviewFilters = { ...data.period, preset: warning ? "CUSTOM" : preset };
     const summary = data.summary;
-    const period = `${calendarDate(data.period.from)} – ${calendarDate(data.period.to)}`;
-    const greeting = el("section", { class: "overview-intro" }, [
-        el("div", {}, [
-            el("p", { class: "eyebrow", text: "KẾT QUẢ KINH DOANH" }),
-            el("h2", { text: `Xin chào, ${state.user.username}.` }),
-            el("p", { text: `Khoảng thời gian tổng quan: ${period}.` })
+    $("#page-actions").replaceChildren(
+        button(
+            "Báo cáo chi tiết ↗",
+            () => {
+                state.reportFilters = { ...data.period };
+                state.reportComparison = "NONE";
+                return showView("reports");
+            },
+            "button secondary small"
+        )
+    );
+    const period = el("section", { class: "overview-period", "aria-label": "Khoảng thời gian tổng quan" }, [
+        el("div", { class: "overview-period-heading" }, [
+            el("div", {}, [
+                el("h2", { text: "Kết quả kinh doanh" }),
+                el("p", { text: `${calendarDate(data.period.from)} – ${calendarDate(data.period.to)}` })
+            ]),
+            el("span", { class: "overview-updated", text: `Cập nhật ${date(data.generatedAt)}` })
         ]),
-        el("p", { class: "overview-updated", text: `Cập nhật ${date(data.generatedAt)}` })
+        overviewPeriodForm(data.period, state.overviewFilters.preset)
     ]);
-    const stats = el("div", { class: "stats-grid" }, [
+    const stats = el("div", { class: "stats-grid overview-stats" }, [
         stat("Doanh thu thực thu", money(summary.revenue), "Thanh toán thành công trong kỳ"),
         stat("Giá trị xe đã bán", money(summary.salesAmount), "Giao dịch đã thanh toán / hoàn tất"),
-        stat("Số xe bán ra", number(summary.vehiclesSold), "Đếm theo xe thực tế"),
+        stat("Số xe bán ra", number(summary.vehiclesSold), "Xe thực tế trong kỳ"),
         stat(
             "Tổng giao dịch",
             number(summary.totalOrders),
             `${number(summary.completedOrders)} hoàn tất · ${number(summary.cancelledOrders)} đã hủy`
         )
     ]);
-    const quickActions = [
-        button(
-            "Xem báo cáo chi tiết",
-            () => {
-                state.reportFilters = { ...data.period };
-                return showView("reports");
-            },
-            "button"
-        ),
-        button("Khám phá danh mục xe", () => showView("catalogue"), "button secondary")
-    ];
-    if (canView("users")) {
-        quickActions.push(button("Quản lý tài khoản", () => showView("users"), "button secondary"));
-    }
-    if (canView("promotions")) {
-        quickActions.push(button("Chương trình khuyến mãi", () => showView("promotions"), "button secondary"));
-    }
-    if (canView("logs")) {
-        quickActions.push(button("Xem nhật ký", () => showView("logs"), "button secondary"));
-    }
-    const shortcuts = card(
-        "Thao tác thường dùng",
-        "Mở nhanh chức năng bạn được phân quyền.",
-        el("div", { class: "card-body quick-actions" }, quickActions)
-    );
-    const charts = el("div", { class: "chart-grid" }, [
+    const charts = el("div", { class: "chart-grid overview-charts" }, [
         card(
             "Dòng tiền theo tháng",
             "Doanh thu thực thu theo ngày nhận tiền.",
@@ -164,42 +222,45 @@ async function loadOverview() {
         ),
         card(
             "Trạng thái giao dịch",
-            "Theo dõi tiến độ xử lý trong kỳ.",
+            "Tiến độ xử lý trong kỳ đã chọn.",
             bars(data.orderStatuses || [], "status", "count")
         )
     ]);
     const recentSales = [...(data.sales || [])]
-        .sort((left, right) => {
-            const leftDate = businessDate(left.orderDate);
-            const rightDate = businessDate(right.orderDate);
-            return (rightDate?.getTime() || 0) - (leftDate?.getTime() || 0);
-        })
+        .sort(
+            (left, right) =>
+                (businessDate(right.orderDate)?.getTime() || 0) - (businessDate(left.orderDate)?.getTime() || 0)
+        )
         .slice(0, 6);
     const recentRows = recentSales.map((sale) => [
         cellTitle(`#${sale.orderId}`, date(sale.orderDate)),
-        cellTitle(sale.customerName, sale.employeeName || "Chưa phân công"),
-        (sale.vehicles || []).map((vehicle) => vehicle.modelName).join(", ") || "Chưa có xe",
-        pill(sale.status),
+        cellTitle(
+            sale.customerName,
+            (sale.vehicles || []).map((vehicle) => vehicle.modelName).join(", ") || "Chưa có xe"
+        ),
         money(sale.totalAmount),
-        money(sale.paidAmount)
+        pill(sale.status)
     ]);
+    const inventoryRows = (data.inventory || []).map((item) => [
+        pill(item.status),
+        number(item.count),
+        money(item.amount)
+    ]);
+    const totalInventory = (data.inventory || []).reduce((sum, item) => sum + (Number(item.count) || 0), 0);
     const inventory = card(
         "Tồn kho hiện tại",
-        "Số xe trong showroom ở thời điểm tải dữ liệu.",
-        bars(data.inventory || [], "status", "count")
+        `${number(totalInventory)} xe · Trạng thái ở thời điểm tải dữ liệu.`,
+        inventoryRows.length ? table(["TRẠNG THÁI", "SỐ XE", "GIÁ TRỊ"], inventoryRows) : empty("Chưa có xe trong kho")
     );
     const recent = card(
         "Giao dịch gần đây",
-        "6 giao dịch mới nhất thuộc khoảng thời gian tổng quan.",
+        "6 giao dịch mới nhất thuộc kỳ đã chọn.",
         recentRows.length
-            ? table(["GIAO DỊCH", "KHÁCH HÀNG", "XE", "TRẠNG THÁI", "GIÁ TRỊ", "ĐÃ THU"], recentRows)
-            : empty("Chưa có giao dịch trong kỳ", "Mở báo cáo để chọn khoảng thời gian khác.")
+            ? table(["GIAO DỊCH", "KHÁCH HÀNG / XE", "GIÁ TRỊ", "TRẠNG THÁI"], recentRows)
+            : empty("Chưa có giao dịch trong kỳ", "Chọn khoảng thời gian khác để xem giao dịch.")
     );
-    $("#content").replaceChildren(greeting, stats, shortcuts, charts, recent, inventory);
-    const warnings = [];
-    if (warning) {
-        warnings.push(warning);
-    }
+    $("#content").replaceChildren(period, stats, charts, el("div", { class: "overview-details" }, [recent, inventory]));
+    const warnings = warning ? [warning] : [];
     if (summary.inconsistentOrders) {
         warnings.push(
             `${number(summary.inconsistentOrders)} giao dịch có chứng từ chưa nhất quán. Mở báo cáo để kiểm tra chi tiết.`
@@ -260,7 +321,7 @@ async function loadReports(filters = state.reportFilters) {
             usingDefaultPeriod
                 ? readDefaultReport(reportFilters)
                 : api(`reports?${query(reportFilters)}`).then((data) => ({ data, warning: "" })),
-            api("ai").catch(() => ({ models: [] })),
+            api("catalogue").catch(() => ({ models: [] })),
             loadCatalogueMetadata()
         ])
     );
@@ -308,8 +369,9 @@ async function loadReports(filters = state.reportFilters) {
     // Danh sách mẫu xe độc lập với số xe đã bán trong kết quả đang lọc.
     const modelMap = new Map();
     for (const model of [...(catalogue.models || []), ...(data.models || [])]) {
-        if (model.modelId != null) {
-            modelMap.set(model.modelId, model);
+        const modelId = model.modelId ?? model.modelID;
+        if (modelId != null) {
+            modelMap.set(modelId, { ...model, modelId });
         }
     }
     const modelChoices = [
