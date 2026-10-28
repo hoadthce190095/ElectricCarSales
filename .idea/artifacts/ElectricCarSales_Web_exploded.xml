@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
-  <artifact type="exploded-war" name="ElectricCarSales:war exploded2">
-    <output-path>$PROJECT_DIR$/out/artifacts/ElectricCarSales_war_exploded2</output-path>
+  <artifact type="exploded-war" name="ElectricCarSales:Web exploded">
+    <output-path>$PROJECT_DIR$/out/artifacts/ElectricCarSales_Web_exploded</output-path>
     <root id="root">
       <element id="directory" name="WEB-INF">
         <element id="directory" name="classes">
@@ -17,7 +17,6 @@
           <element id="library" level="project" name="Maven: org.eclipse.angus:angus-activation:2.0.2" />
         </element>
       </element>
-      <element id="javaee-facet-resources" facet="ElectricCarSales/web/Web2" />
       <element id="javaee-facet-resources" facet="ElectricCarSales/web/Web" />
     </root>
   </artifact>
