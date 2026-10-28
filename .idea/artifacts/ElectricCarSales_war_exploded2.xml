@@ -17,7 +17,6 @@
           <element id="library" level="project" name="Maven: org.eclipse.angus:angus-activation:2.0.2" />
         </element>
       </element>
-      <element id="javaee-facet-resources" facet="ElectricCarSales/web/Web2" />
       <element id="javaee-facet-resources" facet="ElectricCarSales/web/Web" />
     </root>
   </artifact>
