@@ -10,25 +10,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InstallmentPlanDAO extends FinanceDAOBase {
-    private static final String COLUMNS = "PlanID, PlanName, LoanTermMonths, InterestRate, Description";
+    private static final String COLUMNS = "ip.PlanID, ip.CompanyID, ip.PlanName, ip.LoanTermMonths, "
+            + "ip.InterestRate, ip.Description, fc.CompanyName AS CompanyName";
+    private static final String PLAN_FROM = " FROM InstallmentPlans ip JOIN FinancialCompanies fc ON fc.CompanyID = ip.CompanyID ";
 
     public InstallmentPlanDAO() { super(); }
     public InstallmentPlanDAO(Connection transactionConnection) { super(transactionConnection); }
 
     public List<InstallmentPlan> findAll() {
         return withConnection(connection -> list(connection, "SELECT " + COLUMNS
-                + " FROM InstallmentPlans ORDER BY LoanTermMonths, PlanID"));
+                + PLAN_FROM + "ORDER BY ip.CompanyID, ip.LoanTermMonths, ip.PlanID"));
     }
 
     public InstallmentPlan findById(int planId) {
         return withConnection(connection -> one(connection, "SELECT " + COLUMNS
-                + " FROM InstallmentPlans WHERE PlanID = ?", planId));
+                + PLAN_FROM + "WHERE ip.PlanID = ?", planId));
     }
 
     public InstallmentPlan findByName(String planName) {
         return withConnection(connection -> {
             try (PreparedStatement statement = connection.prepareStatement("SELECT " + COLUMNS
-                    + " FROM InstallmentPlans WHERE PlanName = ?")) {
+                    + PLAN_FROM + "WHERE ip.PlanName = ?")) {
                 statement.setString(1, planName);
                 try (ResultSet rs = statement.executeQuery()) { return rs.next() ? map(rs) : null; }
             }
@@ -37,17 +39,18 @@ public class InstallmentPlanDAO extends FinanceDAOBase {
 
     public List<InstallmentPlan> findByLoanTermMonths(int months) {
         return withConnection(connection -> list(connection, "SELECT " + COLUMNS
-                + " FROM InstallmentPlans WHERE LoanTermMonths = ? ORDER BY PlanName", months));
+                + PLAN_FROM + "WHERE ip.LoanTermMonths = ? ORDER BY ip.PlanName", months));
     }
 
     public int insert(InstallmentPlan plan) {
         return withConnection(connection -> {
-            String sql = "INSERT INTO InstallmentPlans (PlanName, LoanTermMonths, InterestRate, Description) VALUES (?, ?, ?, ?)";
+            String sql = "INSERT INTO InstallmentPlans (CompanyID, PlanName, LoanTermMonths, InterestRate, Description) VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement statement = FinanceJDBC.insertStatement(connection, sql)) {
-                statement.setString(1, plan.getPlanName());
-                statement.setInt(2, plan.getLoanTermMonths());
-                statement.setBigDecimal(3, plan.getInterestRate());
-                statement.setString(4, plan.getDescription());
+                statement.setInt(1, plan.getCompanyID());
+                statement.setString(2, plan.getPlanName());
+                statement.setInt(3, plan.getLoanTermMonths());
+                statement.setBigDecimal(4, plan.getInterestRate());
+                statement.setString(5, plan.getDescription());
                 statement.executeUpdate();
                 int id = FinanceJDBC.generatedId(statement);
                 plan.setPlanID(id);
@@ -58,13 +61,14 @@ public class InstallmentPlanDAO extends FinanceDAOBase {
 
     public boolean update(InstallmentPlan plan) {
         return withConnection(connection -> {
-            String sql = "UPDATE InstallmentPlans SET PlanName = ?, LoanTermMonths = ?, InterestRate = ?, Description = ? WHERE PlanID = ?";
+            String sql = "UPDATE InstallmentPlans SET CompanyID = ?, PlanName = ?, LoanTermMonths = ?, InterestRate = ?, Description = ? WHERE PlanID = ?";
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                statement.setString(1, plan.getPlanName());
-                statement.setInt(2, plan.getLoanTermMonths());
-                statement.setBigDecimal(3, plan.getInterestRate());
-                statement.setString(4, plan.getDescription());
-                statement.setInt(5, plan.getPlanID());
+                statement.setInt(1, plan.getCompanyID());
+                statement.setString(2, plan.getPlanName());
+                statement.setInt(3, plan.getLoanTermMonths());
+                statement.setBigDecimal(4, plan.getInterestRate());
+                statement.setString(5, plan.getDescription());
+                statement.setInt(6, plan.getPlanID());
                 return statement.executeUpdate() == 1;
             }
         });
@@ -89,7 +93,10 @@ public class InstallmentPlanDAO extends FinanceDAOBase {
     }
 
     private static InstallmentPlan map(ResultSet rs) throws SQLException {
-        return new InstallmentPlan(rs.getInt("PlanID"), rs.getString("PlanName"),
+        InstallmentPlan plan = new InstallmentPlan(rs.getInt("PlanID"), rs.getString("PlanName"),
                 rs.getInt("LoanTermMonths"), rs.getBigDecimal("InterestRate"), rs.getString("Description"));
+        plan.setCompanyID(rs.getInt("CompanyID"));
+        plan.setCompanyName(rs.getString("CompanyName"));
+        return plan;
     }
 }

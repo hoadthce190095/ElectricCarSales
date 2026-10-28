@@ -1,5 +1,8 @@
 package com.electriccarsales.model;
 
+import java.math.BigDecimal;
+import java.time.LocalTime;
+
 public class FinancialCompany {
     private int companyID;
     private String companyName;
@@ -7,6 +10,10 @@ public class FinancialCompany {
     private String email;
     private String address;
     private String description;
+    private Integer paymentDueDay;
+    private LocalTime paymentCutoffTime;
+    private BigDecimal lateFeeDailyPercent;
+    private BigDecimal earlySettlementFeePercent;
 
     public FinancialCompany() {
     }
@@ -33,4 +40,12 @@ public class FinancialCompany {
     public void setAddress(String address) { this.address = address; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public Integer getPaymentDueDay() { return paymentDueDay; }
+    public void setPaymentDueDay(Integer paymentDueDay) { this.paymentDueDay = paymentDueDay; }
+    public LocalTime getPaymentCutoffTime() { return paymentCutoffTime; }
+    public void setPaymentCutoffTime(LocalTime paymentCutoffTime) { this.paymentCutoffTime = paymentCutoffTime; }
+    public BigDecimal getLateFeeDailyPercent() { return lateFeeDailyPercent; }
+    public void setLateFeeDailyPercent(BigDecimal lateFeeDailyPercent) { this.lateFeeDailyPercent = lateFeeDailyPercent; }
+    public BigDecimal getEarlySettlementFeePercent() { return earlySettlementFeePercent; }
+    public void setEarlySettlementFeePercent(BigDecimal earlySettlementFeePercent) { this.earlySettlementFeePercent = earlySettlementFeePercent; }
 }

@@ -562,21 +562,12 @@ GO
   */
 CREATE TABLE InstallmentPlans(
 	PlanID  INT IDENTITY(1,1) PRIMARY KEY,
+	CompanyID INT NOT NULL,
 	PlanName NVARCHAR(100) NOT NULL UNIQUE,
 	LoanTermMonths INT NOT NULL,
-	InterestRate DECIMAL(5,2) NOT NULL,
+	InterestRate DECIMAL(5,2) NOT NULL, -- Annual nominal rate in percent, e.g. 7.30 means 7.3%/year.
 	Description NVARCHAR(500) NULL
 );
-GO
-
-INSERT INTO InstallmentPlans
-    (PlanName, LoanTermMonths, InterestRate, Description)
-VALUES
-    ('12 Months', 12, 0.00, '12-month installment plan'),
-    ('24 Months', 24, 0.00, '24-month installment plan'),
-    ('36 Months', 36, 0.00, '36-month installment plan'),
-    ('48 Months', 48, 0.00, '48-month installment plan'),
-    ('60 Months', 60, 0.00, '60-month installment plan');
 GO
 
 /* 
@@ -588,8 +579,58 @@ CREATE TABLE FinancialCompanies(
 	Phone VARCHAR(20) NULL,
 	Email VARCHAR(100) NULL,
 	Address NVARCHAR(255) NULL,
-	Description NVARCHAR(500) NULL
+	Description NVARCHAR(500) NULL,
+	PaymentDueDay TINYINT NULL,
+	PaymentCutoffTime TIME(0) NULL,
+	LateFeeDailyPercent DECIMAL(5,2) NULL,
+	EarlySettlementFeePercent DECIMAL(5,2) NULL,
+	CONSTRAINT CK_FinancialCompanies_DueDay CHECK (PaymentDueDay IS NULL OR PaymentDueDay BETWEEN 1 AND 31),
+	CONSTRAINT CK_FinancialCompanies_LateFee CHECK (LateFeeDailyPercent IS NULL OR LateFeeDailyPercent >= 0),
+	CONSTRAINT CK_FinancialCompanies_SettlementFee CHECK (EarlySettlementFeePercent IS NULL OR EarlySettlementFeePercent >= 0)
 );
+GO
+
+INSERT INTO FinancialCompanies
+    (CompanyName, Description, PaymentDueDay, PaymentCutoffTime, LateFeeDailyPercent, EarlySettlementFeePercent)
+VALUES
+    (N'Shinhan Finance', N'Kỳ thanh toán trước 18:00 ngày 5 hằng tháng; phạt trễ hạn theo ngày.', 5, '18:00', 10.00, NULL),
+    (N'Techcombank', N'Kỳ thanh toán trước 18:00 ngày 7 hằng tháng; phạt trễ hạn theo ngày.', 7, '18:00', 3.00, NULL),
+    (N'MB Bank', N'Kỳ thanh toán trước 18:00 ngày 9 hằng tháng; phạt trễ hạn theo ngày.', 9, '18:00', 5.00, NULL),
+    (N'VPBank', N'Kỳ thanh toán trước 18:00 ngày 10 hằng tháng; phạt trễ hạn theo ngày.', 10, '18:00', 7.00, NULL);
+GO
+
+ALTER TABLE InstallmentPlans
+    ADD CONSTRAINT FK_InstallmentPlans_FinancialCompanies
+        FOREIGN KEY (CompanyID) REFERENCES FinancialCompanies(CompanyID);
+GO
+
+/*
+  Demo APR tiers are initial configurable values interpolated across the ranges supplied in the RDS discussion.
+  Replace them with the lender's signed quotation before using these plans for a real customer contract.
+  The flat-rate quote uses: interest = (vehicle price - down payment) * annual APR * term months / 12.
+*/
+INSERT INTO InstallmentPlans (CompanyID, PlanName, LoanTermMonths, InterestRate, Description)
+SELECT fc.CompanyID, p.PlanName, p.LoanTermMonths, p.InterestRate, p.Description
+FROM (VALUES
+    (N'Shinhan Finance', N'Shinhan Finance - 12 tháng', 12, 7.00, N'APR demo; thời hạn 12 tháng.'),
+    (N'Shinhan Finance', N'Shinhan Finance - 24 tháng', 24, 8.25, N'APR demo; thời hạn 24 tháng.'),
+    (N'Shinhan Finance', N'Shinhan Finance - 36 tháng', 36, 9.50, N'APR demo; thời hạn 36 tháng.'),
+    (N'Shinhan Finance', N'Shinhan Finance - 48 tháng', 48, 10.75, N'APR demo; thời hạn 48 tháng.'),
+    (N'Shinhan Finance', N'Shinhan Finance - 60 tháng', 60, 12.00, N'APR demo; thời hạn 60 tháng.'),
+    (N'Techcombank', N'Techcombank - 24 tháng', 24, 5.00, N'APR demo; thời hạn 24 tháng.'),
+    (N'Techcombank', N'Techcombank - 36 tháng', 36, 5.67, N'APR demo; thời hạn 36 tháng.'),
+    (N'Techcombank', N'Techcombank - 48 tháng', 48, 6.33, N'APR demo; thời hạn 48 tháng.'),
+    (N'Techcombank', N'Techcombank - 60 tháng', 60, 7.00, N'APR demo; thời hạn 60 tháng.'),
+    (N'MB Bank', N'MB Bank - 12 tháng', 12, 5.00, N'APR demo; thời hạn 12 tháng.'),
+    (N'MB Bank', N'MB Bank - 24 tháng', 24, 5.88, N'APR demo; thời hạn 24 tháng.'),
+    (N'MB Bank', N'MB Bank - 36 tháng', 36, 6.75, N'APR demo; thời hạn 36 tháng.'),
+    (N'MB Bank', N'MB Bank - 48 tháng', 48, 7.63, N'APR demo; thời hạn 48 tháng.'),
+    (N'MB Bank', N'MB Bank - 60 tháng', 60, 8.50, N'APR demo; thời hạn 60 tháng.'),
+    (N'VPBank', N'VPBank - 36 tháng', 36, 6.00, N'APR demo; thời hạn 36 tháng.'),
+    (N'VPBank', N'VPBank - 48 tháng', 48, 7.75, N'APR demo; thời hạn 48 tháng.'),
+    (N'VPBank', N'VPBank - 60 tháng', 60, 9.50, N'APR demo; thời hạn 60 tháng.')
+) p(CompanyName, PlanName, LoanTermMonths, InterestRate, Description)
+JOIN FinancialCompanies fc ON fc.CompanyName = p.CompanyName;
 GO
 
 /* 
