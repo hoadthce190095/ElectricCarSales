@@ -64,7 +64,6 @@ public class OTPVerificationDAO extends DBContext {
         }
     }
 
-    /** Serializes resends by locking the inactive customer row, then supersedes all older pending codes. */
     public boolean issueRegistrationOtp(int userId, String code) {
         if (conn == null) throw new IllegalStateException("Không kết nối được cơ sở dữ liệu.");
         boolean oldAutoCommit;
