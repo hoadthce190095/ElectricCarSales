@@ -51,7 +51,10 @@ public class LoginController extends HttpServlet {
             String role = roleName.toUpperCase(java.util.Locale.ROOT);
             if ("CUSTOMER".equals(role)) resp.sendRedirect(req.getContextPath() + "/index.jsp");
             else if ("ADMIN".equals(role)) resp.sendRedirect(req.getContextPath() + "/admin.jsp");
-            else resp.sendRedirect(req.getContextPath() + "/staff/dashboard.jsp");
+
+                // ĐÃ SỬA CHỖ NÀY: Xóa đuôi .jsp để gọi vào Servlet DashboardController
+            else resp.sendRedirect(req.getContextPath() + "/staff/dashboard");
+
         } catch (SQLException | RuntimeException e) {
             log("Login failed", e);
             req.setAttribute("error", "Không thể đăng nhập do lỗi kết nối hoặc dữ liệu. Vui lòng thử lại.");
