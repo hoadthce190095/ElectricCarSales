@@ -11,14 +11,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @WebServlet(name = "ComparisonController", urlPatterns = "/comparison")
 public class ComparisonController extends HttpServlet {
@@ -29,12 +24,15 @@ public class ComparisonController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String[] requestedKeys = request.getParameterValues("key");
-        Set<String> comparisonKeys = requestedKeys == null
-                ? Set.of()
-                : Arrays.stream(requestedKeys)
-                        .filter(key -> key != null && !key.isBlank())
-                        .map(String::trim)
-                        .collect(Collectors.toCollection(LinkedHashSet::new));
+        List<String> comparisonKeys = new ArrayList<>();
+
+        if (requestedKeys != null) {
+            for (String key : requestedKeys) {
+                if (key != null && !key.isBlank() && !comparisonKeys.contains(key.trim())) {
+                    comparisonKeys.add(key.trim());
+                }
+            }
+        }
 
         if (comparisonKeys.isEmpty() || comparisonKeys.size() > MAX_COMPARISON_VEHICLES) {
             request.setAttribute("comparisonError", "Vui lòng chọn từ 1 đến 3 xe để so sánh.");
@@ -44,15 +42,13 @@ public class ComparisonController extends HttpServlet {
 
         try {
             List<CatalogVehicle> catalogue = new VehicleCatalogService().getCatalogVehicles();
-            Map<String, CatalogVehicle> vehiclesByKey = catalogue.stream()
-                    .collect(Collectors.toMap(
-                            ComparisonController::comparisonKey,
-                            Function.identity(),
-                            (first, ignored) -> first));
-            List<CatalogVehicle> vehicles = comparisonKeys.stream()
-                    .map(vehiclesByKey::get)
-                    .filter(vehicle -> vehicle != null)
-                    .toList();
+            List<CatalogVehicle> vehicles = new ArrayList<>();
+            for (String key : comparisonKeys) {
+                CatalogVehicle vehicle = findVehicle(catalogue, key);
+                if (vehicle != null) {
+                    vehicles.add(vehicle);
+                }
+            }
 
             if (vehicles.isEmpty()) {
                 request.setAttribute("comparisonError", "Không tìm thấy xe đã chọn. Vui lòng quay lại và chọn lại xe.");
@@ -72,41 +68,62 @@ public class ComparisonController extends HttpServlet {
     }
 
     private static List<Map<String, Object>> createRows(List<CatalogVehicle> vehicles) {
-        List<ComparisonRow> rows = List.of(
-                new ComparisonRow("Phiên bản", CatalogVehicle::specificationVersion),
-                new ComparisonRow("Giá tham khảo", vehicle -> vehicle.priceVnd() == null
-                        ? "Liên hệ" : formatNumber(vehicle.priceVnd(), " ₫")),
-                new ComparisonRow("Quãng đường công bố", vehicle -> formatNumber(vehicle.rangeKm(), " km")),
-                new ComparisonRow("Tiêu chuẩn quãng đường", CatalogVehicle::rangeStandard),
-                new ComparisonRow("Dung lượng pin", vehicle -> formatNumber(vehicle.batteryKwh(), " kWh")),
-                new ComparisonRow("Công suất tối đa", vehicle -> formatNumber(vehicle.maxPowerKw(), " kW")),
-                new ComparisonRow("Số chỗ ngồi", vehicle -> formatNumber(vehicle.seats(), " chỗ")),
-                new ComparisonRow("Kích thước", CatalogVehicle::dimensions),
-                new ComparisonRow("Mâm xe", CatalogVehicle::wheelType),
-                new ComparisonRow("Số túi khí", vehicle -> vehicle.airbagCount() == null || vehicle.airbagCount() <= 0
-                        ? null : vehicle.airbagCount().toString()),
-                new ComparisonRow("Tốc độ tối đa", vehicle -> formatNumber(vehicle.maxSpeedKmh(), " km/h")),
-                new ComparisonRow("Thời gian sạc nhanh", vehicle -> formatNumber(vehicle.rapidChargeMinutes(), " phút")));
+        String[] labels = {
+                "Phiên bản", "Giá tham khảo", "Quãng đường công bố", "Tiêu chuẩn quãng đường",
+                "Dung lượng pin", "Công suất tối đa", "Số chỗ ngồi", "Kích thước", "Mâm xe",
+                "Số túi khí", "Tốc độ tối đa", "Thời gian sạc nhanh"
+        };
+        List<Map<String, Object>> result = new ArrayList<>();
 
-        List<Map<String, Object>> result = new ArrayList<>(rows.size());
-        for (ComparisonRow row : rows) {
-            List<String> values = vehicles.stream()
-                    .map(row.value())
-                    .map(ComparisonController::valueOrPending)
-                    .toList();
-            result.add(Map.of("label", row.label(), "values", values));
+        for (int row = 0; row < labels.length; row++) {
+            List<String> values = new ArrayList<>();
+            for (CatalogVehicle vehicle : vehicles) {
+                values.add(valueOrPending(getRowValue(labels[row], vehicle)));
+            }
+            result.add(Map.of("label", labels[row], "values", values));
         }
         return result;
     }
 
+    private static CatalogVehicle findVehicle(List<CatalogVehicle> catalogue, String key) {
+        for (CatalogVehicle vehicle : catalogue) {
+            if (comparisonKey(vehicle).equals(key)) {
+                return vehicle;
+            }
+        }
+        return null;
+    }
+
+    private static String getRowValue(String label, CatalogVehicle vehicle) {
+        return switch (label) {
+            case "Phiên bản" -> vehicle.specificationVersion();
+            case "Giá tham khảo" -> vehicle.priceVnd() == null
+                    ? "Liên hệ" : formatNumber(vehicle.priceVnd(), " ₫");
+            case "Quãng đường công bố" -> formatNumber(vehicle.rangeKm(), " km");
+            case "Tiêu chuẩn quãng đường" -> vehicle.rangeStandard();
+            case "Dung lượng pin" -> formatNumber(vehicle.batteryKwh(), " kWh");
+            case "Công suất tối đa" -> formatNumber(vehicle.maxPowerKw(), " kW");
+            case "Số chỗ ngồi" -> formatNumber(vehicle.seats(), " chỗ");
+            case "Kích thước" -> vehicle.dimensions();
+            case "Mâm xe" -> vehicle.wheelType();
+            case "Số túi khí" -> vehicle.airbagCount() == null || vehicle.airbagCount() <= 0
+                    ? null : vehicle.airbagCount().toString();
+            case "Tốc độ tối đa" -> formatNumber(vehicle.maxSpeedKmh(), " km/h");
+            case "Thời gian sạc nhanh" -> formatNumber(vehicle.rapidChargeMinutes(), " phút");
+            default -> "Đang cập nhật";
+        };
+    }
+
     private static List<Map<String, Object>> createColumns(List<CatalogVehicle> vehicles) {
-        return vehicles.stream()
-                .map(vehicle -> Map.<String, Object>of(
-                        "modelID", vehicle.modelID(),
-                        "modelName", valueOrPending(vehicle.modelName()),
-                        "specificationVersion", valueOrPending(vehicle.specificationVersion()),
-                        "imageUrl", vehicle.imageUrl() == null ? "" : vehicle.imageUrl()))
-                .toList();
+        List<Map<String, Object>> columns = new ArrayList<>();
+        for (CatalogVehicle vehicle : vehicles) {
+            columns.add(Map.of(
+                    "modelID", vehicle.modelID(),
+                    "modelName", valueOrPending(vehicle.modelName()),
+                    "specificationVersion", valueOrPending(vehicle.specificationVersion()),
+                    "imageUrl", vehicle.imageUrl() == null ? "" : vehicle.imageUrl()));
+        }
+        return columns;
     }
 
     private static String comparisonKey(CatalogVehicle vehicle) {
@@ -125,8 +142,5 @@ public class ComparisonController extends HttpServlet {
 
     private static String valueOrPending(String value) {
         return value == null || value.isBlank() ? "Đang cập nhật" : value;
-    }
-
-    private record ComparisonRow(String label, Function<CatalogVehicle, String> value) {
     }
 }

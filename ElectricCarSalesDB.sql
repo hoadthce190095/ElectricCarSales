@@ -1348,3 +1348,33 @@ BEGIN CATCH
 	   THROW;
 END CATCH;
 GO
+
+/* =========================================================
+   DEMO CUSTOMER PROMOTION
+   ========================================================= */
+DECLARE @PromotionID INT;
+DECLARE @PromotionStart DATETIME2 = SYSDATETIME();
+
+INSERT INTO dbo.Promotions (
+    PromotionName, Description, DiscountType, DiscountValue,
+    StartDate, EndDate, Status
+)
+VALUES (
+    N'[DEMO] Ưu đãi minh họa - giảm 5%',
+    N'Dữ liệu minh họa giao diện; không phải chương trình khuyến mãi thực tế.',
+    'PERCENTAGE',
+    5,
+    @PromotionStart,
+    DATEADD(DAY, 30, @PromotionStart),
+    'ACTIVE'
+);
+
+SET @PromotionID = SCOPE_IDENTITY();
+
+INSERT INTO dbo.PromotionCars (PromotionID, ModelID)
+SELECT @PromotionID, model.ModelID
+FROM dbo.CarModels model
+INNER JOIN dbo.CarLines line ON line.CarLineID = model.CarLineID
+INNER JOIN dbo.Brands brand ON brand.BrandID = line.BrandID
+WHERE brand.BrandName = N'VinFast';
+GO

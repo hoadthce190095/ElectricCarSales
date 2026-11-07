@@ -1,33 +1,39 @@
 package com.electriccarsales.service;
 
-import com.electriccarsales.dao.*;
-import com.electriccarsales.model.*;
+import com.electriccarsales.dao.BrandDAO;
+import com.electriccarsales.dao.CarImageDAO;
+import com.electriccarsales.dao.CarLineDAO;
+import com.electriccarsales.dao.CarModelDAO;
+import com.electriccarsales.dao.CarVersionDAO;
+import com.electriccarsales.dao.CatalogVehicleDAO;
+import com.electriccarsales.dao.ColorDAO;
+import com.electriccarsales.dao.ModelColorDAO;
+import com.electriccarsales.dao.SpecificationDAO;
+import com.electriccarsales.model.Brand;
+import com.electriccarsales.model.CarImage;
+import com.electriccarsales.model.CarLine;
+import com.electriccarsales.model.CarModel;
+import com.electriccarsales.model.CarVersion;
+import com.electriccarsales.model.CatalogVehicle;
+import com.electriccarsales.model.Color;
+import com.electriccarsales.model.ModelColor;
+import com.electriccarsales.model.Specification;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class VehicleCatalogService {
-    private BrandDAO brandDAO;
-    private CarLineDAO carLineDAO;
-    private CarModelDAO carModelDAO;
-    private CarVersionDAO carVersionDAO;
-    private SpecificationDAO specificationDAO;
-    private ColorDAO colorDAO;
-    private ModelColorDAO modelColorDAO;
-    private CarImageDAO carImageDAO;
-    private CatalogVehicleDAO catalogVehicleDAO;
-
-    public VehicleCatalogService() {
-        brandDAO = new BrandDAO();
-        carLineDAO = new CarLineDAO();
-        carModelDAO = new CarModelDAO();
-        carVersionDAO = new CarVersionDAO();
-        specificationDAO = new SpecificationDAO();
-        colorDAO = new ColorDAO();
-        modelColorDAO = new ModelColorDAO();
-        carImageDAO = new CarImageDAO();
-        catalogVehicleDAO = new CatalogVehicleDAO();
-    }
+    private final BrandDAO brandDAO = new BrandDAO();
+    private final CarLineDAO carLineDAO = new CarLineDAO();
+    private final CarModelDAO carModelDAO = new CarModelDAO();
+    private final CarVersionDAO carVersionDAO = new CarVersionDAO();
+    private final SpecificationDAO specificationDAO = new SpecificationDAO();
+    private final ColorDAO colorDAO = new ColorDAO();
+    private final ModelColorDAO modelColorDAO = new ModelColorDAO();
+    private final CarImageDAO carImageDAO = new CarImageDAO();
+    private final CatalogVehicleDAO catalogVehicleDAO = new CatalogVehicleDAO();
 
     public List<Brand> getAllBrands() {
         return brandDAO.getAll();
@@ -72,7 +78,6 @@ public class VehicleCatalogService {
     }
 
 
-    // Lấy thông tin chi tiết một mẫu xe theo ModelID
     public CarModel getCarModelById(int modelID) {
         return carModelDAO.getById(modelID);
     }
@@ -86,33 +91,31 @@ public class VehicleCatalogService {
             return null;
         }
 
-        String requestedLine = normalizeName(carLineName);
-        List<Integer> matchingLineIds = carLineDAO.getAll().stream()
-                .filter(line -> normalizeName(line.getCarLineName()).equals(requestedLine))
-                .map(CarLine::getCarLineID)
-                .toList();
-        if (matchingLineIds.isEmpty()) {
-            return null;
+        List<Integer> matchingLineIds = new ArrayList<>();
+        for (CarLine line : carLineDAO.getAll()) {
+            if (normalizeName(line.getCarLineName()).equals(normalizeName(carLineName))) {
+                matchingLineIds.add(line.getCarLineID());
+            }
         }
 
-        List<CarModel> matchingModels = carModelDAO.getAll().stream()
-                .filter(car -> matchingLineIds.contains(car.getCarLineID()))
-                .toList();
+        List<CarModel> matchingModels = new ArrayList<>();
+        for (CarModel car : carModelDAO.getAll()) {
+            if (matchingLineIds.contains(car.getCarLineID())) {
+                matchingModels.add(car);
+            }
+        }
         return matchingModels.size() == 1 ? matchingModels.get(0) : null;
     }
 
     private String normalizeName(String value) {
-        return value.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", "");
+        return value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
     }
 
-    // Lấy thông số kỹ thuật theo ModelID
     public Specification getSpecificationByModelId(int modelID) {
         return specificationDAO.getByModelId(modelID);
     }
 
-    // Lấy danh sách hình ảnh theo ModelID
     public List<CarImage> getImagesByModelId(int modelID) {
         return carImageDAO.getByModelId(modelID);
     }
-
 }

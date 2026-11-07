@@ -15,7 +15,7 @@ boolean customerView = "customer".equals(request.getParameter("view"));
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/home.css?v=8">
-    <script src="<%= request.getContextPath() %>/assets/js/home.js?v=21" defer></script>
+    <script src="<%= request.getContextPath() %>/assets/js/home.js?v=22" defer></script>
 </head>
 <body class="home-page">
 <header class="site-header">
@@ -104,9 +104,6 @@ boolean customerView = "customer".equals(request.getParameter("view"));
 
             <div class="active-filters" id="active-filters" aria-live="polite"></div>
      <div class="vehicle-grid" id="vehicle-grid"
-          data-server-search-applied="<c:out value='${serverSearchApplied}'/>"
-          data-server-search-model-ids="<c:out value='${serverSearchModelIds}'/>"
-          data-server-search-keyword="<c:out value='${searchKeyword}'/>"
           aria-live="polite" aria-busy="false" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
          <c:choose>
              <c:when test="${not empty carList}">

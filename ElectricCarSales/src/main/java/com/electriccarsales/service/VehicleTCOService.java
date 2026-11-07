@@ -6,13 +6,9 @@ import com.electriccarsales.model.VehicleTCO;
 import java.util.List;
 
 public class VehicleTCOService {
-    private VehicleTCODAO vehicleTCODAO;
+    private final VehicleTCODAO vehicleTCODAO = new VehicleTCODAO();
 
-    public VehicleTCOService() {
-        vehicleTCODAO = new VehicleTCODAO();
-    }
-
-    public List<VehicleTCO> getAllVehicleTCO(){
+    public List<VehicleTCO> getAllVehicleTCO() {
         return vehicleTCODAO.getAll();
     }
 }

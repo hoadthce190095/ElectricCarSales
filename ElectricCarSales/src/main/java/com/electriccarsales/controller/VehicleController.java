@@ -1,8 +1,9 @@
 package com.electriccarsales.controller;
 
-import com.electriccarsales.model.CatalogVehicle;
-import com.electriccarsales.model.CarModel;
 import com.electriccarsales.model.CarImage;
+import com.electriccarsales.model.CarModel;
+import com.electriccarsales.model.CatalogVehicle;
+import com.electriccarsales.model.PromotionOffer;
 import com.electriccarsales.service.VehicleCatalogService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -11,11 +12,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 @WebServlet(name = "VehicleController", urlPatterns = {"/cars", "/api/catalogue"})
 public class VehicleController extends HttpServlet {
@@ -24,103 +27,164 @@ public class VehicleController extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         if ("/api/catalogue".equals(request.getServletPath())) {
-            doGetCatalogue(request, response);
+            showCatalogue(request, response);
             return;
         }
 
+        showCarList(request, response);
+    }
+
+    private void showCarList(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         VehicleCatalogService service = new VehicleCatalogService();
+        List<CarModel> cars = service.getAllCarModels();
+        Map<Integer, String> imagesByCarId = new HashMap<>();
 
-
-        List<CarModel> carList = service.getAllCarModels();
-
-
-        Map<Integer, String> carImagesMap = new HashMap<>();
-        for (CarModel car : carList) {
+        for (CarModel car : cars) {
             List<CarImage> images = service.getImagesByModelId(car.getModelID());
-            if (images != null && !images.isEmpty()) {
-                carImagesMap.put(car.getModelID(), images.get(0).getImageURL());
-            } else {
-                carImagesMap.put(car.getModelID(), "assets/images/default-car.png");
-            }
+            String imageUrl = images == null || images.isEmpty()
+                    ? "assets/images/default-car.png"
+                    : images.get(0).getImageURL();
+            imagesByCarId.put(car.getModelID(), imageUrl);
         }
 
-
-        request.setAttribute("carList", carList);
-        request.setAttribute("carImagesMap", carImagesMap);
-
-
+        request.setAttribute("carList", cars);
+        request.setAttribute("carImagesMap", imagesByCarId);
         request.getRequestDispatcher("/index.jsp").forward(request, response);
     }
 
-    private void doGetCatalogue(HttpServletRequest request, HttpServletResponse response)
+    private void showCatalogue(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json");
 
         try {
             List<CatalogVehicle> vehicles = new VehicleCatalogService().getCatalogVehicles();
-            String[] requestedKeys = request.getParameterValues("key");
             String modelId = request.getParameter("modelId");
 
             if (modelId != null && !modelId.isBlank()) {
-                int parsedModelId;
-                try {
-                    parsedModelId = Integer.parseInt(modelId);
-                } catch (NumberFormatException e) {
+                int parsedModelId = parseModelId(modelId);
+                if (parsedModelId < 0) {
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mã xe không hợp lệ.");
                     return;
                 }
-                if (parsedModelId <= 0) {
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mã xe không hợp lệ.");
-                    return;
+                List<CatalogVehicle> matchingVehicles = new ArrayList<>();
+                for (CatalogVehicle vehicle : vehicles) {
+                    if (vehicle.modelID() == parsedModelId) {
+                        matchingVehicles.add(vehicle);
+                    }
                 }
-                vehicles = vehicles.stream().filter(vehicle -> vehicle.modelID() == parsedModelId).toList();
-            } else if (requestedKeys != null) {
-                List<String> keys = Arrays.asList(requestedKeys);
-                vehicles = vehicles.stream().filter(vehicle -> keys.contains(comparisonKey(vehicle))).toList();
+                vehicles = matchingVehicles;
+            } else {
+                String[] requestedKeys = request.getParameterValues("key");
+                if (requestedKeys != null) {
+                    Set<String> keys = new HashSet<>(Arrays.asList(requestedKeys));
+                    List<CatalogVehicle> matchingVehicles = new ArrayList<>();
+                    for (CatalogVehicle vehicle : vehicles) {
+                        if (keys.contains(comparisonKey(vehicle))) {
+                            matchingVehicles.add(vehicle);
+                        }
+                    }
+                    vehicles = matchingVehicles;
+                }
             }
 
-            String payload = vehicles.stream()
-                    .map(VehicleController::toJson)
-                    .collect(Collectors.joining(",", "{\"note\":" +
-                            jsonString("Thông tin và thông số xe được lấy từ danh mục trong cơ sở dữ liệu.") +
-                            ",\"models\":[", "]}"));
-            response.getWriter().write(payload);
+            StringBuilder modelsJson = new StringBuilder();
+            for (CatalogVehicle vehicle : vehicles) {
+                if (modelsJson.length() > 0) {
+                    modelsJson.append(",");
+                }
+                modelsJson.append(toJson(vehicle));
+            }
+            String note = jsonString("Thông tin và thông số xe được lấy từ danh mục trong cơ sở dữ liệu.");
+            response.getWriter().write("{\"note\":" + note + ",\"models\":[" + modelsJson + "]}");
         } catch (RuntimeException e) {
             log("Không thể tải danh mục xe từ cơ sở dữ liệu.", e);
             throw new ServletException("Không thể tải danh mục xe.", e);
         }
     }
 
+    private int parseModelId(String value) {
+        try {
+            int modelId = Integer.parseInt(value);
+            return modelId > 0 ? modelId : -1;
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
     private static String toJson(CatalogVehicle vehicle) {
+        StringBuilder json = new StringBuilder("{");
+        json.append("\"modelID\":").append(vehicle.modelID())
+                .append(",\"versionID\":").append(vehicle.versionID())
+                .append(",\"comparisonKey\":").append(jsonString(comparisonKey(vehicle)))
+                .append(",\"modelName\":").append(jsonString(vehicle.modelName()))
+                .append(",\"carLine\":").append(jsonString(vehicle.carLine()))
+                .append(",\"specificationVersion\":").append(jsonString(vehicle.specificationVersion()))
+                .append(",\"priceVnd\":").append(jsonNumber(vehicle.priceVnd()))
+                .append(",\"dimensions\":").append(jsonString(vehicle.dimensions()))
+                .append(",\"batteryKwh\":").append(jsonNumber(vehicle.batteryKwh()))
+                .append(",\"rangeKm\":").append(jsonNumber(vehicle.rangeKm()))
+                .append(",\"maxPowerKw\":").append(jsonNumber(vehicle.maxPowerKw()))
+                .append(",\"seats\":").append(jsonNumber(vehicle.seats()))
+                .append(",\"rangeStandard\":").append(jsonString(vehicle.rangeStandard()))
+                .append(",\"sourceUrl\":").append(jsonString(vehicle.sourceUrl()))
+                .append(",\"priceSourceUrl\":").append(jsonString(vehicle.priceSourceUrl()))
+                .append(",\"imageUrl\":").append(jsonString(vehicle.imageUrl()));
+        json.append(",\"colors\":").append(toJsonArray(vehicle.colors()));
+        json.append(",\"colorImages\":").append(toJsonObject(vehicle.colorImages()));
+        json.append(",\"wheelType\":").append(jsonString(vehicle.wheelType()))
+                .append(",\"airbagCount\":").append(jsonNumber(vehicle.airbagCount()))
+                .append(",\"maxSpeedKmh\":").append(jsonNumber(vehicle.maxSpeedKmh()))
+                .append(",\"rapidChargeMinutes\":").append(jsonNumber(vehicle.rapidChargeMinutes()))
+                .append(",\"priceNote\":").append(jsonString(vehicle.priceNote()))
+                .append(",\"specificationNote\":").append(jsonString(vehicle.specificationNote()));
+
+        json.append(",\"promotions\":[");
+        for (int i = 0; i < vehicle.promotions().size(); i++) {
+            if (i > 0) {
+                json.append(",");
+            }
+            json.append(promotionToJson(vehicle.promotions().get(i)));
+        }
+        return json.append("]}").toString();
+    }
+
+    private static String toJsonArray(List<String> values) {
+        StringBuilder json = new StringBuilder("[");
+        for (int i = 0; i < values.size(); i++) {
+            if (i > 0) {
+                json.append(",");
+            }
+            json.append(jsonString(values.get(i)));
+        }
+        return json.append("]").toString();
+    }
+
+    private static String toJsonObject(Map<String, String> values) {
+        StringBuilder json = new StringBuilder("{");
+        boolean first = true;
+        for (Map.Entry<String, String> entry : values.entrySet()) {
+            if (!first) {
+                json.append(",");
+            }
+            json.append(jsonString(entry.getKey()))
+                    .append(":")
+                    .append(jsonString(entry.getValue()));
+            first = false;
+        }
+        return json.append("}").toString();
+    }
+
+    private static String promotionToJson(PromotionOffer promotion) {
         return "{"
-                + "\"modelID\":" + vehicle.modelID()
-                + ",\"versionID\":" + vehicle.versionID()
-                + ",\"comparisonKey\":" + jsonString(comparisonKey(vehicle))
-                + ",\"modelName\":" + jsonString(vehicle.modelName())
-                + ",\"carLine\":" + jsonString(vehicle.carLine())
-                + ",\"specificationVersion\":" + jsonString(vehicle.specificationVersion())
-                + ",\"priceVnd\":" + jsonNumber(vehicle.priceVnd())
-                + ",\"dimensions\":" + jsonString(vehicle.dimensions())
-                + ",\"batteryKwh\":" + jsonNumber(vehicle.batteryKwh())
-                + ",\"rangeKm\":" + jsonNumber(vehicle.rangeKm())
-                + ",\"maxPowerKw\":" + jsonNumber(vehicle.maxPowerKw())
-                + ",\"seats\":" + jsonNumber(vehicle.seats())
-                + ",\"rangeStandard\":" + jsonString(vehicle.rangeStandard())
-                + ",\"sourceUrl\":" + jsonString(vehicle.sourceUrl())
-                + ",\"priceSourceUrl\":" + jsonString(vehicle.priceSourceUrl())
-                + ",\"imageUrl\":" + jsonString(vehicle.imageUrl())
-                + ",\"colors\":" + vehicle.colors().stream().map(VehicleController::jsonString)
-                        .collect(Collectors.joining(",", "[", "]"))
-                + ",\"colorImages\":" + vehicle.colorImages().entrySet().stream()
-                        .map(entry -> jsonString(entry.getKey()) + ":" + jsonString(entry.getValue()))
-                        .collect(Collectors.joining(",", "{", "}"))
-                + ",\"wheelType\":" + jsonString(vehicle.wheelType())
-                + ",\"airbagCount\":" + jsonNumber(vehicle.airbagCount())
-                + ",\"maxSpeedKmh\":" + jsonNumber(vehicle.maxSpeedKmh())
-                + ",\"rapidChargeMinutes\":" + jsonNumber(vehicle.rapidChargeMinutes())
-                + ",\"priceNote\":" + jsonString(vehicle.priceNote())
-                + ",\"specificationNote\":" + jsonString(vehicle.specificationNote())
+                + "\"promotionID\":" + promotion.promotionID()
+                + ",\"promotionName\":" + jsonString(promotion.promotionName())
+                + ",\"description\":" + jsonString(promotion.description())
+                + ",\"discountType\":" + jsonString(promotion.discountType())
+                + ",\"discountValue\":" + jsonNumber(promotion.discountValue())
+                + ",\"endDate\":" + jsonString(promotion.endDate() == null
+                        ? null : promotion.endDate().toString())
                 + "}";
     }
 

@@ -8,20 +8,14 @@ import com.electriccarsales.model.ComparisonSession;
 import java.util.List;
 
 public class ComparisonService {
-    private ComparisonSessionDAO comparisonSessionDAO;
-    private ComparisonItemDAO comparisonItemDAO;
+    private final ComparisonSessionDAO sessionDAO = new ComparisonSessionDAO();
+    private final ComparisonItemDAO itemDAO = new ComparisonItemDAO();
 
-    public ComparisonService (){
-    comparisonSessionDAO = new ComparisonSessionDAO();
-    comparisonItemDAO = new ComparisonItemDAO();
+    public List<ComparisonSession> getAllComparisonSessions() {
+        return sessionDAO.getAll();
     }
 
-    public List<ComparisonSession> getAllComparisonSessions(){
-        return comparisonSessionDAO.getAll();
+    public List<ComparisonItem> getAllComparisonItems() {
+        return itemDAO.getAll();
     }
-
-    public List<ComparisonItem> getAllComparisonItems(){
-        return comparisonItemDAO.getAll();
-    }
-
 }

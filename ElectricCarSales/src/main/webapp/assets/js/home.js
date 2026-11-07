@@ -17,11 +17,6 @@
     const compareNotice = document.getElementById("compare-notice");
     const selections = new Set();
     const compareSelectionStorageKey = "electriccarsale.compareSelections";
-    const serverSearchApplied = grid.dataset.serverSearchApplied === "true";
-    const serverSearchKeyword = grid.dataset.serverSearchKeyword;
-    const serverSearchModelIds = new Set(
-        grid.dataset.serverSearchModelIds.split(",").filter(Boolean)
-    );
     let models = [];
     let catalogueMetadata = {};
     let compareNoticeTimer;
@@ -90,12 +85,43 @@
         const classes = { "VF 3": "Xe đô thị", "VF 5": "SUV đô thị", "VF 6": "SUV cỡ B", "VF 7": "SUV cỡ C", "VF 8": "SUV cỡ D", "VF 9": "SUV cỡ E" };
         return classes[line] || "Xe điện VinFast";
     };
+    const promotionValue = (promotion) => {
+        const value = number(promotion.discountValue);
+        if (value === null) return "";
+        return promotion.discountType === "PERCENTAGE"
+            ? `${new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(value)}%`
+            : `${new Intl.NumberFormat("vi-VN").format(value)} ₫`;
+    };
     const make = (tag, classValue, value) => {
         const element = document.createElement(tag);
         if (classValue) element.className = classValue;
         if (value !== undefined) element.textContent = value;
         return element;
     };
+
+    function promotionList(model) {
+        if (!Array.isArray(model.promotions) || model.promotions.length === 0) return null;
+        const section = make("div", "vehicle-promotions");
+        section.append(make("span", "promotion-heading", "Ưu đãi đang áp dụng"));
+        model.promotions.forEach((promotion) => {
+            const item = make("div", "promotion-item");
+            const title = make("strong", "promotion-title", text(promotion.promotionName));
+            const value = promotionValue(promotion);
+            if (value) item.append(make("span", "promotion-value", value));
+            item.prepend(title);
+            if (text(promotion.description)) {
+                item.append(make("span", "promotion-description", text(promotion.description)));
+            }
+            if (promotion.endDate) {
+                const endDate = new Date(promotion.endDate);
+                if (!Number.isNaN(endDate.getTime())) {
+                    item.append(make("span", "promotion-end-date", `Đến ${endDate.toLocaleDateString("vi-VN")}`));
+                }
+            }
+            section.append(item);
+        });
+        return section;
+    }
 
     function populateFilters() {
         const lines = [...new Set(models.map(lineName).filter(Boolean))];
@@ -111,15 +137,12 @@
     }
 
     function matches(model) {
-        if (serverSearchApplied && !serverSearchModelIds.has(String(model.modelID))) return false;
         const searchText = normalizeSearch(search.value);
         const fields = [model.modelName, model.carLine, model.specificationVersion, model.dimensions, ...(Array.isArray(model.colors) ? model.colors : [])].map(normalizeSearch);
-        const shouldMatchSearchText = !serverSearchApplied ||
-            searchText !== normalizeSearch(serverSearchKeyword);
         const amount = number(model.priceVnd);
         const maxPriceMillions = number(priceFilter.value);
         const minimumRange = number(rangeFilter.value);
-        return (!searchText || !shouldMatchSearchText || fields.some((value) => value.includes(searchText)))
+        return (!searchText || fields.some((value) => value.includes(searchText)))
             && (!modelFilter.value || lineName(model) === modelFilter.value)
             && (maxPriceMillions === null || amount === null || amount <= maxPriceMillions * 1_000_000)
             && (minimumRange === null || number(model.rangeKm) === null || Number(model.rangeKm) >= minimumRange)
@@ -175,6 +198,7 @@
         });
         const priceLabel = make("span", "vehicle-price-label", "Giá tham khảo · đã gồm pin");
         const priceValue = make("strong", "vehicle-price", price(model.priceVnd));
+        const promotions = promotionList(model);
         const footer = make("div", "vehicle-card-footer");
         const sourceUrl = safeOfficialUrl(model.priceSourceUrl);
         if (sourceUrl) {
@@ -191,7 +215,9 @@
         compareButton.setAttribute("aria-pressed", String(selected));
         compareButton.addEventListener("click", () => toggleCompare(id, model));
         footer.append(compareButton);
-        body.append(title, version, specs, priceLabel, priceValue, footer);
+        body.append(title, version, specs, priceLabel, priceValue);
+        if (promotions) body.append(promotions);
+        body.append(footer);
         article.append(photo, body);
         return article;
     }
@@ -275,7 +301,8 @@
     }
 
     function resetFilters() {
-        if (serverSearchApplied) {
+        if (window.location.pathname.endsWith("/cars/search")
+            || window.location.pathname.endsWith("/cars-search")) {
             window.location.href = `${contextPath}/index.jsp#models`;
             return;
         }

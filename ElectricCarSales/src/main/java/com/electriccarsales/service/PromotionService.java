@@ -6,14 +6,9 @@ import com.electriccarsales.model.Promotion;
 import java.util.List;
 
 public class PromotionService {
-    private PromotionDAO promotionDAO;
+    private final PromotionDAO promotionDAO = new PromotionDAO();
 
-    public PromotionService() {
-        promotionDAO = new PromotionDAO();
-    }
-
-    public List<Promotion> getAllPromotions(){
+    public List<Promotion> getAllPromotions() {
         return promotionDAO.getAll();
     }
-
 }

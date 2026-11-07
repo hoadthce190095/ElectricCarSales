@@ -1,6 +1,7 @@
 package com.electriccarsales.dao;
 
 import com.electriccarsales.model.CatalogVehicle;
+import com.electriccarsales.model.PromotionOffer;
 import util.DBContext;
 
 import java.sql.PreparedStatement;
@@ -69,6 +70,7 @@ public class CatalogVehicleDAO extends DBContext {
         }
 
         loadColors(vehicles);
+        loadPromotions(vehicles);
         return vehicles.values().stream().map(CatalogVehicleBuilder::build).toList();
     }
 
@@ -109,6 +111,51 @@ public class CatalogVehicleDAO extends DBContext {
         }
     }
 
+    private void loadPromotions(Map<Integer, CatalogVehicleBuilder> vehicles) {
+        if (vehicles.isEmpty()) {
+            return;
+        }
+
+        String sql = """
+                SELECT pc.ModelID, p.PromotionID, p.PromotionName, p.Description,
+                       p.DiscountType, p.DiscountValue, p.EndDate
+                FROM PromotionCars pc
+                INNER JOIN Promotions p ON p.PromotionID = pc.PromotionID
+                WHERE UPPER(LTRIM(RTRIM(p.Status))) = 'ACTIVE'
+                  AND p.StartDate <= SYSDATETIME()
+                  AND p.EndDate >= SYSDATETIME()
+                ORDER BY p.EndDate, p.PromotionName
+                """;
+        Map<Integer, List<CatalogVehicleBuilder>> vehiclesByModel = new LinkedHashMap<>();
+        for (CatalogVehicleBuilder vehicle : vehicles.values()) {
+            vehiclesByModel.computeIfAbsent(vehicle.modelID, ignored -> new ArrayList<>()).add(vehicle);
+        }
+
+        try (PreparedStatement statement = conn.prepareStatement(sql);
+             ResultSet results = statement.executeQuery()) {
+            while (results.next()) {
+                List<CatalogVehicleBuilder> modelVehicles = vehiclesByModel.get(results.getInt("ModelID"));
+                if (modelVehicles == null) {
+                    continue;
+                }
+
+                java.sql.Timestamp endTimestamp = results.getTimestamp("EndDate");
+                PromotionOffer promotion = new PromotionOffer(
+                        results.getInt("PromotionID"),
+                        results.getString("PromotionName"),
+                        results.getString("Description"),
+                        results.getString("DiscountType"),
+                        results.getBigDecimal("DiscountValue"),
+                        endTimestamp == null ? null : endTimestamp.toLocalDateTime());
+                for (CatalogVehicleBuilder vehicle : modelVehicles) {
+                    vehicle.promotions.add(promotion);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error in CatalogVehicleDAO.loadPromotions(): " + e.getMessage(), e);
+        }
+    }
+
     private Integer getNullableInteger(ResultSet results, String column) throws SQLException {
         int value = results.getInt(column);
         return results.wasNull() ? null : value;
@@ -138,6 +185,7 @@ public class CatalogVehicleDAO extends DBContext {
         private final String specificationNote;
         private final List<String> colors = new ArrayList<>();
         private final Map<String, String> colorImages = new LinkedHashMap<>();
+        private final List<PromotionOffer> promotions = new ArrayList<>();
 
         private CatalogVehicleBuilder(int modelID, int versionID, String modelName, String carLine,
                                       String specificationVersion, java.math.BigDecimal priceVnd,
@@ -174,7 +222,8 @@ public class CatalogVehicleDAO extends DBContext {
             return new CatalogVehicle(modelID, versionID, modelName, carLine, specificationVersion,
                     priceVnd, dimensions, batteryKwh, rangeKm, maxPowerKw, seats, rangeStandard,
                     sourceUrl, priceSourceUrl, imageUrl, List.copyOf(colors), Map.copyOf(colorImages),
-                    wheelType, airbagCount, maxSpeedKmh, rapidChargeMinutes, priceNote, specificationNote);
+                    wheelType, airbagCount, maxSpeedKmh, rapidChargeMinutes, priceNote, specificationNote,
+                    List.copyOf(promotions));
         }
     }
 }

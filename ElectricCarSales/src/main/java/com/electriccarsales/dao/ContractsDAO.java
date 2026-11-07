@@ -1,23 +1,21 @@
 package com.electriccarsales.dao;
 
 import com.electriccarsales.model.Contract;
-import java.sql.Connection;
+import util.DBContext;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.electriccarsales.config.Database.getConnection;
-
-public class ContractsDAO {
+public class ContractsDAO extends DBContext {
 
     @SuppressWarnings("SqlResolve")
     public List<Contract> getAllContracts() {
         List<Contract> list = new ArrayList<>();
         String sql = "SELECT * FROM Contracts";
 
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
+        // Sử dụng trực tiếp biến 'conn' từ lớp cha DBContext
+        try (PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
@@ -44,8 +42,7 @@ public class ContractsDAO {
     public boolean addContract(Contract c) {
         String sql = "INSERT INTO Contracts (OrderID, CustomerID, EmployeeID, ContractNumber, ContractAmount, Status, Note) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, c.getOrderID());
             ps.setInt(2, c.getCustomerID());

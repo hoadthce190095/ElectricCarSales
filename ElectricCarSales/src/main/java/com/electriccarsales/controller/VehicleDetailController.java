@@ -16,42 +16,16 @@ public class VehicleDetailController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String idValue = request.getParameter("id");
         VehicleCatalogService service = new VehicleCatalogService();
         CarModel car;
-        int modelID;
-        if (idValue != null && !idValue.isBlank()) {
-            try {
-                modelID = Integer.parseInt(idValue);
-                if (modelID <= 0) {
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mã xe không hợp lệ.");
-                    return;
-                }
-            } catch (NumberFormatException e) {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mã xe không hợp lệ.");
-                return;
-            }
-
-            try {
-                car = service.getCarModelById(modelID);
-            } catch (RuntimeException e) {
-                log("Không thể tải thông tin xe với ModelID " + modelID, e);
-                throw new ServletException("Không thể tải thông tin chi tiết xe.", e);
-            }
-        } else {
-            String modelName = request.getParameter("name");
-            String carLineName = request.getParameter("line");
-            if ((modelName == null || modelName.isBlank()) && (carLineName == null || carLineName.isBlank())) {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Vui lòng cung cấp tên hoặc mã xe.");
-                return;
-            }
-
-            try {
-                car = service.getCarModelByNameOrLine(modelName, carLineName);
-            } catch (RuntimeException e) {
-                log("Không thể tải thông tin xe theo tên/dòng xe.", e);
-                throw new ServletException("Không thể tải thông tin chi tiết xe.", e);
-            }
+        try {
+            car = findCar(request, response, service);
+        } catch (RuntimeException e) {
+            log("Không thể tải thông tin chi tiết xe.", e);
+            throw new ServletException("Không thể tải thông tin chi tiết xe.", e);
+        }
+        if (response.getStatus() == HttpServletResponse.SC_BAD_REQUEST) {
+            return;
         }
 
         if (car == null) {
@@ -59,15 +33,41 @@ public class VehicleDetailController extends HttpServlet {
             return;
         }
 
-        modelID = car.getModelID();
         try {
             request.setAttribute("car", car);
-            request.setAttribute("specification", service.getSpecificationByModelId(modelID));
-            request.setAttribute("carImages", service.getImagesByModelId(modelID));
+            request.setAttribute("specification", service.getSpecificationByModelId(car.getModelID()));
+            request.setAttribute("carImages", service.getImagesByModelId(car.getModelID()));
             request.getRequestDispatcher("/vehicle-detail.jsp").forward(request, response);
         } catch (RuntimeException e) {
-            log("Không thể tải thông tin xe với ModelID " + modelID, e);
+            log("Không thể tải thông tin xe với ModelID " + car.getModelID(), e);
             throw new ServletException("Không thể tải thông tin chi tiết xe.", e);
         }
+    }
+
+    private CarModel findCar(HttpServletRequest request, HttpServletResponse response,
+                             VehicleCatalogService service) throws IOException {
+        String id = request.getParameter("id");
+        if (id != null && !id.isBlank()) {
+            try {
+                int modelID = Integer.parseInt(id);
+                if (modelID > 0) {
+                    return service.getCarModelById(modelID);
+                }
+            } catch (NumberFormatException e) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mã xe không hợp lệ.");
+                return null;
+            }
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mã xe không hợp lệ.");
+            return null;
+        }
+
+        String modelName = request.getParameter("name");
+        String carLineName = request.getParameter("line");
+        if ((modelName == null || modelName.isBlank())
+                && (carLineName == null || carLineName.isBlank())) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Vui lòng cung cấp tên hoặc mã xe.");
+            return null;
+        }
+        return service.getCarModelByNameOrLine(modelName, carLineName);
     }
 }
