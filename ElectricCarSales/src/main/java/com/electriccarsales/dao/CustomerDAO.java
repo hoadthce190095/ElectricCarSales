@@ -105,4 +105,18 @@ public class CustomerDAO extends DBContext {
         return new Customer(rs.getInt("CustomerID"), rs.getInt("UserID"), rs.getString("CustomerName"),
                 rs.getString("Phone"), rs.getString("Email"), rs.getString("Address"));
     }
+
+    /** CustomerID for authenticated Users.UserID (do not trust a form's customerId). */
+    public static int findCustomerIdByUserId(int userId) {
+        String sql = "SELECT CustomerID FROM Customers WHERE UserID=?";
+        try (java.sql.Connection c=util.DBContext.openConnection();
+             java.sql.PreparedStatement ps=c.prepareStatement(sql)) {
+            ps.setInt(1,userId);
+            try (java.sql.ResultSet rs=ps.executeQuery()) {
+                return rs.next()?rs.getInt(1):0;
+            }
+        } catch (java.sql.SQLException e) {
+            throw new IllegalStateException("Cannot resolve customer account",e);
+        }
+    }
 }

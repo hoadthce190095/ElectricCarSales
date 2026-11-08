@@ -1,6 +1,6 @@
 {
   "referenceDate": "2026-10-05",
-  "note": "Thông tin sản phẩm và ảnh từ VinFast. Giá là MSRP kèm pin và VAT theo chính sách 15/07/2026. Xe kho, mã DEMO, khách hàng và giao dịch trong bài là dữ liệu giả lập phục vụ báo cáo học tập.",
+  "note": "Thông tin xe và hình ảnh là tài liệu tham khảo. Giá bán, tình trạng xe và số lượng tồn kho phải lấy từ cơ sở dữ liệu cửa hàng.",
   "priceSourceUrl": "https://static-cms-prod.vinfastauto.com/202607015_thong-bao-chinh-sach-gia-ban-cac-dong-xe-vinfast-thang-07.2026_0.pdf",
   "pricePolicyPageUrl": "https://vinfastauto.com/vn_vi/node/11885",
   "rangeNote": "NEDC và WLTP là hai quy trình thử khác nhau; quãng đường công bố không phải cam kết quãng đường thực tế. Hãy đối chiếu cùng tiêu chuẩn khi so sánh.",
@@ -190,7 +190,12 @@
       "sourceUrl": "https://vinfastauto.com/vn_vi/dat-coc-xe-vf8",
       "priceSourceUrl": "https://static-cms-prod.vinfastauto.com/202607015_thong-bao-chinh-sach-gia-ban-cac-dong-xe-vinfast-thang-07.2026_0.pdf",
       "imageUrl": "https://static-cms-prod.vinfastauto.com/statics/car/vf8/hinh-anh-vinfast-vf8-eco-text-logo-banner-desktop.webp",
-      "colors": ["Trắng (Infinity Blanc)", "Đen (Jet Black)", "Đỏ (Crimson Red)", "Xanh lá đậm (Ivy Green)"],
+      "colors": [
+        "Trắng (Infinity Blanc)",
+        "Đen (Jet Black)",
+        "Đỏ (Crimson Red)",
+        "Xanh lá đậm (Ivy Green)"
+      ],
       "wheelType": "19 inch",
       "airbagCount": 11,
       "maxSpeedKmh": null,
@@ -213,7 +218,12 @@
       "sourceUrl": "https://vinfastauto.com/vn_vi/dat-coc-xe-vf8",
       "priceSourceUrl": "https://static-cms-prod.vinfastauto.com/202607015_thong-bao-chinh-sach-gia-ban-cac-dong-xe-vinfast-thang-07.2026_0.pdf",
       "imageUrl": "https://static-cms-prod.vinfastauto.com/statics/car/VF-8/hinh-anh-xe-VinFast-vf8-ngoai-that-mau-xanh-reu-02.webp",
-      "colors": ["Trắng (Infinity Blanc)", "Đen (Jet Black)", "Đỏ (Crimson Red)", "Xanh lá đậm (Ivy Green)"],
+      "colors": [
+        "Trắng (Infinity Blanc)",
+        "Đen (Jet Black)",
+        "Đỏ (Crimson Red)",
+        "Xanh lá đậm (Ivy Green)"
+      ],
       "wheelType": "20 inch",
       "airbagCount": 11,
       "maxSpeedKmh": null,

@@ -54,4 +54,39 @@ public class OTPVerificationDAO extends DBContext {
             catch (SQLException e) { throw new IllegalStateException("Không thể khôi phục trạng thái kết nối.", e); }
         }
     }
+    /** Issue a replacement code for the pending registration only. */
+    public boolean renewRegistrationOtp(int userId, String code) {
+        if (conn == null || userId <= 0 || code == null || !code.matches("\\d{6}")) return false;
+        try {
+            boolean previousAutoCommit = conn.getAutoCommit();
+            try {
+                conn.setAutoCommit(false);
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "SELECT UserID FROM Users WHERE UserID=? AND StatusID="
+                        + "(SELECT StatusID FROM Statuses WHERE StatusName='INACTIVE')")) {
+                    ps.setInt(1, userId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) { conn.rollback(); return false; }
+                    }
+                }
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE OTPVerifications SET Status='EXPIRED' WHERE UserID=? AND Purpose='REGISTER' AND Status='PENDING'")) {
+                    ps.setInt(1, userId); ps.executeUpdate();
+                }
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "INSERT INTO OTPVerifications(UserID,OTPCode,Purpose,ExpiredDate,Status) "
+                        + "VALUES (?,?,'REGISTER',DATEADD(MINUTE,5,SYSDATETIME()),'PENDING')")) {
+                    ps.setInt(1, userId); ps.setString(2, code); ps.executeUpdate();
+                }
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                conn.rollback(); throw e;
+            } finally {
+                conn.setAutoCommit(previousAutoCommit);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể gửi lại OTP.", e);
+        }
+    }
 }

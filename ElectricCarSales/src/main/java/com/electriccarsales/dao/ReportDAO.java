@@ -61,15 +61,8 @@ public class ReportDAO {
                 List<PaymentRow> payments = payments(connection, filter);
                 ExtraTotals extras = extras(connection, filter, today);
                 List<StatusTotal> inventory = inventory(connection, filter);
-                boolean containsDemo = hasDemoInventory(connection, filter);
-                if (!containsDemo) {
-                    containsDemo = hasDemoPayment(connection, filter);
-                }
-                if (!containsDemo) {
-                    containsDemo = hasDemoInstallmentPayment(connection, filter);
-                }
                 connection.commit();
-                return new Snapshot(orders, vehicles, payments, extras, inventory, containsDemo);
+                return new Snapshot(orders, vehicles, payments, extras, inventory);
             } catch (SQLException | RuntimeException ex) {
                 try {
                     connection.rollback();
@@ -222,55 +215,6 @@ public class ReportDAO {
         return rows;
     }
 
-    // Tồn kho là dữ liệu hiện tại, nên xe DEMO vẫn phải được ghi nhãn dù ngoài kỳ bán hàng.
-    private boolean hasDemoInventory(Connection connection, ReportFilter filter) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Cars c JOIN CarStatuses cs ON cs.CarStatusID=c.CarStatusID"
-            + " WHERE c.VIN LIKE 'DEMO%'" + (filter.getModelId() == null ? "" : " AND c.ModelID=?");
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            if (filter.getModelId() != null) {
-                statement.setInt(1, filter.getModelId());
-            }
-            statement.setQueryTimeout(30);
-            try (ResultSet result = statement.executeQuery()) {
-                result.next();
-                return result.getLong(1) > 0;
-            }
-        }
-    }
-
-    private boolean hasDemoPayment(Connection connection, ReportFilter filter) throws SQLException {
-        // Một đơn tạo ngoài kỳ vẫn có thể đóng góp khoản thu hoặc thống kê thanh toán trong kỳ.
-        String sql = "SELECT COUNT(*) FROM Payments p JOIN Orders o ON o.OrderID=p.OrderID"
-            + " JOIN PaymentStatuses ps ON ps.PaymentStatusID=p.PaymentStatusID"
-            + " WHERE p.PaymentDate>=? AND p.PaymentDate<?" + filters(filter) + demoOrderCondition();
-        try (PreparedStatement statement = dated(connection, sql, filter);
-            ResultSet result = statement.executeQuery()) {
-            result.next();
-            return result.getLong(1) > 0;
-        }
-    }
-
-    private boolean hasDemoInstallmentPayment(Connection connection, ReportFilter filter) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM InstallmentPayments ip JOIN PaymentStatuses ps ON"
-            + " ps.PaymentStatusID=ip.PaymentStatusID JOIN InstallmentSchedules sch ON"
-            + " sch.ScheduleID=ip.ScheduleID JOIN InstallmentContracts ic ON"
-            + " ic.InstallmentContractID=sch.InstallmentContractID JOIN Orders o ON" + " o.OrderID=ic.OrderID"
-            + ORDER_JOINS + " WHERE ip.PaymentDate>=? AND ip.PaymentDate<? AND"
-            + " ps.StatusID='COMPLETED' AND UPPER(ic.Status) NOT IN" + " ('CANCELLED','VOID','DRAFT') AND " + ELIGIBLE
-            + filters(filter) + demoOrderCondition();
-        try (PreparedStatement statement = dated(connection, sql, filter);
-            ResultSet result = statement.executeQuery()) {
-            result.next();
-            return result.getLong(1) > 0;
-        }
-    }
-
-    private String demoOrderCondition() {
-        // Chỉ đọc cờ tồn tại; không đưa VIN hay chi tiết giao dịch vào danh mục hoặc AI.
-        return " AND EXISTS (SELECT 1 FROM OrderDetails odd JOIN Cars cd ON cd.CarID=odd.CarID"
-            + " WHERE odd.OrderID=o.OrderID AND cd.VIN LIKE 'DEMO%')";
-    }
-
     private static String filters(ReportFilter filter) {
         return (filter.getEmployeeId() == null ? "" : " AND o.EmployeeID = ?")
             + (filter.getModelId() == null
@@ -314,24 +258,17 @@ public class ReportDAO {
         private List<PaymentRow> payments;
         private ExtraTotals extras;
         private List<StatusTotal> inventory;
-        private boolean containsDemo;
 
         public Snapshot() {
         }
 
         public Snapshot(List<OrderRow> orders, List<VehicleRow> vehicles, List<PaymentRow> payments, ExtraTotals extras,
             List<StatusTotal> inventory) {
-            this(orders, vehicles, payments, extras, inventory, false);
-        }
-
-        public Snapshot(List<OrderRow> orders, List<VehicleRow> vehicles, List<PaymentRow> payments, ExtraTotals extras,
-            List<StatusTotal> inventory, boolean containsDemo) {
             this.orders = orders;
             this.vehicles = vehicles;
             this.payments = payments;
             this.extras = extras;
             this.inventory = inventory;
-            this.containsDemo = containsDemo;
         }
 
         public List<OrderRow> getOrders() {
@@ -372,14 +309,6 @@ public class ReportDAO {
 
         public void setInventory(List<StatusTotal> inventory) {
             this.inventory = inventory;
-        }
-
-        public boolean isContainsDemo() {
-            return containsDemo;
-        }
-
-        public void setContainsDemo(boolean containsDemo) {
-            this.containsDemo = containsDemo;
         }
     }
 

@@ -39,9 +39,6 @@
             <span class="step-indicator">01 <i>/</i> 01</span>
         </div>
         <form class="customer-form" action="${pageContext.request.contextPath}/customer/consultation" method="POST">
-            <c:if test="${not empty loggedCustomer}">
-                <input type="hidden" name="customerId" value="${loggedCustomer.customerID}">
-            </c:if>
             <label>Họ và tên khách hàng
                 <input name="fullName" autocomplete="name" value="${not empty loggedCustomer ? loggedCustomer.customerName : ''}" placeholder="Nhập họ và tên của bạn" required>
             </label>
@@ -57,7 +54,7 @@
                 <select name="carModel" required>
                     <option value="">-- Chọn mẫu xe điện VinFast --</option>
                     <c:forEach var="cm" items="${carModels}">
-                        <option value="${cm.modelId}">${cm.modelName}</option>
+                        <option value="${cm.modelID}">${cm.modelName}</option>
                     </c:forEach>
                 </select>
             </label>

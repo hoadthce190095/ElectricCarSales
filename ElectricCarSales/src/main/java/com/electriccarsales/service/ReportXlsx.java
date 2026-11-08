@@ -85,9 +85,6 @@ public final class ReportXlsx {
         ReportSummary s = report.getSummary();
         List<Object[]> summary = new ArrayList<>();
         summary.add(new Object[]{"Chỉ tiêu", "Giá trị"});
-        if (report.getDefinitions().containsKey("demo")) {
-            summary.add(new Object[]{"Nguồn dữ liệu", report.getDefinitions().get("demo")});
-        }
         summary.add(new Object[]{"Từ ngày", report.getPeriod().getFrom()});
         summary.add(new Object[]{"Đến ngày (bao gồm)", report.getPeriod().getTo()});
         summary.add(new Object[]{"Thời điểm tạo (Việt Nam)", report.getGeneratedAt()});

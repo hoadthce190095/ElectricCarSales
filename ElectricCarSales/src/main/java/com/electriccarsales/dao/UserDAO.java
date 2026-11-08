@@ -154,6 +154,44 @@ public class UserDAO extends DBContext {
         }
     }
 
+    /** Roll back only an unverified registration when email delivery fails. */
+    public void deleteFailedRegistration(int userId) {
+        if (conn == null) throw new IllegalStateException("Không kết nối được database.");
+        try {
+            boolean previousAutoCommit = conn.getAutoCommit();
+            try {
+                conn.setAutoCommit(false);
+                int inactive;
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "SELECT UserID FROM Users WHERE UserID=? AND StatusID="
+                        + "(SELECT StatusID FROM Statuses WHERE StatusName='INACTIVE')")) {
+                    ps.setInt(1, userId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) { conn.rollback(); return; }
+                        inactive = rs.getInt(1);
+                    }
+                }
+                try (PreparedStatement ps = conn.prepareStatement("DELETE FROM OTPVerifications WHERE UserID=?")) {
+                    ps.setInt(1, inactive); ps.executeUpdate();
+                }
+                try (PreparedStatement ps = conn.prepareStatement("DELETE FROM Customers WHERE UserID=?")) {
+                    ps.setInt(1, inactive); ps.executeUpdate();
+                }
+                try (PreparedStatement ps = conn.prepareStatement("DELETE FROM Users WHERE UserID=?")) {
+                    ps.setInt(1, inactive); ps.executeUpdate();
+                }
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(previousAutoCommit);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể hủy đăng ký chưa xác thực.", e);
+        }
+    }
+
     private User map(ResultSet rs) throws SQLException {
         User u = new User();
         u.setUserID(rs.getInt("UserID")); u.setUsername(rs.getString("Username"));

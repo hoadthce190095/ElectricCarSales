@@ -37,10 +37,24 @@ public class OrderDAO extends DBContext {
             "LEFT JOIN CarModels cm ON cv.ModelID = cm.ModelID " +
             "LEFT JOIN Colors col ON car.ColorID = col.ColorID ";
 
+    private Connection openOrderConnection() throws SQLException {
+        Connection connection = new OrderDAOConnection().getConnection();
+        if (connection == null) {
+            throw new SQLException("Không thể tạo kết nối đến cơ sở dữ liệu.");
+        }
+        return connection;
+    }
+
+    private static class OrderDAOConnection extends DBContext {
+        private Connection getConnection() {
+            return conn;
+        }
+    }
+
     public List<Order> findAll() {
         List<Order> list = new ArrayList<>();
         String sql = BASE_SELECT + "ORDER BY o.OrderDate DESC, o.OrderID DESC";
-        try (Connection c = openConnection();
+        try (Connection c = openOrderConnection();
              PreparedStatement ps = c.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -54,7 +68,7 @@ public class OrderDAO extends DBContext {
 
     public Order findById(int orderId) {
         String sql = BASE_SELECT + "WHERE o.OrderID = ?";
-        try (Connection c = openConnection();
+        try (Connection c = openOrderConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, orderId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -71,7 +85,7 @@ public class OrderDAO extends DBContext {
     public List<Order> findByCustomerId(int customerId) {
         List<Order> list = new ArrayList<>();
         String sql = BASE_SELECT + "WHERE o.CustomerID = ? ORDER BY o.OrderDate DESC";
-        try (Connection c = openConnection();
+        try (Connection c = openOrderConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setInt(1, customerId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -88,7 +102,7 @@ public class OrderDAO extends DBContext {
     public int insert(Order order) {
         String sql = "INSERT INTO Orders (CustomerID, EmployeeID, OrderDate, PaymentMethod, OrderStatus, TotalAmount, DepositAmount, RemainingAmount, Note) " +
                      "VALUES (?, ?, SYSDATETIME(), ?, ?, ?, ?, ?, ?)";
-        try (Connection c = openConnection();
+        try (Connection c = openOrderConnection();
              PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, order.getCustomerId() > 0 ? order.getCustomerId() : 1);
             if (order.getEmployeeId() > 0) {
@@ -139,7 +153,7 @@ public class OrderDAO extends DBContext {
     public boolean updateStatus(int orderId, int statusId) {
         String statusStr = mapStatusIdToString(statusId);
         String sql = "UPDATE Orders SET OrderStatus = ? WHERE OrderID = ?";
-        try (Connection c = openConnection();
+        try (Connection c = openOrderConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, statusStr);
             ps.setInt(2, orderId);
@@ -166,7 +180,7 @@ public class OrderDAO extends DBContext {
                          "LEFT JOIN CarVersions cv ON c.VersionID = cv.VersionID " +
                          "WHERE (cv.ModelID = ? OR ? = 0) " +
                          "ORDER BY c.CarID";
-        try (Connection c = openConnection();
+        try (Connection c = openOrderConnection();
              PreparedStatement ps = c.prepareStatement(sqlFind)) {
             ps.setInt(1, modelId);
             ps.setInt(2, modelId);
@@ -189,7 +203,7 @@ public class OrderDAO extends DBContext {
                      "LEFT JOIN CarModels cm ON cv.ModelID = cm.ModelID " +
                      "LEFT JOIN Colors col ON c.ColorID = col.ColorID " +
                      "ORDER BY c.CarID";
-        try (Connection c = openConnection();
+        try (Connection c = openOrderConnection();
              PreparedStatement ps = c.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -213,7 +227,7 @@ public class OrderDAO extends DBContext {
     public List<Map<String, Object>> getCarModelsWithPrices() {
         List<Map<String, Object>> list = new ArrayList<>();
         String sql = "SELECT ModelID, ModelName, BasePrice FROM CarModels ORDER BY ModelID";
-        try (Connection c = openConnection();
+        try (Connection c = openOrderConnection();
              PreparedStatement ps = c.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -232,7 +246,7 @@ public class OrderDAO extends DBContext {
     public List<Map<String, Object>> getEmployees() {
         List<Map<String, Object>> list = new ArrayList<>();
         String sql = "SELECT EmployeeID, FullName, Position FROM Employees ORDER BY EmployeeID";
-        try (Connection c = openConnection();
+        try (Connection c = openOrderConnection();
              PreparedStatement ps = c.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {

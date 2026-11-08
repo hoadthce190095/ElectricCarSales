@@ -47,10 +47,24 @@ public class LoginController extends HttpServlet {
             session.setAttribute("roleName", authenticationService.getRoleName(user.getRoleID()));
             session.setAttribute("email", user.getEmail());
             session.setAttribute("phone", user.getPhone());
+            // API-based admin/report screens use the same authenticated session.
+            try (java.sql.Connection connection = util.DBContext.openConnection()) {
+                com.electriccarsales.model.Account account =
+                    new com.electriccarsales.dao.AuthenticationDAO().byId(connection, user.getUserID());
+                if (account != null) {
+                    session.setAttribute("user", new com.electriccarsales.model.SessionUser(
+                        account.getUserId(), account.getUsername(), account.getRole()));
+                    session.setAttribute(com.electriccarsales.service.PasswordSession.ATTRIBUTE,
+                        com.electriccarsales.service.PasswordSession.fingerprint(account.getPasswordHash()));
+                }
+            } catch (java.sql.SQLException ex) {
+                log("Unable to set up admin session", ex);
+                throw new IllegalStateException("Cannot verify login account", ex);
+            }
 
             String role = ((String) session.getAttribute("roleName")).toUpperCase(java.util.Locale.ROOT);
             if ("CUSTOMER".equals(role)) resp.sendRedirect(req.getContextPath() + "/index.jsp");
-            else if ("ADMIN".equals(role)) resp.sendRedirect(req.getContextPath() + "/admin/admin.html");
+            else if ("ADMIN".equals(role)) resp.sendRedirect(req.getContextPath() + "/admin.jsp");
             else resp.sendRedirect(req.getContextPath() + "/staff/dashboard.jsp");
         } catch (RuntimeException e) {
             log("Login failed", e);

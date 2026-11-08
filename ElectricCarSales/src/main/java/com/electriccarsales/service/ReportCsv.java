@@ -24,9 +24,6 @@ public final class ReportCsv {
         row(writer, "Section", "Date", "ID", "Label", "Count", "Amount", "PaidAmount", "RemainingAmount", "Status");
         row(writer, "Period", report.getPeriod().getFrom(), report.getPeriod().getTo(), "Inclusive", "", "", "", "",
             "");
-        if (report.getDefinitions().containsKey("demo")) {
-            row(writer, "Source", "", "demo", report.getDefinitions().get("demo"), "", "", "", "", "");
-        }
         ReportSummary summary = report.getSummary();
         row(writer, "Summary", "", "", "Cash receipts (Payments only)", summary.getCompletedPayments(),
             summary.getRevenue(), "", "", "");

@@ -102,13 +102,6 @@
                 </header>
                 <main id="main" tabindex="-1">
                     <noscript><p class="notice error">Hãy bật JavaScript trong trình duyệt để đăng nhập và sử dụng các chức năng quản trị, báo cáo, tư vấn xe.</p></noscript>
-                    <div class="demo-banner">
-                        <span class="pill">BẢN DEMO BÁO CÁO</span>
-                        <p>
-                            Xe: thông tin VinFast có nguồn tham khảo. Giao dịch, khách hàng và doanh thu: dữ liệu mô
-                            phỏng phục vụ bài báo cáo.
-                        </p>
-                    </div>
                     <div class="page-heading">
                         <div>
                             <p class="eyebrow" id="page-eyebrow">KHÁM PHÁ XE ĐIỆN</p>

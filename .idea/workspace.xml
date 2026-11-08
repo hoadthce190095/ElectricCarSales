@@ -11,18 +11,298 @@
   <component name="ChangeListManager">
     <list default="true" id="740c799d-e83a-430a-aca5-6eb08e4227f1" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/data_sources_history.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_19-Oct-26_11_56_[Changes]/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_19-Oct-26_11_56__Changes_.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_19-Oct-26_11_57_[Changes]/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_19-Oct-26_11_57_[Changes]1/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_19-Oct-26_11_57__Changes_.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_19-Oct-26_11_57__Changes_1.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_19-Oct-26_13_38_[Changes]1/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_19-Oct-26_13_38__Changes_1.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_19-Oct-26_14_22_[Changes]/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_19-Oct-26_14_22__Changes_.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_26-Oct-26_11_35_[Changes]1/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_26-Oct-26_11_35__Changes_1.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ElectricCarSales/ElectricCarSalesDB.sql" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/ElectricCarSalesDB.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/InstallmentController.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/InstallmentController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/FinancialCompanyDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/FinancialCompanyDAO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/InstallmentPlanDAO.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/InstallmentPlanDAO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/FinancialCompany.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/FinancialCompany.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/InstallmentPlan.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/InstallmentPlan.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/InstallmentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/InstallmentService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/common/customer-shell.jspf" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/common/customer-shell.jspf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-contracts.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-contracts.jsp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-payments.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-payments.jsp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ElectricCarSalesDB.sql" beforeDir="false" afterPath="$PROJECT_DIR$/ElectricCarSalesDB.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/pom.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/Main.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/AIController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/AdminSetupController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/AdministrationController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/AuthenticationController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/CarController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/ComparisonController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/ConsultationController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/ContractController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/CustomerController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/DeliveryController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/FinanceControllerSupport.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/InstallmentController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/InvoiceController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/JsonServlet.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/LoginController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/LogoutController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/OperationsPageFilter.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/OrderController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/OrderStatusController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/OtpController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/PaymentController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/RegisterController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/ReportApiController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/ReportController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/SecurityFilter.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/SettlementController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/SupplierController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/VehicleController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/VehicleDetailController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/controller/VehicleSearchController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/AICatalogue.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/AIDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/AdminRoleDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/AdministrationDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/AuthenticationDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/BrandDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/BrandStatusDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/CarDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/CarImageDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/CarLineDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/CarModelDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/CarStatusDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/CarVersionDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/CatalogVehicleDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/ColorDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/ComparisonItemDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/ComparisonSessionDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/ConsultationRequestDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/ConsultationStatusDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/ContractsDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/CustomerDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/DeliveryDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/FinanceConnection.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/FinanceCustomerDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/FinanceDAOBase.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/FinanceDAOException.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/FinanceJDBC.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/FinancialCompanyDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/InstallmentContractDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/InstallmentPaymentDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/InstallmentPlanDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/InstallmentScheduleDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/InstallmentSettlementDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/InventoryTransactionDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/InvoiceDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/ModelColorDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/OTPVerificationDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/OrderDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/OrderDetailDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/OrderStatusDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/OrderStatusHistoryDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/PaymentDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/PromotionCarDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/PromotionDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/ReportDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/RoleDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/SpecificationDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/StatusDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/SupplierDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/SystemConfigurationDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/SystemLogDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/UserDAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/dao/VehicleTCODAO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/AIConstraints.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/AIRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/AIResponse.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Account.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/AdminPromotion.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/AdminRole.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/AdminSetupRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/AdminUser.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/AdministrationLookupsDTO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ApiException.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Brand.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/BrandStatus.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Car.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/CarImage.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/CarLine.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/CarModel.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/CarStatus.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/CarVersion.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/CatalogVehicle.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/CatalogueResponse.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Color.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ComparisonItem.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ComparisonSession.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ConfigurationRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ConsultationRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ConsultationStatus.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Contract.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ConversationContext.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/CreateRoleRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Customer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Delivery.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Employee.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/EmployeeRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/EmployeeSalesReport.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/FinancialCompany.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/InstallmentContract.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/InstallmentPayment.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/InstallmentPlan.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/InstallmentSchedule.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/InstallmentSettlement.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/InventoryTransaction.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Invoices.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/LinkedPaymentInstrument.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/LoginRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/LookupDTO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ModelColor.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ModelSalesReport.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/MonthlyReport.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/OTPVerification.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Order.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/OrderDetail.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/OrderStatus.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/OrderStatusHistory.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/PageResponse.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Payment.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/PaymentGateway.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/PaymentMethod.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/PaymentStatus.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/PaymentType.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/PermissionDTO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Promotion.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/PromotionCar.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/PromotionRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ReportData.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ReportFilter.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ReportPeriod.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/ReportSummary.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Role.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/RoleRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/RolesResponse.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/SaleReport.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/SaleVehicle.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/SessionUser.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Specification.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Status.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/StatusTotal.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/Supplier.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/SystemConfiguration.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/SystemLog.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/User.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/UserRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/VehicleModel.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/VehicleRecommendation.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/VehicleSpecifications.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/model/VehicleTCO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/AIService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/AdminSetupService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/AdministrationService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/AuthenticationService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/AuthorizationService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/BootstrapAdmin.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/BrandService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/CarInventoryService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/CarModelService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/CarVersionService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/ComparisonService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/ConsultationService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/ContractsService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/CustomerService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/DeliveryService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/ElectronicPaymentGateway.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/ElectronicPaymentService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/InstallmentService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/InventoryTransactionService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/InvoiceService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/OrderService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/OrderStatusService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/OtpService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/PasswordChangeService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/PasswordHasher.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/PasswordService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/PasswordSession.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/PaymentService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/PromotionService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/RegistrationEmailService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/ReportCsv.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/ReportService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/ReportXlsx.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/SettlementService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/SpecificationService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/SupplierService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/SystemConfigurationService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/VehicleCatalogService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/com/electriccarsales/service/VehicleTCOService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/java/util/DBContext.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/WEB-INF/web.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/admin.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/admin-common.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/admin-dashboard.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/admin-dashboard.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/admin-management.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/css/admin.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/css/customer-ai.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/css/customer.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/css/data-pages.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/css/home.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/css/login.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/css/staff.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/css/theme.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/js/admin.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/js/ai.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/js/catelogue.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/js/common.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/js/customer.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/js/home.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/js/login.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/js/loginadmin.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/js/report.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/js/vinfast-catalogue.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/sales-reports.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/tan-admin.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/tan-ai.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/tan-catalogue.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/tan-common.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/tan-report.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/tan.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/tan.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/vehicle-assistant.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/vehicle-catalogue.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/assets/vinfast-catelogue.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/auth/otp.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/auth/register.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/car.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/common/customer-shell-end.jspf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/common/customer-shell.jspf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/common/data-shell-end.jspf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/common/data-shell.jspf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/common/staff-shell-end.jspf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/common/staff-shell.jspf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/compare.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/contract.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/ai-assistant.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/cart.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/checkout.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/consultation.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-account.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-contracts.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-invoices.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-orders.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/customer/my-payments.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/delivery.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/home.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/index.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/login.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/staff/consultation-management.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/staff/dashboard.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/staff/sales-report.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/staff/transaction-detail.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/staff/transaction-management.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/supplier.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/tan.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ElectricCarSales/src/main/webapp/vehicle-detail.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/InstallmentFinancePolicyMigration.sql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/how --stat --oneline 35df410" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,12 +330,12 @@
     &quot;assignee&quot;: &quot;datdt05&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/hoadthce190095/ElectricCarSales&quot;,
-    &quot;accountId&quot;: &quot;bbe44fc7-ea96-46e6-8307-822e5bc0fb0f&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/hoadthce190095/ElectricCarSales",
+    "accountId": "a7c20b9d-4f8b-413f-9add-4d5c99554fbf"
   }
-}</component>
+}]]></component>
   <component name="LogFilters">
     <option name="FILTER_ERRORS" value="false" />
     <option name="FILTER_WARNINGS" value="false" />
@@ -142,7 +422,7 @@
     &quot;Tomcat Server.Tomcat 10.1.56.executor&quot;: &quot;Run&quot;,
     &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;tandat/payment&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;tong-hop&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
@@ -271,8 +551,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-a203e0a19954-intellij.indexing.shared.core-IU-262.10968.63" />
-        <option value="bundled-js-predefined-d6986cc7102b-4abd2a77f808-JavaScript-IU-262.10968.63" />
+        <option value="bundled-jdk-30f59d01ecdd-2df11533d9fe-intellij.indexing.shared.core-IU-262.11879.100" />
+        <option value="bundled-js-predefined-d6986cc7102b-4abd2a77f808-JavaScript-IU-262.11879.100" />
       </set>
     </attachedChunks>
   </component>
@@ -288,6 +568,29 @@
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="origin/feature/duong-auth-customer" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

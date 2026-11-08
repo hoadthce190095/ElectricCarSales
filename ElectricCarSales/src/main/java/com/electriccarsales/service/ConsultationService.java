@@ -1,18 +1,12 @@
-package com.electriccarsales.service.consultation;
+package com.electriccarsales.service;
 
-import com.electriccarsales.dao.consultation.ConsultationRequestDAO;
-import com.electriccarsales.model.consultation.ConsultationRequest;
+import com.electriccarsales.dao.ConsultationRequestDAO;
+import com.electriccarsales.model.ConsultationRequest;
 import java.util.List;
 
 public class ConsultationService {
-    private ConsultationRequestDAO dao = new ConsultationRequestDAO();
-
-    public List<ConsultationRequest> getAllRequests() {
-        return dao.findAll();
-    }
-
-    public void createRequest(ConsultationRequest request) {
-        request.setStatus("Pending");
-        dao.insert(request);
-    }
+    private final ConsultationRequestDAO dao=new ConsultationRequestDAO();
+    public List<ConsultationRequest> getAllRequests(){return dao.findAll();}
+    public void createRequest(ConsultationRequest request){dao.insert(request);}
+    public void updateRequestStatus(int id,int statusId,Integer employeeId){dao.updateStatus(id,statusId,employeeId);}
 }

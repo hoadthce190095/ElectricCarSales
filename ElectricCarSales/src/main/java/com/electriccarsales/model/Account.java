@@ -1,6 +1,5 @@
 package com.electriccarsales.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class Account {
     private int userId;
@@ -38,7 +37,6 @@ public class Account {
         this.username = username;
     }
 
-    @JsonIgnore
     public String getPasswordHash() {
         return passwordHash;
     }

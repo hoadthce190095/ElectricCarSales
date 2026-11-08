@@ -7,6 +7,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.security.SecureRandom;
+import com.electriccarsales.dao.UserDAO;
+import com.electriccarsales.service.RegistrationEmailService;
+import jakarta.servlet.http.HttpSession;
 import java.util.regex.Pattern;
 
 @WebServlet("/register")
@@ -41,10 +45,41 @@ public class RegisterController extends HttpServlet {
             return;
         }
 
-        // Registration creates an inactive account and is not safe to persist until OTP delivery is available.
-        req.setAttribute("error", "Hệ thống chưa cấu hình kênh gửi OTP nên chưa thể hoàn tất đăng ký. "
-                + "Vui lòng liên hệ quản trị viên.");
-        req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
+        RegistrationEmailService mail = new RegistrationEmailService();
+        if (!mail.isConfigured()) {
+            req.setAttribute("error", "Chưa cấu hình SMTP để gửi OTP. Vui lòng liên hệ quản trị viên.");
+            req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
+            return;
+        }
+        try {
+            UserDAO dao = new UserDAO();
+            if (dao.exists(username, phone, email)) {
+                req.setAttribute("error", "Tên đăng nhập, số điện thoại hoặc email đã tồn tại.");
+                req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
+                return;
+            }
+            String otp = String.format("%06d", new SecureRandom().nextInt(1_000_000));
+            int userId = dao.registerCustomer(username, dao.hashPassword(password),
+                    email, phone, name, address, otp);
+            if (!mail.sendRegistrationOtp(email, otp)) {
+                // Leave neither a stale inactive account nor a password in application logs.
+                dao.deleteFailedRegistration(userId);
+                req.setAttribute("error", "Không gửi được email OTP. Kiểm tra cấu hình SMTP rồi thử lại.");
+                req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
+                return;
+            }
+            HttpSession session = req.getSession(true);
+            session.setAttribute("registrationUserId", userId);
+            session.setAttribute("registrationEmail", email);
+            session.setAttribute("otpLastSent", System.currentTimeMillis());
+            req.setAttribute("email", email);
+            req.setAttribute("notice", "Mã OTP đã được gửi tới email của bạn.");
+            req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);
+        } catch (RuntimeException e) {
+            log("Registration failed", e);
+            req.setAttribute("error", "Không thể đăng ký. Hãy kiểm tra kết nối database và thử lại.");
+            req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
+        }
     }
 
     private String validate(String name, String username, String phone, String email, String password, String confirm) {

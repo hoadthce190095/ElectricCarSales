@@ -176,7 +176,7 @@ function vehicleDetails(vehicle) {
             "Cấu hình đối chiếu",
             metadata?.specificationVersion || (vehicle.versions || []).join(", ") || "Chưa cập nhật"
         ],
-        ["Giá showroom demo", modelPrice(vehicle)],
+        ["Giá tham khảo", modelPrice(vehicle)],
         ["Giá tham khảo từ hãng", metadata?.priceVnd == null ? "Chưa cập nhật" : money(metadata.priceVnd)],
         ["Kích thước D × R × C (mm)", spec.dimensions || "Chưa cập nhật"],
         ["Dung lượng pin", quantity(spec.batteryCapacity, "kWh")],
@@ -187,7 +187,7 @@ function vehicleDetails(vehicle) {
         ["Số túi khí", quantity(spec.airbagCount)],
         ["Thời gian sạc (giờ)", quantity(spec.chargingTime)],
         ["Màu trong showroom", (vehicle.colors || []).join(", ") || "Chưa cập nhật"],
-        ["Xe có sẵn (demo)", number(vehicle.availableCars)]
+        ["Xe có sẵn", number(vehicle.availableCars)]
     ];
     const detail = el("div", { class: "field full vehicle-detail" }, [
         vehicleImage(vehicle),
@@ -252,8 +252,8 @@ function catalogueCard(vehicle, onSelection) {
                 ])
             ]),
             el("div", { class: "vehicle-stock" }, [
-                pill(vehicle.availableCars ? "AVAILABLE" : "Hết xe demo", vehicle.availableCars ? "" : "neutral"),
-                el("span", { text: `${number(vehicle.availableCars)} xe trong showroom demo` })
+                pill(vehicle.availableCars ? "AVAILABLE" : "Hết xe", vehicle.availableCars ? "" : "neutral"),
+                el("span", { text: `${number(vehicle.availableCars)} xe trong showroom` })
             ]),
             el("div", { class: "vehicle-actions" }, [
                 button("Xem chi tiết", () => vehicleDetails(vehicle), "button secondary"),
@@ -404,7 +404,7 @@ async function loadCatalogue(filters = state.catalogueFilters, refresh = true) {
                 "Thông số đọc từ danh mục sản phẩm của showroom. Trường chưa xác định được ghi rõ trong từng mẫu xe."
         }),
         el("p", {
-            text: "Giá trên trang dùng cho bản demo; chính sách ưu đãi và giá thực tế có thể thay đổi. Tầm hoạt động công bố phụ thuộc chuẩn đo, cấu hình và điều kiện sử dụng. Các màu hiển thị là màu xe đang có trong dữ liệu demo."
+            text: "Giá tham khảo lấy từ danh mục; chính sách ưu đãi và giá thực tế có thể thay đổi. Tầm hoạt động công bố phụ thuộc chuẩn đo, cấu hình và điều kiện sử dụng. Các màu hiển thị là màu xe đang có trong dữ liệu hệ thống."
         }),
         state.catalogueMetadata?.referenceDate
             ? el("small", {
@@ -437,7 +437,7 @@ function vehicleCard(vehicle, reasons = []) {
             text: `${spec.rangeKM != null ? `${number(spec.rangeKM)} km · ${rangeStandard(vehicle)}` : "Chưa có quãng đường"} · ${spec.seatingCapacity != null ? `${spec.seatingCapacity} chỗ` : "Chưa có số chỗ"}`
         }),
         el("p", {
-            text: `${number(vehicle.availableCars)} xe có sẵn (demo) · ${(vehicle.versions || []).join(", ") || "Chưa có phiên bản"}`
+            text: `${number(vehicle.availableCars)} xe có sẵn · ${(vehicle.versions || []).join(", ") || "Chưa có phiên bản"}`
         }),
         reasons.length
             ? el(
@@ -452,7 +452,7 @@ function vehicleCard(vehicle, reasons = []) {
 
 function comparison(vehicles) {
     const specs = [
-        ["Giá showroom demo", (v) => modelPrice(v)],
+        ["Giá tham khảo", (v) => modelPrice(v)],
         ["Phiên bản", (v) => (v.versions || []).join(", ") || "Chưa cập nhật"],
         ["Pin (kWh)", (v) => v.specifications?.batteryCapacity],
         ["Quãng đường (km)", (v) => v.specifications?.rangeKM],
@@ -461,7 +461,7 @@ function comparison(vehicles) {
         ["Công suất (kW)", (v) => v.specifications?.maxPower],
         ["Kích thước (mm)", (v) => v.specifications?.dimensions],
         ["Sạc (giờ)", (v) => v.specifications?.chargingTime],
-        ["Xe có sẵn (demo)", (v) => v.availableCars],
+        ["Xe có sẵn", (v) => v.availableCars],
         ["Màu sắc", (v) => (v.colors || []).join(", ") || "Chưa cập nhật"],
         ["Nguồn thông số", (v) => sourceLink("VinFast ↗", vehicleMetadata(v)?.sourceUrl) || "Danh mục showroom"],
         ["Chú thích giá", (v) => priceNote(v)]

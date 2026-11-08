@@ -38,8 +38,10 @@
                 <h1 id="login-title">Đăng nhập</h1>
                 <p class="form-intro">Nhập tên đăng nhập và mật khẩu để tiếp tục.</p>
 
-                <form id="login-form" class="auth-form" novalidate>
-                    <label class="sr-only" for="username">Tên đăng nhập</label>
+<form id="login-form" class="auth-form"
+      action="<%= request.getContextPath() %>/login"
+      method="post">
+                          <label class="sr-only" for="username">Tên đăng nhập</label>
                     <div class="input-wrap">
                         <input id="username" name="username" type="text" autocomplete="username" placeholder="TÊN ĐĂNG NHẬP" required maxlength="50">
                         <span class="field-status" aria-hidden="true">✓</span>
@@ -60,7 +62,8 @@
                     <button class="submit-button" type="submit">Đăng nhập <span aria-hidden="true">→</span></button>
                 </form>
 
-                <div class="form-bottom"><span>Bạn chưa có tài khoản?</span><button class="text-button" type="button" data-register>Đăng ký</button></div>
+                <div class="form-bottom"><span>Bạn chưa có tài khoản?</span>n><a class="text-button"
+                                                                                 href="<%= request.getContextPath() %>/register">Đăng ký</a></div>
                 <p class="role-note">Sau khi xác thực, hệ thống sẽ mở giao diện phù hợp với vai trò tài khoản của bạn.</p>
             </div>
 

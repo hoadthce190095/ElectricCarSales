@@ -163,7 +163,7 @@ public class ReportService {
             inconsistentOrders);
 
         return new ReportData(new ReportPeriod(filter.getFrom(), filter.getTo()), LocalDateTime.now(clock),
-            createDefinitions(sales, snapshot.isContainsDemo()), summary, createMonthlyReports(monthlyTotals),
+            createDefinitions(sales), summary, createMonthlyReports(monthlyTotals),
             createModelSalesReports(modelTotals, modelNames), createEmployeeSalesReports(employeeTotals, employeeNames),
             createStatusTotals(orderStatusTotals), createStatusTotals(paymentStatusTotals),
             List.copyOf(snapshot.getInventory()), List.copyOf(sales));
@@ -253,24 +253,8 @@ public class ReportService {
         return List.copyOf(reports);
     }
 
-    private Map<String, String> createDefinitions(List<SaleReport> sales, boolean containsDemo) {
+    private Map<String, String> createDefinitions(List<SaleReport> sales) {
         Map<String, String> definitions = new LinkedHashMap<>();
-        // Khoản thu của đơn ngoài kỳ và tồn kho hiện tại cũng có thể chứa dữ liệu DEMO.
-        for (SaleReport sale : sales) {
-            for (SaleVehicle vehicle : sale.getVehicles()) {
-                if (vehicle.getVin() != null && vehicle.getVin().startsWith("DEMO")) {
-                    containsDemo = true;
-                    break;
-                }
-            }
-            if (containsDemo) {
-                break;
-            }
-        }
-        if (containsDemo) {
-            definitions.put("demo", "Báo cáo có dữ liệu DEMO mô phỏng phục vụ bài tập. Các giao dịch DEMO không"
-                + " phải doanh thu thực tế của VinFast.");
-        }
         definitions.put("revenue", "Tiền thực thu: chỉ Payments COMPLETED trong khoảng PaymentDate, của đơn hợp lệ và"
             + " chưa hủy. Đây là chỉ tiêu thu tiền, không phải chính sách ghi nhận doanh" + " thu kế toán.");
         definitions.put("salesAmount",

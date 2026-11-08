@@ -7,6 +7,8 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import com.electriccarsales.service.VehicleCatalogService;
+import com.electriccarsales.dao.CatalogVehicleDAO;
 
 import java.io.IOException;
 import java.text.NumberFormat;
@@ -41,8 +43,7 @@ public class ComparisonController extends HttpServlet {
         }
 
         try {
-            List<CatalogVehicle> catalogue = new VehicleCatalogService().getCatalogVehicles();
-            List<CatalogVehicle> vehicles = new ArrayList<>();
+            List<CatalogVehicle> catalogue = new CatalogVehicleDAO().getAll();            List<CatalogVehicle> vehicles = new ArrayList<>();
             for (String key : comparisonKeys) {
                 CatalogVehicle vehicle = findVehicle(catalogue, key);
                 if (vehicle != null) {

@@ -1197,27 +1197,6 @@ dialog::backdrop {
 }
 
 /* Danh mục công khai và thông tin phục vụ buổi báo cáo. */
-.demo-banner {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    margin-bottom: 24px;
-    border: 1px solid var(--border-blue);
-    border-radius: 8px;
-    background: var(--surface-blue);
-}
-.demo-banner p {
-    margin: 0;
-    font-size: 10px;
-    color: #526178;
-}
-.demo-banner .pill {
-    background: #dce7f6;
-    color: var(--primary);
-    flex-shrink: 0;
-    letter-spacing: 0.4px;
-}
 .catalogue-hero {
     display: flex;
     justify-content: space-between;
@@ -1579,11 +1558,6 @@ dialog::backdrop {
     }
 }
 @media (max-width: 760px) {
-    .demo-banner {
-        align-items: start;
-        flex-direction: column;
-        gap: 6px;
-    }
     .catalogue-hero {
         gap: 20px;
         padding: 24px;
@@ -1670,10 +1644,6 @@ dialog::backdrop {
     }
 }
 @media print {
-    .demo-banner {
-        background: white;
-        border-color: #ddd;
-    }
     .catalogue-selection,
     .compare-choice,
     .vehicle-actions {

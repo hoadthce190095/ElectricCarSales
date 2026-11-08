@@ -1,31 +1,29 @@
+
 "use strict";
 
-const loginForm = document.querySelector("#login-form");
-const loginMessage = document.querySelector("#form-message");
 const passwordInput = document.querySelector("#password");
+const passwordToggle = document.querySelector("[data-password-toggle]");
+const loginMessage = document.querySelector("#form-message");
 
-document.querySelector("[data-password-toggle]").addEventListener("click", (event) => {
-    const button = event.currentTarget;
-    const showing = passwordInput.type === "text";
-    passwordInput.type = showing ? "password" : "text";
-    button.textContent = showing ? "Hiện" : "Ẩn";
-    button.setAttribute("aria-label", showing ? "Hiện mật khẩu" : "Ẩn mật khẩu");
-    button.setAttribute("aria-pressed", String(!showing));
-});
+if (passwordToggle && passwordInput) {
+    passwordToggle.addEventListener("click", () => {
+        const showing = passwordInput.type === "text";
 
-document.querySelector("[data-forgot-password]").addEventListener("click", () => {
-    loginMessage.textContent = "Vui lòng liên hệ hotro@electriccarsale.vn để được hỗ trợ khôi phục mật khẩu.";
-    loginMessage.hidden = false;
-});
+        passwordInput.type = showing ? "password" : "text";
 
-document.querySelector("[data-register]").addEventListener("click", () => {
-    loginMessage.textContent = "Đăng ký tài khoản sẽ được mở khi hệ thống kết nối chức năng xác thực.";
-    loginMessage.hidden = false;
-});
+        passwordToggle.textContent = showing ? "Hiện" : "Ẩn";
+        passwordToggle.setAttribute(
+            "aria-pressed", String(!showing)
+        );
+    });
+}
 
-loginForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    if (!loginForm.reportValidity()) return;
-    loginMessage.textContent = "Giao diện đã sẵn sàng. Cần kết nối Servlet/DAO để xác thực và chuyển đến trang theo vai trò.";
-    loginMessage.hidden = false;
-});
+const forgotButton = document.querySelector("[data-forgot-password]");
+
+if (forgotButton && loginMessage) {
+    forgotButton.addEventListener("click", () => {
+        loginMessage.textContent =
+            "Vui lòng liên hệ quản trị viên để khôi phục mật khẩu.";
+        loginMessage.hidden = false;
+    });
+}

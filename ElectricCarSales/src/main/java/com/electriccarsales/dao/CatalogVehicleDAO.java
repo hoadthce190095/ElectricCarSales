@@ -17,10 +17,16 @@ public class CatalogVehicleDAO extends DBContext {
     public List<CatalogVehicle> getAll() {
         String sql = """
                 SELECT m.ModelID, v.VersionID, m.ModelName, line.CarLineName, v.VersionName,
-                       v.CatalogPrice, spec.Dimensions, spec.BatteryCapacity, spec.RangeKM,
-                       spec.MaxPower, spec.SeatingCapacity, v.RangeStandard, v.SourceURL,
-                       v.PriceSourceURL, image.ImageURL, spec.WheelType, spec.AirbagCount,
-                       spec.MaxSpeed, v.RapidChargeMinutes, v.PriceNote, spec.Description AS SpecificationNote
+                       (SELECT MIN(c.Price) FROM Cars c WHERE c.ModelID=m.ModelID AND c.VersionID=v.VersionID) AS CatalogPrice,
+                       spec.Dimensions, spec.BatteryCapacity, spec.RangeKM,
+                       spec.MaxPower, spec.SeatingCapacity,
+                       CAST(NULL AS NVARCHAR(100)) AS RangeStandard,
+                       CAST(NULL AS NVARCHAR(500)) AS SourceURL,
+                       CAST(NULL AS NVARCHAR(500)) AS PriceSourceURL,
+                       image.ImageURL, spec.WheelType, spec.AirbagCount,
+                       spec.MaxSpeed, CAST(NULL AS INT) AS RapidChargeMinutes,
+                       CAST(NULL AS NVARCHAR(300)) AS PriceNote,
+                       spec.Description AS SpecificationNote
                 FROM CarModels m
                 INNER JOIN CarLines line ON line.CarLineID = m.CarLineID
                 INNER JOIN Brands brand ON brand.BrandID = line.BrandID
@@ -80,7 +86,8 @@ public class CatalogVehicleDAO extends DBContext {
         }
 
         String sql = """
-                SELECT mc.ModelID, color.ColorName, mc.ColorImageURL
+                SELECT mc.ModelID, color.ColorName,
+                       CAST(NULL AS NVARCHAR(500)) AS ColorImageURL
                 FROM ModelColors mc
                 INNER JOIN Colors color ON color.ColorID = mc.ColorID
                 ORDER BY color.ColorName

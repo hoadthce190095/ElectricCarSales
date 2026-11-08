@@ -2,8 +2,6 @@ package com.electriccarsales.model;
 
 public class UserRequest {
     private String username;
-
-    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     private String email;
