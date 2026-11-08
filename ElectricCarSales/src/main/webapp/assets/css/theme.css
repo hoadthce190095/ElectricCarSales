@@ -1,0 +1,34 @@
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap");
+
+/* Bảng màu và kiểu chữ chung theo giao diện trang chủ trên nhánh main. */
+:root {
+    --primary: #315b9d;
+    --primary-dark: #24487d;
+    --navy: #16365f;
+    --ink: #17233a;
+    --muted: #758093;
+    --line: #e5e9f0;
+    --canvas: #f7f8fa;
+    --white: #fff;
+    --surface-soft: #f0f5fc;
+    --surface-blue: #edf3fb;
+    --border-blue: #dbe4f1;
+    --on-navy: #cfdaea;
+    --focus: #9fc0f0;
+    --danger: #af3a3a;
+    --shadow: 0 12px 32px rgba(27, 43, 68, 0.07);
+    --font-body: "Be Vietnam Pro", Arial, sans-serif;
+    --font-display: "Manrope", "Be Vietnam Pro", Arial, sans-serif;
+
+    --home-ink: var(--ink);
+    --home-muted: var(--muted);
+    --home-line: var(--line);
+    --home-bg: var(--canvas);
+    --home-white: var(--white);
+    --home-blue: var(--primary);
+    --home-blue-dark: var(--navy);
+    --home-red: #e31837;
+    --home-shadow: var(--shadow);
+    --home-font: var(--font-body);
+    --home-display: var(--font-display);
+}

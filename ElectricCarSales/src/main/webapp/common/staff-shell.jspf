@@ -1,0 +1,226 @@
+<%@ page pageEncoding="UTF-8" %>
+<%
+    response.setCharacterEncoding("UTF-8");
+    String appContext = request.getContextPath();
+    String staffUri = request.getRequestURI();
+    String staffTitle = (String) request.getAttribute("staffTitle");
+    if (staffTitle == null) staffTitle = "Không gian nội bộ";
+    String staffActive = (String) request.getAttribute("staffActive");
+    if (staffActive == null) {
+        if (staffUri.contains("consultation")) staffActive = "consultations";
+        else if (staffUri.contains("transaction")) staffActive = "transactions";
+        else if (staffUri.contains("report")) staffActive = "report";
+        else staffActive = "dashboard";
+    }
+%>
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#111214">
+    <title><%= staffTitle %> · VinFast - ElectricCarSale</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="<%= appContext %>/assets/css/staff.css">
+    <style>
+        /* Điều chỉnh kích thước chữ dễ đọc và đồng bộ toàn khung Staff */
+        .staff-content th { font-size: 11px; letter-spacing: 0.5px; padding: 12px 16px; }
+        .staff-content td { font-size: 13px; padding: 12px 16px; white-space: normal; vertical-align: middle; }
+        .staff-content .cell-primary { font-size: 13px; font-weight: 600; color: #191a1e; }
+        .staff-content .cell-secondary { font-size: 11.5px; color: #70737b; margin-top: 3px; }
+        .staff-content .status-pill { font-size: 11px; padding: 4px 10px; }
+        .staff-content .button { font-size: 12px; min-height: 36px; padding: 0 14px; cursor: pointer; }
+        .staff-content .toolbar input, .staff-content .toolbar select { font-size: 12.5px; height: 36px; padding: 0 12px; }
+        .staff-content .panel-title { font-size: 15px; }
+        .staff-content .panel-subtitle { font-size: 12px; }
+        .staff-content .metric-head { font-size: 12px; font-weight: 600; }
+        .staff-content .metric-card > strong { font-size: 26px; }
+        .staff-content .metric-foot { font-size: 11.5px; }
+        .staff-content .eyebrow { font-size: 11px; }
+        .staff-content .page-heading p { font-size: 13px; }
+        .staff-content .table-foot { font-size: 12px; padding: 12px 16px; }
+        .staff-nav-link { font-size: 13px; min-height: 40px; }
+        .nav-group-label { font-size: 10px; }
+        .breadcrumb { font-size: 13px; }
+        .profile-copy strong { font-size: 12.5px; }
+        .profile-copy small { font-size: 11px; }
+        .staff-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+        .staff-field label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #414248;
+            margin-bottom: 6px;
+        }
+        .staff-field input, .staff-field select, .staff-field textarea {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #dcdde1;
+            border-radius: 6px;
+            background: #fff;
+            color: #191a1e;
+            font-size: 13px;
+            font-family: inherit;
+        }
+        .staff-field input:focus, .staff-field select:focus, .staff-field textarea:focus {
+            outline: none;
+            border-color: var(--red);
+        }
+        .staff-modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(17, 18, 20, 0.55);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .staff-modal-backdrop.open {
+            display: flex;
+        }
+        .staff-modal {
+            width: 100%;
+            max-width: 640px;
+            border-radius: 10px;
+            background: #fff;
+            border: 1px solid var(--line);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+            overflow: hidden;
+        }
+        .staff-modal-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--line);
+            background: #fafafa;
+        }
+        .staff-modal-head h3 {
+            margin: 0;
+            font: 700 17px var(--display);
+            color: var(--ink);
+        }
+        .staff-modal-body {
+            padding: 20px 22px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .staff-modal-foot {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 14px 22px;
+            border-top: 1px solid var(--line);
+            background: #fafafa;
+        }
+        .alert-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-radius: 7px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .alert-banner.success {
+            background: #eaf5ef;
+            border: 1px solid #b8e0cb;
+            color: #1f6e4a;
+        }
+        .alert-banner.danger {
+            background: #fae9ec;
+            border: 1px solid #f3bfc8;
+            color: #b42338;
+        }
+    </style>
+</head>
+<body>
+<div class="staff-app">
+    <aside class="staff-sidebar" id="staff-sidebar">
+        <a class="staff-brand" href="<%= appContext %>/staff/dashboard.jsp" aria-label="VinFast - ElectricCarSale">
+            <span class="staff-brand-mark">V</span>
+            <span class="staff-brand-copy">
+                <strong>VinFast</strong>
+                <small>ELECTRIC CAR SALE</small>
+            </span>
+        </a>
+        <div class="workspace-caption">KHÔNG GIAN NỘI BỘ</div>
+
+        <nav class="staff-nav" aria-label="Điều hướng nhân viên">
+            <div class="nav-group-label">CÔNG VIỆC &amp; TƯ VẤN</div>
+            <a class="staff-nav-link <%= "dashboard".equals(staffActive) ? "active" : "" %>" href="<%= appContext %>/staff/dashboard.jsp">
+                <span class="staff-nav-icon">⌂</span>
+                <span>Tổng quan công việc</span>
+            </a>
+            <a class="staff-nav-link <%= "consultations".equals(staffActive) ? "active" : "" %>" href="<%= appContext %>/staff/consultations">
+                <span class="staff-nav-icon">✧</span>
+                <span>Yêu cầu tư vấn</span>
+            </a>
+
+            <div class="nav-group-label">BÁN HÀNG &amp; ĐƠN HÀNG</div>
+            <a class="staff-nav-link <%= "transactions".equals(staffActive) ? "active" : "" %>" href="<%= appContext %>/staff/transactions">
+                <span class="staff-nav-icon">▤</span>
+                <span>Giao dịch bán xe (Orders)</span>
+            </a>
+
+            <div class="nav-group-label">BÁO CÁO &amp; THỐNG KÊ</div>
+            <a class="staff-nav-link <%= "report".equals(staffActive) ? "active" : "" %>" href="<%= appContext %>/staff/report">
+                <span class="staff-nav-icon">▥</span>
+                <span>Báo cáo doanh thu</span>
+            </a>
+
+            <div class="nav-group-label">LIÊN KẾT KHÁCH HÀNG</div>
+            <a class="staff-nav-link" href="<%= appContext %>/customer/consultation">
+                <span class="staff-nav-icon">↗</span>
+                <span>Trang Gửi tư vấn (KH)</span>
+            </a>
+            <a class="staff-nav-link" href="<%= appContext %>/orders">
+                <span class="staff-nav-icon">↗</span>
+                <span>Trang Đơn hàng (KH)</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-support">
+            <span class="support-orbit">✳</span>
+            <strong>Trung tâm hỗ trợ</strong>
+            <p>Hệ thống quản lý tư vấn, đơn hàng &amp; trạng thái giao dịch xe điện VinFast.</p>
+            <a href="<%= appContext %>/index.jsp">Về trang chủ <span>↗</span></a>
+        </div>
+        <div class="sidebar-foot">
+            <i></i>
+            <span>SQL Server · ElectricCarSalesDB</span>
+            <small>LIVE</small>
+        </div>
+    </aside>
+
+    <div class="staff-main">
+        <header class="staff-topbar">
+            <button class="mobile-menu" type="button" aria-label="Mở menu" onclick="document.getElementById('staff-sidebar').classList.toggle('open')">☰</button>
+            <div class="breadcrumb">
+                <span>VinFast</span>
+                <i>/</i>
+                <strong><%= staffTitle %></strong>
+            </div>
+            <div class="topbar-actions">
+                <span class="live-indicator"><i></i> Kết nối CSDL trực tiếp</span>
+                <span class="topbar-divider"></span>
+                <div class="staff-profile">
+                    <span class="profile-avatar">NV</span>
+                    <span class="profile-copy">
+                        <strong>Nhân viên Kinh doanh</strong>
+                        <small>Consultation &amp; Sales Order</small>
+                    </span>
+                </div>
+            </div>
+        </header>
+        <main class="staff-content" id="staff-content">
+
