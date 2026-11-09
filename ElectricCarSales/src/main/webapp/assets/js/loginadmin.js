@@ -23,7 +23,7 @@ function createFirstAdmin() {
         [
             el("p", {
                 class: "field full setup-introduction",
-                text: "Bạn tự đặt mật khẩu trên máy. Sau khi tạo tài khoản, đăng nhập để xem báo cáo, quản lý tài khoản và khuyến mãi."
+                text: "Bạn tự đặt mật khẩu trên máy. Sau khi tạo tài khoản, đăng nhập để xem báo cáo và quản lý tài khoản."
             }),
             field("username", "Tên đăng nhập", "text", "admin", {
                 required: true,

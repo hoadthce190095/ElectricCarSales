@@ -27,15 +27,6 @@
         .spec span { display: block; color: #666; font-size: 12px; }
         .spec strong { display: block; margin-top: 5px; font-size: 14px; }
         .spec-note { grid-column: 1 / -1; color: #555; font-size: 13px; line-height: 1.5; }
-        .promotions { margin-top: 18px; padding: 14px; border: 1px solid #f0d7c3; border-radius: 6px; background: #fffaf5; }
-        .promotions[hidden] { display: none; }
-        .promotions h2 { margin: 0 0 10px; color: #9a4318; font-size: 17px; }
-        .promotion { padding: 10px 0; border-top: 1px solid #f1e4d8; }
-        .promotion:first-child { padding-top: 0; border-top: 0; }
-        .promotion strong { color: #633b25; }
-        .promotion-value { margin-left: 8px; color: #c2410c; font-weight: 700; }
-        .promotion p { margin: 5px 0 0; color: #66564a; font-size: 13px; line-height: 1.5; }
-        .promotion small { display: block; margin-top: 5px; color: #857365; }
         .color-picker { margin: 18px 0; }
         .color-picker h2 { margin: 0 0 4px; font-size: 16px; }
         .selected-color { margin: 0 0 10px; color: #555; font-size: 14px; }
@@ -86,11 +77,6 @@
                 <h2 class="specs-title">Thông số kỹ thuật</h2>
                 <p class="spec-note" id="specification-status" role="status" aria-live="polite">Đang tải thông số xe...</p>
             </section>
-            <section class="promotions" id="vehicle-promotions" aria-labelledby="promotions-title" hidden>
-                <h2 id="promotions-title">Ưu đãi đang áp dụng</h2>
-                <div id="promotion-list"></div>
-            </section>
-
             <div class="actions">
                 <a class="back-link" href="<c:url value='/index.jsp#models'/>">← Quay lại danh sách xe</a>
                 <a class="contact-link" href="mailto:hotro@electriccarsale.vn?subject=Tu%20van%20xe">Liên hệ tư vấn</a>
@@ -108,8 +94,6 @@
         const selectedColorName = document.getElementById("selected-color-name");
         const colorStatus = document.getElementById("color-status");
         const specifications = document.getElementById("detail-specs");
-        const promotionsSection = document.getElementById("vehicle-promotions");
-        const promotionList = document.getElementById("promotion-list");
         let fallbackRequested = false;
         let cataloguePromise;
         let catalogueColorImages = {};
@@ -170,46 +154,6 @@
                 fragment.append(item);
             });
             specifications.replaceChildren(fragment);
-        }
-
-        function renderPromotions(promotions) {
-            promotionList.replaceChildren();
-            if (!Array.isArray(promotions) || promotions.length === 0) {
-                promotionsSection.hidden = true;
-                return;
-            }
-
-            promotions.forEach((promotion) => {
-                const item = document.createElement("article");
-                item.className = "promotion";
-                const title = document.createElement("strong");
-                title.textContent = promotion.promotionName || "Khuyến mãi";
-                item.append(title);
-
-                if (promotion.discountValue != null) {
-                    const value = document.createElement("span");
-                    value.className = "promotion-value";
-                    const amount = new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 })
-                        .format(promotion.discountValue);
-                    value.textContent = promotion.discountType === "PERCENTAGE" ? `${amount}%` : `${amount} ₫`;
-                    item.append(value);
-                }
-                if (promotion.description) {
-                    const description = document.createElement("p");
-                    description.textContent = promotion.description;
-                    item.append(description);
-                }
-                if (promotion.endDate) {
-                    const endDate = new Date(promotion.endDate);
-                    if (!Number.isNaN(endDate.getTime())) {
-                        const expiry = document.createElement("small");
-                        expiry.textContent = `Áp dụng đến ${endDate.toLocaleDateString("vi-VN")}`;
-                        item.append(expiry);
-                    }
-                }
-                promotionList.append(item);
-            });
-            promotionsSection.hidden = false;
         }
 
         function showSpecificationError(message) {
@@ -351,7 +295,6 @@
                 const model = catalogue.models?.find((item) => Number(item.modelID) === Number(modelID));
                 if (model) {
                     renderSpecifications(model);
-                    renderPromotions(model.promotions);
                 } else {
                     showSpecificationError("Chưa có thông số cho mẫu xe này trong danh mục.");
                 }

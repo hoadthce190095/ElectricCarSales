@@ -386,7 +386,7 @@ async function loadCatalogue(filters = state.catalogueFilters) {
                 "Thông số đọc từ danh mục sản phẩm của showroom. Trường chưa xác định được ghi rõ trong từng mẫu xe."
         }),
         el("p", {
-            text: "Giá trên trang dùng cho bản demo; chính sách ưu đãi và giá thực tế có thể thay đổi. Tầm hoạt động công bố phụ thuộc chuẩn đo, cấu hình và điều kiện sử dụng. Các màu hiển thị là màu xe đang có trong dữ liệu demo."
+            text: "Giá trên trang dùng cho bản demo và có thể thay đổi. Tầm hoạt động công bố phụ thuộc chuẩn đo, cấu hình và điều kiện sử dụng. Các màu hiển thị là màu xe đang có trong dữ liệu demo."
         }),
         state.catalogueMetadata?.referenceDate
             ? el("small", {

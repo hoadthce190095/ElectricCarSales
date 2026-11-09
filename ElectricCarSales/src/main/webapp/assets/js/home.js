@@ -85,43 +85,12 @@
         const classes = { "VF 3": "Xe đô thị", "VF 5": "SUV đô thị", "VF 6": "SUV cỡ B", "VF 7": "SUV cỡ C", "VF 8": "SUV cỡ D", "VF 9": "SUV cỡ E" };
         return classes[line] || "Xe điện VinFast";
     };
-    const promotionValue = (promotion) => {
-        const value = number(promotion.discountValue);
-        if (value === null) return "";
-        return promotion.discountType === "PERCENTAGE"
-            ? `${new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(value)}%`
-            : `${new Intl.NumberFormat("vi-VN").format(value)} ₫`;
-    };
     const make = (tag, classValue, value) => {
         const element = document.createElement(tag);
         if (classValue) element.className = classValue;
         if (value !== undefined) element.textContent = value;
         return element;
     };
-
-    function promotionList(model) {
-        if (!Array.isArray(model.promotions) || model.promotions.length === 0) return null;
-        const section = make("div", "vehicle-promotions");
-        section.append(make("span", "promotion-heading", "Ưu đãi đang áp dụng"));
-        model.promotions.forEach((promotion) => {
-            const item = make("div", "promotion-item");
-            const title = make("strong", "promotion-title", text(promotion.promotionName));
-            const value = promotionValue(promotion);
-            if (value) item.append(make("span", "promotion-value", value));
-            item.prepend(title);
-            if (text(promotion.description)) {
-                item.append(make("span", "promotion-description", text(promotion.description)));
-            }
-            if (promotion.endDate) {
-                const endDate = new Date(promotion.endDate);
-                if (!Number.isNaN(endDate.getTime())) {
-                    item.append(make("span", "promotion-end-date", `Đến ${endDate.toLocaleDateString("vi-VN")}`));
-                }
-            }
-            section.append(item);
-        });
-        return section;
-    }
 
     function populateFilters() {
         const lines = [...new Set(models.map(lineName).filter(Boolean))];
@@ -198,7 +167,6 @@
         });
         const priceLabel = make("span", "vehicle-price-label", "Giá tham khảo · đã gồm pin");
         const priceValue = make("strong", "vehicle-price", price(model.priceVnd));
-        const promotions = promotionList(model);
         const footer = make("div", "vehicle-card-footer");
         const sourceUrl = safeOfficialUrl(model.priceSourceUrl);
         if (sourceUrl) {
@@ -216,7 +184,6 @@
         compareButton.addEventListener("click", () => toggleCompare(id, model));
         footer.append(compareButton);
         body.append(title, version, specs, priceLabel, priceValue);
-        if (promotions) body.append(promotions);
         body.append(footer);
         article.append(photo, body);
         return article;

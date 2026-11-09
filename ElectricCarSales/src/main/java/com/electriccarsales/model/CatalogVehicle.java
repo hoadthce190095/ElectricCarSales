@@ -27,6 +27,5 @@ public record CatalogVehicle(
         BigDecimal maxSpeedKmh,
         Integer rapidChargeMinutes,
         String priceNote,
-        String specificationNote,
-        List<PromotionOffer> promotions) {
+        String specificationNote) {
 }

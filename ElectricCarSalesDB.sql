@@ -898,64 +898,6 @@ CREATE TABLE CarImages(
 );
 GO
 /* 
-  Promotions
-  */
-CREATE TABLE Promotions(
-	PromotionID INT IDENTITY(1,1) PRIMARY KEY,
-	PromotionName NVARCHAR(150) NOT NULL,
-	Description NVARCHAR(500) NULL,
-	DiscountType VARCHAR(30) NULL,
-	DiscountValue DECIMAL(18,2) NULL,
-	StartDate DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
-	EndDate DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
-	Status VARCHAR(30)
-);
-GO 
-
-/* 
-  PromotionCars
-  */
-CREATE TABLE PromotionCars(
-	PromotionCarID INT IDENTITY(1,1) PRIMARY KEY,
-	PromotionID INT NOT NULL,
-	ModelID INT NOT NULL,
-
-	CONSTRAINT FK_PromotionCars_Promotions
-		FOREIGN KEY(PromotionID)
-		REFERENCES Promotions(PromotionID),
-
-	CONSTRAINT FK_PromotionCars_CarModels
-		FOREIGN KEY(ModelID)
-		REFERENCES CarModels(ModelID),
-
-	CONSTRAINT UQ_PromotionCars_Promotion_Model
-		UNIQUE (PromotionID, ModelID)
-);
-GO
-
-/* 
-  VehicleTCO
-  */
-CREATE TABLE VehicleTCO(
-	TCOID INT IDENTITY(1,1) PRIMARY KEY,
-	ModelID INT NOT NULL,
-	VehiclePrice DECIMAL(18,2) NULL,
-	EnergyCost DECIMAL(18,2) NULL,
-	MaintenanceCost DECIMAL(18,2) NULL,
-	InsuranceCost DECIMAL(18,2) NULL,
-	RegistrationCost DECIMAL(18,2) NULL,
-	IncentiveAmount DECIMAL(18,2) NULL,
-	TotalCost DECIMAL(18,2) NULL,
-	PeriodMonths INT NULL,
-	Description NVARCHAR(500) NULL,
-	CreateDate DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
-
-	CONSTRAINT FK_VehicleTCO_CarModels
-		FOREIGN KEY (ModelID)
-		REFERENCES CarModels(ModelID)
-);
-GO 
-/* 
   OrderStatusHistory
   */
  CREATE TABLE OrderStatusHistory(
@@ -1347,34 +1289,4 @@ BEGIN CATCH
 	       ROLLBACK TRANSACTION;
 	   THROW;
 END CATCH;
-GO
-
-/* =========================================================
-   DEMO CUSTOMER PROMOTION
-   ========================================================= */
-DECLARE @PromotionID INT;
-DECLARE @PromotionStart DATETIME2 = SYSDATETIME();
-
-INSERT INTO dbo.Promotions (
-    PromotionName, Description, DiscountType, DiscountValue,
-    StartDate, EndDate, Status
-)
-VALUES (
-    N'[DEMO] Ưu đãi minh họa - giảm 5%',
-    N'Dữ liệu minh họa giao diện; không phải chương trình khuyến mãi thực tế.',
-    'PERCENTAGE',
-    5,
-    @PromotionStart,
-    DATEADD(DAY, 30, @PromotionStart),
-    'ACTIVE'
-);
-
-SET @PromotionID = SCOPE_IDENTITY();
-
-INSERT INTO dbo.PromotionCars (PromotionID, ModelID)
-SELECT @PromotionID, model.ModelID
-FROM dbo.CarModels model
-INNER JOIN dbo.CarLines line ON line.CarLineID = model.CarLineID
-INNER JOIN dbo.Brands brand ON brand.BrandID = line.BrandID
-WHERE brand.BrandName = N'VinFast';
 GO

@@ -2,6 +2,6 @@
 <project version="4">
   <component name="SqlDialectMappings">
     <file url="file://$PROJECT_DIR$/ElectricCarSalesCatalogUpgrade.sql" dialect="GenericSQL" />
-    <file url="file://$PROJECT_DIR$/ElectricCarSalesDB.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/ElectricCarSalesDB.sql" dialect="TSQL" />
   </component>
 </project>

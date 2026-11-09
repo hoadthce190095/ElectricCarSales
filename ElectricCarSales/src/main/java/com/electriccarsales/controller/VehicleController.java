@@ -3,7 +3,6 @@ package com.electriccarsales.controller;
 import com.electriccarsales.model.CarImage;
 import com.electriccarsales.model.CarModel;
 import com.electriccarsales.model.CatalogVehicle;
-import com.electriccarsales.model.PromotionOffer;
 import com.electriccarsales.service.VehicleCatalogService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -139,15 +138,7 @@ public class VehicleController extends HttpServlet {
                 .append(",\"rapidChargeMinutes\":").append(jsonNumber(vehicle.rapidChargeMinutes()))
                 .append(",\"priceNote\":").append(jsonString(vehicle.priceNote()))
                 .append(",\"specificationNote\":").append(jsonString(vehicle.specificationNote()));
-
-        json.append(",\"promotions\":[");
-        for (int i = 0; i < vehicle.promotions().size(); i++) {
-            if (i > 0) {
-                json.append(",");
-            }
-            json.append(promotionToJson(vehicle.promotions().get(i)));
-        }
-        return json.append("]}").toString();
+        return json.append("}").toString();
     }
 
     private static String toJsonArray(List<String> values) {
@@ -174,18 +165,6 @@ public class VehicleController extends HttpServlet {
             first = false;
         }
         return json.append("}").toString();
-    }
-
-    private static String promotionToJson(PromotionOffer promotion) {
-        return "{"
-                + "\"promotionID\":" + promotion.promotionID()
-                + ",\"promotionName\":" + jsonString(promotion.promotionName())
-                + ",\"description\":" + jsonString(promotion.description())
-                + ",\"discountType\":" + jsonString(promotion.discountType())
-                + ",\"discountValue\":" + jsonNumber(promotion.discountValue())
-                + ",\"endDate\":" + jsonString(promotion.endDate() == null
-                        ? null : promotion.endDate().toString())
-                + "}";
     }
 
     private static String comparisonKey(CatalogVehicle vehicle) {

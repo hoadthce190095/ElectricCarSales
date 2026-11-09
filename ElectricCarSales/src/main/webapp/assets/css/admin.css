@@ -1532,22 +1532,6 @@ dialog::backdrop {
     color: var(--muted);
     font-size: 12px;
 }
-.promotion-preview-result {
-    background: #f4f7ee;
-    border: 1px solid #dce6d1;
-    border-radius: 8px;
-    padding: 16px;
-}
-.promotion-preview-result p {
-    margin: 0;
-    font-size: 12px;
-    color: var(--muted);
-}
-.promotion-preview-result strong {
-    margin-top: 5px;
-    font-size: 18px;
-    color: var(--green);
-}
 .report-comparison-warning {
     margin-top: 0;
 }

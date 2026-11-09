@@ -10,7 +10,6 @@ const state = {
     userFilters: {},
     userPage: 1,
     employeeFilters: {},
-    promotionFilters: {},
     report: null,
     reportFilters: {},
     reportComparison: "NONE",
@@ -86,7 +85,6 @@ const views = {
     employees: ["Nhân viên", "Thông tin liên hệ của đội ngũ showroom."],
     roles: ["Phân quyền", "Thiết lập những chức năng mỗi vai trò được phép sử dụng."],
     configurations: ["Cấu hình hệ thống", "Điều chỉnh thời gian phiên đăng nhập và phạm vi truy vấn báo cáo."],
-    promotions: ["Khuyến mãi", "Tạo ưu đãi và lựa chọn những mẫu xe tham gia chương trình."],
     reports: ["Báo cáo kinh doanh", "Theo dõi doanh thu, xe bán ra và tiến độ giao dịch."],
     logs: ["Nhật ký hệ thống", "Theo dõi hoạt động và truy vết những thay đổi quan trọng."],
     ai: ["Trợ lý xe", "Tìm hiểu, so sánh và chọn chiếc xe phù hợp với bạn."]
@@ -244,7 +242,6 @@ function canView(name) {
                     overview: "VIEW_REPORTS",
                     users: "MANAGE_USERS",
                     employees: "MANAGE_USERS",
-                    promotions: "MANAGE_PROMOTIONS",
                     reports: "VIEW_REPORTS",
                     logs: "VIEW_LOGS"
                 }[name]
@@ -390,7 +387,6 @@ function clearPrivateState() {
     state.userFilters = {};
     state.userPage = 1;
     state.employeeFilters = {};
-    state.promotionFilters = {};
 }
 
 function modal(title, fields, onSubmit, submitLabel = "Lưu thay đổi") {
@@ -564,7 +560,6 @@ async function showView(name) {
                 employees: loadEmployees,
                 roles: loadRoles,
                 configurations: loadConfigurations,
-                promotions: loadPromotions,
                 reports: loadReports,
                 logs: loadLogs,
                 ai: loadAI
