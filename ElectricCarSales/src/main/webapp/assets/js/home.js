@@ -4,6 +4,7 @@
     const contextPath = document.querySelector(".brand")?.getAttribute("href")?.replace(/\/index\.jsp$/, "") || "";
     const catalogueUrl = `${contextPath}/api/catalogue`;
     const grid = document.getElementById("vehicle-grid");
+    const searchForm = document.getElementById("search-form");
     const search = document.getElementById("vehicle-search");
     const modelFilter = document.getElementById("model-filter");
     const priceFilter = document.getElementById("price-filter");
@@ -323,6 +324,12 @@
 
     [modelFilter, priceFilter, rangeFilter, colorFilter, sortFilter].forEach((control) => control.addEventListener("change", render));
     search.addEventListener("input", render);
+    searchForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        search.value = search.value.trim();
+        render();
+        document.getElementById("models").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
     document.getElementById("reset-filters").addEventListener("click", resetFilters);
     document.getElementById("empty-reset").addEventListener("click", resetFilters);
     document.getElementById("compare-open").addEventListener("click", openComparison);
