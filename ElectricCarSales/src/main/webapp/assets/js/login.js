@@ -17,7 +17,3 @@ document.querySelector("[data-forgot-password]").addEventListener("click", () =>
     loginMessage.hidden = false;
 });
 
-document.querySelector("[data-register]").addEventListener("click", () => {
-    loginMessage.textContent = "Chức năng đăng ký chưa sẵn sàng. Vui lòng liên hệ quản trị viên để được hỗ trợ.";
-    loginMessage.hidden = false;
-});

@@ -21,7 +21,14 @@ import java.util.Locale;
 import java.util.Set;
 
 /** Protects shared operational lists, including direct access to their JSP views. */
-@WebFilter(urlPatterns = {"/car", "/car.jsp", "/contract", "/contract.jsp", "/delivery", "/delivery.jsp"})
+@WebFilter(urlPatterns = {
+    "/car", "/car.jsp",
+    "/contract", "/contract.jsp",
+    "/delivery", "/delivery.jsp",
+    "/customer/*",
+    "/staff/*",
+    "/admin/*"
+})
 public class OperationsPageFilter implements Filter {
     private static final Set<String> STAFF_ROLES = Set.of("ADMIN", "MANAGER", "SALES", "OPERATIONS", "ACCOUNTANT");
 
@@ -49,8 +56,24 @@ public class OperationsPageFilter implements Filter {
             String role = account.getRole() == null ? "" : account.getRole().toUpperCase(Locale.ROOT);
             session.setAttribute("user", new SessionUser(account.getUserId(), account.getUsername(), account.getRole()));
             session.setAttribute("roleName", account.getRole());
-            if (!STAFF_ROLES.contains(role)) {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền xem danh sách nghiệp vụ.");
+            String path = request.getServletPath();
+            boolean allowed;
+
+            if (path.startsWith("/customer/")) {
+                allowed = "CUSTOMER".equals(role);
+            } else if (path.startsWith("/admin/")) {
+                allowed = "ADMIN".equals(role);
+            } else if (path.startsWith("/staff/inventory")) {
+                allowed = Set.of("OPERATIONS", "MANAGER", "ADMIN").contains(role);
+            } else {
+                allowed = STAFF_ROLES.contains(role);
+            }
+
+            if (!allowed) {
+                response.sendError(
+                    HttpServletResponse.SC_FORBIDDEN,
+                    "Bạn không có quyền truy cập trang này."
+                );
                 return;
             }
         } catch (Exception exception) {

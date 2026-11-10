@@ -61,7 +61,7 @@
                     <button class="submit-button" type="submit">Đăng nhập <span aria-hidden="true">→</span></button>
                 </form>
 
-                <div class="form-bottom"><span>Bạn chưa có tài khoản?</span><button class="text-button" type="button" data-register>Đăng ký</button></div>
+                <div class="form-bottom"><span>Bạn chưa có tài khoản?</span><a class="text-button" href="<c:url value='/register' />">Đăng ký</a></div>
                 <p class="role-note">Sau khi xác thực, hệ thống sẽ mở giao diện phù hợp với vai trò tài khoản của bạn.</p>
             </div>
 

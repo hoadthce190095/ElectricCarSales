@@ -1,5 +1,6 @@
 package com.electriccarsales.controller;
-
+import com.electriccarsales.dao.UserDAO;
+import com.electriccarsales.service.OtpService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -41,10 +42,50 @@ public class RegisterController extends HttpServlet {
             return;
         }
 
-        // Registration creates an inactive account and is not safe to persist until OTP delivery is available.
-        req.setAttribute("error", "Hệ thống chưa cấu hình kênh gửi OTP nên chưa thể hoàn tất đăng ký. "
-                + "Vui lòng liên hệ quản trị viên.");
-        req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
+        if (!OtpService.isSmtpConfigured()) {
+            req.setAttribute("error", "Ứng dụng chưa nhận đủ biến môi trường SMTP.");
+            req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
+            return;
+        }
+
+        try {
+            UserDAO userDAO = new UserDAO();
+
+            if (userDAO.exists(username, phone, email))
+                throw new IllegalArgumentException(
+                    "Tên đăng nhập, số điện thoại hoặc email đã được sử dụng.");
+
+            OtpService otpService = new OtpService();
+            String code = otpService.generateRegistrationCode();
+
+            int userId = userDAO.registerCustomer(
+                username, userDAO.hashPassword(password),
+                email, phone, name, address, code);
+
+            req.getSession().setAttribute("pendingRegistrationUserId", userId);
+            req.getSession().setAttribute("pendingRegistrationEmail", email);
+            req.setAttribute("email", email);
+
+            try {
+                otpService.sendRegistrationOtp(email, code);
+                req.setAttribute("notice", "Đã gửi mã OTP tới email của bạn.");
+            } catch (RuntimeException e) {
+                log("Không gửi được OTP đăng ký", e);
+                req.setAttribute("error",
+                    "Chưa gửi được OTP. Hãy kiểm tra SMTP rồi bấm Gửi lại mã xác thực.");
+            }
+
+            req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);
+
+        } catch (IllegalArgumentException e) {
+           req.setAttribute("error", e.getMessage());
+            req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
+
+        } catch (RuntimeException e) {
+            log("Đăng ký thất bại", e);
+            req.setAttribute("error", "Không thể tạo tài khoản.");
+            req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
+        }
     }
 
     private String validate(String name, String username, String phone, String email, String password, String confirm) {

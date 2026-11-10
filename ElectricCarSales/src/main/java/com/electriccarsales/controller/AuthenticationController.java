@@ -79,6 +79,7 @@ public class AuthenticationController extends JsonServlet {
 
     private void login(HttpServletRequest request, HttpServletResponse response, LoginRequest input)
         throws SQLException, IOException {
+
         if (input.getUsername() == null || input.getUsername().isBlank() || input.getUsername().length() > 50
             || input.getPassword() == null || input.getPassword().length() > 128) {
             throw new ApiException(400, "Nhập tên đăng nhập và mật khẩu hợp lệ.");
@@ -144,18 +145,42 @@ public class AuthenticationController extends JsonServlet {
         Connection connection) throws SQLException {
         String email;
         String phone;
+        String displayName = account.getUsername();
         Integer employeeId;
+
         try (PreparedStatement statement = connection.prepareStatement(
-            "SELECT u.Email,u.Phone,e.EmployeeID FROM Users u LEFT JOIN Employees e ON e.UserID=u.UserID"
-                + " WHERE u.UserID=?")) {
+            "SELECT u.Email, u.Phone, e.EmployeeID, e.EmployeeName, c.CustomerName "
+                + "FROM Users u "
+                + "LEFT JOIN Employees e ON e.UserID = u.UserID "
+                + "LEFT JOIN Customers c ON c.UserID = u.UserID "
+                + "WHERE u.UserID = ?")) {
+
             statement.setInt(1, account.getUserId());
+
             try (ResultSet result = statement.executeQuery()) {
                 if (!result.next()) {
                     throw new ApiException(401, "Tài khoản không còn tồn tại.");
                 }
+
                 email = result.getString("Email");
                 phone = result.getString("Phone");
                 employeeId = result.getObject("EmployeeID", Integer.class);
+                String name = "CUSTOMER".equalsIgnoreCase(account.getRole())
+                    ? result.getString("CustomerName")
+                    : result.getString("EmployeeName");
+
+                if (name != null && !name.isBlank()) {
+                    displayName = name;
+                }
+                if ("CUSTOMER".equalsIgnoreCase(account.getRole())) {
+                    displayName = result.getString("CustomerName");
+                } else {
+                    displayName = result.getString("EmployeeName");
+                }
+
+                if (displayName == null || displayName.isBlank()) {
+                    displayName = account.getUsername();
+                }
             }
         }
         HttpSession previous = request.getSession(false);
@@ -169,6 +194,8 @@ public class AuthenticationController extends JsonServlet {
         session.setAttribute("username", account.getUsername());
         session.setAttribute("roleID", account.getRoleId());
         session.setAttribute("roleName", account.getRole());
+        session.setAttribute("displayName", displayName);
+        session.setAttribute("displayName", displayName);
         session.setAttribute("email", email);
         session.setAttribute("phone", phone);
         if (employeeId != null && employeeId > 0) {
@@ -227,6 +254,8 @@ public class AuthenticationController extends JsonServlet {
         }
         Map<String, Object> state = new LinkedHashMap<>();
         state.put("user", session.getAttribute("user"));
+        state.put("displayName", session.getAttribute("displayName"));
+        state.put("displayName", session.getAttribute("displayName"));
         state.put("csrfToken", token);
         state.put("permissions",
             session.getAttribute("user") == null ? List.of() : request.getAttribute("permissions"));

@@ -1,4 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%
 request.setAttribute("customerTitle", "Tài khoản của tôi");
 request.setAttribute("customerEyebrow", "CHÀO MỪNG TRỞ LẠI");
@@ -92,24 +93,20 @@ request.setAttribute("customerEyebrow", "CHÀO MỪNG TRỞ LẠI");
         <div class="profile-summary">
             <div class="profile-avatar">KH</div>
             <div>
-                <strong>Khách hàng</strong>
-                <span>Thành viên VinFast</span>
+<strong><c:out value="${customer.customerName}" default="Khách hàng" /></strong>                <span>Tài khoản: <c:out value="${sessionScope.username}" /></span>
             </div>
             <span class="verified-badge">✓ Đã xác thực</span>
         </div>
         <div class="profile-fields">
             <div>
                 <span>Họ và tên</span>
-                <strong>Chưa cập nhật</strong>
-            </div>
+<strong><c:out value="${customer.customerName}" default="Chưa cập nhật" /></strong>            </div>
             <div>
                 <span>Số điện thoại</span>
-                <strong>Chưa cập nhật</strong>
-            </div>
+<strong><c:out value="${customer.phone}" default="Chưa cập nhật" /></strong>            </div>
             <div>
                 <span>Email</span>
-                <strong>Chưa cập nhật</strong>
-            </div>
+<strong><c:out value="${customer.email}" default="Chưa cập nhật" /></strong>            </div>
         </div>
         <p class="profile-note">Thông tin sẽ được tải từ tài khoản của bạn khi kết nối hệ thống.</p>
     </section>

@@ -16,13 +16,28 @@
     <link rel="stylesheet" href="<%= appContext %>/assets/css/staff.css">
 
     <!-- Vẫn nạp staff.js để chạy menu bên trái, nhưng cần xóa đoạn code ghi đè thẻ <main> trong file JS này -->
-    <script src="<%= appContext %>/assets/js/staff.js" defer></script>
+    <script src="<%= appContext %>/assets/js/staff.js?v=logout-role-2" defer></script>
 </head>
-<body>
-<div class="staff-app" data-staff-app>
+<body data-context-path="<%= appContext %>">
+<%
+    String roleName = session == null ? "" : String.valueOf(session.getAttribute("roleName"));
+    if (!("SALES".equalsIgnoreCase(roleName) || "OPERATIONS".equalsIgnoreCase(roleName)
+            || "ACCOUNTANT".equalsIgnoreCase(roleName) || "MANAGER".equalsIgnoreCase(roleName)
+            || "ADMIN".equalsIgnoreCase(roleName))) {
+        response.sendRedirect(appContext + "/login");
+        return;
+    }
+    boolean inventoryPage = request.getRequestURI().contains("/staff/inventory");
+    if (inventoryPage && !("OPERATIONS".equalsIgnoreCase(roleName)
+            || "MANAGER".equalsIgnoreCase(roleName) || "ADMIN".equalsIgnoreCase(roleName))) {
+        response.sendError(403);
+        return;
+    }
+%>
+<div class="staff-app" data-staff-app data-staff-role="<c:out value='${sessionScope.roleName}' />">
     <!-- BỘ KHUNG SIDEBAR BÊN TRÁI -->
     <aside class="staff-sidebar" id="staff-sidebar">
-        <a class="staff-brand" href="<%= appContext %>/staff/dashboard.jsp" aria-label="VinFast - ElectricCarSale">
+        <a class="staff-brand" href="<%= appContext %>/staff/dashboard" aria-label="VinFast - ElectricCarSale">
             <span class="staff-brand-mark">V</span>
             <span class="staff-brand-copy">
                 <strong>VinFast</strong>
@@ -30,13 +45,6 @@
             </span>
         </a>
         <div class="workspace-caption">KHÔNG GIAN NỘI BỘ</div>
-        <label class="role-picker-label" for="role-picker">Vai trò xem trước</label>
-        <select class="role-picker" id="role-picker" aria-label="Chọn vai trò giao diện">
-            <option value="sales">Sales Staff</option>
-            <option value="operations" selected>Operations Officer</option>
-            <option value="accountant">Accountant</option>
-            <option value="manager">Manager</option>
-        </select>
         <nav class="staff-nav" id="staff-nav" aria-label="Điều hướng nhân viên"></nav>
         <div class="sidebar-support">
             <span class="support-orbit">✳</span>
@@ -58,26 +66,30 @@
             <div class="breadcrumb">
                 <span>VinFast</span>
                 <i>/</i>
-                <strong id="breadcrumb-title">Quản lý tồn kho</strong>
+                <strong id="breadcrumb-title">Tổng quan</strong>
             </div>
             <div class="topbar-actions">
                 <span class="date-label" id="today-label"></span>
                 <button class="topbar-icon" type="button" aria-label="Thông báo">♧<b></b></button>
+                <form method="post" action="<%= appContext %>/logout" style="margin:0">
+                    <button class="staff-logout-btn" type="submit">Đăng xuất</button>
+                </form>
                 <span class="topbar-divider"></span>
-                <button class="staff-profile" type="button">
-                    <span class="profile-avatar" id="profile-avatar">OP</span>
+                <div class="staff-profile">
+                    <span class="profile-avatar" id="profile-avatar">NV</span>
                     <span class="profile-copy">
                         <!-- Tên và Role đã được cập nhật chuẩn xác -->
-                        <strong id="profile-name">Nhân PTH</strong>
-                        <small id="profile-role">Nhân viên vận hành</small>
+                        <strong id="profile-name"><c:out value="${empty sessionScope.displayName ? sessionScope.username : sessionScope.displayName}" default="Nhân viên" /></strong>
+                        <small id="profile-role">Nhân viên</small>
                     </span>
                     <span class="profile-chevron">⌄</span>
-                </button>
+                </div>
             </div>
         </header>
 
-        <!-- NỘI DUNG CHÍNH (Đã được code cứng thẻ JSTL thay vì để trống) -->
+        <%-- Dashboard sẽ được staff.js dựng theo vai trò. Chỉ hiển thị bảng khi Servlet tồn kho được gọi. --%>
         <main class="staff-content p-4" id="staff-content" tabindex="-1" aria-live="polite" style="overflow-y: auto;">
+          <% if (inventoryPage) { %>
             <div class="mb-4">
                 <h3 class="fw-bold">Quản lý tồn kho</h3>
                 <p class="text-muted">Theo dõi số lượng xe theo mẫu, màu sắc và địa điểm</p>
@@ -130,6 +142,7 @@
                     </tbody>
                 </table>
             </div>
+          <% } %>
         </main>
 
         <footer class="staff-footer">

@@ -1340,3 +1340,15 @@ td {
     font: inherit;
     font-size: 8px;
 }
+
+/* Explicit logout control, shared by all staff roles. */
+.staff-logout-btn {
+    border: 1px solid #d8d8df;
+    background: #fff;
+    border-radius: 6px;
+    padding: 7px 11px;
+    color: #a41b30;
+    font-weight: 700;
+    font-size: 10px;
+}
+.staff-logout-btn:hover { background: #fff3f5; }

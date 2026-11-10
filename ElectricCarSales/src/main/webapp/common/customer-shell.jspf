@@ -1,8 +1,10 @@
 <%@ page pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%
 response.setCharacterEncoding("UTF-8");
 String customerContext = request.getContextPath();
 String customerPage = request.getRequestURI().substring(request.getRequestURI().lastIndexOf('/') + 1);
+if ("profile".equals(customerPage)) customerPage = "my-account.jsp";
 String customerTitle = (String) request.getAttribute("customerTitle");
 if (customerTitle == null) customerTitle = "Tài khoản của tôi";
 String customerEyebrow = (String) request.getAttribute("customerEyebrow");
@@ -28,7 +30,7 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
     <body>
         <div class="customer-app">
             <aside class="customer-sidebar" id="customer-sidebar">
-                <a class="vf-brand" href="<%= customerContext %>/customer/my-account.jsp" aria-label="VinFast ElectricCarSale">
+                <a class="vf-brand" href="<%= customerContext %>/customer/profile" aria-label="VinFast ElectricCarSale">
                     <span class="vf-mark" aria-hidden="true">V</span>
                     <span class="vf-brand-copy">
                         <strong>VinFast</strong>
@@ -37,7 +39,7 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
                 </a>
                 <div class="sidebar-caption">KHÔNG GIAN CỦA BẠN</div>
                 <nav class="customer-nav" aria-label="Điều hướng khách hàng">
-                    <a class="nav-link <%= customerPage.equals("my-account.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/my-account.jsp">
+                    <a class="nav-link <%= customerPage.equals("my-account.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/profile">
                         <span class="nav-icon">⌂</span>
                         <span>Tổng quan</span>
                     </a>
@@ -73,7 +75,7 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
                     <div class="nav-divider">
                         <span>TÀI KHOẢN</span>
                     </div>
-                    <a class="nav-link" href="<%= customerContext %>/customer/my-account.jsp#profile">
+                    <a class="nav-link" href="<%= customerContext %>/customer/profile#profile">
                         <span class="nav-icon">◎</span>
                         <span>Hồ sơ cá nhân</span>
                     </a>
@@ -82,6 +84,9 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
                         <span>Khám phá xe</span>
                     </a>
                 </nav>
+                <form method="post" action="<%= customerContext %>/logout" style="margin:10px 13px 0;">
+                    <button type="submit" class="nav-link" style="background:none;border:0;color:#fff;width:100%;cursor:pointer;text-align:left;">⎋ &nbsp;Đăng xuất</button>
+                </form>
                 <div class="sidebar-help">
                     <div class="help-orbit">✳</div>
                     <strong>Cần hỗ trợ?</strong>
@@ -108,10 +113,10 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
                         </a>
                         <button class="icon-button notification-button" type="button" aria-label="Thông báo" data-notification>♧</button>
                         <span class="topbar-divider"></span>
-                        <a class="user-chip" href="<%= customerContext %>/customer/my-account.jsp#profile">
+                        <a class="user-chip" href="<%= customerContext %>/customer/profile#profile">
                             <span class="user-avatar">KH</span>
                             <span class="user-chip-copy">
-                                <strong>Khách hàng</strong>
+                                <strong><c:out value="${empty sessionScope.displayName ? sessionScope.username : sessionScope.displayName}" default="Khách hàng" /></strong>
                                 <small>Tài khoản cá nhân</small>
                             </span>
                             <span class="chevron">⌄</span>

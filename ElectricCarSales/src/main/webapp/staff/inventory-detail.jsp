@@ -26,10 +26,18 @@
     <link rel="stylesheet" href="<%= appContext %>/assets/css/staff.css">
 
     <!-- LƯU Ý: Vẫn giữ staff.js để các nút menu/sidebar hoạt động -->
-    <script src="<%= appContext %>/assets/js/staff.js" defer></script>
+    <script src="<%= appContext %>/assets/js/staff.js?v=logout-role-2" defer></script>
 </head>
-<body>
-<div class="staff-app" data-staff-app>
+<body data-context-path="<%= appContext %>">
+<%
+    String roleName = session == null ? "" : String.valueOf(session.getAttribute("roleName"));
+    if (!("OPERATIONS".equalsIgnoreCase(roleName) || "MANAGER".equalsIgnoreCase(roleName)
+            || "ADMIN".equalsIgnoreCase(roleName))) {
+        response.sendError(403);
+        return;
+    }
+%>
+<div class="staff-app" data-staff-app data-staff-role="<c:out value='${sessionScope.roleName}' />">
     <!-- BỘ KHUNG SIDEBAR BÊN TRÁI -->
     <aside class="staff-sidebar" id="staff-sidebar">
         <a class="staff-brand" href="<%= appContext %>/staff/inventory">
@@ -40,13 +48,6 @@
             </span>
         </a>
         <div class="workspace-caption">KHÔNG GIAN NỘI BỘ</div>
-        <label class="role-picker-label" for="role-picker">Vai trò xem trước</label>
-        <select class="role-picker" id="role-picker">
-            <option value="operations" selected>Operations Officer</option>
-            <option value="sales">Sales Staff</option>
-            <option value="accountant">Accountant</option>
-            <option value="manager">Manager</option>
-        </select>
         <nav class="staff-nav" id="staff-nav"></nav>
         <div class="sidebar-foot">
             <i></i><span>VinFast ElectricCarSale</span><small>NỘI BỘ</small>
@@ -62,13 +63,16 @@
                 <strong>Chi tiết lô xe</strong>
             </div>
             <div class="topbar-actions">
-                <button class="staff-profile" type="button">
-                    <span class="profile-avatar">OP</span>
+                <form method="post" action="<%= appContext %>/logout" style="margin:0">
+                    <button class="staff-logout-btn" type="submit">Đăng xuất</button>
+                </form>
+                <div class="staff-profile">
+                    <span class="profile-avatar" id="profile-avatar">NV</span>
                     <span class="profile-copy">
-                        <strong>Operations Officer</strong>
-                        <small>Nhân viên vận hành</small>
+                        <strong id="profile-name"><c:out value="${empty sessionScope.displayName ? sessionScope.username : sessionScope.displayName}" default="Nhân viên" /></strong>
+                        <small id="profile-role">Nhân viên</small>
                     </span>
-                </button>
+                </div>
             </div>
         </header>
 

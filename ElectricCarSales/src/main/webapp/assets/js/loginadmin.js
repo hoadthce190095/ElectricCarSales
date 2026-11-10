@@ -90,20 +90,18 @@ $("#today").textContent = new Intl.DateTimeFormat("vi-VN", {
     try {
         const result = await api("auth");
         state.user = result.user;
+        state.displayName = result.displayName || "";
         state.permissions = result.permissions || [];
         state.csrf = result.csrfToken;
     } catch (error) {
-        // This project currently has no API servlet. Fall back to a visual demo
-        // so the admin screen can still be previewed on Tomcat.
-        if (error.status === 404 || error.status == null) {
-            state.user = { username: "admin", role: "ADMIN" };
-            state.permissions = [];
-            state.demoMode = true;
-        } else {
-            notice(error.message, true);
-        }
+        window.location.replace("../login");
+        return;
+    }
+    if (!state.user || state.user.role !== "ADMIN") {
+        window.location.replace("../login");
+        return;
     }
     updateSession();
     await refreshSetup();
-    await showView(state.demoMode ? "roles" : canReport() ? "overview" : canView("users") ? "users" : "catalogue");
+    await showView(canReport() ? "overview" : canView("users") ? "users" : "catalogue");
 })();

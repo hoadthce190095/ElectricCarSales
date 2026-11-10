@@ -2,6 +2,7 @@
 const $ = (selector, root = document) => root.querySelector(selector);
 const state = {
     user: null,
+    displayName: "",
     permissions: [],
     csrf: "",
     view: "catalogue",
@@ -255,7 +256,7 @@ function canView(name) {
 }
 
 function updateSession() {
-    $("#session-label").textContent = state.user?.username || "Đăng nhập";
+    $("#session-label").textContent = state.displayName || state.user?.username || "Đăng nhập";
     $("#avatar").textContent = (state.user?.username || "G").slice(0, 1).toUpperCase();
     for (const node of document.querySelectorAll("[data-access]")) {
         node.hidden = !canView(node.dataset.view);
@@ -377,6 +378,7 @@ function searchText(value) {
 
 function applySession(result) {
     state.user = result.user;
+    state.displayName = result.displayName || "";
     state.permissions = result.permissions || [];
     state.csrf = result.csrfToken;
     state.lookups = null;

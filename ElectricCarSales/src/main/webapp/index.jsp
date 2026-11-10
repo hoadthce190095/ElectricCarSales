@@ -37,17 +37,20 @@ boolean customerView = authenticatedUser instanceof SessionUser
             <a class="nav-link current" href="#models">Mua xe <span aria-hidden="true">⌄</span></a>
             <a class="nav-link" href="#about">Giới thiệu</a>
             <a class="nav-link" href="#contact">Tư vấn</a>
-            <a class="nav-link" href="<c:url value='/admin.jsp' />#ai">Trợ lý xe</a>
-            <a class="nav-link" href="<c:url value='/admin.jsp'><c:param name='login' value='1' /></c:url>">Quản trị</a>
+            <a class="nav-link" href="<c:url value='/customer/ai-assistant.jsp' />">Trợ lý xe</a>
+            <a class="nav-link" href="<c:url value='/login' />">Quản trị</a>
         </nav>
         <div class="header-actions">
             <a class="header-contact" href="mailto:hotro@electriccarsale.vn?subject=Yeu%20cau%20tu%20van%20xe%20VinFast">
                 <span aria-hidden="true">✉</span><span>Liên hệ tư vấn</span>
             </a>
             <% if (customerView) { %>
-            <a class="account-link" href="<c:url value='/customer/my-account.jsp' />"><span class="account-icon" aria-hidden="true">KH</span>Tài khoản của tôi</a>
+            <a class="account-link" href="<c:url value='/customer/profile' />"><span class="account-icon" aria-hidden="true">KH</span><c:out value="${empty sessionScope.displayName ? sessionScope.username : sessionScope.displayName}" default="Tài khoản của tôi" /></a>
+            <form method="post" action="<c:url value='/logout' />" style="margin:0">
+                <button class="account-link" type="submit" style="background:white;cursor:pointer">Đăng xuất</button>
+            </form>
             <% } else { %>
-            <a class="account-link" href="<c:url value='/login.jsp' />"><span class="account-icon" aria-hidden="true">♙</span>Đăng nhập</a>
+            <a class="account-link" href="<c:url value='/login' />"><span class="account-icon" aria-hidden="true">♙</span>Đăng nhập</a>
             <% } %>
         </div>
     </div>
