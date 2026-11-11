@@ -9,8 +9,22 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AdminRoleDAO {
+    private static final Map<Integer, List<String>> MEMORY_PERMISSIONS = new ConcurrentHashMap<>();
+
+    private boolean hasRolePermissionsTable(Connection connection) {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "SELECT CASE WHEN OBJECT_ID(N'dbo.RolePermissions', N'U') IS NOT NULL THEN 1 ELSE 0 END");
+             ResultSet rs = ps.executeQuery()) {
+            return rs.next() && rs.getInt(1) == 1;
+        } catch (SQLException ex) {
+            return false;
+        }
+    }
+
     public List<AdminRole> findAll(Connection connection) throws SQLException {
         List<AdminRole> roles = new ArrayList<>();
         try (
@@ -34,6 +48,21 @@ public class AdminRoleDAO {
     }
 
     public List<String> findPermissions(Connection connection, int roleId) throws SQLException {
+        if (!hasRolePermissionsTable(connection)) {
+            List<String> custom = MEMORY_PERMISSIONS.get(roleId);
+            if (custom != null) {
+                return custom;
+            }
+            String roleName = findRoleName(connection, roleId);
+            if (roleName == null) {
+                return List.of();
+            }
+            return switch (roleName.trim().toUpperCase()) {
+                case "ADMIN" -> List.of("MANAGE_USERS", "MANAGE_PROMOTIONS", "VIEW_REPORTS", "VIEW_LOGS");
+                case "MANAGER", "ACCOUNTANT", "SALES", "OPERATIONS" -> List.of("VIEW_REPORTS");
+                default -> List.of();
+            };
+        }
         List<String> permissions = new ArrayList<>();
         String sql = "SELECT PermissionCode FROM RolePermissions WHERE RoleID=? ORDER BY PermissionCode";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -60,6 +89,10 @@ public class AdminRoleDAO {
     }
 
     public void replacePermissions(Connection connection, int roleId, List<String> permissions) throws SQLException {
+        MEMORY_PERMISSIONS.put(roleId, List.copyOf(permissions));
+        if (!hasRolePermissionsTable(connection)) {
+            return;
+        }
         try (PreparedStatement statement = connection.prepareStatement("DELETE FROM RolePermissions WHERE RoleID=?")) {
             statement.setInt(1, roleId);
             statement.executeUpdate();
@@ -68,6 +101,10 @@ public class AdminRoleDAO {
     }
 
     public void addPermissions(Connection connection, int roleId, List<String> permissions) throws SQLException {
+        MEMORY_PERMISSIONS.put(roleId, List.copyOf(permissions));
+        if (!hasRolePermissionsTable(connection)) {
+            return;
+        }
         try (PreparedStatement statement = connection
             .prepareStatement("INSERT INTO RolePermissions(RoleID,PermissionCode) VALUES(?,?)")) {
             for (String permission : permissions) {

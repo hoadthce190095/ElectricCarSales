@@ -1,6 +1,8 @@
 package com.electriccarsales.dao.order;
 
 import com.electriccarsales.model.Order;
+import com.electriccarsales.model.OrderStatusHistory;
+import com.electriccarsales.dao.OrderStatusHistoryDAO;
 import util.DBContext;
 
 import java.math.BigDecimal;
@@ -60,6 +62,104 @@ public class OrderDAO {
             return orders;
         } catch (SQLException exception) {
             throw new IllegalStateException("Không thể tải danh sách đơn hàng.", exception);
+        }
+    }
+
+    public Order findById(int orderId) {
+        String sql = "SELECT o.OrderID,o.CustomerID,o.EmployeeID,o.PaymentMethodID,o.TotalAmount,"
+                + "o.DepositAmount,o.RemainingAmount,o.OrderDate,o.Note,s.StatusName "
+                + "FROM Orders o JOIN OrderStatuses s ON s.OrderStatusID=o.OrderStatusID WHERE o.OrderID=?";
+        try (Connection connection = connections.open();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, orderId);
+            try (ResultSet row = statement.executeQuery()) {
+                if (!row.next()) return null;
+                Order order = new Order();
+                order.setId(row.getInt("OrderID"));
+                order.setCustomerId(row.getInt("CustomerID"));
+                order.setEmployeeId(row.getObject("EmployeeID", Integer.class));
+                order.setPaymentMethodId(row.getInt("PaymentMethodID"));
+                order.setOriginalAmount(row.getBigDecimal("TotalAmount"));
+                order.setDepositAmount(row.getBigDecimal("DepositAmount"));
+                order.setRemainingAmount(row.getBigDecimal("RemainingAmount"));
+                order.setStatus(row.getString("StatusName"));
+                order.setOrderDate(row.getTimestamp("OrderDate"));
+                order.setNote(row.getString("Note"));
+                return order;
+            }
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Không thể tải đơn hàng.", exception);
+        }
+    }
+
+    public boolean updateStatus(int orderId, String status, Integer employeeId, String note) {
+        String sql = "UPDATE Orders SET OrderStatusID=(SELECT OrderStatusID FROM OrderStatuses WHERE StatusName=?), "
+                + "EmployeeID=COALESCE(?,EmployeeID) WHERE OrderID=?";
+        try (Connection connection = connections.open()) {
+            connection.setAutoCommit(false);
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, status);
+                if (employeeId == null || employeeId <= 0) {
+                    statement.setNull(2, Types.INTEGER);
+                } else {
+                    statement.setInt(2, employeeId);
+                }
+                statement.setInt(3, orderId);
+                if (statement.executeUpdate() != 1) {
+                    connection.rollback();
+                    return false;
+                }
+                OrderStatusHistory history = new OrderStatusHistory();
+                history.setOrderId(orderId);
+                history.setStatus(status);
+                history.setEmployeeId(employeeId);
+                history.setNote(note);
+                new OrderStatusHistoryDAO().insert(connection, history);
+                connection.commit();
+                return true;
+            } catch (SQLException exception) {
+                connection.rollback();
+                throw exception;
+            }
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Không thể cập nhật trạng thái đơn hàng.", exception);
+        }
+    }
+
+    /** Customer-owned orders only; never expose other customers' transactions. */
+    public List<Order> findByCustomerId(int customerId) {
+        if (customerId <= 0) throw new IllegalArgumentException("Khách hàng không hợp lệ.");
+        String sql = "SELECT o.OrderID,o.CustomerID,o.EmployeeID,o.PaymentMethodID,o.TotalAmount,"
+                + "o.DepositAmount,o.RemainingAmount,o.OrderDate,o.Note,s.StatusName,"
+                + "m.ModelName FROM Orders o JOIN OrderStatuses s ON s.OrderStatusID=o.OrderStatusID "
+                + "LEFT JOIN OrderDetails d ON d.OrderID=o.OrderID "
+                + "LEFT JOIN Cars c ON c.CarID=d.CarID "
+                + "LEFT JOIN CarModels m ON m.ModelID=c.ModelID "
+                + "WHERE o.CustomerID=? ORDER BY o.OrderDate DESC,o.OrderID DESC";
+        try (Connection connection = connections.open();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, customerId);
+            try (ResultSet rows = statement.executeQuery()) {
+                List<Order> orders = new ArrayList<>();
+                while (rows.next()) {
+                    Order order = new Order();
+                    order.setId(rows.getInt("OrderID"));
+                    order.setCustomerId(rows.getInt("CustomerID"));
+                    order.setEmployeeId(rows.getObject("EmployeeID", Integer.class));
+                    order.setPaymentMethodId(rows.getInt("PaymentMethodID"));
+                    order.setOriginalAmount(rows.getBigDecimal("TotalAmount"));
+                    order.setDepositAmount(rows.getBigDecimal("DepositAmount"));
+                    order.setRemainingAmount(rows.getBigDecimal("RemainingAmount"));
+                    order.setStatus(rows.getString("StatusName"));
+                    order.setOrderDate(rows.getTimestamp("OrderDate"));
+                    order.setNote(rows.getString("Note"));
+                    order.setVehicleName(rows.getString("ModelName"));
+                    orders.add(order);
+                }
+                return orders;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể tải đơn hàng của khách.", e);
         }
     }
 

@@ -96,6 +96,7 @@ public class PaymentService {
     public PreparedPayment createRequest(int orderId, String methodName, String typeName,
                                          String currency, BigDecimal providerMinimum, int providerScale) {
         requirePositiveId(orderId, "orderId");
+        if (testMode) throw new IllegalStateException("Scaled test gateway amounts cannot create real order payments.");
         if (methodName == null || methodName.isBlank()) throw new IllegalArgumentException("methodName is required");
         if (typeName == null || typeName.isBlank()) throw new IllegalArgumentException("typeName is required");
         if (orderPaymentEligibility == null) {

@@ -2,11 +2,12 @@
         </main>
 <footer class="customer-footer">
     <span>© VinFast - ElectricCarSale</span>
-    <span>Hành trình xanh bắt đầu từ đây <b>✳</b>
-    </span>
+    <span>Hành trình xanh bắt đầu từ đây <b>✳</b></span>
 </footer>
 </div>
 </div>
+
+<%@ include file="consult-popup.jspf" %>
 <div class="toast" role="status" aria-live="polite" data-toast></div>
 </body>
 </html>

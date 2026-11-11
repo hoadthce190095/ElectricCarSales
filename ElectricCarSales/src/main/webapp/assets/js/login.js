@@ -3,7 +3,7 @@
 const loginMessage = document.querySelector("#form-message");
 const passwordInput = document.querySelector("#password");
 
-document.querySelector("[data-password-toggle]").addEventListener("click", (event) => {
+document.querySelector("[data-password-toggle]")?.addEventListener("click", (event) => {
     const button = event.currentTarget;
     const showing = passwordInput.type === "text";
     passwordInput.type = showing ? "password" : "text";
@@ -12,8 +12,6 @@ document.querySelector("[data-password-toggle]").addEventListener("click", (even
     button.setAttribute("aria-pressed", String(!showing));
 });
 
-document.querySelector("[data-forgot-password]").addEventListener("click", () => {
-    loginMessage.textContent = "Vui lòng liên hệ hotro@electriccarsale.vn để được hỗ trợ khôi phục mật khẩu.";
-    loginMessage.hidden = false;
+document.querySelector("[data-forgot-password]")?.addEventListener("click", () => {
+    window.location.href = "verify-otp?mode=forgot";
 });
-

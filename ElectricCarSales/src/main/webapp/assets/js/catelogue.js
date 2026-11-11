@@ -142,7 +142,7 @@ function vehicleDetails(vehicle) {
             "Cấu hình đối chiếu",
             metadata?.specificationVersion || (vehicle.versions || []).join(", ") || "Chưa cập nhật"
         ],
-        ["Giá showroom demo", modelPrice(vehicle)],
+        [vehicle.availableCars > 0 ? "Giá xe sẵn có trong kho" : "Giá danh mục tham khảo", modelPrice(vehicle)],
         ["Giá tham khảo từ hãng", metadata?.priceVnd == null ? "Chưa cập nhật" : money(metadata.priceVnd)],
         ["Kích thước D × R × C (mm)", spec.dimensions || "Chưa cập nhật"],
         ["Dung lượng pin", quantity(spec.batteryCapacity, "kWh")],
@@ -153,7 +153,7 @@ function vehicleDetails(vehicle) {
         ["Số túi khí", quantity(spec.airbagCount)],
         ["Thời gian sạc (giờ)", quantity(spec.chargingTime)],
         ["Màu trong showroom", (vehicle.colors || []).join(", ") || "Chưa cập nhật"],
-        ["Xe có sẵn (demo)", number(vehicle.availableCars)]
+        ["Xe sẵn có trong kho", number(vehicle.availableCars)]
     ];
     const detail = el("div", { class: "field full vehicle-detail" }, [
         vehicleImage(vehicle),
@@ -218,8 +218,8 @@ function catalogueCard(vehicle, onSelection) {
                 ])
             ]),
             el("div", { class: "vehicle-stock" }, [
-                pill(vehicle.availableCars ? "AVAILABLE" : "Hết xe demo", vehicle.availableCars ? "" : "neutral"),
-                el("span", { text: `${number(vehicle.availableCars)} xe trong showroom demo` })
+                pill(vehicle.availableCars ? "AVAILABLE" : "Hết xe", vehicle.availableCars ? "" : "neutral"),
+                el("span", { text: `${number(vehicle.availableCars)} xe sẵn có trong kho` })
             ]),
             el("div", { class: "vehicle-actions" }, [
                 button("Xem chi tiết", () => vehicleDetails(vehicle), "button secondary"),
@@ -415,7 +415,7 @@ function vehicleCard(vehicle, reasons = []) {
             text: `${spec.rangeKM != null ? `${number(spec.rangeKM)} km · ${rangeStandard(vehicle)}` : "Chưa có quãng đường"} · ${spec.seatingCapacity != null ? `${spec.seatingCapacity} chỗ` : "Chưa có số chỗ"}`
         }),
         el("p", {
-            text: `${number(vehicle.availableCars)} xe có sẵn (demo) · ${(vehicle.versions || []).join(", ") || "Chưa có phiên bản"}`
+            text: `${number(vehicle.availableCars)} xe sẵn có trong kho · ${(vehicle.versions || []).join(", ") || "Chưa có phiên bản"}`
         }),
         reasons.length
             ? el(
@@ -439,7 +439,7 @@ function comparison(vehicles) {
         ["Công suất (kW)", (v) => v.specifications?.maxPower],
         ["Kích thước (mm)", (v) => v.specifications?.dimensions],
         ["Sạc (giờ)", (v) => v.specifications?.chargingTime],
-        ["Xe có sẵn (demo)", (v) => v.availableCars],
+        ["Xe sẵn có trong kho", (v) => v.availableCars],
         ["Màu sắc", (v) => (v.colors || []).join(", ") || "Chưa cập nhật"],
         ["Nguồn thông số", (v) => sourceLink("VinFast ↗", vehicleMetadata(v)?.sourceUrl) || "Danh mục showroom"],
         ["Chú thích giá", (v) => priceNote(v)]

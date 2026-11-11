@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Read-only reporting queries. Each many-side is read/aggregated separately to avoid join fan-out.
+ * Read-only reporting queries compatible with fixed ElectricCarSalesDB.sql schema.
  */
 public class ReportDAO {
     @FunctionalInterface
@@ -48,11 +48,21 @@ public class ReportDAO {
               AND inv.CustomerID = o.CustomerID AND inv.TotalAmount = o.TotalAmount))
         """;
 
+    private boolean hasInstallmentTables(Connection connection) {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "SELECT CASE WHEN OBJECT_ID(N'dbo.InstallmentContracts', N'U') IS NOT NULL "
+                + "AND OBJECT_ID(N'dbo.InstallmentSchedules', N'U') IS NOT NULL "
+                + "AND OBJECT_ID(N'dbo.InstallmentPayments', N'U') IS NOT NULL THEN 1 ELSE 0 END");
+             ResultSet rs = ps.executeQuery()) {
+            return rs.next() && rs.getInt(1) == 1;
+        } catch (SQLException ex) {
+            return false;
+        }
+    }
+
     public Snapshot read(ReportFilter filter, LocalDate today) throws SQLException {
         filter.validate();
         try (Connection connection = connections.get()) {
-            // Hold a consistent view of rows already read while the remaining report sections are
-            // loaded.
             connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
             connection.setAutoCommit(false);
             try {
@@ -65,7 +75,7 @@ public class ReportDAO {
                 if (!containsDemo) {
                     containsDemo = hasDemoPayment(connection, filter);
                 }
-                if (!containsDemo) {
+                if (!containsDemo && hasInstallmentTables(connection)) {
                     containsDemo = hasDemoInstallmentPayment(connection, filter);
                 }
                 connection.commit();
@@ -137,7 +147,7 @@ public class ReportDAO {
     private List<PaymentRow> payments(Connection connection, ReportFilter filter) throws SQLException {
         String sql = """
             SELECT p.PaymentDate, ps.StatusID, p.PaymentAmount, CASE WHEN
-            """ + ELIGIBLE + " THEN 1 ELSE 0 END Eligible FROM Payments p " + " JOIN Orders o ON o.OrderID = p.OrderID "
+            """ + ELIGIBLE + " THEN 1 ELSE 0 END Eligible FROM Payments p JOIN Orders o ON o.OrderID = p.OrderID "
             + ORDER_JOINS + """
                  JOIN PaymentStatuses ps ON ps.PaymentStatusID = p.PaymentStatusID
                  WHERE p.PaymentDate >= ? AND p.PaymentDate < ?
@@ -153,14 +163,26 @@ public class ReportDAO {
     }
 
     private ExtraTotals extras(Connection connection, ReportFilter filter, LocalDate today) throws SQLException {
+        if (!hasInstallmentTables(connection)) {
+            // In ElectricCarSalesDB.sql, installment orders use Orders.CompanyID or PaymentMethods.MethodName = 'INSTALLMENT'
+            String countSql = "SELECT COUNT(*) Total FROM Orders o JOIN PaymentMethods pm ON pm.PaymentMethodID = o.PaymentMethodID "
+                + ORDER_JOINS + " WHERE o.OrderDate >= ? AND o.OrderDate < ? "
+                + "AND (o.CompanyID IS NOT NULL OR pm.MethodName = 'INSTALLMENT') AND " + ELIGIBLE + filters(filter);
+            long contracts = 0;
+            try (PreparedStatement statement = dated(connection, countSql, filter);
+                 ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) contracts = rs.getLong("Total");
+            }
+            return new ExtraTotals(BigDecimal.ZERO, contracts, BigDecimal.ZERO);
+        }
         String receiptSql = """
             SELECT COALESCE(SUM(ip.PaymentAmount), 0) Amount
             FROM InstallmentPayments ip JOIN PaymentStatuses ps ON ps.PaymentStatusID = ip.PaymentStatusID
             JOIN InstallmentSchedules sch ON sch.ScheduleID = ip.ScheduleID
             JOIN InstallmentContracts ic ON ic.InstallmentContractID = sch.InstallmentContractID
             JOIN Orders o ON o.OrderID = ic.OrderID
-            """ + ORDER_JOINS + " WHERE ip.PaymentDate >= ? AND ip.PaymentDate < ?  AND ps.StatusID ="
-            + " 'COMPLETED' AND UPPER(ic.Status) NOT IN ('CANCELLED', 'VOID', 'DRAFT')" + " AND " + ELIGIBLE
+            """ + ORDER_JOINS + " WHERE ip.PaymentDate >= ? AND ip.PaymentDate < ? AND ps.StatusID ="
+            + " 'COMPLETED' AND UPPER(ic.Status) NOT IN ('CANCELLED', 'VOID', 'DRAFT') AND " + ELIGIBLE
             + filters(filter);
         BigDecimal receipts;
         try (PreparedStatement statement = dated(connection, receiptSql, filter);
@@ -222,7 +244,6 @@ public class ReportDAO {
         return rows;
     }
 
-    // Tồn kho là dữ liệu hiện tại, nên xe DEMO vẫn phải được ghi nhãn dù ngoài kỳ bán hàng.
     private boolean hasDemoInventory(Connection connection, ReportFilter filter) throws SQLException {
         String sql = "SELECT COUNT(*) FROM Cars c JOIN CarStatuses cs ON cs.CarStatusID=c.CarStatusID"
             + " WHERE c.VIN LIKE 'DEMO%'" + (filter.getModelId() == null ? "" : " AND c.ModelID=?");
@@ -239,7 +260,6 @@ public class ReportDAO {
     }
 
     private boolean hasDemoPayment(Connection connection, ReportFilter filter) throws SQLException {
-        // Một đơn tạo ngoài kỳ vẫn có thể đóng góp khoản thu hoặc thống kê thanh toán trong kỳ.
         String sql = "SELECT COUNT(*) FROM Payments p JOIN Orders o ON o.OrderID=p.OrderID"
             + " JOIN PaymentStatuses ps ON ps.PaymentStatusID=p.PaymentStatusID"
             + " WHERE p.PaymentDate>=? AND p.PaymentDate<?" + filters(filter) + demoOrderCondition();
@@ -254,9 +274,9 @@ public class ReportDAO {
         String sql = "SELECT COUNT(*) FROM InstallmentPayments ip JOIN PaymentStatuses ps ON"
             + " ps.PaymentStatusID=ip.PaymentStatusID JOIN InstallmentSchedules sch ON"
             + " sch.ScheduleID=ip.ScheduleID JOIN InstallmentContracts ic ON"
-            + " ic.InstallmentContractID=sch.InstallmentContractID JOIN Orders o ON" + " o.OrderID=ic.OrderID"
+            + " ic.InstallmentContractID=sch.InstallmentContractID JOIN Orders o ON o.OrderID=ic.OrderID"
             + ORDER_JOINS + " WHERE ip.PaymentDate>=? AND ip.PaymentDate<? AND"
-            + " ps.StatusID='COMPLETED' AND UPPER(ic.Status) NOT IN" + " ('CANCELLED','VOID','DRAFT') AND " + ELIGIBLE
+            + " ps.StatusID='COMPLETED' AND UPPER(ic.Status) NOT IN ('CANCELLED','VOID','DRAFT') AND " + ELIGIBLE
             + filters(filter) + demoOrderCondition();
         try (PreparedStatement statement = dated(connection, sql, filter);
             ResultSet result = statement.executeQuery()) {
@@ -266,7 +286,6 @@ public class ReportDAO {
     }
 
     private String demoOrderCondition() {
-        // Chỉ đọc cờ tồn tại; không đưa VIN hay chi tiết giao dịch vào danh mục hoặc AI.
         return " AND EXISTS (SELECT 1 FROM OrderDetails odd JOIN Cars cd ON cd.CarID=odd.CarID"
             + " WHERE odd.OrderID=o.OrderID AND cd.VIN LIKE 'DEMO%')";
     }
@@ -334,53 +353,18 @@ public class ReportDAO {
             this.containsDemo = containsDemo;
         }
 
-        public List<OrderRow> getOrders() {
-            return orders;
-        }
-
-        public void setOrders(List<OrderRow> orders) {
-            this.orders = orders;
-        }
-
-        public List<VehicleRow> getVehicles() {
-            return vehicles;
-        }
-
-        public void setVehicles(List<VehicleRow> vehicles) {
-            this.vehicles = vehicles;
-        }
-
-        public List<PaymentRow> getPayments() {
-            return payments;
-        }
-
-        public void setPayments(List<PaymentRow> payments) {
-            this.payments = payments;
-        }
-
-        public ExtraTotals getExtras() {
-            return extras;
-        }
-
-        public void setExtras(ExtraTotals extras) {
-            this.extras = extras;
-        }
-
-        public List<StatusTotal> getInventory() {
-            return inventory;
-        }
-
-        public void setInventory(List<StatusTotal> inventory) {
-            this.inventory = inventory;
-        }
-
-        public boolean isContainsDemo() {
-            return containsDemo;
-        }
-
-        public void setContainsDemo(boolean containsDemo) {
-            this.containsDemo = containsDemo;
-        }
+        public List<OrderRow> getOrders() { return orders; }
+        public void setOrders(List<OrderRow> orders) { this.orders = orders; }
+        public List<VehicleRow> getVehicles() { return vehicles; }
+        public void setVehicles(List<VehicleRow> vehicles) { this.vehicles = vehicles; }
+        public List<PaymentRow> getPayments() { return payments; }
+        public void setPayments(List<PaymentRow> payments) { this.payments = payments; }
+        public ExtraTotals getExtras() { return extras; }
+        public void setExtras(ExtraTotals extras) { this.extras = extras; }
+        public List<StatusTotal> getInventory() { return inventory; }
+        public void setInventory(List<StatusTotal> inventory) { this.inventory = inventory; }
+        public boolean isContainsDemo() { return containsDemo; }
+        public void setContainsDemo(boolean containsDemo) { this.containsDemo = containsDemo; }
     }
 
     public static class OrderRow {
@@ -422,117 +406,34 @@ public class ReportDAO {
             this.eligible = eligible;
         }
 
-        public int getOrderId() {
-            return orderId;
-        }
-
-        public void setOrderId(int orderId) {
-            this.orderId = orderId;
-        }
-
-        public LocalDateTime getOrderDate() {
-            return orderDate;
-        }
-
-        public void setOrderDate(LocalDateTime orderDate) {
-            this.orderDate = orderDate;
-        }
-
-        public Integer getEmployeeId() {
-            return employeeId;
-        }
-
-        public void setEmployeeId(Integer employeeId) {
-            this.employeeId = employeeId;
-        }
-
-        public String getEmployeeName() {
-            return employeeName;
-        }
-
-        public void setEmployeeName(String employeeName) {
-            this.employeeName = employeeName;
-        }
-
-        public String getCustomerName() {
-            return customerName;
-        }
-
-        public void setCustomerName(String customerName) {
-            this.customerName = customerName;
-        }
-
-        public String getStatus() {
-            return status;
-        }
-
-        public void setStatus(String status) {
-            this.status = status;
-        }
-
-        public BigDecimal getTotalAmount() {
-            return totalAmount;
-        }
-
-        public void setTotalAmount(BigDecimal totalAmount) {
-            this.totalAmount = totalAmount;
-        }
-
-        public BigDecimal getPaidAmount() {
-            return paidAmount;
-        }
-
-        public void setPaidAmount(BigDecimal paidAmount) {
-            this.paidAmount = paidAmount;
-        }
-
-        public String getContractNumber() {
-            return contractNumber;
-        }
-
-        public void setContractNumber(String contractNumber) {
-            this.contractNumber = contractNumber;
-        }
-
-        public String getInvoiceNumber() {
-            return invoiceNumber;
-        }
-
-        public void setInvoiceNumber(String invoiceNumber) {
-            this.invoiceNumber = invoiceNumber;
-        }
-
-        public String getDeliveryStatus() {
-            return deliveryStatus;
-        }
-
-        public void setDeliveryStatus(String deliveryStatus) {
-            this.deliveryStatus = deliveryStatus;
-        }
-
-        public BigDecimal getDiscountAmount() {
-            return discountAmount;
-        }
-
-        public void setDiscountAmount(BigDecimal discountAmount) {
-            this.discountAmount = discountAmount;
-        }
-
-        public BigDecimal getTaxAmount() {
-            return taxAmount;
-        }
-
-        public void setTaxAmount(BigDecimal taxAmount) {
-            this.taxAmount = taxAmount;
-        }
-
-        public boolean isEligible() {
-            return eligible;
-        }
-
-        public void setEligible(boolean eligible) {
-            this.eligible = eligible;
-        }
+        public int getOrderId() { return orderId; }
+        public void setOrderId(int orderId) { this.orderId = orderId; }
+        public LocalDateTime getOrderDate() { return orderDate; }
+        public void setOrderDate(LocalDateTime orderDate) { this.orderDate = orderDate; }
+        public Integer getEmployeeId() { return employeeId; }
+        public void setEmployeeId(Integer employeeId) { this.employeeId = employeeId; }
+        public String getEmployeeName() { return employeeName; }
+        public void setEmployeeName(String employeeName) { this.employeeName = employeeName; }
+        public String getCustomerName() { return customerName; }
+        public void setCustomerName(String customerName) { this.customerName = customerName; }
+        public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
+        public BigDecimal getTotalAmount() { return totalAmount; }
+        public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
+        public BigDecimal getPaidAmount() { return paidAmount; }
+        public void setPaidAmount(BigDecimal paidAmount) { this.paidAmount = paidAmount; }
+        public String getContractNumber() { return contractNumber; }
+        public void setContractNumber(String contractNumber) { this.contractNumber = contractNumber; }
+        public String getInvoiceNumber() { return invoiceNumber; }
+        public void setInvoiceNumber(String invoiceNumber) { this.invoiceNumber = invoiceNumber; }
+        public String getDeliveryStatus() { return deliveryStatus; }
+        public void setDeliveryStatus(String deliveryStatus) { this.deliveryStatus = deliveryStatus; }
+        public BigDecimal getDiscountAmount() { return discountAmount; }
+        public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount; }
+        public BigDecimal getTaxAmount() { return taxAmount; }
+        public void setTaxAmount(BigDecimal taxAmount) { this.taxAmount = taxAmount; }
+        public boolean isEligible() { return eligible; }
+        public void setEligible(boolean eligible) { this.eligible = eligible; }
     }
 
     public static class VehicleRow {
@@ -547,21 +448,10 @@ public class ReportDAO {
             this.vehicle = vehicle;
         }
 
-        public int getOrderId() {
-            return orderId;
-        }
-
-        public void setOrderId(int orderId) {
-            this.orderId = orderId;
-        }
-
-        public SaleVehicle getVehicle() {
-            return vehicle;
-        }
-
-        public void setVehicle(SaleVehicle vehicle) {
-            this.vehicle = vehicle;
-        }
+        public int getOrderId() { return orderId; }
+        public void setOrderId(int orderId) { this.orderId = orderId; }
+        public SaleVehicle getVehicle() { return vehicle; }
+        public void setVehicle(SaleVehicle vehicle) { this.vehicle = vehicle; }
     }
 
     public static class PaymentRow {
@@ -580,37 +470,14 @@ public class ReportDAO {
             this.eligible = eligible;
         }
 
-        public LocalDateTime getPaymentDate() {
-            return paymentDate;
-        }
-
-        public void setPaymentDate(LocalDateTime paymentDate) {
-            this.paymentDate = paymentDate;
-        }
-
-        public String getStatus() {
-            return status;
-        }
-
-        public void setStatus(String status) {
-            this.status = status;
-        }
-
-        public BigDecimal getAmount() {
-            return amount;
-        }
-
-        public void setAmount(BigDecimal amount) {
-            this.amount = amount;
-        }
-
-        public boolean isEligible() {
-            return eligible;
-        }
-
-        public void setEligible(boolean eligible) {
-            this.eligible = eligible;
-        }
+        public LocalDateTime getPaymentDate() { return paymentDate; }
+        public void setPaymentDate(LocalDateTime paymentDate) { this.paymentDate = paymentDate; }
+        public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
+        public BigDecimal getAmount() { return amount; }
+        public void setAmount(BigDecimal amount) { this.amount = amount; }
+        public boolean isEligible() { return eligible; }
+        public void setEligible(boolean eligible) { this.eligible = eligible; }
     }
 
     public static class ExtraTotals {
@@ -627,28 +494,11 @@ public class ReportDAO {
             this.overdueAmount = overdueAmount;
         }
 
-        public BigDecimal getInstallmentReceipts() {
-            return installmentReceipts;
-        }
-
-        public void setInstallmentReceipts(BigDecimal installmentReceipts) {
-            this.installmentReceipts = installmentReceipts;
-        }
-
-        public long getInstallmentContracts() {
-            return installmentContracts;
-        }
-
-        public void setInstallmentContracts(long installmentContracts) {
-            this.installmentContracts = installmentContracts;
-        }
-
-        public BigDecimal getOverdueAmount() {
-            return overdueAmount;
-        }
-
-        public void setOverdueAmount(BigDecimal overdueAmount) {
-            this.overdueAmount = overdueAmount;
-        }
+        public BigDecimal getInstallmentReceipts() { return installmentReceipts; }
+        public void setInstallmentReceipts(BigDecimal installmentReceipts) { this.installmentReceipts = installmentReceipts; }
+        public long getInstallmentContracts() { return installmentContracts; }
+        public void setInstallmentContracts(long installmentContracts) { this.installmentContracts = installmentContracts; }
+        public BigDecimal getOverdueAmount() { return overdueAmount; }
+        public void setOverdueAmount(BigDecimal overdueAmount) { this.overdueAmount = overdueAmount; }
     }
 }

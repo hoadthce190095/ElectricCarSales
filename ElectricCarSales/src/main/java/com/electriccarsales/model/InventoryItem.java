@@ -5,6 +5,7 @@ public class InventoryItem {
     private String modelName;
     private String color;
     private String location;
+    private String statusName;
     private int quantity;
 
     public InventoryItem() {}
@@ -20,6 +21,9 @@ public class InventoryItem {
 
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
+
+    public String getStatusName() { return statusName; }
+    public void setStatusName(String statusName) { this.statusName = statusName; }
 
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }

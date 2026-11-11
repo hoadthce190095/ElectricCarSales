@@ -1,4 +1,4 @@
-package com.electriccarsales.model.consultation;
+package com.electriccarsales.model;
 
 import java.sql.Timestamp;
 
@@ -10,6 +10,11 @@ public class ConsultationRequest {
     private String content;
     private String status;
     private Timestamp createdAt;
+    private String customerName;
+    private String customerPhone;
+    private String customerEmail;
+    private String modelName;
+    private String staffName;
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
@@ -25,4 +30,14 @@ public class ConsultationRequest {
     public void setStatus(String status) { this.status = status; }
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+    public String getCustomerName() { return customerName; }
+    public void setCustomerName(String customerName) { this.customerName = customerName; }
+    public String getCustomerPhone() { return customerPhone; }
+    public void setCustomerPhone(String customerPhone) { this.customerPhone = customerPhone; }
+    public String getCustomerEmail() { return customerEmail; }
+    public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
+    public String getModelName() { return modelName; }
+    public void setModelName(String modelName) { this.modelName = modelName; }
+    public String getStaffName() { return staffName; }
+    public void setStaffName(String staffName) { this.staffName = staffName; }
 }

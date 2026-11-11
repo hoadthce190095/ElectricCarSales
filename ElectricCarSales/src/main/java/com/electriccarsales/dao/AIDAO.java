@@ -33,26 +33,45 @@ public final class AIDAO implements AICatalogue {
         this.connections = connections;
     }
 
-    // Sellability is an explicit allowlist. Reserved, deposited, sold and unknown statuses are
-    // excluded.
+    // Inventory counts/prices come only from unallocated physical Cars. CatalogPrice is display-only fallback.
     static final String CATALOGUE_SQL = """
         SELECT m.ModelID, m.ModelName, l.CarLineName, b.BrandName, m.Description,
                s.Dimensions, s.BatteryCapacity, s.WheelType, s.EnergyConsumption,
                s.RangeKM, s.MaxPower, s.MaxSpeed, s.SeatingCapacity, s.ChargingTime,
                s.AirbagCount, s.Description AS SpecificationDescription,
-               c.Price, v.VersionName, color.ColorName
+               COALESCE(c.Price, cv_cat.CatalogPrice) AS Price,
+               c.CarID AS InventoryCarID, c.Price AS InventoryPrice,
+               COALESCE(v.VersionName, cv_cat.VersionName) AS VersionName,
+               COALESCE(color.ColorName, col_cat.ColorName) AS ColorName
         FROM CarModels m
         INNER JOIN CarLines l ON l.CarLineID = m.CarLineID
         INNER JOIN Brands b ON b.BrandID = l.BrandID
         INNER JOIN BrandStatuses bs ON bs.BrandStatusID = b.BrandStatusID
             AND UPPER(LTRIM(RTRIM(bs.StatusName))) = N'ACTIVE'
         LEFT JOIN Specifications s ON s.ModelID = m.ModelID
-        LEFT JOIN (Cars c INNER JOIN CarStatuses cs ON cs.CarStatusID = c.CarStatusID
-            AND UPPER(LTRIM(RTRIM(cs.StatusName))) IN
-                (N'AVAILABLE', N'IN_STOCK', N'FOR_SALE', N'READY_FOR_SALE', N'CÓ SẴN', N'CO SAN'))
-            ON c.ModelID = m.ModelID
-        LEFT JOIN Carversions v ON v.VersionID = c.VersionID AND v.ModelID = m.ModelID
+        LEFT JOIN (
+            SELECT physical.CarID, physical.ModelID, physical.Price, physical.VersionID, physical.ColorID
+            FROM Cars physical
+            JOIN CarStatuses physicalStatus ON physicalStatus.CarStatusID = physical.CarStatusID
+            WHERE UPPER(LTRIM(RTRIM(physicalStatus.StatusName))) IN
+                (N'AVAILABLE', N'IN_STOCK', N'FOR_SALE', N'READY_FOR_SALE', N'CÓ SẴN', N'CO SAN')
+              AND NOT EXISTS (SELECT 1 FROM OrderDetails allocated WHERE allocated.CarID = physical.CarID)
+        ) c ON c.ModelID = m.ModelID
+        LEFT JOIN CarVersions v ON v.VersionID = c.VersionID AND v.ModelID = m.ModelID
         LEFT JOIN Colors color ON color.ColorID = c.ColorID
+        OUTER APPLY (
+            SELECT TOP (1) catalogVersion.CatalogPrice, catalogVersion.VersionName
+            FROM CarVersions catalogVersion
+            WHERE catalogVersion.ModelID = m.ModelID
+            ORDER BY catalogVersion.VersionID
+        ) cv_cat
+        OUTER APPLY (
+            SELECT TOP (1) catalogColor.ColorName
+            FROM ModelColors modelColor
+            JOIN Colors catalogColor ON catalogColor.ColorID = modelColor.ColorID
+            WHERE modelColor.ModelID = m.ModelID
+            ORDER BY catalogColor.ColorName
+        ) col_cat
         ORDER BY m.ModelID
         """;
 
@@ -91,7 +110,9 @@ public final class AIDAO implements AICatalogue {
         private final VehicleSpecifications specifications;
         private final LinkedHashSet<String> versions = new LinkedHashSet<>();
         private final LinkedHashSet<String> colors = new LinkedHashSet<>();
+        private final LinkedHashSet<Integer> countedCarIds = new LinkedHashSet<>();
         private BigDecimal minPrice, maxPrice;
+        private BigDecimal inventoryMinPrice, inventoryMaxPrice;
         private int availableCars;
 
         private ModelBuilder(ResultSet row) throws SQLException {
@@ -109,11 +130,20 @@ public final class AIDAO implements AICatalogue {
         }
 
         private void addInventory(ResultSet row) throws SQLException {
+            int carId = row.getInt("InventoryCarID");
+            boolean physicalCar = !row.wasNull();
+            if (physicalCar && countedCarIds.add(carId)) {
+                availableCars++;
+                BigDecimal stockPrice = row.getBigDecimal("InventoryPrice");
+                if (stockPrice != null && stockPrice.signum() > 0) {
+                    inventoryMinPrice = inventoryMinPrice == null ? stockPrice : inventoryMinPrice.min(stockPrice);
+                    inventoryMaxPrice = inventoryMaxPrice == null ? stockPrice : inventoryMaxPrice.max(stockPrice);
+                }
+            }
             BigDecimal price = row.getBigDecimal("Price");
             if (price == null || price.signum() <= 0) {
                 return;
             }
-            availableCars++;
             minPrice = minPrice == null ? price : minPrice.min(price);
             maxPrice = maxPrice == null ? price : maxPrice.max(price);
             if (row.getString("VersionName") != null) {
@@ -125,8 +155,11 @@ public final class AIDAO implements AICatalogue {
         }
 
         private VehicleModel build() {
-            return new VehicleModel(id, name, line, brand, description, minPrice, maxPrice, availableCars,
+            VehicleModel model = new VehicleModel(id, name, line, brand, description, minPrice, maxPrice, availableCars,
                 new ArrayList<>(versions), new ArrayList<>(colors), specifications);
+            model.setInventoryMinPrice(inventoryMinPrice);
+            model.setInventoryMaxPrice(inventoryMaxPrice);
+            return model;
         }
     }
 }

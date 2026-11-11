@@ -22,14 +22,30 @@ public class InstallmentContractDAO extends FinanceDAOBase {
     public InstallmentContractDAO() { super(); }
     public InstallmentContractDAO(Connection transactionConnection) { super(transactionConnection); }
 
+    private static boolean hasTable(Connection connection) {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "SELECT CASE WHEN OBJECT_ID(N'dbo.InstallmentContracts', N'U') IS NOT NULL THEN 1 ELSE 0 END");
+             ResultSet rs = ps.executeQuery()) {
+            return rs.next() && rs.getInt(1) == 1;
+        } catch (SQLException ex) {
+            return false;
+        }
+    }
+
     public InstallmentContract findById(int id) {
-        return withConnection(connection -> one(connection, "SELECT " + COLUMNS
-                + " FROM InstallmentContracts ic WHERE ic.InstallmentContractID = ?", id));
+        return withConnection(connection -> {
+            if (!hasTable(connection)) return null;
+            return one(connection, "SELECT " + COLUMNS
+                    + " FROM InstallmentContracts ic WHERE ic.InstallmentContractID = ?", id);
+        });
     }
 
     public InstallmentContract findByOrderId(int orderId) {
-        return withConnection(connection -> one(connection, "SELECT " + COLUMNS
-                + " FROM InstallmentContracts ic WHERE ic.OrderID = ?", orderId));
+        return withConnection(connection -> {
+            if (!hasTable(connection)) return null;
+            return one(connection, "SELECT " + COLUMNS
+                    + " FROM InstallmentContracts ic WHERE ic.OrderID = ?", orderId);
+        });
     }
 
     public boolean existsByOrderId(int orderId) { return findByOrderId(orderId) != null; }
@@ -47,6 +63,7 @@ public class InstallmentContractDAO extends FinanceDAOBase {
 
     public boolean contractBelongsToCustomer(int contractId, int customerId) {
         return withConnection(connection -> {
+            if (!hasTable(connection)) return false;
             String sql = "SELECT 1 FROM InstallmentContracts ic JOIN Orders o ON o.OrderID = ic.OrderID "
                     + "WHERE ic.InstallmentContractID = ? AND o.CustomerID = ?";
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -59,6 +76,7 @@ public class InstallmentContractDAO extends FinanceDAOBase {
 
     public List<InstallmentContract> findAll(String status) {
         return withConnection(connection -> {
+            if (!hasTable(connection)) return List.of();
             String sql = "SELECT " + COLUMNS + " FROM InstallmentContracts ic"
                     + (status == null || status.isBlank() ? "" : " WHERE ic.Status = ?")
                     + " ORDER BY ic.ContractDate DESC, ic.InstallmentContractID DESC";
@@ -68,6 +86,7 @@ public class InstallmentContractDAO extends FinanceDAOBase {
 
     public InstallmentContract findDetailsById(int id) {
         return withConnection(connection -> {
+            if (!hasTable(connection)) return null;
             String sql = "SELECT " + COLUMNS + ", fc.CompanyName AS CompanyName, ip.PlanName AS PlanName, "
                     + "cu.CustomerName AS CustomerName" + DETAIL_FROM + "WHERE ic.InstallmentContractID = ?";
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -79,6 +98,7 @@ public class InstallmentContractDAO extends FinanceDAOBase {
 
     public List<InstallmentContract> findDetailsByStatus(String status) {
         return withConnection(connection -> {
+            if (!hasTable(connection)) return List.of();
             String sql = "SELECT " + COLUMNS + ", fc.CompanyName AS CompanyName, ip.PlanName AS PlanName, "
                     + "cu.CustomerName AS CustomerName" + DETAIL_FROM
                     + (status == null || status.isBlank() ? "" : "WHERE ic.Status = ? ")
@@ -96,6 +116,9 @@ public class InstallmentContractDAO extends FinanceDAOBase {
 
     public int insert(InstallmentContract contract) {
         return withConnection(connection -> {
+            if (!hasTable(connection)) {
+                throw new FinanceDAOException("InstallmentContracts table is not present in ElectricCarSalesDB.sql.");
+            }
             String sql = "INSERT INTO InstallmentContracts (OrderID, CompanyID, PlanID, VehiclePrice, DownPayment, "
                     + "LoanAmount, LoanTermMonths, InterestRate, TotalInterest, TotalInstallmentAmount, "
                     + "PeriodicPayment, ContractDate, Status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
@@ -112,6 +135,7 @@ public class InstallmentContractDAO extends FinanceDAOBase {
 
     public boolean update(InstallmentContract contract) {
         return withConnection(connection -> {
+            if (!hasTable(connection)) return false;
             String sql = "UPDATE InstallmentContracts SET CompanyID = ?, PlanID = ?, VehiclePrice = ?, "
                     + "DownPayment = ?, LoanAmount = ?, LoanTermMonths = ?, InterestRate = ?, TotalInterest = ?, "
                     + "TotalInstallmentAmount = ?, PeriodicPayment = ?, Status = ? WHERE InstallmentContractID = ?";

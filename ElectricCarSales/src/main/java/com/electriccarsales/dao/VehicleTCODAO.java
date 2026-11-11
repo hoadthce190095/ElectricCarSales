@@ -11,14 +11,20 @@ import java.util.List;
 public class VehicleTCODAO extends DBContext {
     public List<VehicleTCO> getAll() {
         List<VehicleTCO> list = new ArrayList<>();
+        try (PreparedStatement check = conn.prepareStatement(
+                "SELECT CASE WHEN OBJECT_ID(N'dbo.VehicleTCO', N'U') IS NOT NULL THEN 1 ELSE 0 END");
+             ResultSet crs = check.executeQuery()) {
+            if (!crs.next() || crs.getInt(1) == 0) {
+                return list;
+            }
+        } catch (Exception e) {
+            return list;
+        }
 
         String sql = "SELECT * FROM VehicleTCO";
-
-        try{
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
-
-            while(rs.next()){
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
                 VehicleTCO vehicle = new VehicleTCO();
                 vehicle.setTcoID(rs.getInt("TCOID"));
                 vehicle.setModelID(rs.getInt("ModelID"));
@@ -32,15 +38,11 @@ public class VehicleTCODAO extends DBContext {
                 vehicle.setPeriodMonths(rs.getInt("PeriodMonths"));
                 vehicle.setDescription(rs.getString("Description"));
                 vehicle.setCreateDate(rs.getTimestamp("CreateDate").toLocalDateTime());
-
                 list.add(vehicle);
             }
-            rs.close();
-            ps.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
         return list;
     }
-
 }

@@ -22,10 +22,12 @@ boolean customerView = authenticatedUser instanceof SessionUser
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <link rel="stylesheet" href="<c:url value='/assets/css/theme.css'><c:param name='v' value='main-blue-20261017' /></c:url>">
-    <link rel="stylesheet" href="<c:url value='/assets/css/home.css'><c:param name='v' value='main-blue-20261017' /></c:url>">
-    <script src="<c:url value='/assets/js/home.js'><c:param name='v' value='main-blue-20261017' /></c:url>" defer></script>
+    <link rel="stylesheet" href="<c:url value='/assets/css/customer.css'><c:param name='v' value='consult-popup-20261111' /></c:url>">
+    <link rel="stylesheet" href="<c:url value='/assets/css/home.css'><c:param name='v' value='home-database-inventory-sync-20261112' /></c:url>">
+    <script src="<c:url value='/assets/js/customer.js'><c:param name='v' value='consult-popup-model-prefill-20261111' /></c:url>" defer></script>
+    <script src="<c:url value='/assets/js/home.js'><c:param name='v' value='home-database-inventory-sync-20261112' /></c:url>" defer></script>
 </head>
-<body class="home-page">
+<body class="home-page" data-context-path="<c:out value='${pageContext.request.contextPath}' />">
 <header class="site-header">
     <div class="header-inner">
         <a class="brand" href="<c:url value='/index.jsp' />" aria-label="VinFast ElectricCarSale - Trang chủ">
@@ -36,13 +38,11 @@ boolean customerView = authenticatedUser instanceof SessionUser
         <nav class="primary-nav" id="primary-nav" aria-label="Điều hướng chính">
             <a class="nav-link current" href="#models">Mua xe <span aria-hidden="true">⌄</span></a>
             <a class="nav-link" href="#about">Giới thiệu</a>
-            <a class="nav-link" href="#contact">Tư vấn</a>
             <a class="nav-link" href="<c:url value='/customer/ai-assistant.jsp' />">Trợ lý xe</a>
-            <a class="nav-link" href="<c:url value='/login' />">Quản trị</a>
         </nav>
         <div class="header-actions">
-            <a class="header-contact" href="mailto:hotro@electriccarsale.vn?subject=Yeu%20cau%20tu%20van%20xe%20VinFast">
-                <span aria-hidden="true">✉</span><span>Liên hệ tư vấn</span>
+            <a class="header-contact" href="#" data-open-consult-popup>
+                <span aria-hidden="true">✉</span><span>Tư vấn &amp; Báo giá</span>
             </a>
             <% if (customerView) { %>
             <a class="account-link" href="<c:url value='/customer/profile' />"><span class="account-icon" aria-hidden="true">KH</span><c:out value="${empty sessionScope.displayName ? sessionScope.username : sessionScope.displayName}" default="Tài khoản của tôi" /></a>
@@ -97,7 +97,7 @@ boolean customerView = authenticatedUser instanceof SessionUser
             <div class="select-wrap"><span aria-hidden="true">◉</span><select id="color-filter"><option value="">Tất cả màu sắc</option></select><b aria-hidden="true">⌄</b></div>
 
             <div class="filter-note"><span aria-hidden="true">i</span><p>Giá và quãng đường là thông tin tham khảo theo cấu hình được ghi trong danh mục.</p></div>
-            <a class="filter-contact" href="mailto:hotro@electriccarsale.vn?subject=Tu%20van%20chon%20xe%20VinFast">Cần tư vấn chọn xe? <span>Liên hệ với chúng tôi ↗</span></a>
+            <a class="filter-contact" href="#" data-open-consult-popup>Cần tư vấn chọn xe? <span>Gửi yêu cầu tư vấn ↗</span></a>
         </aside>
 
         <div class="catalog-main">
@@ -124,17 +124,21 @@ boolean customerView = authenticatedUser instanceof SessionUser
 
     <section class="about-strip" id="about">
         <div class="about-icon" aria-hidden="true">⚡</div><div><span class="eyebrow">VINFAST · ELECTRIC CAR SALE</span><h2>Thông tin xe rõ ràng, lựa chọn dễ dàng</h2><p>Tìm hiểu mẫu xe, cấu hình và thông số trước khi quyết định. Đội ngũ tư vấn sẵn sàng hỗ trợ khi bạn cần.</p></div>
-        <a href="mailto:hotro@electriccarsale.vn?subject=Yeu%20cau%20tu%20van%20xe%20VinFast" id="contact">Gửi yêu cầu tư vấn <span>↗</span></a>
+        <a href="#" id="contact" data-open-consult-popup>Gửi yêu cầu tư vấn <span>↗</span></a>
     </section>
 </main>
 
 <div class="compare-dock" id="compare-dock" hidden>
+    <span class="compare-notice" id="compare-notice" role="status" aria-live="polite" hidden></span>
     <span><b id="compare-count">0</b> mẫu xe đã chọn để so sánh</span><button id="compare-open" type="button">So sánh xe <span>→</span></button><button class="compare-clear" id="compare-clear" type="button" aria-label="Xóa các xe đã chọn">×</button>
 </div>
 <dialog class="compare-dialog" id="compare-dialog" aria-labelledby="compare-title">
     <div class="dialog-heading"><div><span class="eyebrow">ĐỐI CHIẾU THÔNG SỐ</span><h2 id="compare-title">So sánh xe</h2></div><button type="button" class="dialog-close" id="compare-close" aria-label="Đóng">×</button></div>
     <div class="compare-table-wrap" id="compare-table-wrap"></div>
+    <div class="compare-dialog-actions"><a class="compare-page-link" id="compare-page-link" href="#" hidden>Xem bảng so sánh đầy đủ →</a></div>
 </dialog>
-<footer class="site-footer"><a class="footer-brand" href="<c:url value='/index.jsp' />">VinFast - ElectricCarSale</a><span>© <span id="copyright-year">2026</span> · Thông tin sản phẩm mang tính tham khảo.</span><a href="mailto:hotro@electriccarsale.vn">hotro@electriccarsale.vn</a></footer>
+<footer class="site-footer"><a class="footer-brand" href="<c:url value='/index.jsp' />">VinFast - ElectricCarSale</a><span>© <span id="copyright-year">2026</span> · Thông tin sản phẩm mang tính tham khảo.</span><a href="#" data-open-consult-popup>Tư vấn trực tuyến</a></footer>
+<%@ include file="common/consult-popup.jspf" %>
+<div class="toast" role="status" aria-live="polite" data-toast></div>
 </body>
 </html>

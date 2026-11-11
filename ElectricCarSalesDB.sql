@@ -9,7 +9,7 @@ GO
 
 IF DB_ID(N'ElectricCarSalesDB') IS NOT NULL
 BEGIN
-    ALTER DATABASE ElectricCarSalesDB 
+    ALTER DATABASE ElectricCarSalesDB
     SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
 
     DROP DATABASE ElectricCarSalesDB;
@@ -53,13 +53,13 @@ CREATE TABLE Users (
     Username VARCHAR(50) NOT NULL UNIQUE,
     PasswordHash VARCHAR(255) NOT NULL,
     Email VARCHAR(100) NULL UNIQUE,
-    Phone VARCHAR(20) NULL UNIQUE, 
+    Phone VARCHAR(20) NULL UNIQUE,
 	RoleID INT NOT NULL,
 	StatusID INT NOT NULL,
 
 	CreatedDate DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
 
-	CONSTRAINT FK_Users_Roles 
+	CONSTRAINT FK_Users_Roles
 		FOREIGN KEY (RoleID) REFERENCES Roles(RoleID),
 
 	CONSTRAINT FK_Users_Statuses
@@ -78,7 +78,7 @@ INSERT INTO Roles(RoleName)
 	GO
 
 INSERT INTO Statuses(StatusName)
-	VALUES 
+	VALUES
 	('ACTIVE'),
 	('INACTIVE'),
 	('LOCKED');
@@ -94,10 +94,10 @@ CREATE TABLE BrandStatuses(
 	GO
 
 INSERT INTO BrandStatuses(StatusName)
-	VALUES 
+	VALUES
 	('ACTIVE'),
 	('INACTIVE');
-	GO 
+	GO
 /* =========================================================
   5. BRANDS
  ========================================================= */
@@ -114,7 +114,7 @@ CREATE TABLE Brands (
 	);
 GO
 /*=========================================================
-  CarLines dòng xe 
+  CarLines dòng xe
  ========================================================= */
 CREATE TABLE CarLines(
 	CarLineID INT IDENTITY(1,1) PRIMARY KEY,
@@ -132,7 +132,7 @@ CREATE TABLE CarLines(
 GO
 
 /*=========================================================
-  CarModels 
+  CarModels
  ========================================================= */
 CREATE TABLE CarModels(
 	ModelID INT IDENTITY(1,1) PRIMARY KEY,
@@ -150,7 +150,7 @@ CREATE TABLE CarModels(
 GO
 
 /*=========================================================
-  Specifications thông số 
+  Specifications thông số
  ========================================================= */
 
  CREATE TABLE Specifications(
@@ -177,7 +177,7 @@ GO
  );
  GO
  /*=========================================================
-  ComparisonSessions SO SANH XE 
+  ComparisonSessions SO SANH XE
  ========================================================= */
  CREATE TABLE ComparisonSessions(
 	ComparisonSessionID INT IDENTITY(1,1) PRIMARY KEY,
@@ -192,7 +192,7 @@ GO
 
 
  /*=========================================================
- ComparisonItems LUU CAC DONG XE 
+ ComparisonItems LUU CAC DONG XE
  ========================================================= */
  CREATE TABLE ComparisonItems (
 	ComparisonItemID INT IDENTITY(1,1) PRIMARY KEY,
@@ -210,7 +210,7 @@ GO
 	CONSTRAINT UQ_ComparisonItems_Session_Model
 		UNIQUE (ComparisonSessionID, ModelID)
  );
- GO 
+ GO
 
  /*
 	COLORS DANH SACH MAU
@@ -223,7 +223,7 @@ CREATE TABLE Colors(
 GO
 
  /*
-	MODELCOLORS LUA CHON MAU 
+	MODELCOLORS LUA CHON MAU
 */
 CREATE TABLE ModelColors(
 	ModelColorsID INT IDENTITY(1,1) PRIMARY KEY,
@@ -245,7 +245,7 @@ CREATE TABLE ModelColors(
 GO
 
  /*
-	CARVERSIONS PHIEN BAN XE 
+	CARVERSIONS PHIEN BAN XE
 */
 CREATE TABLE Carversions(
 	VersionID INT IDENTITY(1,1) PRIMARY KEY,
@@ -269,7 +269,7 @@ CREATE TABLE Carversions(
 GO
 
  /*
-	CARSTATUS TRANG THAI XE 
+	CARSTATUS TRANG THAI XE
 */
 CREATE TABLE CarStatuses(
 	CarStatusID INT IDENTITY(1,1) PRIMARY KEY,
@@ -278,8 +278,8 @@ CREATE TABLE CarStatuses(
 );
 GO
 
-/* 
-	CARS 
+/*
+	CARS
 */
 CREATE TABLE Cars(
 	CarID INT IDENTITY(1,1) PRIMARY KEY,
@@ -314,7 +314,7 @@ CREATE TABLE Cars(
 GO
 
 
-/* 
+/*
   CUSTOMERS
   */
 CREATE TABLE Customers (
@@ -323,7 +323,7 @@ CREATE TABLE Customers (
     CustomerName NVARCHAR(100) NOT NULL,
     Phone VARCHAR(20) NOT NULL UNIQUE,
     Email VARCHAR(100) NULL,
-    Address NVARCHAR(255) NULL,   
+    Address NVARCHAR(255) NULL,
 
     CONSTRAINT FK_Customers_Users
         FOREIGN KEY (UserID)
@@ -333,7 +333,7 @@ GO
 
 
 /* =========================================================
-   3. EMPLOYEES 
+   3. EMPLOYEES
    ========================================================= */
 CREATE TABLE Employees (
 	EmployeeID INT IDENTITY(1,1) PRIMARY KEY,
@@ -347,8 +347,8 @@ CREATE TABLE Employees (
 		REFERENCES Users(UserID)
 );
 GO
-/* 
-  ConsultationStatus   trang thai tu van 
+/*
+  ConsultationStatus   trang thai tu van
   */
 CREATE TABLE ConsultationStatuses(
 	ConsultationStatusID INT IDENTITY(1,1) PRIMARY KEY,
@@ -365,8 +365,8 @@ INSERT INTO ConsultationStatuses(StatusName)
 
 GO
 
-/* 
-  ConsultationRequests  yeu cau tu van 
+/*
+  ConsultationRequests  yeu cau tu van
   */
   CREATE TABLE ConsultationRequests(
 	ConsultationRequestID INT IDENTITY(1,1) PRIMARY KEY,
@@ -397,7 +397,7 @@ GO
   GO
 
 
-/* 
+/*
   ORDERSTATUS  trang thai don hang
   */
 CREATE TABLE OrderStatuses(
@@ -417,10 +417,10 @@ INSERT INTO OrderStatuses(StatusName, Description)
 	('PAID', 'Full payment has been completed'),
 	('COMPLETED', 'Order has been completed'),
 	('CANCELLED', 'Order has been cancelled');
-	
+
 GO
 
-/* 
+/*
   PAYMENTMETHODS
   */
 CREATE TABLE PaymentMethods(
@@ -431,13 +431,13 @@ CREATE TABLE PaymentMethods(
 GO
 
 INSERT INTO PaymentMethods(MethodName, Description)
-	VALUES 
+	VALUES
 	('CASH', 'Cash payment'),
 	('BANK_TRANSFER', 'Bank tranfer payment'),
 	('INSTALLMENT', 'Installment payment');
 GO
 
-/* 
+/*
   ORDERS
   */
 CREATE TABLE Orders(
@@ -451,6 +451,7 @@ CREATE TABLE Orders(
 	DepositAmount DECIMAL(18,2) NOT NULL,
 	RemainingAmount DECIMAL(18,2) NOT NULL,
 	Note NVARCHAR(500) NULL,
+	CompanyID INT NULL,
 
 	CONSTRAINT FK_Orders_Customers
 		FOREIGN KEY(CustomerID)
@@ -470,8 +471,8 @@ CREATE TABLE Orders(
 );
 GO
 
-/* 
-  ORDERS DETAILS 
+/*
+  ORDERS DETAILS
   */
 CREATE TABLE OrderDetails(
 	OrderDetailID INT IDENTITY(1,1) PRIMARY KEY,
@@ -489,7 +490,7 @@ CREATE TABLE OrderDetails(
 );
 GO
 
-/* 
+/*
   PAYMENT TYPE
   */
 CREATE TABLE PaymentTypes(
@@ -502,12 +503,11 @@ GO
 INSERT INTO PaymentTypes(TypeName, Description)
 	VALUES
 	('DEPOSIT', 'Vehicle deposit payment'),
-	('REMAINING', 'Remaining amount payment'),
-	('INSTALLMENT', 'Installment payment');
+	('REMAINING', 'Remaining amount payment');
 GO
 
-/* 
-  PAYMENT STATUS 
+/*
+  PAYMENT STATUS
   */
 CREATE TABLE PaymentStatuses(
 	PaymentStatusID INT IDENTITY(1,1) PRIMARY KEY,
@@ -524,7 +524,7 @@ INSERT INTO PaymentStatuses(StatusID, Description)
 	('CANCELLED', 'Payment has been cancelled');
 GO
 
-/* 
+/*
   PAYMENTS
   */
 CREATE TABLE Payments(
@@ -554,23 +554,9 @@ CREATE TABLE Payments(
 		FOREIGN KEY (PaymentStatusID)
 		REFERENCES PaymentStatuses(PaymentStatusID)
 );
-GO 
-
-
-/* 
-  InstallmentPlans
-  */
-CREATE TABLE InstallmentPlans(
-	PlanID  INT IDENTITY(1,1) PRIMARY KEY,
-	CompanyID INT NOT NULL,
-	PlanName NVARCHAR(100) NOT NULL UNIQUE,
-	LoanTermMonths INT NOT NULL,
-	InterestRate DECIMAL(5,2) NOT NULL, -- Annual nominal rate in percent, e.g. 7.30 means 7.3%/year.
-	Description NVARCHAR(500) NULL
-);
 GO
 
-/* 
+/*
   FinancialCompanies
   */
 CREATE TABLE FinancialCompanies(
@@ -579,185 +565,11 @@ CREATE TABLE FinancialCompanies(
 	Phone VARCHAR(20) NULL,
 	Email VARCHAR(100) NULL,
 	Address NVARCHAR(255) NULL,
-	Description NVARCHAR(500) NULL,
-	PaymentDueDay TINYINT NULL,
-	PaymentCutoffTime TIME(0) NULL,
-	LateFeeDailyPercent DECIMAL(5,2) NULL,
-	EarlySettlementFeePercent DECIMAL(5,2) NULL,
-	CONSTRAINT CK_FinancialCompanies_DueDay CHECK (PaymentDueDay IS NULL OR PaymentDueDay BETWEEN 1 AND 31),
-	CONSTRAINT CK_FinancialCompanies_LateFee CHECK (LateFeeDailyPercent IS NULL OR LateFeeDailyPercent >= 0),
-	CONSTRAINT CK_FinancialCompanies_SettlementFee CHECK (EarlySettlementFeePercent IS NULL OR EarlySettlementFeePercent >= 0)
+	Description NVARCHAR(500) NULL
 );
-GO
-
-INSERT INTO FinancialCompanies
-    (CompanyName, Description, PaymentDueDay, PaymentCutoffTime, LateFeeDailyPercent, EarlySettlementFeePercent)
-VALUES
-    (N'Shinhan Finance', N'Kỳ thanh toán trước 18:00 ngày 5 hằng tháng; phạt trễ hạn theo ngày.', 5, '18:00', 10.00, NULL),
-    (N'Techcombank', N'Kỳ thanh toán trước 18:00 ngày 7 hằng tháng; phạt trễ hạn theo ngày.', 7, '18:00', 3.00, NULL),
-    (N'MB Bank', N'Kỳ thanh toán trước 18:00 ngày 9 hằng tháng; phạt trễ hạn theo ngày.', 9, '18:00', 5.00, NULL),
-    (N'VPBank', N'Kỳ thanh toán trước 18:00 ngày 10 hằng tháng; phạt trễ hạn theo ngày.', 10, '18:00', 7.00, NULL);
-GO
-
-ALTER TABLE InstallmentPlans
-    ADD CONSTRAINT FK_InstallmentPlans_FinancialCompanies
-        FOREIGN KEY (CompanyID) REFERENCES FinancialCompanies(CompanyID);
 GO
 
 /*
-  Demo APR tiers are initial configurable values interpolated across the ranges supplied in the RDS discussion.
-  Replace them with the lender's signed quotation before using these plans for a real customer contract.
-  The flat-rate quote uses: interest = (vehicle price - down payment) * annual APR * term months / 12.
-*/
-INSERT INTO InstallmentPlans (CompanyID, PlanName, LoanTermMonths, InterestRate, Description)
-SELECT fc.CompanyID, p.PlanName, p.LoanTermMonths, p.InterestRate, p.Description
-FROM (VALUES
-    (N'Shinhan Finance', N'Shinhan Finance - 12 tháng', 12, 7.00, N'APR demo; thời hạn 12 tháng.'),
-    (N'Shinhan Finance', N'Shinhan Finance - 24 tháng', 24, 8.25, N'APR demo; thời hạn 24 tháng.'),
-    (N'Shinhan Finance', N'Shinhan Finance - 36 tháng', 36, 9.50, N'APR demo; thời hạn 36 tháng.'),
-    (N'Shinhan Finance', N'Shinhan Finance - 48 tháng', 48, 10.75, N'APR demo; thời hạn 48 tháng.'),
-    (N'Shinhan Finance', N'Shinhan Finance - 60 tháng', 60, 12.00, N'APR demo; thời hạn 60 tháng.'),
-    (N'Techcombank', N'Techcombank - 24 tháng', 24, 5.00, N'APR demo; thời hạn 24 tháng.'),
-    (N'Techcombank', N'Techcombank - 36 tháng', 36, 5.67, N'APR demo; thời hạn 36 tháng.'),
-    (N'Techcombank', N'Techcombank - 48 tháng', 48, 6.33, N'APR demo; thời hạn 48 tháng.'),
-    (N'Techcombank', N'Techcombank - 60 tháng', 60, 7.00, N'APR demo; thời hạn 60 tháng.'),
-    (N'MB Bank', N'MB Bank - 12 tháng', 12, 5.00, N'APR demo; thời hạn 12 tháng.'),
-    (N'MB Bank', N'MB Bank - 24 tháng', 24, 5.88, N'APR demo; thời hạn 24 tháng.'),
-    (N'MB Bank', N'MB Bank - 36 tháng', 36, 6.75, N'APR demo; thời hạn 36 tháng.'),
-    (N'MB Bank', N'MB Bank - 48 tháng', 48, 7.63, N'APR demo; thời hạn 48 tháng.'),
-    (N'MB Bank', N'MB Bank - 60 tháng', 60, 8.50, N'APR demo; thời hạn 60 tháng.'),
-    (N'VPBank', N'VPBank - 36 tháng', 36, 6.00, N'APR demo; thời hạn 36 tháng.'),
-    (N'VPBank', N'VPBank - 48 tháng', 48, 7.75, N'APR demo; thời hạn 48 tháng.'),
-    (N'VPBank', N'VPBank - 60 tháng', 60, 9.50, N'APR demo; thời hạn 60 tháng.')
-) p(CompanyName, PlanName, LoanTermMonths, InterestRate, Description)
-JOIN FinancialCompanies fc ON fc.CompanyName = p.CompanyName;
-GO
-
-/* 
-  InstallmentContracts
-  */
-CREATE TABLE InstallmentContracts(
-    InstallmentContractID INT IDENTITY(1,1) PRIMARY KEY,
-    OrderID INT NOT NULL,
-    CompanyID INT NOT NULL,
-    PlanID INT NOT NULL,
-
-    VehiclePrice DECIMAL(18,2) NOT NULL,
-    DownPayment DECIMAL(18,2) NOT NULL,
-    LoanAmount DECIMAL(18,2) NOT NULL,
-    LoanTermMonths INT NOT NULL,
-    InterestRate DECIMAL(5,2) NOT NULL,
-    TotalInterest DECIMAL(18,2) NOT NULL,
-    TotalInstallmentAmount DECIMAL(18,2) NOT NULL,
-    PeriodicPayment DECIMAL(18,2) NOT NULL,
-
-    ContractDate DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
-    Status VARCHAR(30) NOT NULL,
-
-    CONSTRAINT FK_InstallmentContracts_Orders
-        FOREIGN KEY (OrderID)
-        REFERENCES Orders(OrderID),
-
-    CONSTRAINT FK_InstallmentContracts_FinancialCompanies
-        FOREIGN KEY (CompanyID)
-        REFERENCES FinancialCompanies(CompanyID),
-
-    CONSTRAINT FK_InstallmentContracts_InstallmentPlans
-        FOREIGN KEY (PlanID)
-        REFERENCES InstallmentPlans(PlanID),
-
-    CONSTRAINT UQ_InstallmentContracts_Order
-        UNIQUE (OrderID)
-);
-GO
-
-/* 
-  InstallmentSchedules
-  */
-CREATE TABLE InstallmentSchedules(
-    ScheduleID INT IDENTITY(1,1) PRIMARY KEY,
-    InstallmentContractID INT NOT NULL,
-
-    PeriodNumber INT NOT NULL,
-    DueDate DATE NOT NULL,
-    PrincipalAmount DECIMAL(18,2) NOT NULL,
-    InterestAmount DECIMAL(18,2) NOT NULL,
-    PaymentAmount DECIMAL(18,2) NOT NULL,
-    PaidAmount DECIMAL(18,2) NOT NULL DEFAULT 0,
-    Status VARCHAR(30) NOT NULL,
-
-    CONSTRAINT FK_InstallmentSchedules_InstallmentContracts
-        FOREIGN KEY (InstallmentContractID)
-        REFERENCES InstallmentContracts(InstallmentContractID),
-
-    CONSTRAINT UQ_InstallmentSchedules_Contract_Period
-        UNIQUE (InstallmentContractID, PeriodNumber)
-);
-GO
-
-/* 
-  InstallmentPayments
-  */
-CREATE TABLE InstallmentPayments(
-    InstallmentPaymentID INT IDENTITY(1,1) PRIMARY KEY,
-    ScheduleID INT NOT NULL,
-    PaymentAmount DECIMAL(18,2) NOT NULL,
-    PaymentDate DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
-    PaymentMethodID INT NOT NULL,
-    PaymentStatusID INT NOT NULL,
-    ReferenceCode VARCHAR(100) NULL,
-    Note NVARCHAR(500) NULL,
-
-    CONSTRAINT FK_InstallmentPayments_Schedules
-        FOREIGN KEY (ScheduleID)
-        REFERENCES InstallmentSchedules(ScheduleID),
-
-    CONSTRAINT FK_InstallmentPayments_PaymentMethods
-        FOREIGN KEY (PaymentMethodID)
-        REFERENCES PaymentMethods(PaymentMethodID),
-
-    CONSTRAINT FK_InstallmentPayments_PaymentStatuses
-        FOREIGN KEY (PaymentStatusID)
-        REFERENCES PaymentStatuses(PaymentStatusID)
-);
-GO
-
-/* 
-  InstallmentPayments
-  */
-  CREATE TABLE InstallmentSettlements(
-    SettlementID INT IDENTITY(1,1) PRIMARY KEY,
-    InstallmentContractID INT NOT NULL,
-
-    SettlementDate DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
-    PrincipalRemaining DECIMAL(18,2) NOT NULL,
-    AccruedInterest DECIMAL(18,2) NOT NULL,
-    SettlementFee DECIMAL(18,2) NOT NULL,
-    SettlementAmount DECIMAL(18,2) NOT NULL,
-
-    PaymentMethodID INT NOT NULL,
-    EmployeeID INT NOT NULL,
-    ReferenceCode VARCHAR(100) NULL,
-    Note NVARCHAR(500) NULL,
-
-    CONSTRAINT FK_InstallmentSettlements_Contracts
-        FOREIGN KEY (InstallmentContractID)
-        REFERENCES InstallmentContracts(InstallmentContractID),
-
-    CONSTRAINT FK_InstallmentSettlements_PaymentMethods
-        FOREIGN KEY (PaymentMethodID)
-        REFERENCES PaymentMethods(PaymentMethodID),
-
-    CONSTRAINT FK_InstallmentSettlements_Employees
-        FOREIGN KEY (EmployeeID)
-        REFERENCES Employees(EmployeeID),
-
-    CONSTRAINT UQ_InstallmentSettlements_Contract
-        UNIQUE (InstallmentContractID)
-);
-GO
-
-/* 
   Invoices
   */
 CREATE TABLE Invoices(
@@ -794,7 +606,7 @@ CREATE TABLE Invoices(
 );
 GO
 
-/* 
+/*
   Contracts
   */
  CREATE TABLE Contracts(
@@ -826,7 +638,7 @@ GO
 );
 GO
 
-/* 
+/*
   Contracts
   */
 CREATE TABLE Deliveries(
@@ -861,7 +673,7 @@ CREATE TABLE Deliveries(
         UNIQUE (OrderID)
 );
 GO
-/* 
+/*
   OTPVerificationsacts
   */
 CREATE TABLE OTPVerifications(
@@ -881,7 +693,7 @@ CREATE TABLE OTPVerifications(
 );
 GO
 
-/* 
+/*
   Suppliers
   */
 CREATE TABLE Suppliers(
@@ -892,9 +704,9 @@ CREATE TABLE Suppliers(
 	Address NVARCHAR(255) NULL,
 	Description NVARCHAR(500) NULL
 );
-GO 
+GO
 
-/* 
+/*
   InventoryTransactions
   */
 CREATE TABLE InventoryTransactions(
@@ -921,7 +733,7 @@ CREATE TABLE InventoryTransactions(
 );
 GO
 
-/* 
+/*
   CarImages
   */
 CREATE TABLE CarImages(
@@ -938,65 +750,7 @@ CREATE TABLE CarImages(
 		REFERENCES CarModels(ModelID)
 );
 GO
-/* 
-  Promotions
-  */
-CREATE TABLE Promotions(
-	PromotionID INT IDENTITY(1,1) PRIMARY KEY,
-	PromotionName NVARCHAR(150) NOT NULL,
-	Description NVARCHAR(500) NULL,
-	DiscountType VARCHAR(30) NULL,
-	DiscountValue DECIMAL(18,2) NULL,
-	StartDate DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
-	EndDate DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
-	Status VARCHAR(30)
-);
-GO 
-
-/* 
-  PromotionCars
-  */
-CREATE TABLE PromotionCars(
-	PromotionCarID INT IDENTITY(1,1) PRIMARY KEY,
-	PromotionID INT NOT NULL,
-	ModelID INT NOT NULL,
-
-	CONSTRAINT FK_PromotionCars_Promotions
-		FOREIGN KEY(PromotionID)
-		REFERENCES Promotions(PromotionID),
-
-	CONSTRAINT FK_PromotionCars_CarModels
-		FOREIGN KEY(ModelID)
-		REFERENCES CarModels(ModelID),
-
-	CONSTRAINT UQ_PromotionCars_Promotion_Model
-		UNIQUE (PromotionID, ModelID)
-);
-GO
-
-/* 
-  VehicleTCO
-  */
-CREATE TABLE VehicleTCO(
-	TCOID INT IDENTITY(1,1) PRIMARY KEY,
-	ModelID INT NOT NULL,
-	VehiclePrice DECIMAL(18,2) NULL,
-	EnergyCost DECIMAL(18,2) NULL,
-	MaintenanceCost DECIMAL(18,2) NULL,
-	InsuranceCost DECIMAL(18,2) NULL,
-	RegistrationCost DECIMAL(18,2) NULL,
-	IncentiveAmount DECIMAL(18,2) NULL,
-	TotalCost DECIMAL(18,2) NULL,
-	PeriodMonths INT NULL,
-	Description NVARCHAR(500) NULL,
-	CreateDate DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
-
-	CONSTRAINT FK_VehicleTCO_CarModels
-		FOREIGN KEY (ModelID)
-		REFERENCES CarModels(ModelID)
-);
-GO 
-/* 
+/*
   OrderStatusHistory
   */
  CREATE TABLE OrderStatusHistory(
@@ -1314,7 +1068,8 @@ BEGIN TRY
 	   DECLARE @CatalogColorImages TABLE (
 	       ModelName NVARCHAR(100) NOT NULL,
 	       ColorName NVARCHAR(50) NOT NULL,
-	       ImageURL NVARCHAR(500) NOT NULL
+	       ImageURL NVAR
+	           CHAR(500) NOT NULL
 	   );
 	   INSERT INTO @CatalogColorImages (ModelName, ColorName, ImageURL)
 	   VALUES

@@ -1,4 +1,5 @@
 package com.electriccarsales.controller;
+
 import com.electriccarsales.dao.UserDAO;
 import com.electriccarsales.service.OtpService;
 import jakarta.servlet.ServletException;
@@ -32,8 +33,11 @@ public class RegisterController extends HttpServlet {
         String password = req.getParameter("password");
         String confirm = req.getParameter("confirmPassword");
 
-        req.setAttribute("name", name); req.setAttribute("username", username);
-        req.setAttribute("phone", phone); req.setAttribute("email", email); req.setAttribute("address", address);
+        req.setAttribute("name", name);
+        req.setAttribute("username", username);
+        req.setAttribute("phone", phone);
+        req.setAttribute("email", email);
+        req.setAttribute("address", address);
 
         String error = validate(name, username, phone, email, password, confirm);
         if (error != null) {
@@ -42,18 +46,11 @@ public class RegisterController extends HttpServlet {
             return;
         }
 
-        if (!OtpService.isSmtpConfigured()) {
-            req.setAttribute("error", "Ứng dụng chưa nhận đủ biến môi trường SMTP.");
-            req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
-            return;
-        }
-
         try {
             UserDAO userDAO = new UserDAO();
-
-            if (userDAO.exists(username, phone, email))
-                throw new IllegalArgumentException(
-                    "Tên đăng nhập, số điện thoại hoặc email đã được sử dụng.");
+            if (userDAO.exists(username, phone, email)) {
+                throw new IllegalArgumentException("Tên đăng nhập, số điện thoại hoặc email đã được sử dụng.");
+            }
 
             OtpService otpService = new OtpService();
             String code = otpService.generateRegistrationCode();
@@ -64,23 +61,23 @@ public class RegisterController extends HttpServlet {
 
             req.getSession().setAttribute("pendingRegistrationUserId", userId);
             req.getSession().setAttribute("pendingRegistrationEmail", email);
+            req.setAttribute("userId", userId);
             req.setAttribute("email", email);
 
             try {
                 otpService.sendRegistrationOtp(email, code);
-                req.setAttribute("notice", "Đã gửi mã OTP tới email của bạn.");
+                req.setAttribute("notice", "Đã gửi mã OTP tới email của bạn (" + email + ").");
             } catch (RuntimeException e) {
-                log("Không gửi được OTP đăng ký", e);
-                req.setAttribute("error",
-                    "Chưa gửi được OTP. Hãy kiểm tra SMTP rồi bấm Gửi lại mã xác thực.");
+                log("SMTP chưa cấu hình hoặc gửi lỗi, đã in OTP ra console", e);
+                req.setAttribute("notice",
+                    "Tài khoản đã được tạo ở trạng thái chờ kích hoạt. Nếu chưa cấu hình SMTP, vui lòng xem mã OTP trong Console của IntelliJ hoặc bấm Gửi lại mã xác thực.");
             }
 
             req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);
 
         } catch (IllegalArgumentException e) {
-           req.setAttribute("error", e.getMessage());
+            req.setAttribute("error", e.getMessage());
             req.getRequestDispatcher("/auth/register.jsp").forward(req, resp);
-
         } catch (RuntimeException e) {
             log("Đăng ký thất bại", e);
             req.setAttribute("error", "Không thể tạo tài khoản.");
@@ -98,5 +95,6 @@ public class RegisterController extends HttpServlet {
         if (confirm == null || !password.equals(confirm)) return "Mật khẩu nhập lại không khớp.";
         return null;
     }
+
     private String trim(String value) { return value == null ? "" : value.trim(); }
 }

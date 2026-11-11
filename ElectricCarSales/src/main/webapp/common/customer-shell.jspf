@@ -24,10 +24,10 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
         <link rel="stylesheet" href="<%= customerContext %>/assets/css/customer.css">
         <link rel="stylesheet" href="<%= customerContext %>/assets/css/customer-ai.css">
         <% if (customerPage.equals("payment-demo.jsp")) { %><link rel="stylesheet" href="<%= customerContext %>/assets/css/payment-demo.css"><% } %>
-        <script src="<%= customerContext %>/assets/js/customer.js" defer>
+        <script src="<%= customerContext %>/assets/js/customer.js?v=inventory-finance-sync-20261112" defer>
         </script>
     </head>
-    <body>
+    <body data-context-path="<%= customerContext %>">
         <div class="customer-app">
             <aside class="customer-sidebar" id="customer-sidebar">
                 <a class="vf-brand" href="<%= customerContext %>/customer/profile" aria-label="VinFast ElectricCarSale">
@@ -51,11 +51,11 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
                     <div class="nav-divider">
                         <span>GIAO DỊCH CỦA TÔI</span>
                     </div>
-                    <a class="nav-link <%= customerPage.equals("my-orders.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/my-orders.jsp">
+                    <a class="nav-link <%= customerPage.equals("my-orders.jsp") ? "active" : "" %>" href="<%= customerContext %>/orders">
                         <span class="nav-icon">▤</span>
                         <span>Đơn hàng</span>
                     </a>
-                    <a class="nav-link <%= customerPage.equals("my-payments.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/my-payments.jsp">
+                    <a class="nav-link <%= customerPage.equals("my-payments.jsp") ? "active" : "" %>" href="<%= customerContext %>/payment/history">
                         <span class="nav-icon">◉</span>
                         <span>Thanh toán</span>
                     </a>

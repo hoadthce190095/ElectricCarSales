@@ -1,5 +1,6 @@
 package com.electriccarsales.controller;
 
+import com.electriccarsales.dao.ContractsDAO;
 import com.electriccarsales.dao.FinanceDAOException;
 import com.electriccarsales.model.InstallmentContract;
 import com.electriccarsales.service.InstallmentService;
@@ -46,6 +47,8 @@ public class InstallmentController extends HttpServlet {
             }
             request.setAttribute("installmentPlans", installmentService.getPlans());
             request.setAttribute("financialCompanies", installmentService.getFinancialCompanies());
+            request.setAttribute("contractList", new ContractsDAO().findByCustomerId(customerId));
+
             Integer contractId = FinanceControllerSupport.positiveInt(request.getParameter("contractId"));
             Integer orderId = FinanceControllerSupport.positiveInt(request.getParameter("orderId"));
             InstallmentContract contract = null;
@@ -105,30 +108,9 @@ public class InstallmentController extends HttpServlet {
                     "Chức năng trả góp không tồn tại.");
             return;
         }
-        Integer orderId = FinanceControllerSupport.positiveInt(request.getParameter("orderId"));
-        Integer contractId = FinanceControllerSupport.positiveInt(request.getParameter("contractId"));
-        try {
-            if ("create".equals(action)) {
-                if (orderId == null || !installmentService.orderBelongsToCustomer(orderId, customerId)) {
-                    FinanceControllerSupport.sendError(response, HttpServletResponse.SC_NOT_FOUND,
-                            "Không tìm thấy đơn hàng.");
-                    return;
-                }
-            } else {
-                if (contractId == null || !installmentService.contractBelongsToCustomer(contractId, customerId)) {
-                    FinanceControllerSupport.sendError(response, HttpServletResponse.SC_NOT_FOUND,
-                            "Không tìm thấy hợp đồng trả góp.");
-                    return;
-                }
-            }
-            // Contract creation and installment payment require verified business and gateway workflows.
-            FinanceControllerSupport.sendError(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,
-                    "Chưa cấu hình quy trình hợp đồng và cổng thanh toán đã xác minh cho nghiệp vụ này.");
-        } catch (FinanceDAOException e) {
-            getServletContext().log("Installment authorization query failed.", e);
-            FinanceControllerSupport.sendError(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,
-                    "Chưa thể xác minh quyền truy cập. Vui lòng thử lại sau.");
-        }
+        // Per RDS EX-08 & BR-05, periodic installment collection is handled by the partner bank outside the website.
+        FinanceControllerSupport.sendError(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+                "Theo RDS (EX-08 & BR-05), website chỉ thu 30% tiền đặt cọc và ghi nhận ngân hàng đối tác giải ngân 70% còn lại; không thu tiền trả góp định kỳ hàng tháng trên website.");
     }
 
     private static String action(HttpServletRequest request) {

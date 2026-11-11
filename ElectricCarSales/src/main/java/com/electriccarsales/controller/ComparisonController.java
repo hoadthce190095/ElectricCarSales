@@ -36,8 +36,8 @@ public class ComparisonController extends HttpServlet {
                         .map(String::trim)
                         .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        if (comparisonKeys.isEmpty() || comparisonKeys.size() > MAX_COMPARISON_VEHICLES) {
-            request.setAttribute("comparisonError", "Vui lòng chọn từ 1 đến 3 xe để so sánh.");
+        if (comparisonKeys.size() < 2 || comparisonKeys.size() > MAX_COMPARISON_VEHICLES) {
+            request.setAttribute("comparisonError", "Vui lòng chọn từ 2 đến 3 xe để so sánh.");
             request.getRequestDispatcher("/compare.jsp").forward(request, response);
             return;
         }

@@ -27,7 +27,11 @@ public class InventoryController extends HttpServlet {
             request.getRequestDispatcher("/staff/dashboard.jsp").forward(request, response);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            request.getServletContext().log("Cannot load inventory summary", e);
+            response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+            request.setAttribute("inventoryLoadError",
+                    "Không thể tải tồn kho từ cơ sở dữ liệu. Hãy kiểm tra cấu hình kết nối SQL Server rồi thử lại.");
+            request.getRequestDispatcher("/staff/dashboard.jsp").forward(request, response);
         }
     }
 }

@@ -24,6 +24,18 @@ public class AdministrationDAO {
         + " FROM Users u JOIN Roles r ON r.RoleID=u.RoleID JOIN Statuses s ON"
         + " s.StatusID=u.StatusID LEFT JOIN Employees e ON e.UserID=u.UserID ";
 
+    private boolean hasTable(Connection connection, String tableName) {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "SELECT CASE WHEN OBJECT_ID(?, N'U') IS NOT NULL THEN 1 ELSE 0 END")) {
+            ps.setString(1, "dbo." + tableName);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) == 1;
+            }
+        } catch (SQLException ex) {
+            return false;
+        }
+    }
+
     public AdministrationLookupsDTO lookups(Connection connection) throws SQLException {
         AdministrationLookupsDTO result = new AdministrationLookupsDTO(lookup(connection, "SELECT RoleID,RoleName FROM Roles ORDER BY RoleID"),
             lookup(connection, "SELECT StatusID,StatusName FROM Statuses ORDER BY StatusID"),
@@ -63,7 +75,6 @@ public class AdministrationDAO {
 
     public PageResponse<AdminUser> users(Connection connection, String query, int page, Integer roleId, Integer statusId)
         throws SQLException {
-        // Dùng cùng điều kiện cho tổng số và danh sách để phân trang không bị lệch.
         String where = " WHERE (u.Username LIKE ? ESCAPE '~' OR u.Email LIKE ? ESCAPE '~' OR"
             + " e.EmployeeName LIKE ? ESCAPE '~')";
         if (roleId != null) {
@@ -84,7 +95,7 @@ public class AdministrationDAO {
         }
         List<AdminUser> result = new ArrayList<>();
         try (PreparedStatement statement = connection
-            .prepareStatement(USERS + where + " ORDER BY u.UserID DESC OFFSET ? ROWS FETCH NEXT 20 ROWS" + " ONLY")) {
+            .prepareStatement(USERS + where + " ORDER BY u.UserID DESC OFFSET ? ROWS FETCH NEXT 20 ROWS ONLY")) {
             int nextParameter = bindUserFilters(statement, search, roleId, statusId);
             statement.setInt(nextParameter, (page - 1) * 20);
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -148,7 +159,7 @@ public class AdministrationDAO {
     public int activeAdmins(Connection connection) throws SQLException {
         try (PreparedStatement statement = connection
             .prepareStatement("SELECT COUNT(*) FROM Users u JOIN Roles r ON u.RoleID=r.RoleID"
-                + " JOIN Statuses s ON u.StatusID=s.StatusID WHERE" + " r.RoleName='ADMIN' AND s.StatusName='ACTIVE'");
+                + " JOIN Statuses s ON u.StatusID=s.StatusID WHERE r.RoleName='ADMIN' AND s.StatusName='ACTIVE'");
             ResultSet resultSet = statement.executeQuery()) {
             resultSet.next();
             return resultSet.getInt(1);
@@ -157,7 +168,7 @@ public class AdministrationDAO {
 
     public int createUser(Connection connection, UserRequest input, String hash) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(
-            "INSERT INTO Users(Username,PasswordHash,Email,Phone,RoleID,StatusID)" + " VALUES(?,?,?,?,?,?)",
+            "INSERT INTO Users(Username,PasswordHash,Email,Phone,RoleID,StatusID) VALUES(?,?,?,?,?,?)",
             Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, input.getUsername());
             statement.setString(2, hash);
@@ -219,7 +230,7 @@ public class AdministrationDAO {
         List<Employee> result = new ArrayList<>();
         try (
             PreparedStatement statement = connection.prepareStatement(
-                "SELECT" + " e.EmployeeID,e.UserID,e.EmployeeName,e.Phone,e.Email,u.Username,r.RoleName,s.StatusName"
+                "SELECT e.EmployeeID,e.UserID,e.EmployeeName,e.Phone,e.Email,u.Username,r.RoleName,s.StatusName"
                     + " FROM Employees e JOIN Users u ON e.UserID=u.UserID JOIN"
                     + " Roles r ON r.RoleID=u.RoleID JOIN Statuses s ON"
                     + " s.StatusID=u.StatusID ORDER BY e.EmployeeName");
@@ -234,6 +245,9 @@ public class AdministrationDAO {
     }
 
     public List<AdminPromotion> promotions(Connection connection) throws SQLException {
+        if (!hasTable(connection, "Promotions")) {
+            return List.of();
+        }
         List<AdminPromotion> result = new ArrayList<>();
         try (
             PreparedStatement statement = connection
@@ -242,12 +256,14 @@ public class AdministrationDAO {
             while (resultSet.next()) {
                 List<Integer> ids = new ArrayList<>();
                 int id = resultSet.getInt("PromotionID");
-                try (PreparedStatement links = connection
-                    .prepareStatement("SELECT ModelID FROM PromotionCars WHERE PromotionID=? ORDER BY" + " ModelID")) {
-                    links.setInt(1, id);
-                    try (ResultSet linkResults = links.executeQuery()) {
-                        while (linkResults.next()) {
-                            ids.add(linkResults.getInt(1));
+                if (hasTable(connection, "PromotionCars")) {
+                    try (PreparedStatement links = connection
+                        .prepareStatement("SELECT ModelID FROM PromotionCars WHERE PromotionID=? ORDER BY ModelID")) {
+                        links.setInt(1, id);
+                        try (ResultSet linkResults = links.executeQuery()) {
+                            while (linkResults.next()) {
+                                ids.add(linkResults.getInt(1));
+                            }
                         }
                     }
                 }
@@ -261,13 +277,13 @@ public class AdministrationDAO {
     }
 
     public int savePromotion(Connection connection, Integer id, PromotionRequest promotion) throws SQLException {
+        if (!hasTable(connection, "Promotions")) {
+            throw new com.electriccarsales.model.ApiException(503,
+                "Bảng Promotions không có trong schema ElectricCarSalesDB.sql hiện tại.");
+        }
         String sql = id == null
-            ? "INSERT INTO"
-                + " Promotions(PromotionName,Description,DiscountType,DiscountValue,StartDate,EndDate,Status)"
-                + " VALUES(?,?,?,?,?,?,?)"
-            : "UPDATE Promotions SET"
-                + " PromotionName=?,Description=?,DiscountType=?,DiscountValue=?,StartDate=?,EndDate=?,Status=?"
-                + " WHERE PromotionID=?";
+            ? "INSERT INTO Promotions(PromotionName,Description,DiscountType,DiscountValue,StartDate,EndDate,Status) VALUES(?,?,?,?,?,?,?)"
+            : "UPDATE Promotions SET PromotionName=?,Description=?,DiscountType=?,DiscountValue=?,StartDate=?,EndDate=?,Status=? WHERE PromotionID=?";
         try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setNString(1, promotion.getPromotionName());
             statement.setNString(2, promotion.getDescription());
@@ -289,19 +305,21 @@ public class AdministrationDAO {
                 }
             }
         }
-        try (PreparedStatement statement = connection
-            .prepareStatement("DELETE FROM PromotionCars WHERE PromotionID=?")) {
-            statement.setInt(1, id);
-            statement.executeUpdate();
-        }
-        try (PreparedStatement statement = connection
-            .prepareStatement("INSERT INTO PromotionCars(PromotionID,ModelID) VALUES(?,?)")) {
-            for (int model : promotion.getModelIds()) {
+        if (hasTable(connection, "PromotionCars")) {
+            try (PreparedStatement statement = connection
+                .prepareStatement("DELETE FROM PromotionCars WHERE PromotionID=?")) {
                 statement.setInt(1, id);
-                statement.setInt(2, model);
-                statement.addBatch();
+                statement.executeUpdate();
             }
-            statement.executeBatch();
+            try (PreparedStatement statement = connection
+                .prepareStatement("INSERT INTO PromotionCars(PromotionID,ModelID) VALUES(?,?)")) {
+                for (int model : promotion.getModelIds()) {
+                    statement.setInt(1, id);
+                    statement.setInt(2, model);
+                    statement.addBatch();
+                }
+                statement.executeBatch();
+            }
         }
         return id;
     }
@@ -313,6 +331,18 @@ public class AdministrationDAO {
 
     public PageResponse<SystemLog> logs(Connection connection, String action, Integer userId, LocalDate from,
         LocalDate to, int page, int pageSize, String targetType) throws SQLException {
+        if (!hasTable(connection, "SystemLogs")) {
+            List<SystemLog> mem = SystemLogDAO.memoryLogs().stream()
+                .filter(l -> (action == null || action.isEmpty() || action.equalsIgnoreCase(l.getAction()))
+                    && (userId == null || userId.equals(l.getUserId()))
+                    && (targetType == null || targetType.isEmpty() || targetType.equalsIgnoreCase(l.getTargetType()))
+                    && (from == null || !l.getCreatedDate().toLocalDate().isBefore(from))
+                    && (to == null || !l.getCreatedDate().toLocalDate().isAfter(to)))
+                .toList();
+            int start = Math.min(mem.size(), Math.max(0, (page - 1) * pageSize));
+            int end = Math.min(mem.size(), start + pageSize);
+            return new PageResponse<>(mem.subList(start, end), page, mem.size(), pageSize);
+        }
         String where = " WHERE (?='' OR l.Action=?) AND (? IS NULL OR l.UserID=?) AND l.CreatedDate>=? AND"
             + " l.CreatedDate<? AND (?='' OR l.TargetType=?)";
         long total;
@@ -330,7 +360,7 @@ public class AdministrationDAO {
             throw new IllegalArgumentException("Nhật ký vượt 50.000 dòng. Thu hẹp bộ lọc trước khi xuất.");
         }
         try (PreparedStatement statement = connection
-            .prepareStatement("SELECT l.*,u.Username FROM SystemLogs l LEFT JOIN Users u ON" + " u.UserID=l.UserID"
+            .prepareStatement("SELECT l.*,u.Username FROM SystemLogs l LEFT JOIN Users u ON u.UserID=l.UserID"
                 + where + " ORDER BY l.LogID DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY")) {
             bindLogs(statement, action, userId, from, to);
             statement.setString(7, targetType);

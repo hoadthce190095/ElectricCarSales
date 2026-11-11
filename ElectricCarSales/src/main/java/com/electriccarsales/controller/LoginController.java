@@ -20,6 +20,7 @@ public class LoginController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if ("1".equals(req.getParameter("registered"))) req.setAttribute("success", "Đăng ký thành công. Bạn có thể đăng nhập.");
+        if ("1".equals(req.getParameter("reset"))) req.setAttribute("success", "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới.");
         if ("1".equals(req.getParameter("loggedOut"))) req.setAttribute("success", "Bạn đã đăng xuất thành công.");
         req.getRequestDispatcher("/login.jsp").forward(req, resp);
     }
@@ -38,7 +39,7 @@ public class LoginController extends HttpServlet {
             AuthenticationService authenticationService = new AuthenticationService();
             User user = authenticationService.authenticate(username.trim(), password);
             if (user == null) {
-                req.setAttribute("error", "Tên đăng nhập hoặc mật khẩu không chính xác.");
+                req.setAttribute("error", "Tên đăng nhập, mật khẩu hoặc trạng thái tài khoản không hợp lệ.");
                 req.getRequestDispatcher("/login.jsp").forward(req, resp);
                 return;
             }

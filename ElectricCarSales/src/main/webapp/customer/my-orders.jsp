@@ -31,20 +31,43 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td colspan="6">
-                        <div class="table-empty">
-                            <span>▤</span>
-                            <strong>Chưa có giao dịch</strong>
-                            <p>Các giao dịch đã được nhân viên ghi nhận sẽ xuất hiện tại đây.</p>
-                        </div>
-                    </td>
-                </tr>
+                <c:forEach var="order" items="${orders}">
+                    <tr>
+                        <td>#<c:out value="${order.id}"/></td>
+                        <td><c:out value="${order.orderDate}"/></td>
+                        <td><c:out value="${order.vehicleName}" default="—"/></td>
+                        <td><c:out value="${order.originalAmount}"/> VND</td>
+                        <td><c:out value="${order.status}"/></td>
+                        <td>
+                            <a href="<%= request.getContextPath() %>/payment/detail?orderId=<c:out value='${order.id}'/>">Công nợ</a>
+                            <c:if test="${order.status eq 'PENDING' or order.status eq 'RESERVED'}">
+                                <form method="post" action="<%= request.getContextPath() %>/payment/create">
+                                    <input type="hidden" name="csrfToken" value="<c:out value='${paymentCsrf}'/>">
+                                    <input type="hidden" name="orderId" value="<c:out value='${order.id}'/>">
+                                    <input type="hidden" name="type" value="DEPOSIT">
+                                    <button type="submit">QR cọc 30%</button>
+                                </form>
+                            </c:if>
+                            <c:if test="${(order.status eq 'DEPOSITED' or order.status eq 'PROCESSING') and order.remainingAmount gt 0}">
+                                <form method="post" action="<%= request.getContextPath() %>/payment/create">
+                                    <input type="hidden" name="csrfToken" value="<c:out value='${paymentCsrf}'/>">
+                                    <input type="hidden" name="orderId" value="<c:out value='${order.id}'/>">
+                                    <input type="hidden" name="type" value="REMAINING">
+                                    <button type="submit">QR 70% (chỉ trả thẳng)</button>
+                                </form>
+                            </c:if>
+                        </td>
+                    </tr>
+                </c:forEach>
+                <c:if test="${empty orders}">
+                    <tr><td colspan="6"><div class="table-empty"><strong>Chưa có giao dịch</strong>
+                        <p>Đơn hàng được Sales Staff lập sẽ xuất hiện tại đây.</p></div></td></tr>
+                </c:if>
             </tbody>
         </table>
     </div>
     <div class="table-foot">
-        <span>Đang hiển thị <strong>0</strong> giao dịch</span>
+        <span>Đang hiển thị <strong><c:out value="${orders.size()}"/></strong> giao dịch</span>
         <div class="pagination">
             <button disabled aria-label="Trang trước">←</button>
             <span>1</span>

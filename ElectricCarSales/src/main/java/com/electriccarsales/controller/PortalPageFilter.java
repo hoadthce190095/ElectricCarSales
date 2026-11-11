@@ -24,12 +24,14 @@ import java.util.Set;
 @WebFilter(urlPatterns = {
     "/customer/*",
     "/staff/*",
-    "/admin/*"
+    "/admin/*",
+    "/orders",
+    "/payment/*"
 })
 public class PortalPageFilter implements Filter {
 
     private static final Set<String> STAFF_ROLES =
-        Set.of("SALES", "OPERATIONS", "ACCOUNTANT", "MANAGER");
+        Set.of("SALES", "OPERATIONS", "ACCOUNTANT", "MANAGER", "ADMIN");
 
     private static final Set<String> INVENTORY_ROLES =
         Set.of("OPERATIONS", "MANAGER", "ADMIN");
@@ -82,30 +84,39 @@ public class PortalPageFilter implements Filter {
 
         } catch (Exception e) {
             request.getServletContext().log("Page authorization failed", e);
-            response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+            writeError(request, response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+                "Không thể xác minh quyền truy cập do lỗi kết nối cơ sở dữ liệu.");
             return;
         }
 
         String path = request.getServletPath();
 
-        if (path.startsWith("/customer/") && !"CUSTOMER".equals(role)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+        boolean salesCustomerList = "/customer/profile".equals(path)
+            && "staff".equalsIgnoreCase(request.getParameter("mode"))
+            && Set.of("SALES", "MANAGER", "ADMIN").contains(role);
+
+        if (path.startsWith("/customer/") && !"CUSTOMER".equals(role) && !salesCustomerList) {
+            writeError(request, response, HttpServletResponse.SC_FORBIDDEN,
+                "Vai trò hiện tại không có quyền truy cập trang khách hàng này.");
             return;
         }
 
         if (path.startsWith("/admin/") && !"ADMIN".equals(role)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            writeError(request, response, HttpServletResponse.SC_FORBIDDEN,
+                "Chỉ Admin được truy cập trang này.");
             return;
         }
 
         if (path.startsWith("/staff/inventory")) {
             if (!INVENTORY_ROLES.contains(role)) {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                writeError(request, response, HttpServletResponse.SC_FORBIDDEN,
+                    "Chỉ Operations Officer, Manager hoặc Admin được truy cập tồn kho.");
                 return;
             }
         } else if (path.startsWith("/staff/")
             && !STAFF_ROLES.contains(role)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            writeError(request, response, HttpServletResponse.SC_FORBIDDEN,
+                "Vai trò hiện tại không có quyền truy cập khu vực nhân viên.");
             return;
         }
 
@@ -115,5 +126,21 @@ public class PortalPageFilter implements Filter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    private static void writeError(HttpServletRequest request, HttpServletResponse response,
+                                   int status, String message) throws IOException {
+        boolean json = "json".equalsIgnoreCase(request.getParameter("format"))
+            || (request.getHeader("Accept") != null
+                && request.getHeader("Accept").contains("application/json"));
+        if (json) {
+            response.setStatus(status);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"success\":false,\"error\":\"" + message
+                .replace("\\", "\\\\").replace("\"", "\\\"")
+                .replace("\r", "\\r").replace("\n", "\\n") + "\"}");
+        } else {
+            response.sendError(status, message);
+        }
     }
 }

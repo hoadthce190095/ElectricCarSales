@@ -33,8 +33,9 @@ public class InventoryDetailController extends HttpServlet {
             request.getRequestDispatcher("/staff/inventory-detail.jsp").forward(request, response);
 
         } catch (Exception e) {
-            e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/staff/inventory");
+            request.getServletContext().log("Cannot load inventory vehicle details", e);
+            response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+                    "Không thể tải chi tiết xe từ cơ sở dữ liệu. Kiểm tra cấu hình kết nối SQL Server.");
         }
     }
 }

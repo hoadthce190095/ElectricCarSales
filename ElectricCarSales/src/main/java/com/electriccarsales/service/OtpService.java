@@ -14,6 +14,17 @@ import java.security.SecureRandom;
 import java.util.Properties;
 
 public class OtpService {
+    private static String getConfig(String key) {
+        return getConfig(key, "");
+    }
+
+    private static String getConfig(String key, String defaultValue) {
+        String value = System.getenv(key);
+        if (value == null || value.isBlank()) {
+            value = System.getProperty(key);
+        }
+        return value == null || value.isBlank() ? defaultValue : value;
+    }
     private static final SecureRandom RANDOM = new SecureRandom();
     private final OTPVerificationDAO otpDAO = new OTPVerificationDAO();
 
@@ -21,15 +32,38 @@ public class OtpService {
         if (userId <= 0 || code == null || !code.matches("\\d{6}")) return false;
         return otpDAO.verifyRegistrationOtp(userId, code);
     }
+
+    public boolean verifyPurposeOtp(int userId, String purpose, String code) {
+        if (userId <= 0 || purpose == null || code == null || !code.matches("\\d{6}")) return false;
+        return otpDAO.verifyPurposeOtp(userId, purpose, code);
+    }
+
+    public String issuePurposeOtp(int userId, String purpose) {
+        String code = generateRegistrationCode();
+        if (!otpDAO.issuePurposeOtp(userId, purpose, code)) {
+            throw new IllegalStateException("Không lưu được mã OTP.");
+        }
+        String email = otpDAO.findUserEmail(userId);
+        System.out.println("[OTP-CONSOLE] UserID=" + userId + " | Purpose=" + purpose + " | Email=" + email + " | OTP=" + code);
+        if (email != null && !email.isBlank() && isSmtpConfigured()) {
+            try {
+                sendEmailOtp(email, code, purpose);
+            } catch (RuntimeException ex) {
+                System.err.println("[OTP-WARN] Không gửi được email SMTP, sử dụng mã OTP trên console: " + code);
+            }
+        }
+        return code;
+    }
+
     public static boolean isSmtpConfigured() {
         for (String key : new String[]{"ECARS_SMTP_HOST", "ECARS_SMTP_PORT",
             "ECARS_SMTP_SECURITY", "ECARS_SMTP_USERNAME",
             "ECARS_SMTP_PASSWORD", "ECARS_SMTP_FROM"}) {
-            String value = System.getenv(key);
+            String value = getConfig(key, null);
             if (value == null || value.isBlank()) {
-                System.err.println("THIEU BIEN SMTP: " + key);
                 return false;
-            }        }
+            }
+        }
         return true;
     }
 
@@ -38,20 +72,27 @@ public class OtpService {
     }
 
     public void sendRegistrationOtp(String email, String code) {
-        if (!isSmtpConfigured())
-            throw new IllegalStateException("Chưa cấu hình SMTP.");
+        System.out.println("[OTP-CONSOLE] Registration Email=" + email + " | OTP=" + code);
+        if (!isSmtpConfigured()) {
+            throw new IllegalStateException("Chưa cấu hình SMTP. Mã OTP kiểm thử đã được in ra Console của IntelliJ: " + code);
+        }
+        sendEmailOtp(email, code, "REGISTER");
+    }
 
-        String host = System.getenv("ECARS_SMTP_HOST").trim();
-        String username = System.getenv("ECARS_SMTP_USERNAME").trim();
-        String password = System.getenv("ECARS_SMTP_PASSWORD").replaceAll("\\s+", "");
-        String from = System.getenv("ECARS_SMTP_FROM").trim();
+    private void sendEmailOtp(String email, String code, String purpose) {
+        String host = getConfig("ECARS_SMTP_HOST", "");
+        String username = getConfig("ECARS_SMTP_USERNAME", "");
+        String password = getConfig("ECARS_SMTP_PASSWORD", "").replaceAll("\\s+", "");
+        String from = getConfig("ECARS_SMTP_FROM", "");
+        String security = getConfig("ECARS_SMTP_SECURITY", "STARTTLS");
 
-        if (!"STARTTLS".equalsIgnoreCase(System.getenv("ECARS_SMTP_SECURITY").trim()))
+        if (!"STARTTLS".equalsIgnoreCase(security)) {
             throw new IllegalStateException("SMTP hiện chỉ hỗ trợ STARTTLS.");
+        }
 
         Properties props = new Properties();
         props.put("mail.smtp.host", host);
-        props.put("mail.smtp.port", System.getenv("ECARS_SMTP_PORT").trim());
+        props.put("mail.smtp.port", getConfig("ECARS_SMTP_PORT", "587"));
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
         props.put("mail.smtp.starttls.required", "true");
@@ -70,10 +111,9 @@ public class OtpService {
             MimeMessage message = new MimeMessage(session);
             message.setFrom(new InternetAddress(from));
             message.setRecipient(Message.RecipientType.TO, new InternetAddress(email));
-            message.setSubject("Ma xac thuc Electric Car Sales", "UTF-8");
-            message.setText("Ma OTP dang ky cua ban: " + code
+            message.setSubject("Ma xac thuc Electric Car Sales (" + purpose + ")", "UTF-8");
+            message.setText("Ma OTP (" + purpose + ") cua ban: " + code
                 + "\nMa co hieu luc trong 5 phut.", "UTF-8");
-
             Transport.send(message);
         } catch (MessagingException e) {
             throw new IllegalStateException("Không gửi được OTP qua SMTP.", e);
@@ -82,22 +122,21 @@ public class OtpService {
 
     public String resendRegistrationOtp(int userId) {
         String email = otpDAO.findPendingRegistrationEmail(userId);
-
-        if (email == null || email.isBlank())
+        if (email == null || email.isBlank()) {
             throw new IllegalArgumentException("Không tìm thấy tài khoản đang chờ xác thực.");
-
-        String code = generateRegistrationCode();
-
-        if (!otpDAO.issueRegistrationOtp(userId, code))
-            throw new IllegalStateException("Không lưu được mã OTP mới.");
-
-        try {
-            sendRegistrationOtp(email, code);
-        } catch (RuntimeException e) {
-            otpDAO.expireFailedRegistrationOtp(userId, code);
-            throw e;
         }
-
+        String code = generateRegistrationCode();
+        if (!otpDAO.issueRegistrationOtp(userId, code)) {
+            throw new IllegalStateException("Không lưu được mã OTP mới.");
+        }
+        System.out.println("[OTP-CONSOLE] Resend Registration UserID=" + userId + " | Email=" + email + " | OTP=" + code);
+        if (isSmtpConfigured()) {
+            try {
+                sendRegistrationOtp(email, code);
+            } catch (RuntimeException e) {
+                System.err.println("[OTP-WARN] Gửi lại qua SMTP lỗi, mã OTP đã in ra Console: " + code);
+            }
+        }
         return email;
     }
 }

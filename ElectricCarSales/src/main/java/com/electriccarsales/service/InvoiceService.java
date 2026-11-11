@@ -26,4 +26,9 @@ public class InvoiceService {
         if (invoiceId <= 0 || customerId <= 0) throw new IllegalArgumentException("Hóa đơn không hợp lệ.");
         return invoiceDAO.findByIdForCustomer(invoiceId, customerId);
     }
+
+    public Invoices issueInvoice(int orderId, Integer accountantEmployeeId, String note) {
+        if (orderId <= 0) throw new IllegalArgumentException("Mã đơn hàng không hợp lệ.");
+        return invoiceDAO.issueInvoice(orderId, accountantEmployeeId, note);
+    }
 }

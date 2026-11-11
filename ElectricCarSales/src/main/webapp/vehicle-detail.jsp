@@ -6,12 +6,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f3f4f6">
+    <meta name="app-context-path" content="<c:out value='${pageContext.request.contextPath}' />">
     <title><c:out value="${car.modelName}"/> | VinFast - ElectricCarSale</title>
+    <link rel="stylesheet" href="<c:url value='/assets/css/customer.css'><c:param name='v' value='consult-popup-20261111' /></c:url>">
+    <script src="<c:url value='/assets/js/customer.js'><c:param name='v' value='consult-popup-model-prefill-20261111' /></c:url>" defer></script>
     <style>
         :root { color-scheme: light; font-family: Arial, sans-serif; color: #263238; background: #f3f4f6; }
         * { box-sizing: border-box; }
         body { margin: 0; }
-        .detail-header { padding: 16px max(20px, calc((100% - 1050px) / 2)); background: #fff; border-bottom: 1px solid #ddd; }
+        .detail-header { padding: 16px max(20px, calc((100% - 1050px) / 2)); background: #fff; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
         .detail-header a, .back-link { color: #24568a; font-size: 14px; font-weight: 700; text-decoration: none; }
         main { width: min(1050px, calc(100% - 32px)); margin: 24px auto; }
         .detail-card { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(280px, .9fr); gap: 24px; padding: 20px; border: 1px solid #ddd; background: #fff; }
@@ -38,13 +41,14 @@
         .color-status { min-height: 18px; margin: 5px 0 0; color: #a12626; font-size: 12px; }
         .specs-title { grid-column: 1 / -1; margin: 0 0 4px; font-size: 18px; }
         .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 20px; }
-        .contact-link { padding: 9px 13px; border: 1px solid #24568a; background: #24568a; color: #fff; font-size: 13px; text-decoration: none; }
+        .contact-link { padding: 10px 16px; border: 1px solid #24568a; background: #24568a; color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; border-radius: 6px; cursor: pointer; }
         @media (max-width: 700px) { main { margin: 16px auto; } .detail-card { grid-template-columns: 1fr; gap: 18px; padding: 14px; } .gallery { min-height: 0; } .gallery img { height: clamp(230px, 68vw, 310px); } .gallery-message { min-height: 230px; } }
     </style>
 </head>
-<body>
+<body data-context-path="<c:out value='${pageContext.request.contextPath}' />">
 <header class="detail-header">
     <a href="<c:url value='/index.jsp'/>">VinFast · ElectricCarSale</a>
+    <a href="#" data-open-consult-popup>Tư vấn &amp; Báo giá →</a>
 </header>
 <main>
     <article class="detail-card">
@@ -80,11 +84,13 @@
 
             <div class="actions">
                 <a class="back-link" href="<c:url value='/index.jsp#models'/>">← Quay lại danh sách xe</a>
-                <a class="contact-link" href="mailto:hotro@electriccarsale.vn?subject=Tu%20van%20xe">Liên hệ tư vấn</a>
+                <a class="contact-link" href="#" data-open-consult-popup data-consult-model-id="<c:out value='${car.modelID}'/>">Gửi yêu cầu tư vấn &amp; Đặt xe →</a>
             </div>
         </div>
     </article>
 </main>
+<%@ include file="common/consult-popup.jspf" %>
+<div class="toast" role="status" aria-live="polite" data-toast></div>
 <script>
     (() => {
         const gallery = document.getElementById("vehicle-gallery");
@@ -132,6 +138,7 @@
             const rows = [
                 ["Phiên bản", valueOrPending(model.specificationVersion)],
                 ["Giá tham khảo", model.priceVnd == null ? "Liên hệ" : formatNumber(model.priceVnd, " ₫")],
+                ["Đặt cọc 30% (RDS)", model.priceVnd == null ? "Đang cập nhật" : formatNumber(Math.round(model.priceVnd * 0.30), " ₫")],
                 ["Quãng đường công bố", formatNumber(model.rangeKm, " km")],
                 ["Tiêu chuẩn quãng đường", valueOrPending(model.rangeStandard)],
                 ["Dung lượng pin", formatNumber(model.batteryKwh, " kWh")],
@@ -140,8 +147,7 @@
                 ["Kích thước", valueOrPending(model.dimensions)],
                 ["Mâm xe", valueOrPending(model.wheelType)],
                 ["Số túi khí", Number(model.airbagCount) > 0 ? String(model.airbagCount) : "Đang cập nhật"],
-                ["Tốc độ tối đa", formatNumber(model.maxSpeedKmh, " km/h")],
-                ["Thời gian sạc nhanh", formatNumber(model.rapidChargeMinutes, " phút")]
+                ["Tốc độ tối đa", formatNumber(model.maxSpeedKmh, " km/h")]
             ];
             const fragment = document.createDocumentFragment();
             rows.forEach(([label, value]) => {

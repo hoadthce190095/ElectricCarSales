@@ -3,6 +3,7 @@ package com.electriccarsales.controller;
 import com.electriccarsales.dao.FinanceCustomerDAO;
 import com.electriccarsales.dao.FinanceDAOException;
 import com.electriccarsales.model.SessionUser;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -10,10 +11,12 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.Map;
 
 /** Shared request validation for the finance servlets. Identity values must be set by server-side login code. */
 final class FinanceControllerSupport {
     static final String CUSTOMER_ROLE = "CUSTOMER";
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     private FinanceControllerSupport() { }
 
@@ -22,17 +25,17 @@ final class FinanceControllerSupport {
         Object sessionUser = session == null ? null : session.getAttribute("user");
         if (!(sessionUser instanceof SessionUser user) || user.getRole() == null
                 || !CUSTOMER_ROLE.equals(user.getRole().trim().toUpperCase(Locale.ROOT))) {
-            sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "Vui lòng đăng nhập bằng tài khoản khách hàng.");
+            sendError(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Vui lòng đăng nhập bằng tài khoản khách hàng.");
             return null;
         }
         try {
             Integer customerId = new FinanceCustomerDAO().findCustomerIdByUserId(user.getUserId());
             if (customerId == null) {
-                sendError(response, HttpServletResponse.SC_FORBIDDEN, "Tài khoản chưa liên kết hồ sơ khách hàng.");
+                sendError(request, response, HttpServletResponse.SC_FORBIDDEN, "Tài khoản chưa liên kết hồ sơ khách hàng.");
             }
             return customerId;
         } catch (FinanceDAOException e) {
-            sendError(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+            sendError(request, response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,
                     "Chưa thể xác minh hồ sơ khách hàng. Vui lòng thử lại sau.");
             return null;
         }
@@ -43,7 +46,7 @@ final class FinanceControllerSupport {
         Integer employeeId = positiveSessionInt(session, "employeeId");
         String role = session == null ? null : stringSessionValue(session, "role");
         if (employeeId == null || role == null || !isFinanceStaffRole(role)) {
-            sendError(response, HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền xử lý nghiệp vụ tài chính.");
+            sendError(request, response, HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền xử lý nghiệp vụ tài chính.");
             return null;
         }
         return employeeId;
@@ -61,6 +64,21 @@ final class FinanceControllerSupport {
             return parsed > 0 ? parsed : null;
         } catch (NumberFormatException ignored) {
             return null;
+        }
+    }
+
+    static void sendError(HttpServletRequest request, HttpServletResponse response, int status, String message) throws IOException {
+        response.setStatus(status);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        String accept = request.getHeader("Accept");
+        boolean jsonRequested = "json".equalsIgnoreCase(request.getParameter("format"))
+                || (accept != null && accept.toLowerCase(Locale.ROOT).contains("application/json"));
+        if (jsonRequested) {
+            response.setContentType("application/json;charset=UTF-8");
+            JSON.writeValue(response.getWriter(), Map.of("error", message));
+        } else {
+            response.setContentType("text/plain;charset=UTF-8");
+            response.getWriter().write(message);
         }
     }
 

@@ -1,11 +1,15 @@
 package com.electriccarsales.dao;
 
 import com.electriccarsales.model.Invoices;
+import com.electriccarsales.model.OrderStatusHistory;
 import util.DBContext;
 
+import java.math.BigDecimal;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +26,9 @@ public class InvoiceDAO extends DBContext {
                 + "SubTotal, DiscountAmount, TaxAmount, TotalAmount, Status, Note FROM Invoices "
                 + "ORDER BY InvoiceDate DESC, InvoiceID DESC";
         List<Invoices> invoices = new ArrayList<>();
-        try (PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+        try (Connection connection = getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) invoices.add(map(rs));
             return invoices;
         } catch (SQLException e) {
@@ -37,7 +43,8 @@ public class InvoiceDAO extends DBContext {
                 + "JOIN Employees e ON e.EmployeeID = o.EmployeeID WHERE e.UserID = ? "
                 + "ORDER BY i.InvoiceDate DESC, i.InvoiceID DESC";
         List<Invoices> invoices = new ArrayList<>();
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection connection = getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) invoices.add(map(rs));
@@ -52,7 +59,8 @@ public class InvoiceDAO extends DBContext {
         String sql = "SELECT InvoiceID, OrderID, CustomerID, EmployeeID, InvoiceNumber, InvoiceDate, "
                 + "SubTotal, DiscountAmount, TaxAmount, TotalAmount, Status, Note FROM Invoices "
                 + "WHERE InvoiceID = ? AND CustomerID = ?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection connection = getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, invoiceId);
             ps.setInt(2, customerId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -63,9 +71,132 @@ public class InvoiceDAO extends DBContext {
         }
     }
 
+    public Invoices findByOrderId(int orderId) {
+        String sql = "SELECT InvoiceID, OrderID, CustomerID, EmployeeID, InvoiceNumber, InvoiceDate, "
+                + "SubTotal, DiscountAmount, TaxAmount, TotalAmount, Status, Note FROM Invoices WHERE OrderID = ?";
+        try (Connection connection = getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? map(rs) : null;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể truy vấn hóa đơn theo đơn hàng.", e);
+        }
+    }
+
+    /**
+     * Issues an official invoice per RDS 9.3:
+     * - Verifies Contract exists and has Status = 'SIGNED' (PRE-1).
+     * - Verifies 100% payment is complete (Orders.RemainingAmount = 0 and Order status is PAID) (PRE-2 & BR3).
+     */
+    public Invoices issueInvoice(int orderId, Integer accountantEmployeeId, String note) {
+        try (Connection connection = openConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                int customerId;
+                Integer orderEmpId;
+                BigDecimal totalAmount;
+                BigDecimal remainingAmount;
+                String orderStatus;
+                String contractStatus;
+
+                String sql = """
+                    SELECT o.CustomerID, o.EmployeeID, o.TotalAmount, o.RemainingAmount,
+                           os.StatusName AS OrderStatus, ct.Status AS ContractStatus
+                    FROM Orders o WITH (UPDLOCK, HOLDLOCK)
+                    JOIN OrderStatuses os ON os.OrderStatusID = o.OrderStatusID
+                    LEFT JOIN Contracts ct ON ct.OrderID = o.OrderID
+                    WHERE o.OrderID = ?
+                    """;
+                try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                    ps.setInt(1, orderId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) throw new IllegalArgumentException("Không tìm thấy đơn hàng #" + orderId);
+                        customerId = rs.getInt("CustomerID");
+                        orderEmpId = rs.getObject("EmployeeID", Integer.class);
+                        totalAmount = rs.getBigDecimal("TotalAmount");
+                        remainingAmount = rs.getBigDecimal("RemainingAmount");
+                        orderStatus = rs.getString("OrderStatus");
+                        contractStatus = rs.getString("ContractStatus");
+                    }
+                }
+
+                if (contractStatus == null || !"SIGNED".equalsIgnoreCase(contractStatus)) {
+                    throw new IllegalStateException("Theo RDS (Mục II.9.3 PRE-1), hợp đồng của đơn hàng phải ở trạng thái đã ký (SIGNED) trước khi xuất hóa đơn.");
+                }
+                if (remainingAmount == null || remainingAmount.signum() > 0 || !"PAID".equalsIgnoreCase(orderStatus)) {
+                    throw new IllegalStateException("Theo RDS (Mục II.9.3 BR3), chỉ được xuất hóa đơn sau khi đơn hàng đã xác nhận thanh toán đủ 100% (RemainingAmount = 0, trạng thái PAID). Công nợ hiện tại: "
+                            + (remainingAmount == null ? "?" : remainingAmount.toPlainString()) + " VND.");
+                }
+
+                try (PreparedStatement check = connection.prepareStatement("SELECT InvoiceID FROM Invoices WHERE OrderID = ?")) {
+                    check.setInt(1, orderId);
+                    try (ResultSet rs = check.executeQuery()) {
+                        if (rs.next()) {
+                            throw new IllegalStateException("Đơn hàng #" + orderId + " đã được xuất hóa đơn trước đó.");
+                        }
+                    }
+                }
+
+                int empId = (accountantEmployeeId != null && accountantEmployeeId > 0)
+                        ? accountantEmployeeId
+                        : (orderEmpId != null && orderEmpId > 0 ? orderEmpId : resolveFallbackEmployeeId(connection));
+                String invoiceNo = "INV-ECS-" + orderId + "-" + (System.currentTimeMillis() % 100000);
+                String invNote = (note == null || note.isBlank())
+                        ? "Hóa đơn GTGT xe điện VinFast (Đã thu đủ 100% giá trị đơn hàng)."
+                        : note.trim();
+
+                int invoiceId;
+                String insertSql = """
+                    INSERT INTO Invoices (OrderID, CustomerID, EmployeeID, InvoiceNumber, SubTotal, DiscountAmount, TaxAmount, TotalAmount, Status, Note)
+                    VALUES (?, ?, ?, ?, ?, 0, 0, ?, 'ISSUED', ?)
+                    """;
+                try (PreparedStatement ps = connection.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setInt(1, orderId);
+                    ps.setInt(2, customerId);
+                    ps.setInt(3, empId);
+                    ps.setString(4, invoiceNo);
+                    ps.setBigDecimal(5, totalAmount);
+                    ps.setBigDecimal(6, totalAmount);
+                    ps.setNString(7, invNote);
+                    ps.executeUpdate();
+                    try (ResultSet keys = ps.getGeneratedKeys()) {
+                        if (!keys.next()) throw new SQLException("Không tạo được hóa đơn.");
+                        invoiceId = keys.getInt(1);
+                    }
+                }
+
+                OrderStatusHistory history = new OrderStatusHistory();
+                history.setOrderId(orderId);
+                history.setStatus(orderStatus);
+                history.setEmployeeId(empId);
+                history.setNote("Kế toán đã phát hành hóa đơn " + invoiceNo + " (ISSUED). Đủ điều kiện xuất kho và bàn giao xe.");
+                new OrderStatusHistoryDAO().insert(connection, history);
+
+                connection.commit();
+                return findByOrderId(orderId);
+            } catch (SQLException | RuntimeException ex) {
+                try { connection.rollback(); } catch (SQLException rb) { ex.addSuppressed(rb); }
+                throw ex;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể phát hành hóa đơn.", e);
+        }
+    }
+
+    private int resolveFallbackEmployeeId(Connection connection) throws SQLException {
+        try (PreparedStatement ps = connection.prepareStatement("SELECT TOP 1 EmployeeID FROM Employees ORDER BY EmployeeID");
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getInt(1);
+        }
+        throw new IllegalStateException("Chưa có hồ sơ nhân viên trong bảng Employees.");
+    }
+
     private List<Invoices> find(String sql, int customerId) {
         List<Invoices> invoices = new ArrayList<>();
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection connection = getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, customerId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) invoices.add(map(rs));

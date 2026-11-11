@@ -14,6 +14,8 @@ public class VehicleModel {
     private String description;
     private BigDecimal minPrice;
     private BigDecimal maxPrice;
+    private BigDecimal inventoryMinPrice;
+    private BigDecimal inventoryMaxPrice;
     private int availableCars;
     private List<String> versions = List.of();
     private List<String> colors = List.of();
@@ -92,6 +94,22 @@ public class VehicleModel {
 
     public void setMaxPrice(BigDecimal maxPrice) {
         this.maxPrice = maxPrice;
+    }
+
+    public BigDecimal getInventoryMinPrice() {
+        return inventoryMinPrice;
+    }
+
+    public void setInventoryMinPrice(BigDecimal inventoryMinPrice) {
+        this.inventoryMinPrice = inventoryMinPrice;
+    }
+
+    public BigDecimal getInventoryMaxPrice() {
+        return inventoryMaxPrice;
+    }
+
+    public void setInventoryMaxPrice(BigDecimal inventoryMaxPrice) {
+        this.inventoryMaxPrice = inventoryMaxPrice;
     }
 
     public int getAvailableCars() {

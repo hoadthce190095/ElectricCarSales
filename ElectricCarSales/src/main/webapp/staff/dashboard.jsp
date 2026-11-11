@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="<%= appContext %>/assets/css/staff.css">
 
     <!-- Vẫn nạp staff.js để chạy menu bên trái, nhưng cần xóa đoạn code ghi đè thẻ <main> trong file JS này -->
-    <script src="<%= appContext %>/assets/js/staff.js?v=logout-role-2" defer></script>
+    <script src="<%= appContext %>/assets/js/staff.js?v=staff-workflow-filter-fix-20261111" defer></script>
 </head>
 <body data-context-path="<%= appContext %>">
 <%
@@ -89,11 +89,21 @@
 
         <%-- Dashboard sẽ được staff.js dựng theo vai trò. Chỉ hiển thị bảng khi Servlet tồn kho được gọi. --%>
         <main class="staff-content p-4" id="staff-content" tabindex="-1" aria-live="polite" style="overflow-y: auto;">
+          <% if ("ACCOUNTANT".equalsIgnoreCase(roleName)) { %>
+            <p><a href="<%= appContext %>/staff/dashboard#payments">Đối chiếu thanh toán thật →</a></p>
+          <% } %>
+          <% if ("SALES".equalsIgnoreCase(roleName)) { %>
+            <p><a href="<%= appContext %>/orders">Lập đơn bán xe →</a></p>
+          <% } %>
           <% if (inventoryPage) { %>
             <div class="mb-4">
                 <h3 class="fw-bold">Quản lý tồn kho</h3>
-                <p class="text-muted">Theo dõi số lượng xe theo mẫu, màu sắc và địa điểm</p>
+                <p class="text-muted">Theo dõi số xe vật lý theo mẫu, màu, trạng thái và số lượng; xe đã gắn đơn được tính là RESERVED.</p>
             </div>
+
+            <c:if test="${not empty inventoryLoadError}">
+                <div role="alert" class="alert alert-danger"><c:out value="${inventoryLoadError}" /></div>
+            </c:if>
 
             <div class="table-responsive bg-white rounded shadow-sm border">
                 <table class="table table-hover align-middle mb-0">
@@ -116,12 +126,7 @@
                                     <td>${item.color}</td>
                                     <td>${item.location}</td>
                                     <td>${item.quantity}</td>
-                                    <td>
-                                        <!-- Màu sắc badge tùy biến theo trạng thái -->
-                                        <span class="badge ${item.quantity > 0 ? 'bg-success' : 'bg-danger'}">
-                                                ${item.quantity > 0 ? 'Có sẵn' : 'Hết hàng'}
-                                        </span>
-                                    </td>
+                                    <td><span class="badge ${item.statusName eq 'AVAILABLE' ? 'bg-success' : item.statusName eq 'RESERVED' ? 'bg-warning text-dark' : 'bg-secondary'}"><c:out value="${item.statusName}" /></span></td>
                                     <td>
                                         <!-- URL truyền tham số chính xác sang Servlet xem chi tiết -->
                                         <a href="<%= appContext %>/staff/inventory/detail?modelId=${item.modelId}&location=${item.location}" class="text-primary fw-bold text-decoration-none">
@@ -134,7 +139,7 @@
                         <c:otherwise>
                             <tr>
                                 <td colspan="6" class="text-center text-muted py-5">
-                                    Không có dữ liệu. Vui lòng gọi Servlet để truyền danh sách tồn kho sang JSP.
+                                    Chưa có xe vật lý trong bảng Cars. Hãy dùng “Nhập / Xuất kho xe” để ghi nhận xe thật có VIN, phiên bản, màu, giá và trạng thái; danh sách khách hàng/Sales sẽ lấy cùng xe AVAILABLE chưa gắn đơn.
                                 </td>
                             </tr>
                         </c:otherwise>

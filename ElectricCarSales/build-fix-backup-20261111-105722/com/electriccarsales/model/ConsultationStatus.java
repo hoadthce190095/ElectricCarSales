@@ -1,8 +1,16 @@
-package com.electriccarsales.model.consultation;
+package com.electriccarsales.model;
 
 public class ConsultationStatus {
     private int id;
     private String statusName;
+
+    public ConsultationStatus() {
+    }
+
+    public ConsultationStatus(int id, String statusName) {
+        this.id = id;
+        this.statusName = statusName;
+    }
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }

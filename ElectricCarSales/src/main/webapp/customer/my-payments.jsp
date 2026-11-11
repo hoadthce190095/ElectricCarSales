@@ -3,8 +3,8 @@
 <% request.setAttribute("customerTitle", "Thanh toán"); request.setAttribute("customerEyebrow", "THANH TOÁN AN TOÀN"); %>
 <%@ include file="../common/customer-shell.jspf" %>
 <div class="page-intro">
-    <p>Xem các khoản đặt cọc, thanh toán còn lại và kỳ trả góp được ghi nhận trong giao dịch của bạn.</p>
-    <a class="button button-primary" href="<%= request.getContextPath() %>/customer/payment-demo.jsp">Mở demo cổng thanh toán <span>→</span></a>
+    <p>Xem lịch sử tiền cọc và thanh toán 70% được xác nhận. Trả góp hằng tháng được thực hiện với đối tác tài chính, không qua website.</p>
+    <a class="button button-primary" href="<%= request.getContextPath() %>/orders">Chọn đơn hàng để thanh toán <span>→</span></a>
 </div>
 <section class="payment-highlight">
     <div>
@@ -83,5 +83,5 @@
     <span>i</span>
     <p>Trạng thái thanh toán phản ánh dữ liệu hệ thống. Với chuyển khoản hoặc thanh toán tiền mặt, nhân viên có thẩm quyền có thể cần xác minh trước khi giao dịch được xác nhận.</p>
 </div>
-<c:if test="${paymentTestMode}"><div class="info-note"><span>i</span><p>Chế độ kiểm thử đang bật. Khi tích hợp cổng thanh toán, số tiền gửi cổng sẽ được quy đổi riêng; số tiền nghiệp vụ trong lịch sử vẫn giữ nguyên.</p></div></c:if>
+
 <%@ include file="../common/customer-shell-end.jspf" %>

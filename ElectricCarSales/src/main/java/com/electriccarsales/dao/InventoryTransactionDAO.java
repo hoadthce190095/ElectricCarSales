@@ -38,7 +38,7 @@ public class InventoryTransactionDAO extends DBContext {
                 list.add(it);
             }
         } catch (Exception e) {
-            System.out.println("Lỗi tại getAllTransactions: " + e.getMessage());
+            throw new IllegalStateException("Không thể tải lịch sử nhập/xuất kho từ cơ sở dữ liệu.", e);
         }
         return list;
     }

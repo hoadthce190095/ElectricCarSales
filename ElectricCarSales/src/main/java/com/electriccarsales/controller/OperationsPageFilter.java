@@ -25,9 +25,6 @@ import java.util.Set;
     "/car", "/car.jsp",
     "/contract", "/contract.jsp",
     "/delivery", "/delivery.jsp",
-    "/customer/*",
-    "/staff/*",
-    "/admin/*"
 })
 public class OperationsPageFilter implements Filter {
     private static final Set<String> STAFF_ROLES = Set.of("ADMIN", "MANAGER", "SALES", "OPERATIONS", "ACCOUNTANT");
@@ -60,27 +57,55 @@ public class OperationsPageFilter implements Filter {
             boolean allowed;
 
             if (path.startsWith("/customer/")) {
-                allowed = "CUSTOMER".equals(role);
+                if ("/customer/profile".equals(path) && "staff".equalsIgnoreCase(request.getParameter("mode"))) {
+                    allowed = Set.of("SALES", "MANAGER", "ADMIN").contains(role);
+                } else {
+                    allowed = "CUSTOMER".equals(role);
+                }
             } else if (path.startsWith("/admin/")) {
                 allowed = "ADMIN".equals(role);
             } else if (path.startsWith("/staff/inventory")) {
                 allowed = Set.of("OPERATIONS", "MANAGER", "ADMIN").contains(role);
+            } else if ("/contract".equals(path)) {
+                // RDS 8.3 & 9.2: Both Customer and Staff/Admin access /contract according to their role scope
+                allowed = "CUSTOMER".equals(role) || STAFF_ROLES.contains(role);
             } else {
                 allowed = STAFF_ROLES.contains(role);
             }
 
             if (!allowed) {
-                response.sendError(
-                    HttpServletResponse.SC_FORBIDDEN,
-                    "Bạn không có quyền truy cập trang này."
-                );
+                writeError(request, response, HttpServletResponse.SC_FORBIDDEN,
+                    "Vai trò hiện tại không có quyền truy cập nghiệp vụ này.");
                 return;
             }
         } catch (Exception exception) {
             request.getServletContext().log("Cannot verify operational page access", exception);
-            response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Không thể xác minh quyền truy cập.");
+            writeError(request, response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+                "Không thể xác minh quyền truy cập do lỗi kết nối cơ sở dữ liệu.");
             return;
         }
         chain.doFilter(request, response);
+    }
+
+    private static void writeError(HttpServletRequest request, HttpServletResponse response,
+                                   int status, String message) throws IOException {
+        if (wantsJson(request)) {
+            response.setStatus(status);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"success\":false,\"error\":\"" + jsonEscape(message) + "\"}");
+            return;
+        }
+        response.sendError(status, message);
+    }
+
+    private static boolean wantsJson(HttpServletRequest request) {
+        return "json".equalsIgnoreCase(request.getParameter("format"))
+            || (request.getHeader("Accept") != null
+                && request.getHeader("Accept").contains("application/json"));
+    }
+
+    private static String jsonEscape(String value) {
+        return value.replace("\\", "\\\\").replace("\"", "\\\"")
+            .replace("\r", "\\r").replace("\n", "\\n");
     }
 }

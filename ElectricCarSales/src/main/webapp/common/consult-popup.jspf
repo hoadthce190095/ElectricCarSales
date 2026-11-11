@@ -1,0 +1,126 @@
+<%@ page pageEncoding="UTF-8" %>
+<!-- POPUP TƯ VẤN KHÁCH HÀNG & TÍNH PHƯƠNG ÁN TRẢ THẲNG / TRẢ GÓP (CÓ MỞ RỘNG TOÀN MÀN HÌNH) -->
+<div id="ecs-consult-popup" class="ecs-consult-popup" hidden aria-label="Hỗ trợ tư vấn xe và phương án thanh toán">
+    <div class="ecs-consult-header">
+        <div>
+            <strong style="font-size:14px;">✧ Tư vấn Xe &amp; Phương án Trả thẳng / Trả góp</strong>
+            <small style="display:block;font-size:11px;opacity:.85;">Kết nối trực tiếp bảng ConsultationRequests · Hỗ trợ bởi Sales Staff</small>
+        </div>
+        <div class="ecs-consult-actions">
+            <button type="button" id="ecs-consult-fullscreen" title="Mở rộng toàn màn hình / Thu nhỏ">⛶ Toàn màn hình</button>
+            <button type="button" id="ecs-consult-close" title="Đóng">✕</button>
+        </div>
+    </div>
+    <div class="ecs-consult-body">
+        <div class="ecs-consult-grid">
+            <div class="ecs-consult-card">
+                <h3 style="margin:0 0 8px;font-size:14px;">1. Chọn mẫu xe và phương án quan tâm</h3>
+                <label class="ecs-field">
+                    <span>Chọn mẫu xe VinFast</span>
+                    <select id="ecs-calc-model">
+                        <option value="">Đang tải mẫu xe và tồn kho...</option>
+                    </select>
+                </label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+                    <label class="ecs-field">
+                        <span>Phương án dự kiến</span>
+                        <select id="ecs-calc-mode">
+                            <option value="BANK_TRANSFER">Trả thẳng (Cọc 30% + Trả 70%)</option>
+                            <option value="INSTALLMENT">Trả góp qua Ngân hàng đối tác</option>
+                        </select>
+                    </label>
+                    <label class="ecs-field" id="ecs-plan-wrap" hidden>
+                        <span>Đối tác tài chính dự kiến</span>
+                        <select id="ecs-calc-plan">
+                            <option value="Techcombank" data-bank="Techcombank">Techcombank</option>
+                            <option value="MB Bank" data-bank="MB Bank">MB Bank</option>
+                            <option value="Shinhan Finance" data-bank="Shinhan Finance">Shinhan Finance</option>
+                            <option value="VPBank" data-bank="VPBank">VPBank</option>
+                        </select>
+                    </label>
+                </div>
+                <div id="ecs-installment-options" hidden>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+                        <label class="ecs-field"><span>Kỳ hạn vay</span><select id="ecs-calc-term"></select></label>
+                        <label class="ecs-field"><span>Giá xe theo kho (VND)</span><input id="ecs-calc-price" type="text" readonly placeholder="Tự lấy từ giá xe trong Cars"></label>
+                    </div>
+                    <label class="ecs-field" style="margin-top:8px;"><span>Tỷ lệ trả trước (tối thiểu 30%)</span><input id="ecs-calc-down-rate" type="number" min="30" max="100" step="1" value="30"></label>
+                </div>
+                <p style="font-size:11px;color:#64748b;margin:8px 0 0;">Giá xe và điều kiện tài chính do Sales Staff/đối tác xác nhận. Đây là ước tính lãi phẳng theo thông tin tham khảo, không phải lịch trả góp hay phê duyệt của ngân hàng. Theo quy trình hệ thống, đối tác giải ngân khoản còn lại một lần trực tiếp cho đại lý.</p>
+                <div id="ecs-calc-summary" class="ecs-calc-summary"></div>
+            </div>
+
+            <div class="ecs-consult-card">
+                <h3 style="margin:0 0 8px;font-size:14px;">2. Gửi yêu cầu tư vấn &amp; lập đơn cho Sales Staff</h3>
+                <form id="ecs-popup-consult-form">
+                    <label class="ecs-field">
+                        <span>Nội dung cần tư vấn (phiên bản, màu xe, yêu cầu lập đơn...)</span>
+                        <textarea name="message" id="ecs-consult-message" rows="3" maxlength="800" placeholder="Ví dụ: Tôi muốn tư vấn VF 8 Eco màu Trắng, phương án trả thẳng và nhờ Sales lập đơn giúp..." required></textarea>
+                    </label>
+                    <button type="submit" class="button button-primary" style="width:100%;margin-top:8px;">Gửi yêu cầu tư vấn tới Sales Staff →</button>
+                </form>
+                <div style="margin-top:12px;">
+                    <strong style="font-size:12px;display:block;margin-bottom:6px;">Lịch sử yêu cầu tư vấn &amp; Phản hồi từ Sales Staff:</strong>
+                    <div id="ecs-consult-history-list" class="ecs-consult-history">Đang tải...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<button type="button" id="ecs-consult-fab" class="ecs-consult-fab" data-open-consult-popup title="Mở hộp thoại tư vấn & báo giá">
+    ✧ Tư vấn &amp; Báo giá
+</button>
+
+<style>
+.ecs-consult-fab {
+    position: fixed; right: 22px; bottom: 22px; z-index: 9990;
+    background: #1456db; color: #fff; border: 0; border-radius: 999px;
+    padding: 12px 18px; font-weight: 700; font-size: 13px; cursor: pointer;
+    box-shadow: 0 10px 26px rgba(20, 86, 219, 0.32);
+}
+.ecs-consult-popup {
+    position: fixed; right: 20px; bottom: 20px; z-index: 9999;
+    width: min(760px, calc(100vw - 32px)); max-height: 84vh;
+    background: #ffffff; color: #182230; border: 1px solid #d5deec;
+    border-radius: 14px; box-shadow: 0 20px 55px rgba(15, 23, 42, 0.25);
+    display: flex; flex-direction: column; overflow: hidden;
+    transition: all 0.2s ease;
+}
+.ecs-consult-popup[hidden] { display: none !important; }
+.ecs-consult-popup.is-fullscreen {
+    top: 12px; left: 12px; right: 12px; bottom: 12px;
+    width: calc(100vw - 24px); max-height: calc(100vh - 24px);
+    border-radius: 12px;
+}
+.ecs-consult-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; background: #102a56; color: #ffffff;
+}
+.ecs-consult-actions { display: flex; gap: 8px; }
+.ecs-consult-actions button {
+    background: rgba(255,255,255,0.16); color: #fff; border: 1px solid rgba(255,255,255,0.28);
+    border-radius: 6px; padding: 5px 10px; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.ecs-consult-body { padding: 16px; overflow-y: auto; flex: 1; background: #f8fafc; }
+.ecs-consult-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.ecs-consult-popup.is-fullscreen .ecs-consult-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+@media (max-width: 720px) { .ecs-consult-grid, .ecs-consult-popup.is-fullscreen .ecs-consult-grid { grid-template-columns: 1fr; } }
+.ecs-consult-popup [hidden] { display: none !important; }
+.ecs-consult-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; }
+.ecs-field { display: block; font-size: 12px; font-weight: 600; color: #334155; }
+.ecs-field select, .ecs-field textarea, .ecs-field input {
+    width: 100%; margin-top: 4px; padding: 8px 10px; border: 1px solid #cbd5e1;
+    border-radius: 6px; font-size: 13px; font-family: inherit;
+}
+.ecs-calc-summary {
+    margin-top: 10px; padding: 10px 12px; background: #eff6ff;
+    border: 1px solid #bfdbfe; border-radius: 8px; font-size: 12.5px; line-height: 1.6;
+}
+.ecs-consult-history {
+    max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 12px;
+}
+.ecs-consult-Popup-item {
+    padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;
+}
+</style>
+
