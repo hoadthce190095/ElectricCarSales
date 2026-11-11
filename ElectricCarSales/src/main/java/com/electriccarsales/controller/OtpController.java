@@ -14,12 +14,38 @@ import java.io.IOException;
 
 @WebServlet("/verify-otp")
 public class OtpController extends HttpServlet {
+    private static final String RESET_AUTH_UNTIL = "resetPasswordAuthorizedUntil";
+    private static final long RESET_AUTH_WINDOW_MILLIS = 10 * 60 * 1000L;
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if ("forgot".equalsIgnoreCase(req.getParameter("mode"))) {
             req.setAttribute("otpMode", "forgot");
             req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);
             return;
+        }
+        if ("resetPassword".equalsIgnoreCase(req.getParameter("mode"))) {
+            HttpSession resetSession = req.getSession(false);
+            if (isResetAuthorized(resetSession)) {
+                req.getRequestDispatcher("/WEB-INF/auth/reset-password.jsp").forward(req, resp);
+            } else {
+                if (resetSession != null) {
+                    resetSession.removeAttribute(RESET_AUTH_UNTIL);
+                    resetSession.removeAttribute("resetPasswordUserId");
+                }
+                req.setAttribute("otpMode", "forgot");
+                req.setAttribute("error", "Phiên đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu lại mã OTP.");
+                req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);
+            }
+            return;
+        }
+        if ("resetOtp".equalsIgnoreCase(req.getParameter("mode"))) {
+            HttpSession resetSession = req.getSession(false);
+            if (resetSession != null && resetSession.getAttribute("resetPasswordUserId") instanceof Integer) {
+                req.setAttribute("otpMode", "resetOtp");
+                req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);
+                return;
+            }
         }
         HttpSession session = req.getSession(false);
         Integer pendingUserId = session == null ? null : (Integer) session.getAttribute("pendingRegistrationUserId");
@@ -44,6 +70,14 @@ public class OtpController extends HttpServlet {
             handleResetPassword(req, resp);
             return;
         }
+        if ("verifyResetOtp".equalsIgnoreCase(action)) {
+            handleVerifyResetOtp(req, resp);
+            return;
+        }
+        if ("resendResetOtp".equalsIgnoreCase(action)) {
+            handleResendResetOtp(req, resp);
+            return;
+        }
 
         int userId = resolveUserId(req);
         if (userId <= 0) {
@@ -60,7 +94,7 @@ public class OtpController extends HttpServlet {
             try {
                 String email = new OtpService().resendRegistrationOtp(userId);
                 req.setAttribute("email", email);
-                req.setAttribute("notice", "Đã phát hành mã OTP mới. Vui lòng kiểm tra email hoặc Console của IntelliJ.");
+                req.setAttribute("notice", "Đã phát hành mã OTP mới. Vui lòng kiểm tra email");
             } catch (RuntimeException e) {
                 req.setAttribute("error", e.getMessage());
             }
@@ -110,8 +144,8 @@ public class OtpController extends HttpServlet {
             }
             new OtpService().issuePurposeOtp(userId, "RESET_PASSWORD");
             req.getSession().setAttribute("resetPasswordUserId", userId);
-            req.setAttribute("otpMode", "reset");
-            req.setAttribute("notice", "Đã tạo mã OTP đặt lại mật khẩu (hiệu lực 5 phút). Vui lòng kiểm tra email hoặc Console của IntelliJ.");
+            req.setAttribute("otpMode", "resetOtp");
+            req.setAttribute("notice", "Đã tạo mã OTP đặt lại mật khẩu (hiệu lực 5 phút). Vui lòng kiểm tra email.");
             req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);
         } catch (RuntimeException e) {
             log("Forgot password OTP request failed", e);
@@ -123,47 +157,102 @@ public class OtpController extends HttpServlet {
     private void handleResetPassword(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         HttpSession session = req.getSession(false);
         Integer userId = session == null ? null : (Integer) session.getAttribute("resetPasswordUserId");
+        if (userId == null || userId <= 0 || !isResetAuthorized(session)) {
+            if (session != null) {
+                session.removeAttribute(RESET_AUTH_UNTIL);
+                session.removeAttribute("resetPasswordUserId");
+            }
+            req.setAttribute("otpMode", "forgot");
+            req.setAttribute("error", "Phiên đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu lại mã OTP.");
+            req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);
+            return;
+        }
+        String newPassword = req.getParameter("newPassword");
+        String confirmPassword = req.getParameter("confirmPassword");
+        if (newPassword == null || newPassword.length() < 8 || newPassword.length() > 72) {
+            req.setAttribute("error", "Mật khẩu mới phải có từ 8 đến 72 ký tự.");
+            req.getRequestDispatcher("/WEB-INF/auth/reset-password.jsp").forward(req, resp);
+            return;
+        }
+        if (!newPassword.equals(confirmPassword)) {
+            req.setAttribute("error", "Mật khẩu xác nhận không khớp.");
+            req.getRequestDispatcher("/WEB-INF/auth/reset-password.jsp").forward(req, resp);
+            return;
+        }
+        try {
+            UserDAO userDAO = new UserDAO();
+            if (userDAO.passwordMatches(userId, newPassword)) {
+                req.setAttribute("error", "Mật khẩu mới không được trùng với mật khẩu hiện tại. Vui lòng nhập mật khẩu khác.");
+                req.getRequestDispatcher("/WEB-INF/auth/reset-password.jsp").forward(req, resp);
+                return;
+            }
+            new OTPVerificationDAO().updatePasswordHash(userId, userDAO.hashPassword(newPassword));
+            session.removeAttribute("resetPasswordUserId");
+            session.removeAttribute(RESET_AUTH_UNTIL);
+            resp.sendRedirect(req.getContextPath() + "/login?reset=1");
+        } catch (RuntimeException e) {
+            log("Reset password failed", e);
+            req.setAttribute("error", "Không thể đặt lại mật khẩu.");
+            req.getRequestDispatcher("/WEB-INF/auth/reset-password.jsp").forward(req, resp);
+        }
+    }
+
+    private void handleVerifyResetOtp(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        HttpSession session = req.getSession(false);
+        Integer userId = session == null ? null : (Integer) session.getAttribute("resetPasswordUserId");
+        String code = req.getParameter("otp");
+        req.setAttribute("otpMode", "resetOtp");
         if (userId == null || userId <= 0) {
             req.setAttribute("otpMode", "forgot");
             req.setAttribute("error", "Phiên đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu lại mã OTP.");
             req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);
             return;
         }
-        String code = req.getParameter("otp");
-        String newPassword = req.getParameter("newPassword");
-        String confirmPassword = req.getParameter("confirmPassword");
-        req.setAttribute("otpMode", "reset");
         if (code == null || !code.trim().matches("[0-9]{6}")) {
             req.setAttribute("error", "Vui lòng nhập mã OTP gồm 6 chữ số.");
             req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);
             return;
         }
-        if (newPassword == null || newPassword.length() < 8 || newPassword.length() > 72) {
-            req.setAttribute("error", "Mật khẩu mới phải có từ 8 đến 72 ký tự.");
-            req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);
-            return;
-        }
-        if (!newPassword.equals(confirmPassword)) {
-            req.setAttribute("error", "Mật khẩu xác nhận không khớp.");
-            req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);
-            return;
-        }
         try {
-            OtpService otpService = new OtpService();
-            if (!otpService.verifyPurposeOtp(userId, "RESET_PASSWORD", code.trim())) {
+            if (!new OtpService().verifyPurposeOtp(userId, "RESET_PASSWORD", code.trim())) {
                 req.setAttribute("error", "Mã OTP không đúng hoặc đã hết hạn.");
                 req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);
                 return;
             }
-            UserDAO userDAO = new UserDAO();
-            new OTPVerificationDAO().updatePasswordHash(userId, userDAO.hashPassword(newPassword));
-            session.removeAttribute("resetPasswordUserId");
-            resp.sendRedirect(req.getContextPath() + "/login?reset=1");
+            session.setAttribute(RESET_AUTH_UNTIL, System.currentTimeMillis() + RESET_AUTH_WINDOW_MILLIS);
+            resp.sendRedirect(req.getContextPath() + "/verify-otp?mode=resetPassword");
         } catch (RuntimeException e) {
-            log("Reset password failed", e);
-            req.setAttribute("error", "Không thể đặt lại mật khẩu.");
+            log("Reset password OTP verification failed", e);
+            req.setAttribute("error", "Không thể xác thực OTP.");
             req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);
         }
+    }
+
+    private void handleResendResetOtp(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        HttpSession session = req.getSession(false);
+        Integer userId = session == null ? null : (Integer) session.getAttribute("resetPasswordUserId");
+        req.setAttribute("otpMode", "resetOtp");
+        if (userId == null || userId <= 0) {
+            req.setAttribute("otpMode", "forgot");
+            req.setAttribute("error", "Phiên đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu lại mã OTP.");
+            req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);
+            return;
+        }
+        try {
+            new OtpService().issuePurposeOtp(userId, "RESET_PASSWORD");
+            session.removeAttribute(RESET_AUTH_UNTIL);
+            req.setAttribute("notice", "Đã gửi yêu cầu mã OTP mới. Mã cũ đã hết hiệu lực; vui lòng kiểm tra email hoặc Console của IntelliJ.");
+        } catch (RuntimeException e) {
+            log("Reset password OTP resend failed", e);
+            req.setAttribute("error", "Không thể gửi lại mã OTP: " + e.getMessage());
+        }
+        req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);
+    }
+
+    private boolean isResetAuthorized(HttpSession session) {
+        if (session == null) return false;
+        Object deadline = session.getAttribute(RESET_AUTH_UNTIL);
+        return deadline instanceof Long && (Long) deadline > System.currentTimeMillis();
     }
 
     private int resolveUserId(HttpServletRequest req) {

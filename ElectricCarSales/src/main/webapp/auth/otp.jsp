@@ -53,9 +53,9 @@
                         <h1 id="otp-title">Quên mật khẩu</h1>
                         <p class="form-intro">Nhập Email, Số điện thoại hoặc Tên đăng nhập đã đăng ký để nhận mã OTP khôi phục mật khẩu.</p>
                     </c:when>
-                    <c:when test="${otpMode == 'reset'}">
-                        <h1 id="otp-title">Đặt lại mật khẩu</h1>
-                        <p class="form-intro">Nhập mã OTP 6 chữ số và mật khẩu mới của bạn.</p>
+                    <c:when test="${otpMode == 'resetOtp'}">
+                        <h1 id="otp-title">Xác thực OTP</h1>
+                        <p class="form-intro">Nhập mã OTP đã gửi để tiếp tục đặt lại mật khẩu.</p>
                     </c:when>
                     <c:otherwise>
                         <h1 id="otp-title">Xác thực OTP</h1>
@@ -84,28 +84,23 @@
                             <button class="submit-button" type="submit">Nhận mã OTP <span aria-hidden="true">→</span></button>
                         </form>
                     </c:when>
-                    <c:when test="${otpMode == 'reset'}">
-                        <p class="otp-hint">Mã OTP có hiệu lực trong 5 phút (kiểm tra email hoặc Console của IntelliJ khi chạy local).</p>
+                    <c:when test="${otpMode == 'resetOtp'}">
+                        <p class="otp-hint">Mã OTP có hiệu lực trong 5 phút.</p>
                         <form class="auth-form otp-form" action="${pageContext.request.contextPath}/verify-otp" method="post">
-                            <input type="hidden" name="action" value="resetPassword">
+                            <input type="hidden" name="action" value="verifyResetOtp">
                             <label class="field-label" for="otp">Mã OTP (6 chữ số)</label>
                             <div class="input-wrap">
                                 <input id="otp" class="otp-digits" name="otp" type="text" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="000000" required autofocus>
                             </div>
-                            <label class="field-label" for="newPassword">Mật khẩu mới (8–72 ký tự)</label>
-                            <div class="input-wrap">
-                                <input id="newPassword" name="newPassword" type="password" minlength="8" maxlength="72" placeholder="Nhập mật khẩu mới" required>
-                            </div>
-                            <label class="field-label" for="confirmPassword">Nhập lại mật khẩu mới</label>
-                            <div class="input-wrap">
-                                <input id="confirmPassword" name="confirmPassword" type="password" minlength="8" maxlength="72" placeholder="Xác nhận mật khẩu mới" required>
-                            </div>
-                            <button class="submit-button" type="submit">Cập nhật mật khẩu <span aria-hidden="true">→</span></button>
+                            <button class="submit-button" type="submit">Xác thực OTP <span aria-hidden="true">→</span></button>
+                        </form>
+                        <form class="otp-form" action="${pageContext.request.contextPath}/verify-otp" method="post" style="margin-top:8px;">
+                            <input type="hidden" name="action" value="resendResetOtp">
+                            <button class="text-button" type="submit">Gửi lại mã OTP</button>
                         </form>
                     </c:when>
                     <c:otherwise>
-                        <p class="otp-hint">Mã có hiệu lực trong 5 phút. Khi chạy local chưa cấu hình SMTP, mã OTP được in tại tab Console của IntelliJ.</p>
-                        <c:if test="${not empty email}"><p class="otp-hint">Email đăng ký: <c:out value="${email}"/>.</p></c:if>
+                        <p class="otp-hint">Mã có hiệu lực trong 5 phút.</p>
                         <form class="auth-form otp-form" action="${pageContext.request.contextPath}/verify-otp" method="post">
                             <input type="hidden" name="userId" value="<c:out value='${not empty userId ? userId : sessionScope.pendingRegistrationUserId}'/>">
                             <label class="field-label" for="otp">Mã xác thực</label>

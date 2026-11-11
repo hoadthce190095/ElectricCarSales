@@ -49,6 +49,18 @@ public class RegisterController extends HttpServlet {
         try {
             UserDAO userDAO = new UserDAO();
             if (userDAO.exists(username, phone, email)) {
+                com.electriccarsales.model.User pending = userDAO.findPendingCustomer(username, phone, email);
+                if (pending != null && userDAO.authenticate(password, pending)) {
+                    OtpService otpService = new OtpService();
+                    String pendingEmail = otpService.resendRegistrationOtp(pending.getUserID());
+                    req.getSession().setAttribute("pendingRegistrationUserId", pending.getUserID());
+                    req.getSession().setAttribute("pendingRegistrationEmail", pendingEmail);
+                    req.setAttribute("userId", pending.getUserID());
+                    req.setAttribute("email", pendingEmail);
+                    req.setAttribute("notice", "Tài khoản đang chờ xác thực. Mã OTP mới đã được tạo; vui lòng kiểm tra email.");
+                    req.getRequestDispatcher("/auth/otp.jsp").forward(req, resp);
+                    return;
+                }
                 throw new IllegalArgumentException("Tên đăng nhập, số điện thoại hoặc email đã được sử dụng.");
             }
 
@@ -66,7 +78,7 @@ public class RegisterController extends HttpServlet {
 
             try {
                 otpService.sendRegistrationOtp(email, code);
-                req.setAttribute("notice", "Đã gửi mã OTP tới email của bạn (" + email + ").");
+                req.setAttribute("notice", "Đã gửi mã OTP đến email của bạn.");
             } catch (RuntimeException e) {
                 log("SMTP chưa cấu hình hoặc gửi lỗi, đã in OTP ra console", e);
                 req.setAttribute("notice",

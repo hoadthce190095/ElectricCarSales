@@ -81,6 +81,18 @@ public class UserDAO extends DBContext {
         return user != null && verifyPassword(rawPassword, user.getPasswordHash());
     }
 
+    public boolean passwordMatches(int userId, String rawPassword) {
+        if (conn == null) throw new IllegalStateException("Không kết nối được cơ sở dữ liệu.");
+        try (PreparedStatement ps = conn.prepareStatement("SELECT PasswordHash FROM Users WHERE UserID=?")) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && verifyPassword(rawPassword, rs.getString(1));
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể kiểm tra mật khẩu hiện tại.", e);
+        }
+    }
+
     public boolean exists(String username, String phone, String email) {
         if (conn == null) throw new IllegalStateException("Không kết nối được cơ sở dữ liệu.");
         String sql = "SELECT 1 FROM Users WHERE LOWER(Username)=LOWER(?) OR Phone=? OR LOWER(Email)=LOWER(?)";
@@ -91,6 +103,25 @@ public class UserDAO extends DBContext {
             try (ResultSet rs = ps.executeQuery()) { return rs.next(); }
         } catch (SQLException e) {
             throw new IllegalStateException("Không thể kiểm tra thông tin đăng ký.", e);
+        }
+    }
+
+    /** Finds an unverified customer only when all registration identifiers match. */
+    public User findPendingCustomer(String username, String phone, String email) {
+        if (conn == null) throw new IllegalStateException("Không kết nối được cơ sở dữ liệu.");
+        String sql = "SELECT u.UserID,u.Username,u.PasswordHash,u.Email,u.Phone,u.RoleID,u.StatusID,u.CreatedDate " +
+                "FROM Users u JOIN Roles r ON r.RoleID=u.RoleID JOIN Statuses s ON s.StatusID=u.StatusID " +
+                "WHERE LOWER(u.Username)=LOWER(?) AND u.Phone=? AND LOWER(u.Email)=LOWER(?) " +
+                "AND r.RoleName='CUSTOMER' AND s.StatusName='INACTIVE'";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            ps.setString(2, phone);
+            ps.setString(3, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? map(rs) : null;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể kiểm tra tài khoản chờ xác thực.", e);
         }
     }
 
