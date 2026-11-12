@@ -24,7 +24,7 @@ boolean customerView = authenticatedUser instanceof SessionUser
     <link rel="stylesheet" href="<c:url value='/assets/css/theme.css'><c:param name='v' value='main-blue-20261017' /></c:url>">
     <link rel="stylesheet" href="<c:url value='/assets/css/customer.css'><c:param name='v' value='consult-popup-20261111' /></c:url>">
     <link rel="stylesheet" href="<c:url value='/assets/css/home.css'><c:param name='v' value='home-database-inventory-sync-20261112' /></c:url>">
-    <script src="<c:url value='/assets/js/customer.js'><c:param name='v' value='consult-popup-model-prefill-20261111' /></c:url>" defer></script>
+    <script src="<c:url value='/assets/js/customer.js'><c:param name='v' value='consult-native-vf-20261112' /></c:url>" defer></script>
     <script src="<c:url value='/assets/js/home.js'><c:param name='v' value='home-database-inventory-sync-20261112' /></c:url>" defer></script>
 </head>
 <body class="home-page" data-context-path="<c:out value='${pageContext.request.contextPath}' />">

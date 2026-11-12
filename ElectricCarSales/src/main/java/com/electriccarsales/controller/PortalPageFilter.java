@@ -47,6 +47,12 @@ public class PortalPageFilter implements Filter {
 
         response.setHeader("Cache-Control", "no-store");
 
+        String path = request.getServletPath();
+        if ("/customer/ai-assistant.jsp".equals(path)) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         HttpSession session = request.getSession(false);
         Object sessionUser = session == null ? null : session.getAttribute("user");
 
@@ -88,8 +94,6 @@ public class PortalPageFilter implements Filter {
                 "Không thể xác minh quyền truy cập do lỗi kết nối cơ sở dữ liệu.");
             return;
         }
-
-        String path = request.getServletPath();
 
         boolean salesCustomerList = "/customer/profile".equals(path)
             && "staff".equalsIgnoreCase(request.getParameter("mode"))

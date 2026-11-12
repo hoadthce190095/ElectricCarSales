@@ -1,8 +1,7 @@
-package com.electriccarsales.dao.order;
+package com.electriccarsales.dao;
 
 import com.electriccarsales.model.Order;
 import com.electriccarsales.model.OrderStatusHistory;
-import com.electriccarsales.dao.OrderStatusHistoryDAO;
 import util.DBContext;
 
 import java.math.BigDecimal;

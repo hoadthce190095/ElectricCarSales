@@ -34,7 +34,8 @@ public class DBContext {
         }
     }
 
-    // 1. Thêm hàm STATIC này để sửa dứt điểm lỗi ở AdminSetupController, LoginController...
+    // 1. Thêm hàm STATIC này để sửa dứt điểm lỗi ở AdminSetupController,
+    // LoginController...
     public static Connection openConnection() throws SQLException {
         try {
             Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
@@ -52,7 +53,7 @@ public class DBContext {
         return conn;
     }
 
-    public static void main(String[] args) {
+public static void main(String[] args) {
         DBContext bd = new DBContext();
     }
 }

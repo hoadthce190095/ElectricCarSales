@@ -500,6 +500,9 @@
                         || `${text(databaseModel.modelName)}-${text(databaseModel.specificationVersion)}`;
                     return merged;
                 });
+                if (productModels.length === 0 && Array.isArray(referenceCatalogue.models) && referenceCatalogue.models.length > 0) {
+                    productModels = referenceCatalogue.models.filter((model) => text(model.modelName));
+                }
             } catch (databaseCatalogueError) {
                 catalogueDatabaseConnected = false;
                 catalogueMetadata = referenceCatalogue;

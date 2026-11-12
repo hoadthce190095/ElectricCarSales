@@ -91,12 +91,89 @@ public final class AIDAO implements AICatalogue {
                     model.addInventory(rows);
                 }
             }
+        } catch (Exception exception) {
+            return fallbackModels();
+        }
+        if (models.isEmpty()) {
+            return fallbackModels();
         }
         List<VehicleModel> catalogue = new ArrayList<>();
         for (ModelBuilder model : models.values()) {
             catalogue.add(model.build());
         }
         return catalogue;
+    }
+
+    public static List<VehicleModel> fallbackModels() {
+        List<VehicleModel> list = new ArrayList<>();
+
+        VehicleSpecifications s3 = new VehicleSpecifications(
+            "3190 x 1679 x 1652 mm", new BigDecimal("18.64"), "16 inch",
+            null, new BigDecimal("215"), new BigDecimal("30"), new BigDecimal("100"),
+            4, new BigDecimal("36"), 1, "Xe điện đô thị mini VinFast VF 3.");
+        VehicleModel m3 = new VehicleModel(1, "VF 3", "VF 3", "VinFast", "Xe điện đô thị mini 4 chỗ nhỏ gọn.",
+            new BigDecimal("285000000"), new BigDecimal("285000000"), 5,
+            List.of("Eco - Tiêu chuẩn 2"), List.of("Trắng", "Xám", "Đỏ", "Vàng", "Xanh dương", "Hồng", "Xanh lá"), s3);
+        m3.setInventoryMinPrice(new BigDecimal("285000000"));
+        m3.setInventoryMaxPrice(new BigDecimal("285000000"));
+        list.add(m3);
+
+        VehicleSpecifications s5 = new VehicleSpecifications(
+            "3967 x 1723 x 1579 mm", new BigDecimal("37.23"), "17 inch",
+            null, new BigDecimal("326"), new BigDecimal("100"), new BigDecimal("130"),
+            5, new BigDecimal("30"), 6, "A-SUV đô thị kinh tế 5 chỗ.");
+        VehicleModel m5 = new VehicleModel(2, "VF 5 Plus", "VF 5", "VinFast", "Xe điện VinFast VF 5 Plus thông minh.",
+            new BigDecimal("496000000"), new BigDecimal("496000000"), 8,
+            List.of("Plus - Tiêu chuẩn 1"), List.of("Trắng", "Xám", "Đỏ", "Vàng", "Xanh dương"), s5);
+        m5.setInventoryMinPrice(new BigDecimal("496000000"));
+        m5.setInventoryMaxPrice(new BigDecimal("496000000"));
+        list.add(m5);
+
+        VehicleSpecifications s6 = new VehicleSpecifications(
+            "4241 x 1834 x 1580 mm", new BigDecimal("59.60"), "18 inch",
+            null, new BigDecimal("485"), new BigDecimal("130"), new BigDecimal("150"),
+            5, new BigDecimal("25"), 4, "B-SUV thể thao tiện nghi đẳng cấp.");
+        VehicleModel m6 = new VehicleModel(3, "VF 6 Eco", "VF 6", "VinFast", "Xe điện VinFast VF 6 Eco phong cách.",
+            new BigDecimal("646000000"), new BigDecimal("699000000"), 6,
+            List.of("Eco - Tiêu chuẩn 1", "Plus - Tiêu chuẩn 2"), List.of("Trắng", "Xám", "Đen", "Đỏ", "Xanh lá"), s6);
+        m6.setInventoryMinPrice(new BigDecimal("646000000"));
+        m6.setInventoryMaxPrice(new BigDecimal("699000000"));
+        list.add(m6);
+
+        VehicleSpecifications s7 = new VehicleSpecifications(
+            "4545 x 1890 x 1636 mm", new BigDecimal("59.60"), "19 inch",
+            null, new BigDecimal("440"), new BigDecimal("130"), new BigDecimal("175"),
+            5, new BigDecimal("25"), 4, "C-SUV thể thao thiết kế tương lai.");
+        VehicleModel m7 = new VehicleModel(4, "VF 7 Eco", "VF 7", "VinFast", "Xe điện VinFast VF 7 Eco cá tính mạnh mẽ.",
+            new BigDecimal("740000000"), new BigDecimal("830000000"), 4,
+            List.of("Eco - Tiêu chuẩn 2", "Plus FWD"), List.of("Trắng", "Xám", "Đen", "Đỏ", "Xanh lá"), s7);
+        m7.setInventoryMinPrice(new BigDecimal("740000000"));
+        m7.setInventoryMaxPrice(new BigDecimal("830000000"));
+        list.add(m7);
+
+        VehicleSpecifications s8 = new VehicleSpecifications(
+            "4750 x 1934 x 1667 mm", new BigDecimal("87.70"), "19 inch",
+            null, new BigDecimal("471"), new BigDecimal("260"), new BigDecimal("200"),
+            5, new BigDecimal("24"), 11, "D-SUV toàn cầu cao cấp chuẩn an toàn 5 sao.");
+        VehicleModel m8 = new VehicleModel(5, "VF 8 Eco", "VF 8", "VinFast", "Xe điện VinFast VF 8 Eco hiện đại sang trọng.",
+            new BigDecimal("1079000000"), new BigDecimal("1259000000"), 6,
+            List.of("Eco", "Plus"), List.of("Trắng", "Đen", "Đỏ", "Xanh lá"), s8);
+        m8.setInventoryMinPrice(new BigDecimal("1079000000"));
+        m8.setInventoryMaxPrice(new BigDecimal("1259000000"));
+        list.add(m8);
+
+        VehicleSpecifications s9 = new VehicleSpecifications(
+            "5118 x 2004 x 1696 mm", new BigDecimal("123.00"), "21 inch",
+            null, new BigDecimal("626"), new BigDecimal("300"), new BigDecimal("200"),
+            7, new BigDecimal("35"), 11, "E-SUV full-size hạng sang đầu bảng.");
+        VehicleModel m9 = new VehicleModel(6, "VF 9 Plus", "VF 9", "VinFast", "Xe điện VinFast VF 9 Plus đẳng cấp doanh nhân.",
+            new BigDecimal("1566000000"), new BigDecimal("1743000000"), 3,
+            List.of("Eco", "Plus 7 chỗ", "Plus 6 chỗ VIP"), List.of("Trắng", "Xám", "Đen", "Đỏ", "Xanh lá", "Bạc"), s9);
+        m9.setInventoryMinPrice(new BigDecimal("1566000000"));
+        m9.setInventoryMaxPrice(new BigDecimal("1743000000"));
+        list.add(m9);
+
+        return list;
     }
 
     private static Integer nullableInteger(ResultSet row, String column) throws SQLException {

@@ -1,6 +1,6 @@
-package com.electriccarsales.service.order;
+package com.electriccarsales.service;
 
-import com.electriccarsales.dao.order.OrderDAO;
+import com.electriccarsales.dao.OrderDAO;
 import com.electriccarsales.model.Order;
 import java.math.BigDecimal;
 import java.util.List;
@@ -8,9 +8,9 @@ import java.util.List;
 public class OrderService {
     private OrderDAO orderDAO = new OrderDAO();
 
-
     public BigDecimal calculateGatewayAmount(BigDecimal originalAmount) {
-        if (originalAmount == null) return BigDecimal.ZERO;
+        if (originalAmount == null)
+            return BigDecimal.ZERO;
         return originalAmount;
     }
 

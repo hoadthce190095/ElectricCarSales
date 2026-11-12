@@ -1,6 +1,6 @@
 package com.electriccarsales.service;
 
-import com.electriccarsales.dao.order.OrderDAO;
+import com.electriccarsales.dao.OrderDAO;
 import com.electriccarsales.model.Order;
 
 import java.util.Locale;

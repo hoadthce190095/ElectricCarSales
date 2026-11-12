@@ -2,7 +2,7 @@ package com.electriccarsales.controller;
 
 import com.electriccarsales.dao.ContractsDAO;
 import com.electriccarsales.dao.CustomerDAO;
-import com.electriccarsales.dao.order.OrderDAO;
+import com.electriccarsales.dao.OrderDAO;
 import com.electriccarsales.dao.PaymentDAO;
 import com.electriccarsales.model.Customer;
 import com.electriccarsales.service.CustomerService;

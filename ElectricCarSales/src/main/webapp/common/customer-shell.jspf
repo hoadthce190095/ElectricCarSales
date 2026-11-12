@@ -24,7 +24,7 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
         <link rel="stylesheet" href="<%= customerContext %>/assets/css/customer.css">
         <link rel="stylesheet" href="<%= customerContext %>/assets/css/customer-ai.css">
         <% if (customerPage.equals("payment-demo.jsp")) { %><link rel="stylesheet" href="<%= customerContext %>/assets/css/payment-demo.css"><% } %>
-        <script src="<%= customerContext %>/assets/js/customer.js?v=inventory-finance-sync-20261112" defer>
+        <script src="<%= customerContext %>/assets/js/customer.js?v=consult-native-vf-20261112" defer>
         </script>
     </head>
     <body data-context-path="<%= customerContext %>">
@@ -113,14 +113,21 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
                         </a>
                         <button class="icon-button notification-button" type="button" aria-label="Thông báo" data-notification>♧</button>
                         <span class="topbar-divider"></span>
-                        <a class="user-chip" href="<%= customerContext %>/customer/profile#profile">
-                            <span class="user-avatar">KH</span>
-                            <span class="user-chip-copy">
-                                <strong><c:out value="${empty sessionScope.displayName ? sessionScope.username : sessionScope.displayName}" default="Khách hàng" /></strong>
-                                <small>Tài khoản cá nhân</small>
-                            </span>
-                            <span class="chevron">⌄</span>
-                        </a>
+                        <c:choose>
+                            <c:when test="${not empty sessionScope.user}">
+                                <a class="user-chip" href="<%= customerContext %>/customer/profile#profile">
+                                    <span class="user-avatar">KH</span>
+                                    <span class="user-chip-copy">
+                                        <strong><c:out value="${empty sessionScope.displayName ? sessionScope.username : sessionScope.displayName}" default="Khách hàng" /></strong>
+                                        <small>Tài khoản cá nhân</small>
+                                    </span>
+                                    <span class="chevron">⌄</span>
+                                </a>
+                            </c:when>
+                            <c:otherwise>
+                                <a class="button button-primary" href="<%= customerContext %>/login" style="padding:6px 14px;font-size:12px;border-radius:6px;text-decoration:none;color:#fff;">Đăng nhập</a>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </header>
                 <main class="customer-content">

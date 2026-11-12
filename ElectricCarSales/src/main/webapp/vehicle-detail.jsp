@@ -9,7 +9,7 @@
     <meta name="app-context-path" content="<c:out value='${pageContext.request.contextPath}' />">
     <title><c:out value="${car.modelName}"/> | VinFast - ElectricCarSale</title>
     <link rel="stylesheet" href="<c:url value='/assets/css/customer.css'><c:param name='v' value='consult-popup-20261111' /></c:url>">
-    <script src="<c:url value='/assets/js/customer.js'><c:param name='v' value='consult-popup-model-prefill-20261111' /></c:url>" defer></script>
+    <script src="<c:url value='/assets/js/customer.js'><c:param name='v' value='consult-native-vf-20261112' /></c:url>" defer></script>
     <style>
         :root { color-scheme: light; font-family: Arial, sans-serif; color: #263238; background: #f3f4f6; }
         * { box-sizing: border-box; }

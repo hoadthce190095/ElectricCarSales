@@ -21,16 +21,16 @@ public class ConsultationRequestDAO {
     }
 
     private static final String SELECT_SQL = """
-        SELECT r.ConsultationRequestID, r.CustomerID, r.EmployeeID, r.ModelID,
-               r.RequestContent, r.RequestDate, s.StatusName,
-               c.CustomerName, c.Phone AS CustomerPhone, c.Email AS CustomerEmail,
-               m.ModelName, e.EmployeeName
-        FROM ConsultationRequests r
-        JOIN ConsultationStatuses s ON s.ConsultationStatusID = r.ConsultationStatusID
-        JOIN Customers c ON c.CustomerID = r.CustomerID
-        LEFT JOIN CarModels m ON m.ModelID = r.ModelID
-        LEFT JOIN Employees e ON e.EmployeeID = r.EmployeeID
-        """;
+            SELECT r.ConsultationRequestID, r.CustomerID, r.EmployeeID, r.ModelID,
+                   r.RequestContent, r.RequestDate, s.StatusName,
+                   c.CustomerName, c.Phone AS CustomerPhone, c.Email AS CustomerEmail,
+                   m.ModelName, e.EmployeeName
+            FROM ConsultationRequests r
+            JOIN ConsultationStatuses s ON s.ConsultationStatusID = r.ConsultationStatusID
+            JOIN Customers c ON c.CustomerID = r.CustomerID
+            LEFT JOIN CarModels m ON m.ModelID = r.ModelID
+            LEFT JOIN Employees e ON e.EmployeeID = r.EmployeeID
+            """;
 
     private final ConnectionProvider connections;
 
@@ -45,8 +45,8 @@ public class ConsultationRequestDAO {
     public List<ConsultationRequest> findAll() {
         String sql = SELECT_SQL + " ORDER BY r.RequestDate DESC, r.ConsultationRequestID DESC";
         try (Connection connection = connections.open();
-            PreparedStatement statement = connection.prepareStatement(sql);
-            ResultSet rows = statement.executeQuery()) {
+                PreparedStatement statement = connection.prepareStatement(sql);
+                ResultSet rows = statement.executeQuery()) {
             List<ConsultationRequest> requests = new ArrayList<>();
             while (rows.next()) {
                 requests.add(map(rows));
@@ -60,7 +60,7 @@ public class ConsultationRequestDAO {
     public List<ConsultationRequest> findByCustomerId(int customerId) {
         String sql = SELECT_SQL + " WHERE r.CustomerID = ? ORDER BY r.RequestDate DESC, r.ConsultationRequestID DESC";
         try (Connection connection = connections.open();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+                PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, customerId);
             try (ResultSet rows = statement.executeQuery()) {
                 List<ConsultationRequest> requests = new ArrayList<>();
@@ -77,7 +77,7 @@ public class ConsultationRequestDAO {
     public ConsultationRequest findById(int requestId) {
         String sql = SELECT_SQL + " WHERE r.ConsultationRequestID = ?";
         try (Connection connection = connections.open();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+                PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, requestId);
             try (ResultSet rows = statement.executeQuery()) {
                 return rows.next() ? map(rows) : null;
@@ -89,19 +89,21 @@ public class ConsultationRequestDAO {
 
     public void insert(ConsultationRequest request) {
         if (request == null || request.getCustomerId() <= 0 || request.getStaffId() < 0
-            || (request.getModelId() != null && request.getModelId() <= 0)
-            || request.getContent() == null || request.getContent().isBlank() || request.getContent().length() > 1000) {
+                || (request.getModelId() != null && request.getModelId() <= 0)
+                || request.getContent() == null || request.getContent().isBlank()
+                || request.getContent().length() > 1000) {
             throw new IllegalArgumentException("Thông tin yêu cầu tư vấn không hợp lệ.");
         }
         String status = request.getStatus() == null ? "PENDING" : request.getStatus().trim().toUpperCase(Locale.ROOT);
-        Timestamp date = request.getCreatedAt() == null ? new Timestamp(System.currentTimeMillis()) : request.getCreatedAt();
+        Timestamp date = request.getCreatedAt() == null ? new Timestamp(System.currentTimeMillis())
+                : request.getCreatedAt();
         String sql = """
-            INSERT INTO ConsultationRequests(CustomerID,EmployeeID,ModelID,ConsultationStatusID,
-                                             RequestContent,RequestDate)
-            VALUES(?,?,?,(SELECT ConsultationStatusID FROM ConsultationStatuses WHERE StatusName=?),?,?)
-            """;
+                INSERT INTO ConsultationRequests(CustomerID,EmployeeID,ModelID,ConsultationStatusID,
+                                                 RequestContent,RequestDate)
+                VALUES(?,?,?,(SELECT ConsultationStatusID FROM ConsultationStatuses WHERE StatusName=?),?,?)
+                """;
         try (Connection connection = connections.open();
-            PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setInt(1, request.getCustomerId());
             if (request.getStaffId() == 0) {
                 statement.setNull(2, Types.INTEGER);
@@ -143,7 +145,8 @@ public class ConsultationRequestDAO {
         if (appendedMessage != null && !appendedMessage.isBlank()) {
             String candidate = updatedContent + "\n" + appendedMessage.trim();
             if (candidate.length() > 1000) {
-                throw new IllegalArgumentException("Lịch sử yêu cầu đã đạt giới hạn 1.000 ký tự của hệ thống. Hãy gửi một yêu cầu tư vấn mới.");
+                throw new IllegalArgumentException(
+                        "Lịch sử yêu cầu đã đạt giới hạn 1.000 ký tự của hệ thống. Hãy gửi một yêu cầu tư vấn mới.");
             }
             updatedContent = candidate;
         }
@@ -152,14 +155,14 @@ public class ConsultationRequestDAO {
                 : (current.getStaffId() > 0 ? current.getStaffId() : null);
 
         String sql = """
-            UPDATE ConsultationRequests
-            SET EmployeeID = ?,
-                ConsultationStatusID = (SELECT ConsultationStatusID FROM ConsultationStatuses WHERE StatusName = ?),
-                RequestContent = ?
-            WHERE ConsultationRequestID = ?
-            """;
+                UPDATE ConsultationRequests
+                SET EmployeeID = ?,
+                    ConsultationStatusID = (SELECT ConsultationStatusID FROM ConsultationStatuses WHERE StatusName = ?),
+                    RequestContent = ?
+                WHERE ConsultationRequestID = ?
+                """;
         try (Connection connection = connections.open();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
+                PreparedStatement ps = connection.prepareStatement(sql)) {
             if (staffToSet == null) {
                 ps.setNull(1, Types.INTEGER);
             } else {
@@ -169,7 +172,8 @@ public class ConsultationRequestDAO {
             ps.setNString(3, updatedContent);
             ps.setInt(4, requestId);
             if (ps.executeUpdate() != 1) {
-                throw new IllegalStateException("Yêu cầu tư vấn vừa thay đổi hoặc không còn tồn tại. Hãy tải lại danh sách.");
+                throw new IllegalStateException(
+                        "Yêu cầu tư vấn vừa thay đổi hoặc không còn tồn tại. Hãy tải lại danh sách.");
             }
             return true;
         } catch (SQLException e) {

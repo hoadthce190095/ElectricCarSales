@@ -1,9 +1,9 @@
-package com.electriccarsales.controller.order;
+package com.electriccarsales.controller;
 
 import com.electriccarsales.dao.FinanceCustomerDAO;
 import com.electriccarsales.model.SessionUser;
 import com.electriccarsales.service.SalesOrderService;
-import com.electriccarsales.service.order.OrderService;
+import com.electriccarsales.service.OrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -19,7 +19,7 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.UUID;
 
-@WebServlet(name = "OrderController", urlPatterns = {"/orders"})
+@WebServlet(name = "OrderController", urlPatterns = {"/orders", "/order"})
 public class OrderController extends HttpServlet {
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final java.util.Set<String> STAFF_ROLES =
