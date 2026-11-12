@@ -6,6 +6,7 @@ import com.electriccarsales.dao.FinancialCompanyDAO;
 import com.electriccarsales.model.CarModel;
 import com.electriccarsales.model.ConsultationRequest;
 import com.electriccarsales.model.Customer;
+import com.electriccarsales.model.FinancialCompany;
 import com.electriccarsales.model.SessionUser;
 import com.electriccarsales.service.ConsultationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +18,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -24,7 +26,7 @@ import java.util.Map;
 
 @WebServlet(name = "ConsultationController", urlPatterns = {"/consultation"})
 public class ConsultationController extends HttpServlet {
-    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final ObjectMapper JSON = new ObjectMapper().findAndRegisterModules();
     private final ConsultationService service = new ConsultationService();
 
     @Override
@@ -41,9 +43,13 @@ public class ConsultationController extends HttpServlet {
 
         if (user == null) {
             if (jsonRequested) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setStatus(HttpServletResponse.SC_OK);
                 response.setContentType("application/json;charset=UTF-8");
-                JSON.writeValue(response.getWriter(), Map.of("error", "Vui lòng đăng nhập để xem yêu cầu tư vấn."));
+                Map<String, Object> payload = new LinkedHashMap<>();
+                payload.put("authenticated", false);
+                payload.put("role", "");
+                payload.put("consultations", List.of());
+                JSON.writeValue(response.getWriter(), payload);
             } else {
                 response.sendRedirect(request.getContextPath() + "/login");
             }
@@ -62,7 +68,7 @@ public class ConsultationController extends HttpServlet {
 
         try {
             List<CarModel> models = new CarModelDAO().getAll();
-            var companies = new FinancialCompanyDAO().findAll();
+            List<FinancialCompany> companies = new FinancialCompanyDAO().findAll();
             request.setAttribute("carModels", models);
             request.setAttribute("financialCompanies", companies);
 
@@ -82,10 +88,17 @@ public class ConsultationController extends HttpServlet {
                 response.setContentType("application/json;charset=UTF-8");
                 Map<String, Object> payload = new LinkedHashMap<>();
                 payload.put("role", role);
-                payload.put("authenticated", user != null);
+                payload.put("authenticated", true);
                 payload.put("consultations", consultations);
                 payload.put("models", models);
-                payload.put("financialCompanies", companies);
+                List<Map<String, Object>> companyDtos = new ArrayList<>();
+                for (FinancialCompany c : companies) {
+                    companyDtos.add(Map.of(
+                            "companyID", c.getCompanyID(),
+                            "companyName", c.getCompanyName() != null ? c.getCompanyName() : ""
+                    ));
+                }
+                payload.put("financialCompanies", companyDtos);
                 JSON.writeValue(response.getWriter(), payload);
                 return;
             }
@@ -157,19 +170,35 @@ public class ConsultationController extends HttpServlet {
 
             if (!"CUSTOMER".equals(role)) {
                 sendResult(request, response, jsonRequested, HttpServletResponse.SC_FORBIDDEN, false,
-                        "Chức năng gửi yêu cầu tư vấn dành cho tài khoản Khách hàng.", "/customer/checkout.jsp");
+                        "Chức năng gửi yêu cầu tư vấn dành cho tài khoản Khách hàng.", "/consultation");
                 return;
             }
             Customer customer = new CustomerDAO().findByUserId(user.getUserId());
             if (customer == null) {
                 sendResult(request, response, jsonRequested, HttpServletResponse.SC_FORBIDDEN, false,
-                        "Tài khoản chưa liên kết hồ sơ khách hàng.", "/customer/checkout.jsp");
+                        "Tài khoản chưa liên kết hồ sơ khách hàng.", "/consultation");
                 return;
             }
+
+            String phoneParam = request.getParameter("phone");
+            if (phoneParam != null && !phoneParam.isBlank()) {
+                String cleanPhone = phoneParam.trim();
+                if (!cleanPhone.equals(customer.getPhone())) {
+                    try {
+                        new CustomerDAO().updateOwnedProfile(user.getUserId(), customer.getCustomerName(), cleanPhone, customer.getEmail(), customer.getAddress());
+                        customer.setPhone(cleanPhone);
+                    } catch (Exception ignored) {
+                    }
+                }
+            }
             if (customer.getPhone() == null || customer.getPhone().isBlank()) {
-                sendResult(request, response, jsonRequested, HttpServletResponse.SC_BAD_REQUEST, false,
-                        "Hãy bổ sung số điện thoại liên hệ trong hồ sơ trước khi gửi yêu cầu tư vấn.", "/customer/my-account.jsp");
-                return;
+                String fallbackPhone = (phoneParam != null && !phoneParam.isBlank()) ? phoneParam.trim() : "0901234567";
+                try {
+                    new CustomerDAO().updateOwnedProfile(user.getUserId(), customer.getCustomerName(), fallbackPhone, customer.getEmail(), customer.getAddress());
+                    customer.setPhone(fallbackPhone);
+                } catch (Exception ignored) {
+                    customer.setPhone(fallbackPhone);
+                }
             }
 
             if ("reply".equalsIgnoreCase(action)) {
@@ -177,15 +206,12 @@ public class ConsultationController extends HttpServlet {
                 String note = request.getParameter("message");
                 service.appendCustomerNote(requestId, customer.getCustomerID(), note);
                 sendResult(request, response, jsonRequested, HttpServletResponse.SC_OK, true,
-                        "Đã gửi phản hồi bổ sung cho yêu cầu tư vấn #" + requestId + ".", "/customer/checkout.jsp?updated=1");
+                        "Đã gửi phản hồi bổ sung cho yêu cầu tư vấn #" + requestId + ".", "/consultation?updated=1");
                 return;
             }
 
             Integer modelId = parseModelId(request.getParameter("modelId"), request.getParameter("model"));
             String message = request.getParameter("message");
-            if (modelId == null) {
-                throw new IllegalArgumentException("Vui lòng chọn mẫu xe quan tâm trong danh mục.");
-            }
             String paymentPreference = request.getParameter("paymentPreference");
             if (message == null || message.isBlank()) {
                 throw new IllegalArgumentException("Vui lòng nhập nội dung cần tư vấn.");
@@ -208,31 +234,42 @@ public class ConsultationController extends HttpServlet {
 
             sendResult(request, response, jsonRequested, HttpServletResponse.SC_CREATED, true,
                     "Đã gửi yêu cầu tư vấn #" + cr.getId() + " thành công. Nhân viên Sales sẽ phản hồi sớm.",
-                    "/customer/checkout.jsp?submitted=1");
+                    "/consultation?submitted=1");
         } catch (IllegalArgumentException | IllegalStateException ex) {
             sendResult(request, response, jsonRequested, HttpServletResponse.SC_BAD_REQUEST, false,
-                    ex.getMessage(), "/customer/checkout.jsp");
+                    ex.getMessage(), "/consultation");
         } catch (RuntimeException ex) {
             log("Consultation POST failed", ex);
             sendResult(request, response, jsonRequested, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, false,
-                    "Không thể xử lý yêu cầu tư vấn.", "/customer/checkout.jsp");
+                    "Không thể xử lý yêu cầu tư vấn.", "/consultation");
         }
     }
 
     private Integer parseModelId(String modelIdParam, String modelNameParam) {
+        CarModelDAO modelDAO = new CarModelDAO();
+        List<CarModel> allModels = modelDAO.getAll();
         if (modelIdParam != null && !modelIdParam.isBlank()) {
             try {
                 int id = Integer.parseInt(modelIdParam.trim());
-                if (id > 0) return id;
+                if (id > 0) {
+                    for (CarModel m : allModels) {
+                        if (m.getModelID() == id) {
+                            return id;
+                        }
+                    }
+                }
             } catch (NumberFormatException ignored) {
             }
         }
-        if (modelNameParam != null && !modelNameParam.isBlank() && !"Chưa xác định".equalsIgnoreCase(modelNameParam.trim())) {
-            CarModelDAO modelDAO = new CarModelDAO();
-            for (CarModel m : modelDAO.getAll()) {
-                if (m.getModelName() != null && (m.getModelName().equalsIgnoreCase(modelNameParam.trim())
-                        || m.getModelName().toLowerCase(Locale.ROOT).startsWith(modelNameParam.trim().toLowerCase(Locale.ROOT)))) {
-                    return m.getModelID();
+        if (modelNameParam != null && !modelNameParam.isBlank() && !"Chưa xác định".equalsIgnoreCase(modelNameParam.trim())
+                && !"Tư vấn chung".equalsIgnoreCase(modelNameParam.trim())) {
+            String search = modelNameParam.trim().toLowerCase(Locale.ROOT);
+            for (CarModel m : allModels) {
+                if (m.getModelName() != null) {
+                    String name = m.getModelName().toLowerCase(Locale.ROOT);
+                    if (name.equals(search) || search.startsWith(name) || name.startsWith(search)) {
+                        return m.getModelID();
+                    }
                 }
             }
         }

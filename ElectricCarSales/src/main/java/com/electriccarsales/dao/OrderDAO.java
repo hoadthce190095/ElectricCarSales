@@ -36,8 +36,16 @@ public class OrderDAO {
     public List<Order> findAll() {
         String sql = """
             SELECT o.OrderID,o.CustomerID,o.EmployeeID,o.PaymentMethodID,o.TotalAmount,
-                   o.DepositAmount,o.RemainingAmount,o.OrderDate,o.Note,s.StatusName
-            FROM Orders o JOIN OrderStatuses s ON s.OrderStatusID=o.OrderStatusID
+                   o.DepositAmount,o.RemainingAmount,o.OrderDate,o.Note,s.StatusName,
+                   o.CompanyID, fc.CompanyName, cu.CustomerName, cu.Phone AS CustomerPhone,
+                   m.ModelName
+            FROM Orders o
+            JOIN OrderStatuses s ON s.OrderStatusID=o.OrderStatusID
+            JOIN Customers cu ON cu.CustomerID=o.CustomerID
+            LEFT JOIN FinancialCompanies fc ON fc.CompanyID=o.CompanyID
+            LEFT JOIN OrderDetails d ON d.OrderID=o.OrderID
+            LEFT JOIN Cars c ON c.CarID=d.CarID
+            LEFT JOIN CarModels m ON m.ModelID=c.ModelID
             ORDER BY o.OrderDate DESC,o.OrderID DESC
             """;
         try (Connection connection = connections.open();
@@ -56,6 +64,11 @@ public class OrderDAO {
                 order.setStatus(rows.getString("StatusName"));
                 order.setOrderDate(rows.getTimestamp("OrderDate"));
                 order.setNote(rows.getString("Note"));
+                order.setCompanyId(rows.getObject("CompanyID", Integer.class));
+                order.setCompanyName(rows.getString("CompanyName"));
+                order.setCustomerName(rows.getString("CustomerName"));
+                order.setCustomerPhone(rows.getString("CustomerPhone"));
+                order.setVehicleName(rows.getString("ModelName"));
                 orders.add(order);
             }
             return orders;
@@ -65,9 +78,20 @@ public class OrderDAO {
     }
 
     public Order findById(int orderId) {
-        String sql = "SELECT o.OrderID,o.CustomerID,o.EmployeeID,o.PaymentMethodID,o.TotalAmount,"
-                + "o.DepositAmount,o.RemainingAmount,o.OrderDate,o.Note,s.StatusName "
-                + "FROM Orders o JOIN OrderStatuses s ON s.OrderStatusID=o.OrderStatusID WHERE o.OrderID=?";
+        String sql = """
+            SELECT o.OrderID,o.CustomerID,o.EmployeeID,o.PaymentMethodID,o.TotalAmount,
+                   o.DepositAmount,o.RemainingAmount,o.OrderDate,o.Note,s.StatusName,
+                   o.CompanyID, fc.CompanyName, cu.CustomerName, cu.Phone AS CustomerPhone,
+                   m.ModelName
+            FROM Orders o
+            JOIN OrderStatuses s ON s.OrderStatusID=o.OrderStatusID
+            JOIN Customers cu ON cu.CustomerID=o.CustomerID
+            LEFT JOIN FinancialCompanies fc ON fc.CompanyID=o.CompanyID
+            LEFT JOIN OrderDetails d ON d.OrderID=o.OrderID
+            LEFT JOIN Cars c ON c.CarID=d.CarID
+            LEFT JOIN CarModels m ON m.ModelID=c.ModelID
+            WHERE o.OrderID=?
+            """;
         try (Connection connection = connections.open();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, orderId);
@@ -84,6 +108,11 @@ public class OrderDAO {
                 order.setStatus(row.getString("StatusName"));
                 order.setOrderDate(row.getTimestamp("OrderDate"));
                 order.setNote(row.getString("Note"));
+                order.setCompanyId(row.getObject("CompanyID", Integer.class));
+                order.setCompanyName(row.getString("CompanyName"));
+                order.setCustomerName(row.getString("CustomerName"));
+                order.setCustomerPhone(row.getString("CustomerPhone"));
+                order.setVehicleName(row.getString("ModelName"));
                 return order;
             }
         } catch (SQLException exception) {
@@ -128,13 +157,19 @@ public class OrderDAO {
     /** Customer-owned orders only; never expose other customers' transactions. */
     public List<Order> findByCustomerId(int customerId) {
         if (customerId <= 0) throw new IllegalArgumentException("Khách hàng không hợp lệ.");
-        String sql = "SELECT o.OrderID,o.CustomerID,o.EmployeeID,o.PaymentMethodID,o.TotalAmount,"
-                + "o.DepositAmount,o.RemainingAmount,o.OrderDate,o.Note,s.StatusName,"
-                + "m.ModelName FROM Orders o JOIN OrderStatuses s ON s.OrderStatusID=o.OrderStatusID "
-                + "LEFT JOIN OrderDetails d ON d.OrderID=o.OrderID "
-                + "LEFT JOIN Cars c ON c.CarID=d.CarID "
-                + "LEFT JOIN CarModels m ON m.ModelID=c.ModelID "
-                + "WHERE o.CustomerID=? ORDER BY o.OrderDate DESC,o.OrderID DESC";
+        String sql = """
+            SELECT o.OrderID,o.CustomerID,o.EmployeeID,o.PaymentMethodID,o.TotalAmount,
+                   o.DepositAmount,o.RemainingAmount,o.OrderDate,o.Note,s.StatusName,
+                   o.CompanyID, fc.CompanyName, m.ModelName
+            FROM Orders o
+            JOIN OrderStatuses s ON s.OrderStatusID=o.OrderStatusID
+            LEFT JOIN FinancialCompanies fc ON fc.CompanyID=o.CompanyID
+            LEFT JOIN OrderDetails d ON d.OrderID=o.OrderID
+            LEFT JOIN Cars c ON c.CarID=d.CarID
+            LEFT JOIN CarModels m ON m.ModelID=c.ModelID
+            WHERE o.CustomerID=?
+            ORDER BY o.OrderDate DESC,o.OrderID DESC
+            """;
         try (Connection connection = connections.open();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, customerId);
@@ -152,6 +187,8 @@ public class OrderDAO {
                     order.setStatus(rows.getString("StatusName"));
                     order.setOrderDate(rows.getTimestamp("OrderDate"));
                     order.setNote(rows.getString("Note"));
+                    order.setCompanyId(rows.getObject("CompanyID", Integer.class));
+                    order.setCompanyName(rows.getString("CompanyName"));
                     order.setVehicleName(rows.getString("ModelName"));
                     orders.add(order);
                 }
@@ -181,8 +218,8 @@ public class OrderDAO {
         Timestamp date = order.getOrderDate() == null ? new Timestamp(System.currentTimeMillis()) : order.getOrderDate();
         String sql = """
             INSERT INTO Orders(CustomerID,EmployeeID,OrderStatusID,PaymentMethodID,OrderDate,
-                               TotalAmount,DepositAmount,RemainingAmount,Note)
-            VALUES(?,?,(SELECT OrderStatusID FROM OrderStatuses WHERE StatusName=?),?,?,?,?,?,?)
+                               TotalAmount,DepositAmount,RemainingAmount,Note,CompanyID)
+            VALUES(?,?,(SELECT OrderStatusID FROM OrderStatuses WHERE StatusName=?),?,?,?,?,?,?,?)
             """;
         try (Connection connection = connections.open();
             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -199,6 +236,11 @@ public class OrderDAO {
             statement.setBigDecimal(7, deposit);
             statement.setBigDecimal(8, remaining);
             statement.setString(9, order.getNote());
+            if (order.getCompanyId() == null || order.getCompanyId() <= 0) {
+                statement.setNull(10, Types.INTEGER);
+            } else {
+                statement.setInt(10, order.getCompanyId());
+            }
             if (statement.executeUpdate() != 1) {
                 throw new SQLException("Không tạo được đơn hàng.");
             }

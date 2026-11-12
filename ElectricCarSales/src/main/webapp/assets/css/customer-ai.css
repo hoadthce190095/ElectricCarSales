@@ -84,6 +84,8 @@
     border-radius: 8px;
     font-size: 13px;
 }
+.message-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.message-avatar .avatar-placeholder { width: 18px; height: 18px; }
 .ai-message>div {
     padding: 11px 13px;
     border: 1px solid #eeeff0;

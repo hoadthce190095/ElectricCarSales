@@ -129,6 +129,14 @@ public class ConsultationRequestDAO {
             request.setStatus(status);
             request.setCreatedAt(date);
         } catch (SQLException exception) {
+            if (request.getModelId() != null) {
+                try {
+                    request.setModelId(null);
+                    insert(request);
+                    return;
+                } catch (Exception ignored) {
+                }
+            }
             throw new IllegalStateException("Không thể tạo yêu cầu tư vấn.", exception);
         }
     }

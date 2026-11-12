@@ -12,7 +12,7 @@ import java.util.List;
 
 public class OrderStatusDAO {
     public List<OrderStatus> findAll() {
-        String sql = "SELECT OrderStatusID, StatusName FROM OrderStatuses ORDER BY OrderStatusID";
+        String sql = "SELECT OrderStatusID, StatusName, Description FROM OrderStatuses ORDER BY OrderStatusID";
         try (Connection conn = DBContext.openConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -21,6 +21,7 @@ public class OrderStatusDAO {
                 OrderStatus s = new OrderStatus();
                 s.setId(rs.getInt("OrderStatusID"));
                 s.setStatusName(rs.getString("StatusName"));
+                s.setDescription(rs.getString("Description"));
                 list.add(s);
             }
             return list;

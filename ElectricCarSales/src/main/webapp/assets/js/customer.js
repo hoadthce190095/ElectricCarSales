@@ -16,6 +16,20 @@
 
     const menuToggle = document.querySelector("[data-menu-toggle]");
     const sidebar = document.querySelector("#customer-sidebar");
+    document.querySelectorAll("[data-avatar-image]").forEach((image) => {
+        const setPlaceholder = () => {
+            image.hidden = true;
+            const placeholder = image.parentElement?.querySelector(".avatar-placeholder");
+            if (placeholder) placeholder.hidden = false;
+        };
+        image.addEventListener("load", () => {
+            image.hidden = false;
+            const placeholder = image.parentElement?.querySelector(".avatar-placeholder");
+            if (placeholder) placeholder.hidden = true;
+        });
+        image.addEventListener("error", setPlaceholder);
+        if (image.complete) image.naturalWidth > 0 ? image.dispatchEvent(new Event("load")) : setPlaceholder();
+    });
     menuToggle?.addEventListener("click", () => {
         const open = sidebar.classList.toggle("open");
         menuToggle.setAttribute("aria-expanded", String(open));
@@ -33,6 +47,20 @@
             form.hidden = !form.hidden;
             if (!form.hidden) form.querySelector("input")?.focus();
         }
+    });
+
+    const avatarInput = document.querySelector('#profile-edit-form input[name="avatar"]');
+    avatarInput?.addEventListener("change", () => {
+        const file = avatarInput.files?.[0];
+        if (!file || !file.type.startsWith("image/")) return;
+        const previewUrl = URL.createObjectURL(file);
+        document.querySelectorAll("[data-avatar-image]").forEach((image) => {
+            image.src = previewUrl;
+            image.hidden = false;
+            const placeholder = image.parentElement?.querySelector(".avatar-placeholder");
+            if (placeholder) placeholder.hidden = true;
+        });
+        setTimeout(() => URL.revokeObjectURL(previewUrl), 60000);
     });
 
     document.querySelectorAll(".filter-tab").forEach((tab) => {
@@ -71,7 +99,23 @@
         wrap.className = `ai-message ${role === "user" ? "user-message" : "assistant-message"}`;
         const avatar = document.createElement("span");
         avatar.className = "message-avatar";
-        avatar.textContent = role === "user" ? "KH" : "✳";
+        if (role === "user") {
+            const placeholder = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            placeholder.setAttribute("viewBox", "0 0 24 24");
+            placeholder.setAttribute("fill", "none");
+            placeholder.setAttribute("aria-hidden", "true");
+            placeholder.innerHTML = '<circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 21c.7-4.1 3.3-6.2 7.5-6.2s6.8 2.1 7.5 6.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
+            placeholder.classList.add("avatar-placeholder");
+            const photo = document.createElement("img");
+            photo.src = `${contextPath}/customer/avatar`;
+            photo.alt = "";
+            photo.hidden = true;
+            photo.addEventListener("load", () => { photo.hidden = false; placeholder.hidden = true; }, { once: true });
+            photo.addEventListener("error", () => photo.remove(), { once: true });
+            avatar.append(placeholder, photo);
+        } else {
+            avatar.textContent = "✳";
+        }
         const body = document.createElement("div");
         const p = document.createElement("p");
         p.style.whiteSpace = "pre-line";
@@ -441,6 +485,142 @@
         }
     }
 
+    function renderMiniModelCard(car) {
+        return `
+        <div class="ecs-catalog-card">
+            <div class="ecs-cat-top">
+                <div>
+                    <div class="ecs-cat-name">${escapeHtml(car.modelName)}</div>
+                    <div class="ecs-cat-seg">${escapeHtml(car.segment)}</div>
+                </div>
+                <div class="ecs-cat-price">${escapeHtml(car.price.split('(')[0].trim())}</div>
+            </div>
+            <div class="ecs-cat-pills">
+                <span>🔋 ${escapeHtml(car.range)}</span>
+                <span>💺 ${escapeHtml(car.seats)}</span>
+                <span>⚡ ${escapeHtml(car.battery)}</span>
+            </div>
+            <button type="button" class="ecs-btn-select" data-pick-model="${escapeHtml(car.modelName)}">
+                Chọn ${escapeHtml(car.modelName)} tính cọc →
+            </button>
+        </div>`;
+    }
+
+    function renderCatalogGrid(title) {
+        const cardsHtml = Object.values(modelProfiles).map(renderMiniModelCard).join("");
+        return `
+        <div>
+            <div class="ecs-catalog-intro">
+                <strong>${escapeHtml(title || "DANH MỤC XE ĐIỆN VINFAST CHỦ LỰC:")}</strong>
+                <div style="font-size:11px;color:#64748b;font-weight:400;margin-top:2px;">Bấm nút "Chọn xe" để tự động tính phương án trả thẳng hoặc vay trả góp ở Cột 1:</div>
+            </div>
+            <div class="ecs-catalog-grid">${cardsHtml}</div>
+        </div>`;
+    }
+
+    function renderSingleCarHero(car, subtitle) {
+        const depNum = Math.round(car.priceNum * 0.3);
+        return `
+        <div class="ecs-vhero">
+            <div class="ecs-vhero-head">
+                <div>
+                    <span class="ecs-vhero-badge">${escapeHtml(car.segment)}</span>
+                    <h4 class="ecs-vhero-title">VinFast ${escapeHtml(car.modelName)}</h4>
+                    ${subtitle ? `<div style="font-size:11.5px;color:#64748b;margin-top:2px;">${escapeHtml(subtitle)}</div>` : ""}
+                </div>
+                <div class="ecs-vhero-pricebox">
+                    <span class="ecs-vhero-price">${escapeHtml(car.price.split('(')[0].trim())}</span>
+                    <span class="ecs-vhero-dep">Cọc 30%: <b>${formatVnd(depNum)}</b></span>
+                </div>
+            </div>
+            <div class="ecs-vhero-metrics">
+                <div class="ecs-vmetric">
+                    <span class="m-icon">🔋</span>
+                    <span class="m-label">Tầm hoạt động</span>
+                    <span class="m-val">${escapeHtml(car.range)}</span>
+                    <span class="m-sub">Pin ${escapeHtml(car.battery)}</span>
+                </div>
+                <div class="ecs-vmetric">
+                    <span class="m-icon">⚡</span>
+                    <span class="m-label">Động cơ &amp; Công suất</span>
+                    <span class="m-val">${escapeHtml(car.power.split('(')[0].trim())}</span>
+                    <span class="m-sub">${escapeHtml(car.seats)}</span>
+                </div>
+                <div class="ecs-vmetric">
+                    <span class="m-icon">⏱</span>
+                    <span class="m-label">Thời gian sạc</span>
+                    <span class="m-val">${escapeHtml(car.charge.split('(')[0].trim())}</span>
+                    <span class="m-sub">Trạm V-GREEN</span>
+                </div>
+                <div class="ecs-vmetric">
+                    <span class="m-icon">🛡</span>
+                    <span class="m-label">An toàn</span>
+                    <span class="m-val">${escapeHtml(car.airbags)}</span>
+                    <span class="m-sub">Chuẩn an toàn cao</span>
+                </div>
+            </div>
+            <div class="ecs-vhero-body">
+                <div class="ecs-vhero-highlight">
+                    <strong>Đặc điểm nổi bật:</strong> ${escapeHtml(car.highlights)}
+                </div>
+                <div class="ecs-vhero-suit">
+                    <strong>Đánh giá phù hợp:</strong> ${escapeHtml(car.suitability)}
+                </div>
+            </div>
+            <button type="button" class="ecs-btn-select-main" data-pick-model="${escapeHtml(car.modelName)}">
+                ✓ Chọn ${escapeHtml(car.modelName)} để tính tiền cọc &amp; trả góp ở Cột 1 →
+            </button>
+        </div>`;
+    }
+
+    function renderComparisonTable(m1, m2) {
+        return `
+        <div class="ecs-cmp-wrap">
+            <div class="ecs-cmp-title">BẢNG SO SÁNH ĐỐI CHIẾU: ${escapeHtml(m1.modelName)} &amp; ${escapeHtml(m2.modelName)}</div>
+            <div class="ecs-cmp-table">
+                <div class="ecs-cmp-row head">
+                    <span class="label">Tiêu chí</span>
+                    <span class="col1">${escapeHtml(m1.modelName)}</span>
+                    <span class="col2">${escapeHtml(m2.modelName)}</span>
+                </div>
+                <div class="ecs-cmp-row">
+                    <span class="label">Phân khúc</span>
+                    <span class="col1">${escapeHtml(m1.segment)}</span>
+                    <span class="col2">${escapeHtml(m2.segment)}</span>
+                </div>
+                <div class="ecs-cmp-row">
+                    <span class="label">Giá niêm yết</span>
+                    <span class="col1 text-red">${escapeHtml(m1.price.split('(')[0].trim())}</span>
+                    <span class="col2 text-red">${escapeHtml(m2.price.split('(')[0].trim())}</span>
+                </div>
+                <div class="ecs-cmp-row">
+                    <span class="label">Cọc 30%</span>
+                    <span class="col1">${formatVnd(m1.priceNum * 0.3)}</span>
+                    <span class="col2">${formatVnd(m2.priceNum * 0.3)}</span>
+                </div>
+                <div class="ecs-cmp-row">
+                    <span class="label">Tầm hoạt động</span>
+                    <span class="col1"><b>${escapeHtml(m1.range)}</b></span>
+                    <span class="col2"><b>${escapeHtml(m2.range)}</b></span>
+                </div>
+                <div class="ecs-cmp-row">
+                    <span class="label">Động cơ &amp; Sạc</span>
+                    <span class="col1">${escapeHtml(m1.power)} · ${escapeHtml(m1.charge)}</span>
+                    <span class="col2">${escapeHtml(m2.power)} · ${escapeHtml(m2.charge)}</span>
+                </div>
+                <div class="ecs-cmp-row">
+                    <span class="label">Số chỗ &amp; Túi khí</span>
+                    <span class="col1">${escapeHtml(m1.seats)} · ${escapeHtml(m1.airbags)}</span>
+                    <span class="col2">${escapeHtml(m2.seats)} · ${escapeHtml(m2.airbags)}</span>
+                </div>
+            </div>
+            <div class="ecs-cmp-actions">
+                <button type="button" class="ecs-btn-select" data-pick-model="${escapeHtml(m1.modelName)}">Chọn ${escapeHtml(m1.modelName)}</button>
+                <button type="button" class="ecs-btn-select" data-pick-model="${escapeHtml(m2.modelName)}">Chọn ${escapeHtml(m2.modelName)}</button>
+            </div>
+        </div>`;
+    }
+
     async function queryAIConsultation(question, selectedModelName) {
         try {
             const token = await ensureCsrf();
@@ -457,7 +637,16 @@
             if (res.ok) {
                 const data = await res.json();
                 if (data.answer && !data.refused) {
-                    return data.answer;
+                    const foundKey = Object.keys(modelProfiles).find(k =>
+                        data.answer.toLowerCase().includes(k.toLowerCase()) || question.toLowerCase().includes(k.toLowerCase())
+                    );
+                    const heroPart = foundKey ? renderSingleCarHero(modelProfiles[foundKey], "Mẫu xe được gợi ý theo câu hỏi") : "";
+                    return `
+                    <div style="margin-bottom:12px;background:#f8fafc;border-left:3px solid #2563eb;padding:9px 12px;border-radius:0 6px 6px 0;font-size:12px;line-height:1.6;color:#1e293b;">
+                        ${escapeHtml(data.answer)}
+                    </div>
+                    ${heroPart || renderCatalogGrid("CÁC MẪU XE VINFAST PHÙ HỢP:")}
+                    `;
                 }
             }
         } catch (e) {
@@ -472,173 +661,101 @@
             return normQ.includes(k) || normSelected.includes(k);
         });
 
-        // 0. INTENT: DANH SÁCH TẤT CẢ DÒNG XE TRONG DỰ ÁN
-        if (normQ.includes("cac dong xe") || normQ.includes("nhung xe") || normQ.includes("du an") || normQ.includes("tat ca xe") || normQ.includes("danh sach xe") || normQ.includes("co nhung mau") || normQ.includes("co xe gi") || normQ.includes("mau xe gi")) {
-            return `DANH MỤC CÁC DÒNG XE ĐIỆN VINFAST ĐANG KINH DOANH:
-
-1. VinFast VF 3 (Mini e-SUV - 4 chỗ)
-   - Giá niêm yết: 285.000.000 ₫ (Cọc 30%: 85.500.000 ₫)
-   - Tầm hoạt động: 215 km/lần sạc · Pin 18.64 kWh · Sạc nhanh 36 phút
-   - Đặc điểm: Nhỏ gọn, linh hoạt trong đô thị, chi phí vận hành siêu tiết kiệm.
-
-2. VinFast VF 5 Plus (A-SUV - 5 chỗ)
-   - Giá niêm yết: 496.000.000 ₫ (Cọc 30%: 148.800.000 ₫)
-   - Tầm hoạt động: 326 km/lần sạc · Pin 37.23 kWh · 6 túi khí
-   - Đặc điểm: Không gian rộng rãi, bền bỉ, tối ưu cho gia đình nhỏ và kinh doanh vận tải.
-
-3. VinFast VF 6 (B-SUV thể thao - 5 chỗ)
-   - Giá niêm yết: Từ 646.000.000 ₫ (Eco) đến 699.000.000 ₫ (Plus)
-   - Tầm hoạt động: 460 - 485 km/lần sạc · Pin 59.6 kWh · ADAS cấp 2
-   - Đặc điểm: Phong cách thể thao châu Âu, màn hình 12.9 inch, hỗ trợ lái an toàn.
-
-4. VinFast VF 7 (C-SUV thể thao - 5 chỗ)
-   - Giá niêm yết: Từ 740.000.000 ₫ (Eco) đến 830.000.000 ₫ (Plus FWD)
-   - Tầm hoạt động: 440 - 500 km/lần sạc · Pin 59.6 - 70.0 kWh · Động cơ đến 349 mã lực
-   - Đặc điểm: Thiết kế phi thuyền hiện đại, bứt tốc mạnh mẽ, khoang lái rộng rãi.
-
-5. VinFast VF 8 (D-SUV toàn cầu cao cấp - 5 chỗ)
-   - Giá niêm yết: Từ 1.079.000.000 ₫ (Eco) đến 1.259.000.000 ₫ (Plus)
-   - Tầm hoạt động: 457 - 471 km/lần sạc · Pin 87.7 kWh · 11 túi khí (chuẩn 5 sao NHTSA)
-   - Đặc điểm: Sang trọng, êm ái, trang bị hiển thị kính lái HUD, dẫn động 4 bánh AWD.
-
-6. VinFast VF 9 (E-SUV Full-size hạng sang - 6 hoặc 7 chỗ)
-   - Giá niêm yết: Từ 1.566.000.000 ₫ (Eco) đến 1.743.000.000 ₫ (Plus)
-   - Tầm hoạt động: 602 - 626 km/lần sạc · Pin khủng 123.0 kWh · 402 mã lực
-   - Đặc điểm: Dòng xe 7 chỗ duy nhất trong danh mục, tùy chọn ghế cơ trưởng VIP massage.
-
-Quý khách có thể chọn mẫu xe ở cột bên trái hoặc đặt câu hỏi trực tiếp để được giải đáp chi tiết thông số, giá bán và phương án tài chính.`;
+        // 1. TẤT CẢ DÒNG XE
+        if (normQ.includes("cac dong xe") || normQ.includes("nhung xe") || normQ.includes("du an")
+            || normQ.includes("tat ca xe") || normQ.includes("danh sach xe") || normQ.includes("co nhung mau")
+            || normQ.includes("co xe gi") || normQ.includes("mau xe gi")) {
+            return renderCatalogGrid("DANH MỤC CÁC DÒNG XE ĐIỆN VINFAST ĐANG KINH DOANH:");
         }
 
-        // INTENT: DÒNG XE RẺ NHẤT / THẤP NHẤT
+        // 2. XE RẺ NHẤT / TIẾT KIỆM
         if (normQ.includes("re nhat") || normQ.includes("it tien nhat") || normQ.includes("thap nhat") || normQ.includes("tiet kiem nhat")) {
-            return `MẪU XE CÓ CHI PHÍ TỐI ƯU NHẤT: VINFAST VF 3
-- Giá niêm yết: 285.000.000 ₫ (đã bao gồm pin & VAT).
-- Đặt cọc 30%: 85.500.000 ₫; thanh toán 70% còn lại khi nhận xe.
-- Thông số chính: Thiết kế 4 chỗ ngồi, tầm hoạt động 215 km/lần sạc, chi phí nạp điện ước tính chỉ ~350 ₫/km.`;
+            return renderSingleCarHero(modelProfiles["VF 3"], "Dòng xe có giá bán và chi phí sạc tối ưu nhất trong danh mục");
         }
 
-        // INTENT: DÒNG XE CAO CẤP / ĐẮT NHẤT / XA NHẤT
+        // 3. XE CAO CẤP / ĐẮT NHẤT / XA NHẤT
         if (normQ.includes("dat nhat") || normQ.includes("cao cap nhat") || normQ.includes("sang nhat") || normQ.includes("xa nhat") || normQ.includes("pin khung nhat")) {
-            return `MẪU XE CAO CẤP & TẦM HOẠT ĐỘNG XA NHẤT: VINFAST VF 9 (E-SUV)
-- Giá niêm yết: Từ 1.566.000.000 ₫ (Eco) đến 1.743.000.000 ₫ (Plus).
-- Tầm hoạt động: Lên đến 626 km cho 1 lần sạc đầy nhờ cụm pin 123.0 kWh lớn nhất.
-- Tiện nghi đẳng cấp: Tùy chọn 6 hoặc 7 chỗ ngồi (ghế cơ trưởng VIP massage, sưởi, thông gió), 11 túi khí, dẫn động AWD 402 mã lực.`;
+            return renderSingleCarHero(modelProfiles["VF 9"], "Mẫu E-SUV full-size đầu bảng với cụm pin 123 kWh đi 626 km");
         }
 
-        // 1. INTENT: SO SÁNH 2 DÒNG XE
+        // 4. SO SÁNH 2 XE
         if (normQ.includes("so sanh") || normQ.includes("khac") || normQ.includes("hay") || (normQ.includes("va") && mentionedModels.length >= 2)) {
             const m1Name = mentionedModels[0] || "VF 5";
             const m2Name = mentionedModels[1] || (m1Name === "VF 5" ? "VF 6" : "VF 5");
             const m1 = modelProfiles[m1Name] || modelProfiles["VF 5"];
             const m2 = modelProfiles[m2Name] || modelProfiles["VF 6"];
-
-            return `BẢNG SO SÁNH CHI TIẾT: VINFAST ${m1.modelName} & ${m2.modelName}
-
-1. Phân khúc & Kích thước:
-   - ${m1.modelName}: ${m1.segment} (${m1.dimensions}, ${m1.seats}).
-   - ${m2.modelName}: ${m2.segment} (${m2.dimensions}, ${m2.seats}).
-
-2. Giá niêm yết & Đặt cọc dự kiến:
-   - ${m1.modelName}: ${m1.price} (Cọc 30% ~ ${formatVnd(m1.priceNum * 0.3)}).
-   - ${m2.modelName}: ${m2.price} (Cọc 30% ~ ${formatVnd(m2.priceNum * 0.3)}).
-
-3. Pin, Tầm hoạt động & Sạc:
-   - ${m1.modelName}: Pin ${m1.battery} · Tầm hoạt động ${m1.range} · ${m1.charge}.
-   - ${m2.modelName}: Pin ${m2.battery} · Tầm hoạt động ${m2.range} · ${m2.charge}.
-
-4. Vận hành & An toàn:
-   - ${m1.modelName}: ${m1.power} · Túi khí: ${m1.airbags}.
-   - ${m2.modelName}: ${m2.power} · Túi khí: ${m2.airbags}.
-
-Khuyến nghị lựa chọn:
-- Chọn ${m1.modelName} nếu Quý khách ưu tiên chi phí đầu tư ban đầu thấp, kích thước nhỏ gọn dễ di chuyển trong nội đô.
-- Chọn ${m2.modelName} nếu Quý khách cần không gian rộng rãi hơn, công suất động cơ mạnh mẽ và nhiều trang bị an toàn hiện đại cho gia đình.`;
+            return renderComparisonTable(m1, m2);
         }
 
+        // 5. SỐ CHỖ / GIA ĐÌNH
+        if (normQ.includes("cho") || normQ.includes("ghe") || normQ.includes("nguoi") || normQ.includes("gia dinh")) {
+            if (normQ.includes("7") || normQ.includes("bay") || normQ.includes("dong nguoi")) {
+                return renderSingleCarHero(modelProfiles["VF 9"], "Dòng xe DUY NHẤT 7 chỗ trong danh mục VinFast, hoàn hảo cho gia đình đông người");
+            }
+            if (normQ.includes("4") || normQ.includes("bon") || normQ.includes("nho")) {
+                return renderSingleCarHero(modelProfiles["VF 3"], "Dòng xe 4 chỗ nhỏ gọn, tối ưu đi phố che nắng che mưa");
+            }
+            return `
+            <div>
+                <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:8px;">GỢI Ý MẪU XE THEO SỐ LƯỢNG CHỖ NGỒI:</div>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    ${renderSingleCarHero(modelProfiles["VF 9"], "Tùy chọn 7 chỗ (dành cho đại gia đình)")}
+                    ${renderSingleCarHero(modelProfiles["VF 7"], "Tùy chọn 5 chỗ rộng rãi, thiết kế thể thao cao cấp")}
+                </div>
+            </div>`;
+        }
+
+        // 6. THÔNG TIN XE CỤ THỂ HOẶC THEO XE ĐANG CHỌN
         const targetKey = mentionedModels[0] || Object.keys(modelProfiles).find(k => normSelected.includes(normalizeVn(k))) || "VF 7";
         const car = modelProfiles[targetKey] || modelProfiles["VF 7"];
+        return renderSingleCarHero(car, "Thông số kỹ thuật chính thức & phương án dự kiến");
+    }
 
-        // 2. INTENT: HỎI VỀ QUÃNG ĐƯỜNG / PIN / SẠC
-        if (normQ.includes("quang duong") || normQ.includes("tam hoat dong") || normQ.includes("km") || normQ.includes("pin") || normQ.includes("sac") || normQ.includes("bao xa")) {
-            return `THÔNG TIN PIN & QUÃNG ĐƯỜNG HOẠT ĐỘNG: VINFAST ${car.modelName}
+    function renderChatBubbles(content, staffName, status) {
+        if (!content) return "";
+        const lines = content.split("\n").map(l => l.trim()).filter(Boolean);
+        const bubbles = [];
+        let hasStaffReply = false;
 
-- Quãng đường di chuyển: ${car.range} cho 1 lần sạc đầy (theo điều kiện tiêu chuẩn).
-- Dung lượng pin: ${car.battery}.
-- Thời gian nạp điện: ${car.charge}.
-- Chi phí sạc ước tính: Chỉ khoảng 350 - 450 ₫/km (tiết kiệm hơn 65% so với xe xăng cùng phân khúc).
-- Hệ thống trạm sạc: Tương thích với toàn bộ trạm sạc V-GREEN phủ kín 63 tỉnh thành, các trạm dừng nghỉ cao tốc và trung tâm thương mại Vincom.
+        lines.forEach((line) => {
+            const staffMatch = line.match(/^\[(.*?(?:NV|Sales|Tư vấn|Nhân viên).*?)\]:\s*(.*)$/i);
+            const customerMatch = line.match(/^\[(?:Khách hàng|Bạn)\]:\s*(.*)$/i);
 
-Khuyến nghị: Với tầm hoạt động ${car.range}, xe đáp ứng hoàn hảo nhu cầu đi lại cả tuần trong đô thị hoặc các chuyến đi liên tỉnh dài ngày mà không cần lo lắng về trạm sạc.`;
+            if (staffMatch) {
+                hasStaffReply = true;
+                bubbles.push(`
+                    <div class="ecs-bubble staff">
+                        <span class="ecs-bubble-label">Sales Staff (${escapeHtml(staffName || staffMatch[1])}):</span>
+                        ${escapeHtml(staffMatch[2])}
+                    </div>
+                `);
+            } else if (customerMatch) {
+                bubbles.push(`
+                    <div class="ecs-bubble customer">
+                        <span class="ecs-bubble-label">Bạn:</span>
+                        ${escapeHtml(customerMatch[1])}
+                    </div>
+                `);
+            } else {
+                bubbles.push(`
+                    <div class="ecs-bubble customer">
+                        <span class="ecs-bubble-label">Yêu cầu tư vấn:</span>
+                        ${escapeHtml(line)}
+                    </div>
+                `);
+            }
+        });
+
+        if (staffName && !hasStaffReply) {
+            bubbles.push(`
+                <div class="ecs-bubble staff">
+                    <span class="ecs-bubble-label">Sales Staff (${escapeHtml(staffName)}):</span>
+                    ${status === 'COMPLETED' ? 'Đã hoàn tất hỗ trợ tư vấn và lập phương án cho yêu cầu này.' : 'Đã tiếp nhận yêu cầu và đang liên hệ hỗ trợ bạn.'}
+                </div>
+            `);
         }
 
-        // 3. INTENT: HỎI VỀ GIÁ BÁN / TIỀN / TRẢ GÓP / ĐẶT CỌC
-        if (normQ.includes("gia") || normQ.includes("bao nhieu") || normQ.includes("tien") || normQ.includes("trieu") || normQ.includes("ty") || normQ.includes("tra gop") || normQ.includes("dat coc") || normQ.includes("vay")) {
-            const deposit = formatVnd(car.priceNum * 0.3);
-            const loan = formatVnd(car.priceNum * 0.7);
-            return `BÁO GIÁ & PHƯƠNG ÁN THANH TOÁN: VINFAST ${car.modelName}
-
-- Giá niêm yết chính hãng: ${car.price}.
-- Phương án Trả thẳng:
-  + Đặt cọc 30%: ${deposit}.
-  + Thanh toán 70% còn lại (${loan}) khi ký kết hợp đồng mua bán và nhận bàn giao xe.
-- Phương án Trả góp ngân hàng:
-  + Hỗ trợ vay tối đa 70% giá trị xe (${loan}) trong thời hạn từ 12 đến 60 tháng.
-  + Các ngân hàng đối tác liên kết: Techcombank, MB Bank, VPBank, Shinhan Finance.
-  + Ước tính gốc + lãi mỗi tháng: từ ${(car.priceNum * 0.7 / 60 / 1000000).toFixed(1)} triệu ₫/tháng.
-
-Chính sách bảo hành: Bảo hành chính hãng từ 7 đến 10 năm (hoặc 160.000 - 200.000 km), cứu hộ miễn phí 24/7 trên toàn quốc.`;
-        }
-
-        // 4. INTENT: HỎI VỀ SỐ CHỖ / GIA ĐÌNH
-        if (normQ.includes("cho") || normQ.includes("ghe") || normQ.includes("nguoi") || normQ.includes("gia dinh")) {
-            return `TƯ VẤN SỐ CHỖ NGỒI CÁC DÒNG XE VINFAST:
-
-1. Dòng xe 4 chỗ:
-   - VF 3 (${modelProfiles["VF 3"].price}): Mini e-SUV 4 chỗ, nhỏ gọn linh hoạt, tối ưu cho 1-2 người hoặc đưa đón con nhỏ.
-
-2. Dòng xe 5 chỗ (Phổ biến nhất):
-   - VF 5 Plus (${modelProfiles["VF 5"].price}): A-SUV 5 chỗ tiết kiệm, thực dụng cho gia đình nhỏ.
-   - VF 6 (${modelProfiles["VF 6"].price}): B-SUV 5 chỗ tiện nghi, phong cách thể thao cho người trẻ.
-   - VF 7 (${modelProfiles["VF 7"].price}): C-SUV 5 chỗ hiện đại, khoang lái rộng rãi, cốp xe lớn đi xa rất thoải mái.
-   - VF 8 (${modelProfiles["VF 8"].price}): D-SUV 5 chỗ cỡ lớn sang trọng, nội thất cao cấp.
-
-3. Dòng xe 6 - 7 chỗ:
-   - VF 9 (${modelProfiles["VF 9"].price}): E-SUV full-size, dòng xe DUY NHẤT có tùy chọn 7 chỗ hoặc 6 chỗ ghế cơ trưởng VIP dành cho gia đình đông người hoặc đón tiếp đối tác.
-
-Đánh giá mẫu ${car.modelName}: Xe thiết kế ${car.seats}, ${car.suitability}`;
-        }
-
-        // 5. INTENT: HỎI VỀ AN TOÀN / CÔNG NGHỆ / TÚI KHÍ / ADAS
-        if (normQ.includes("an toan") || normQ.includes("tui khi") || normQ.includes("adas") || normQ.includes("cong nghe") || normQ.includes("vivi") || normQ.includes("tro lai")) {
-            return `TRANG BỊ AN TOÀN & CÔNG NGHỆ: VINFAST ${car.modelName}
-
-- Trang bị an toàn bị động: ${car.airbags}, khung gầm thép cường lực chịu va đập tiêu chuẩn quốc tế.
-- Hệ thống hỗ trợ lái nâng cao ADAS:
-  + Cảnh báo chệch làn & Hỗ trợ giữ làn đường.
-  + Kiểm soát hành trình thích ứng (Adaptive Cruise Control).
-  + Cảnh báo điểm mù & Cảnh báo phương tiện cắt ngang khi lùi.
-  + Phanh tự động khẩn cấp phía trước.
-- Công nghệ thông minh Smart Services:
-  + Trợ lý ảo tiếng Việt Vivi điều khiển bằng giọng nói tự nhiên (điều hòa, định vị, tra cứu).
-  + Quản lý xe từ xa qua ứng dụng điện thoại VinFast (kiểm tra pin, khóa/mở cửa, bật điều hòa trước).`;
-        }
-
-        // 6. DEFAULT: TỔNG HỢP CHI TIẾT THÔNG SỐ XE ĐANG QUAN TÂM
-        return `THÔNG SỐ KỸ THUẬT CHI TIẾT: VINFAST ${car.modelName}
-
-- Phân khúc & Số chỗ: ${car.segment} - ${car.seats}.
-- Kích thước tổng thể: ${car.dimensions}.
-- Giá niêm yết: ${car.price}.
-- Pin & Tầm hoạt động: ${car.battery} · Tầm di chuyển ${car.range} cho 1 lần sạc đầy.
-- Thời gian sạc: ${car.charge}.
-- Động cơ & Vận hành: ${car.power}.
-- Trang bị an toàn: ${car.airbags}.
-- Điểm nổi bật: ${car.highlights}
-
-Đánh giá phù hợp:
-${car.suitability}
-
-Quý khách có thể nhập thêm câu hỏi cụ thể (ví dụ: "So sánh với VF 6", "Phương án trả góp", hoặc "Thời gian sạc pin") để được giải đáp thêm.`;
+        return bubbles.join("");
     }
 
     async function loadPopupConsultations() {
@@ -652,26 +769,71 @@ Quý khách có thể nhập thêm câu hỏi cụ thể (ví dụ: "So sánh v�
             isCustomerSession = data.authenticated === true && data.role === "CUSTOMER";
             updateConsultationModeUI(isCustomerSession);
 
-            const items = data.consultations || [];
-            if (!items.length) {
-                historyList.innerHTML = `<div style="color:#64748b;">Bạn chưa có yêu cầu tư vấn nào. Hãy gửi câu hỏi ở trên để Sales Staff hỗ trợ!</div>`;
+            if (!isCustomerSession) {
+                historyList.innerHTML = `
+                    <div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:14px;text-align:center;">
+                        <p style="margin:0 0 8px;font-size:12px;color:#475569;line-height:1.5;">Quý khách cần nhân viên Sales liên hệ báo giá lăn bánh chi tiết hoặc làm thủ tục giữ chỗ xe?</p>
+                        <a href="${contextPath}/login" style="display:inline-block;padding:7px 16px;background:#e31837;color:#fff;border-radius:6px;font-weight:600;font-size:12px;text-decoration:none;">Đăng nhập tài khoản Khách hàng →</a>
+                    </div>
+                `;
                 return;
             }
-            historyList.innerHTML = items.map(c => `
-                <div class="ecs-consult-Popup-item">
-                    <div style="display:flex;justify-content:space-between;font-weight:700;">
-                        <span>#${escapeHtml(c.id)} · ${escapeHtml(c.modelName || "Tư vấn chung")}</span>
-                        <span style="color:#1456db;">${escapeHtml(c.status)}</span>
+
+            const items = data.consultations || [];
+            if (!items.length) {
+                historyList.innerHTML = `<div style="color:#64748b;font-size:12px;text-align:center;padding:12px 0;">Bạn chưa có yêu cầu tư vấn nào. Hãy gửi câu hỏi ở trên để Sales Staff hỗ trợ!</div>`;
+                return;
+            }
+            historyList.innerHTML = items.map(c => {
+                const status = String(c.status || "").toUpperCase();
+                const canChat = status === "PENDING" || status === "IN_PROGRESS";
+                const isCompleted = status === "COMPLETED";
+
+                let badgeClass = "tag-pending";
+                let badgeText = "⏳ Chờ Sales tiếp nhận";
+                if (status === "IN_PROGRESS") {
+                    badgeClass = "tag-progress";
+                    badgeText = "💬 Đang tư vấn";
+                } else if (status === "COMPLETED") {
+                    badgeClass = "tag-completed";
+                    badgeText = "✓ Đã hoàn tất";
+                } else if (status === "CANCELLED") {
+                    badgeClass = "tag-cancelled";
+                    badgeText = "✕ Đã hủy";
+                }
+
+                return `
+                <div class="ecs-item-card ${isCompleted ? 'is-completed' : ''}">
+                    <div class="ecs-item-header">
+                        <div class="ecs-item-title">
+                            <strong>#${escapeHtml(c.id)}</strong>
+                            <span>· ${escapeHtml(c.modelName || "Tư vấn chung")}</span>
+                        </div>
+                        <span class="ecs-tag ${badgeClass}">${badgeText}</span>
                     </div>
-                    <div style="white-space:pre-line;margin-top:4px;color:#1e293b;">${escapeHtml(c.content || "")}</div>
-                    <div style="font-size:11px;color:#64748b;margin-top:4px;">NV phụ trách: ${escapeHtml(c.staffName || "Đang phân công")}</div>
-                    ${["PENDING", "IN_PROGRESS"].includes(String(c.status || "").toUpperCase()) ? `
-                        <form class="ecs-popup-reply-form" data-request-id="${escapeHtml(c.id)}" style="display:flex;gap:6px;margin-top:8px;">
-                            <input name="message" maxlength="250" required aria-label="Phản hồi yêu cầu tư vấn #${escapeHtml(c.id)}" placeholder="Gửi phản hồi cho Sales Staff..." style="min-width:0;flex:1;padding:7px;border:1px solid #cbd5e1;border-radius:6px;">
-                            <button type="submit" class="button button-secondary" style="padding:6px 10px;">Gửi</button>
-                        </form>` : ""}
-                </div>
-            `).join("");
+
+                    <div class="ecs-chat-thread">
+                        ${renderChatBubbles(c.content, c.staffName, status)}
+                    </div>
+
+                    <div class="ecs-item-meta">
+                        <span>NV phụ trách: <b>${escapeHtml(c.staffName || "Đang phân công")}</b></span>
+                        ${c.createdAt ? `<span>${escapeHtml(c.createdAt)}</span>` : ""}
+                    </div>
+
+                    ${canChat ? `
+                        <form class="ecs-popup-reply-form" data-request-id="${escapeHtml(c.id)}">
+                            <input name="message" maxlength="250" required placeholder="Nhập tin nhắn tiếp theo cho Sales Staff...">
+                            <button type="submit" class="button button-primary">Gửi tin</button>
+                        </form>
+                    ` : (isCompleted ? `
+                        <div class="ecs-complete-notice">
+                            <span>✓</span> Phiên tư vấn đã được Sales Staff hoàn tất (không thể nhắn thêm).
+                        </div>
+                    ` : '')}
+                </div>`;
+            }).join("");
+
             historyList.querySelectorAll(".ecs-popup-reply-form").forEach((form) => {
                 form.addEventListener("submit", async (event) => {
                     event.preventDefault();
@@ -744,7 +906,13 @@ Quý khách có thể nhập thêm câu hỏi cụ thể (ví dụ: "So sánh v�
     fullscreenBtn?.addEventListener("click", () => {
         if (!popup) return;
         const full = popup.classList.toggle("is-fullscreen");
-        fullscreenBtn.textContent = full ? "❐ Thu nhỏ" : "⛶ Toàn màn hình";
+        fullscreenBtn.textContent = full ? "❐ Thu nhỏ" : "⛶ Phóng to";
+        fullscreenBtn.title = full ? "Thu nhỏ về cửa sổ góc phải" : "Phóng to toàn màn hình";
+    });
+
+    const popupHeader = document.getElementById("ecs-consult-header");
+    popupHeader?.addEventListener("dblclick", () => {
+        fullscreenBtn?.click();
     });
 
     closeBtn?.addEventListener("click", () => {
@@ -752,6 +920,32 @@ Quý khách có thể nhập thêm câu hỏi cụ thể (ví dụ: "So sánh v�
         popup.hidden = true;
         popup.classList.remove("is-fullscreen");
         window.clearInterval(consultationRefreshTimer);
+    });
+
+    // BẮT SỰ KIỆN CLICK VÀO NÚT "CHỌN XE NÀY" TRÊN CÁC THẺ XE TRỰC QUAN
+    document.addEventListener("click", (event) => {
+        const btn = event.target.closest("[data-pick-model]");
+        if (!btn) return;
+        const modelName = btn.dataset.pickModel;
+        if (!modelName || !calcModel) return;
+        const normTarget = normalizeVn(modelName);
+        const option = [...calcModel.options].find((opt) => {
+            const name = normalizeVn(opt.dataset.name || opt.textContent);
+            return name.includes(normTarget) || normTarget.includes(name);
+        });
+        if (option) {
+            calcModel.value = option.value;
+            syncConsultationPrice();
+            updatePopupCalculation();
+            calcModel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            calcModel.style.borderColor = "#e31837";
+            calcModel.style.boxShadow = "0 0 0 3px rgba(227, 24, 55, 0.2)";
+            setTimeout(() => {
+                calcModel.style.borderColor = "";
+                calcModel.style.boxShadow = "";
+            }, 1200);
+            notify(`Đã chọn ${option.textContent.split('·')[0].trim()} ở Cột 1 để tính phương án tài chính!`);
+        }
     });
 
     calcPlan?.addEventListener("change", () => { updateFinanceTerms(); updatePopupCalculation(); });
@@ -796,14 +990,14 @@ Quý khách có thể nhập thêm câu hỏi cụ thể (ví dụ: "So sánh v�
         const aiResultBox = document.getElementById("ecs-ai-consult-result");
         const aiResultText = document.getElementById("ecs-ai-consult-text");
 
-        // 1. NẾU CHƯA ĐĂNG NHẬP: CHẠY TRỢ LÝ TỰ ĐỘNG TƯ VẤN SẢN PHẨM NGAY
+        // 1. NẾU CHƯA ĐĂNG NHẬP: CHẠY TRỢ LÝ TỰ ĐỘNG TƯ VẤN SẢN PHẨM TRỰC QUAN
         if (!isCustomerSession) {
             submitButton.disabled = true;
             submitButton.textContent = "Đang tra cứu dữ liệu xe...";
             try {
                 const answer = await queryAIConsultation(message, modelName);
                 if (aiResultBox && aiResultText) {
-                    aiResultText.textContent = answer;
+                    aiResultText.innerHTML = answer; // Render HTML card trực quan, không còn là đống chữ thô
                     aiResultBox.hidden = false;
                     aiResultBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
                 }
@@ -811,7 +1005,7 @@ Quý khách có thể nhập thêm câu hỏi cụ thể (ví dụ: "So sánh v�
                 notify("Hệ thống tra cứu đang bận. Vui lòng thử lại sau.");
             } finally {
                 submitButton.disabled = false;
-                submitButton.textContent = "Hỏi thêm thông tin khác →";
+                submitButton.textContent = "Hỏi thêm câu hỏi khác →";
             }
             return;
         }

@@ -47,12 +47,6 @@ public class PortalPageFilter implements Filter {
 
         response.setHeader("Cache-Control", "no-store");
 
-        String path = request.getServletPath();
-        if ("/customer/ai-assistant.jsp".equals(path)) {
-            chain.doFilter(request, response);
-            return;
-        }
-
         HttpSession session = request.getSession(false);
         Object sessionUser = session == null ? null : session.getAttribute("user");
 
@@ -95,6 +89,8 @@ public class PortalPageFilter implements Filter {
             return;
         }
 
+        String path = request.getServletPath();
+
         boolean salesCustomerList = "/customer/profile".equals(path)
             && "staff".equalsIgnoreCase(request.getParameter("mode"))
             && Set.of("SALES", "MANAGER", "ADMIN").contains(role);
@@ -126,6 +122,11 @@ public class PortalPageFilter implements Filter {
 
         if ("/customer/my-account.jsp".equals(path)) {
             response.sendRedirect(request.getContextPath() + "/customer/profile");
+            return;
+        }
+
+        if ("/customer/my-profile.jsp".equals(path)) {
+            response.sendRedirect(request.getContextPath() + "/customer/profile?view=profile");
             return;
         }
 

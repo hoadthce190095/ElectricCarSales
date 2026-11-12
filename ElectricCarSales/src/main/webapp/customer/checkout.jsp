@@ -33,9 +33,12 @@
         <form class="customer-form" method="post" action="<%= customerContext %>/consultation">
             <input type="hidden" name="action" value="create">
             <div class="form-row">
+                <label>Số điện thoại liên hệ *
+                    <input type="tel" name="phone" value="<c:out value='${customer.phone}'/>" placeholder="Nhập số điện thoại để Sales liên hệ..." required pattern="[0-9]{9,11}" title="Vui lòng nhập số điện thoại hợp lệ (9-11 chữ số)">
+                </label>
                 <label>Mẫu xe quan tâm
-                    <select name="modelId" required>
-                        <option value="">-- Chọn mẫu xe VinFast --</option>
+                    <select name="modelId">
+                        <option value="">-- Tư vấn chung / Chọn mẫu xe --</option>
                         <c:forEach var="m" items="${carModels}">
                             <option value="${m.modelID}"><c:out value="${m.modelName}"/></option>
                         </c:forEach>
@@ -118,17 +121,39 @@
                                 <td><c:out value="${cr.createdAt}"/></td>
                                 <td><c:out value="${cr.modelName}" default="Tư vấn chung"/></td>
                                 <td><c:out value="${cr.staffName}" default="Chờ phân công"/></td>
-                                <td><span class="soft-badge"><c:out value="${cr.status}"/></span></td>
+                                <td>
+                                    <c:choose>
+                                        <c:when test="${cr.status == 'PENDING'}">
+                                            <span class="soft-badge" style="background:#fef3c7;color:#b45309;border:1px solid #fde68a;">⏳ Chờ tiếp nhận</span>
+                                        </c:when>
+                                        <c:when test="${cr.status == 'IN_PROGRESS'}">
+                                            <span class="soft-badge" style="background:#dbeafe;color:#1d4ed8;border:1px solid #bfdbfe;">💬 Đang tư vấn</span>
+                                        </c:when>
+                                        <c:when test="${cr.status == 'COMPLETED'}">
+                                            <span class="soft-badge" style="background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;">✓ Đã hoàn tất</span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="soft-badge"><c:out value="${cr.status}"/></span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </td>
                                 <td style="min-width:320px;">
-                                    <div style="white-space:pre-line;font-size:13px;margin-bottom:8px;"><c:out value="${cr.content}"/></div>
-                                    <c:if test="${cr.status == 'PENDING' or cr.status == 'IN_PROGRESS'}">
-                                        <form method="post" action="<%= customerContext %>/consultation" style="display:flex;gap:6px;">
-                                            <input type="hidden" name="action" value="reply">
-                                            <input type="hidden" name="requestId" value="${cr.id}">
-                                            <input type="text" name="message" maxlength="300" placeholder="Gửi phản hồi bổ sung cho Sales..." required style="flex:1;padding:6px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">
-                                            <button type="submit" class="button button-secondary" style="padding:6px 12px;font-size:12px;">Gửi</button>
-                                        </form>
-                                    </c:if>
+                                    <div style="white-space:pre-line;font-size:13px;margin-bottom:8px;background:#f8fafc;padding:8px 10px;border-radius:6px;border:1px solid #e2e8f0;"><c:out value="${cr.content}"/></div>
+                                    <c:choose>
+                                        <c:when test="${cr.status == 'PENDING' or cr.status == 'IN_PROGRESS'}">
+                                            <form method="post" action="<%= customerContext %>/consultation" style="display:flex;gap:6px;">
+                                                <input type="hidden" name="action" value="reply">
+                                                <input type="hidden" name="requestId" value="${cr.id}">
+                                                <input type="text" name="message" maxlength="300" placeholder="Nhập tin nhắn tiếp theo cho Sales Staff..." required style="flex:1;padding:6px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">
+                                                <button type="submit" class="button button-primary" style="padding:6px 14px;font-size:12px;">Gửi phản hồi</button>
+                                            </form>
+                                        </c:when>
+                                        <c:when test="${cr.status == 'COMPLETED'}">
+                                            <div style="display:inline-flex;align-items:center;gap:6px;color:#16a34a;font-size:12px;font-weight:600;padding:4px 0;">
+                                                <span>✓</span> Phiên tư vấn đã hoàn tất (không thể nhắn thêm).
+                                            </div>
+                                        </c:when>
+                                    </c:choose>
                                 </td>
                             </tr>
                         </c:forEach>

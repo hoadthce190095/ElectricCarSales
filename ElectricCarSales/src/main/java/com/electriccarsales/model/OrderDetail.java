@@ -8,6 +8,10 @@ public class OrderDetail {
     private int vehicleId;
     private int quantity;
     private BigDecimal unitPrice;
+    private String vin;
+    private String modelName;
+    private String versionName;
+    private String colorName;
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
@@ -19,4 +23,12 @@ public class OrderDetail {
     public void setQuantity(int quantity) { this.quantity = quantity; }
     public BigDecimal getUnitPrice() { return unitPrice; }
     public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
+    public String getVin() { return vin; }
+    public void setVin(String vin) { this.vin = vin; }
+    public String getModelName() { return modelName; }
+    public void setModelName(String modelName) { this.modelName = modelName; }
+    public String getVersionName() { return versionName; }
+    public void setVersionName(String versionName) { this.versionName = versionName; }
+    public String getColorName() { return colorName; }
+    public void setColorName(String colorName) { this.colorName = colorName; }
 }

@@ -1,8 +1,13 @@
 package com.electriccarsales.service;
 
 import com.electriccarsales.dao.OrderDAO;
+import com.electriccarsales.dao.OrderStatusDAO;
+import com.electriccarsales.dao.OrderStatusHistoryDAO;
 import com.electriccarsales.model.Order;
+import com.electriccarsales.model.OrderStatus;
+import com.electriccarsales.model.OrderStatusHistory;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -10,6 +15,16 @@ public class OrderStatusService {
     private static final Set<String> ALLOWED_MANUAL_STATUSES = Set.of(
             "PENDING", "RESERVED", "PROCESSING", "CANCELLED");
     private final OrderDAO orderDAO = new OrderDAO();
+    private final OrderStatusDAO statusDAO = new OrderStatusDAO();
+    private final OrderStatusHistoryDAO historyDAO = new OrderStatusHistoryDAO();
+
+    public List<OrderStatus> getAllStatuses() {
+        return statusDAO.findAll();
+    }
+
+    public List<OrderStatusHistory> getOrderStatusHistory(int orderId) {
+        return historyDAO.findByOrderId(orderId);
+    }
 
     public void updateOrderStatus(int orderId, String newStatus) {
         updateOrderStatus(orderId, newStatus, null, null);

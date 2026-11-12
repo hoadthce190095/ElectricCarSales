@@ -15,6 +15,10 @@ public class Order {
     private Timestamp orderDate;
     private String note;
     private String vehicleName;
+    private Integer companyId;
+    private String companyName;
+    private String customerName;
+    private String customerPhone;
 
     public String getVehicleName() { return vehicleName; }
     public void setVehicleName(String vehicleName) { this.vehicleName = vehicleName; }
@@ -38,4 +42,12 @@ public class Order {
     public void setOrderDate(Timestamp orderDate) { this.orderDate = orderDate; }
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }
+    public Integer getCompanyId() { return companyId; }
+    public void setCompanyId(Integer companyId) { this.companyId = companyId; }
+    public String getCompanyName() { return companyName; }
+    public void setCompanyName(String companyName) { this.companyName = companyName; }
+    public String getCustomerName() { return customerName; }
+    public void setCustomerName(String customerName) { this.customerName = customerName; }
+    public String getCustomerPhone() { return customerPhone; }
+    public void setCustomerPhone(String customerPhone) { this.customerPhone = customerPhone; }
 }

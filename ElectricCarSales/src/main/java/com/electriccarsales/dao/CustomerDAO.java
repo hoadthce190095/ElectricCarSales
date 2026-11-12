@@ -22,6 +22,35 @@ public class CustomerDAO extends DBContext {
         }
     }
 
+    public Avatar findAvatarByUserId(int userId) {
+        String sql = "SELECT AvatarData, AvatarContentType FROM Customers WHERE UserID = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return null;
+                byte[] data = rs.getBytes("AvatarData");
+                String contentType = rs.getString("AvatarContentType");
+                return data == null || data.length == 0 ? null : new Avatar(data, contentType);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể tải ảnh đại diện.", e);
+        }
+    }
+
+    public boolean updateAvatar(int userId, byte[] image, String contentType) {
+        String sql = "UPDATE Customers SET AvatarData = ?, AvatarContentType = ? WHERE UserID = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBytes(1, image);
+            ps.setString(2, contentType);
+            ps.setInt(3, userId);
+            return ps.executeUpdate() == 1;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể lưu ảnh đại diện.", e);
+        }
+    }
+
+    public record Avatar(byte[] data, String contentType) { }
+
     public Customer findById(int customerId) {
         String sql = "SELECT CustomerID, UserID, CustomerName, Phone, Email, Address FROM Customers WHERE CustomerID = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {

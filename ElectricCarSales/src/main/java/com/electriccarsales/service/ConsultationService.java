@@ -1,7 +1,9 @@
 package com.electriccarsales.service;
 
 import com.electriccarsales.dao.ConsultationRequestDAO;
+import com.electriccarsales.dao.ConsultationStatusDAO;
 import com.electriccarsales.model.ConsultationRequest;
+import com.electriccarsales.model.ConsultationStatus;
 
 import java.util.List;
 import java.util.Locale;
@@ -10,6 +12,11 @@ import java.util.Set;
 public class ConsultationService {
     private static final Set<String> VALID_STATUSES = Set.of("PENDING", "IN_PROGRESS", "COMPLETED", "CANCELLED");
     private final ConsultationRequestDAO dao = new ConsultationRequestDAO();
+    private final ConsultationStatusDAO statusDAO = new ConsultationStatusDAO();
+
+    public List<ConsultationStatus> getAllStatuses() {
+        return statusDAO.findAll();
+    }
 
     public List<ConsultationRequest> getAllRequests() {
         return dao.findAll();

@@ -22,10 +22,10 @@ boolean customerView = authenticatedUser instanceof SessionUser
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <link rel="stylesheet" href="<c:url value='/assets/css/theme.css'><c:param name='v' value='main-blue-20261017' /></c:url>">
-    <link rel="stylesheet" href="<c:url value='/assets/css/customer.css'><c:param name='v' value='consult-popup-20261111' /></c:url>">
-    <link rel="stylesheet" href="<c:url value='/assets/css/home.css'><c:param name='v' value='home-database-inventory-sync-20261112' /></c:url>">
-    <script src="<c:url value='/assets/js/customer.js'><c:param name='v' value='consult-native-vf-20261112' /></c:url>" defer></script>
-    <script src="<c:url value='/assets/js/home.js'><c:param name='v' value='home-database-inventory-sync-20261112' /></c:url>" defer></script>
+    <link rel="stylesheet" href="<c:url value='/assets/css/customer.css'><c:param name='v' value='customer-avatar-navigation-20261112' /></c:url>">
+    <link rel="stylesheet" href="<c:url value='/assets/css/home.css'><c:param name='v' value='home-tweaks-20261112' /></c:url>">
+    <script src="<c:url value='/assets/js/customer.js'><c:param name='v' value='customer-avatar-20261112' /></c:url>" defer></script>
+    <script src="<c:url value='/assets/js/home.js'><c:param name='v' value='home-tweaks-20261112' /></c:url>" defer></script>
 </head>
 <body class="home-page" data-context-path="<c:out value='${pageContext.request.contextPath}' />">
 <header class="site-header">
@@ -36,7 +36,7 @@ boolean customerView = authenticatedUser instanceof SessionUser
         </a>
         <button class="mobile-menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Mở menu">☰</button>
         <nav class="primary-nav" id="primary-nav" aria-label="Điều hướng chính">
-            <a class="nav-link current" href="#models">Mua xe <span aria-hidden="true">⌄</span></a>
+            <a class="nav-link current" href="#models">Mua xe</a>
             <a class="nav-link" href="#about">Giới thiệu</a>
             <a class="nav-link" href="<c:url value='/customer/ai-assistant.jsp' />">Trợ lý xe</a>
         </nav>
@@ -45,7 +45,7 @@ boolean customerView = authenticatedUser instanceof SessionUser
                 <span aria-hidden="true">✉</span><span>Tư vấn &amp; Báo giá</span>
             </a>
             <% if (customerView) { %>
-            <a class="account-link" href="<c:url value='/customer/profile' />"><span class="account-icon" aria-hidden="true">KH</span><c:out value="${empty sessionScope.displayName ? sessionScope.username : sessionScope.displayName}" default="Tài khoản của tôi" /></a>
+            <a class="account-link" href="<c:url value='/customer/profile?view=profile' />"><span class="account-icon" data-avatar-wrap aria-hidden="true"><svg class="avatar-placeholder" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 21c.7-4.1 3.3-6.2 7.5-6.2s6.8 2.1 7.5 6.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><img data-avatar-image src="<c:url value='/customer/avatar' />?v=<%= System.currentTimeMillis() %>" alt=""></span><c:out value="${empty sessionScope.displayName ? sessionScope.username : sessionScope.displayName}" default="Tài khoản của tôi" /></a>
             <form method="post" action="<c:url value='/logout' />" style="margin:0">
                 <button class="account-link" type="submit" style="background:white;cursor:pointer">Đăng xuất</button>
             </form>
@@ -63,17 +63,17 @@ boolean customerView = authenticatedUser instanceof SessionUser
             <p>Khám phá các mẫu xe, xem thông số và tìm lựa chọn phù hợp với nhu cầu của bạn.</p>
         </div>
         <div class="banner-track" id="banner-track" aria-label="Một số dòng xe nổi bật">
-            <a class="feature-banner banner-city" href="#models" data-banner="0">
+            <a class="feature-banner banner-city" href="#models" data-banner="0" data-model="VF 3">
                 <span class="banner-copy"><small>NHỎ GỌN MỖI NGÀY</small><strong>Di chuyển linh hoạt<br>trong phố</strong><span class="banner-link">Khám phá VF 3 <b>↗</b></span></span>
                 <img alt="VinFast VF 3" loading="eager">
                 <span class="banner-shade" aria-hidden="true"></span>
             </a>
-            <a class="feature-banner banner-family" href="#models" data-banner="1">
+            <a class="feature-banner banner-family" href="#models" data-banner="1" data-model="VF 7">
                 <span class="banner-copy"><small>KHÔNG GIAN CHO CẢ NHÀ</small><strong>Thoải mái trên<br>mọi cung đường</strong><span class="banner-link">Khám phá VF 7 <b>↗</b></span></span>
                 <img alt="VinFast VF 7" loading="lazy">
                 <span class="banner-shade" aria-hidden="true"></span>
             </a>
-            <a class="feature-banner banner-long" href="#models" data-banner="2">
+            <a class="feature-banner banner-long" href="#models" data-banner="2" data-model="VF 8">
                 <span class="banner-copy"><small>SẴN SÀNG ĐI XA</small><strong>Khám phá<br>một hành trình mới</strong><span class="banner-link">Khám phá VF 8 <b>↗</b></span></span>
                 <img alt="VinFast VF 8" loading="lazy">
                 <span class="banner-shade" aria-hidden="true"></span>
@@ -117,13 +117,23 @@ boolean customerView = authenticatedUser instanceof SessionUser
             <div class="vehicle-grid" id="vehicle-grid" aria-live="polite" aria-busy="true">
                 <div class="loading-card"><span class="loading-orbit"></span><span>Đang tải danh sách xe...</span></div>
             </div>
-            <div class="empty-state" id="empty-state" hidden><span aria-hidden="true">⌕</span><h3>Chưa tìm thấy mẫu xe phù hợp</h3><p>Thử thay đổi từ khóa hoặc bộ lọc để xem thêm lựa chọn.</p><button type="button" id="empty-reset">Xóa bộ lọc</button></div>
             <p class="catalog-disclaimer" id="catalog-disclaimer"></p>
         </div>
     </section>
 
     <section class="about-strip" id="about">
-        <div class="about-icon" aria-hidden="true">⚡</div><div><span class="eyebrow">VINFAST · ELECTRIC CAR SALE</span><h2>Thông tin xe rõ ràng, lựa chọn dễ dàng</h2><p>Tìm hiểu mẫu xe, cấu hình và thông số trước khi quyết định. Đội ngũ tư vấn sẵn sàng hỗ trợ khi bạn cần.</p></div>
+        <div class="about-icon" aria-hidden="true">⚡</div><div><span class="eyebrow">VINFAST · ELECTRIC CAR SALE</span><h2>Thông tin xe rõ ràng, lựa chọn dễ dàng</h2>
+<p>
+    ElectricCarSale là nền tảng giúp khách hàng khám phá và lựa chọn
+    các mẫu xe điện VinFast phù hợp với nhu cầu và phong cách sống.
+    Tại đây, bạn có thể dễ dàng tìm kiếm, tham khảo thông số kỹ thuật,
+    mức giá và so sánh các dòng xe để đưa ra quyết định phù hợp.
+    Với mục tiêu mang đến trải nghiệm tìm hiểu xe thuận tiện, rõ ràng
+    và đáng tin cậy, ElectricCarSale luôn hướng đến việc hỗ trợ khách hàng
+    trong từng bước lựa chọn. Đội ngũ tư vấn sẵn sàng giải đáp thắc mắc
+    và cung cấp thêm thông tin khi bạn cần.
+</p>
+</div>
         <a href="#" id="contact" data-open-consult-popup>Gửi yêu cầu tư vấn <span>↗</span></a>
     </section>
 </main>

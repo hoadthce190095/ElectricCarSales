@@ -324,6 +324,8 @@ CREATE TABLE Customers (
     Phone VARCHAR(20) NOT NULL UNIQUE,
     Email VARCHAR(100) NULL,
     Address NVARCHAR(255) NULL,
+    AvatarData VARBINARY(MAX) NULL,
+    AvatarContentType VARCHAR(30) NULL,
 
     CONSTRAINT FK_Customers_Users
         FOREIGN KEY (UserID)
@@ -1068,8 +1070,7 @@ BEGIN TRY
 	   DECLARE @CatalogColorImages TABLE (
 	       ModelName NVARCHAR(100) NOT NULL,
 	       ColorName NVARCHAR(50) NOT NULL,
-	       ImageURL NVAR
-	           CHAR(500) NOT NULL
+	       ImageURL NVARCHAR(500) NOT NULL
 	   );
 	   INSERT INTO @CatalogColorImages (ModelName, ColorName, ImageURL)
 	   VALUES

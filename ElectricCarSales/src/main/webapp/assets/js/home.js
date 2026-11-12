@@ -13,7 +13,6 @@
     const sortFilter = document.getElementById("sort-filter");
     const summary = document.getElementById("result-summary");
     const activeFilters = document.getElementById("active-filters");
-    const emptyState = document.getElementById("empty-state");
     const compareDock = document.getElementById("compare-dock");
     const compareDialog = document.getElementById("compare-dialog");
     const compareTable = document.getElementById("compare-table-wrap");
@@ -23,9 +22,9 @@
     let models = [];
     let catalogueMetadata = {};
     let catalogueStatus = "loading";
-    let catalogueDatabaseConnected = false;
     let inventoryAvailable = false;
     let inventoryByLine = new Map();
+    let inventoryByModel = new Map();
     let compareNoticeTimer;
 
     try {
@@ -193,10 +192,10 @@
         const article = make("article", `vehicle-card${selected ? " selected-for-compare" : ""}`);
         const photo = make("div", "vehicle-photo");
         const badge = make("span", "model-badge", className(model));
-        const availableColors = Array.isArray(model.colors) ? model.colors.map(text).filter(Boolean) : [];
-        const selectedColor = colorFilter.value
-            ? availableColors.find((color) => colorFamily(color) === colorFamily(colorFilter.value)) || ""
-            : "";
+        const stockColors = inventoryByModel.get(Number(model.modelID)) || [];
+        const selectedColor = (colorFilter.value
+            ? stockColors.find(({ color }) => colorFamily(color) === colorFamily(colorFilter.value))?.color
+            : "") || stockColors[0]?.color || "";
         const imageUrl = colorImageFor(model, selectedColor) || safeOfficialUrl(model.imageUrl);
         let image = null;
         if (imageUrl) {
@@ -218,14 +217,7 @@
         detailLink.href = `${contextPath}/detail?${detailParams.toString()}`;
         photo.append(detailLink);
 
-        const compareLabel = make("label", "compare-check");
-        const checkbox = make("input");
-        checkbox.type = "checkbox";
-        checkbox.checked = selected;
-        checkbox.setAttribute("aria-label", `Chọn ${text(model.modelName)} để so sánh`);
-        checkbox.addEventListener("change", () => toggleCompare(id, model));
-        compareLabel.append(checkbox, document.createTextNode("So sánh"));
-        photo.append(badge, compareLabel);
+        photo.append(badge);
 
         const body = make("div", "vehicle-card-body");
         const title = make("h3", "vehicle-name", text(model.modelName));
@@ -245,25 +237,32 @@
         const colorPicker = make("label", "vehicle-color-picker");
         colorPicker.append(make("span", "", "Màu xe"));
         const colorSelect = make("select", "vehicle-color-select");
-        colorSelect.add(new Option("Màu mặc định", ""));
-        availableColors.forEach((color) => colorSelect.add(new Option(color, color)));
+        stockColors.forEach(({ color, count }) => colorSelect.add(new Option(`${color} · ${count} xe`, color)));
         if (selectedColor) colorSelect.value = selectedColor;
-        colorSelect.disabled = availableColors.length === 0;
-        colorSelect.addEventListener("change", () => {
-            if (!image) return;
-            const nextImage = colorImageFor(model, colorSelect.value) || safeOfficialUrl(model.imageUrl);
-            if (!nextImage) return;
-            image.src = nextImage;
-            image.alt = colorSelect.value ? `${text(model.modelName)} – ${colorSelect.value}` : `${text(model.modelName)} – xe điện VinFast`;
-        });
+        colorSelect.disabled = stockColors.length === 0;
         colorPicker.append(colorSelect);
-        const stockCount = number(model.availableCars);
         const stockText = !model.inventoryConnected
             ? "Chưa kết nối được dữ liệu tồn kho"
-            : stockCount > 0
-                ? `${stockCount} xe sẵn có trong kho (mọi phiên bản dòng ${lineName(model)})`
-                : `Hiện không có xe sẵn có trong kho dòng ${lineName(model)}`;
-        const stockInfo = make("p", `home-stock${model.inventoryConnected && stockCount > 0 ? " is-available" : ""}`, stockText);
+            : selectedColor
+                ? `${stockColors.find(({ color }) => color === selectedColor)?.count || 0} xe màu ${selectedColor} sẵn có trong kho`
+                : `Hiện không có xe sẵn có trong kho cho phiên bản này`;
+        const initialStock = stockColors.find(({ color }) => color === selectedColor);
+        const stockInfo = make("p", `home-stock${model.inventoryConnected && initialStock?.count > 0 ? " is-available" : ""}`, stockText);
+        const updateStockInfo = () => {
+            const selectedStock = stockColors.find(({ color }) => color === colorSelect.value);
+            stockInfo.textContent = !model.inventoryConnected
+                ? "Chưa kết nối được dữ liệu tồn kho"
+                : selectedStock
+                    ? `${selectedStock.count} xe màu ${selectedStock.color} sẵn có trong kho`
+                    : `Hiện không có xe sẵn có trong kho cho phiên bản này`;
+            stockInfo.classList.toggle("is-available", Boolean(model.inventoryConnected && selectedStock?.count > 0));
+            const nextImage = colorImageFor(model, colorSelect.value) || safeOfficialUrl(model.imageUrl);
+            if (image && nextImage) {
+                image.src = nextImage;
+                image.alt = colorSelect.value ? `${text(model.modelName)} – ${colorSelect.value}` : `${text(model.modelName)} – xe điện VinFast`;
+            }
+        };
+        colorSelect.addEventListener("change", updateStockInfo);
         const footer = make("div", "vehicle-card-footer");
         const sourceUrl = safeOfficialUrl(model.priceSourceUrl || catalogueMetadata.pricePolicyPageUrl);
         if (sourceUrl) {
@@ -333,14 +332,12 @@
         const visible = sorted(models.filter(matches));
         grid.replaceChildren(...visible.map(card));
         grid.setAttribute("aria-busy", "false");
-        emptyState.hidden = visible.length !== 0;
         grid.hidden = visible.length === 0;
         const visibleLines = [...new Set(visible.map((model) => lineKey(lineName(model))))];
         const inStock = inventoryAvailable
             ? visibleLines.reduce((total, key) => total + (inventoryByLine.get(key) || 0), 0)
             : null;
         summary.textContent = `Có ${visible.length} phiên bản xe trong danh mục${visible.length !== models.length ? ` · tổng ${models.length} phiên bản` : ""}`
-            + (catalogueDatabaseConnected ? " · danh mục đồng bộ từ database" : " · đang dùng danh mục tham khảo do database chưa kết nối")
             + (inStock === null ? " · chưa tải được tồn kho" : ` · ${inStock} xe sẵn có trong kho theo các dòng đang hiển thị`)
             + ".";
         filterChips();
@@ -445,7 +442,6 @@
         const loadingCard = make("div", "loading-card");
         loadingCard.append(make("span", "loading-orbit"), make("span", "", "Đang tải danh sách xe..."));
         grid.replaceChildren(loadingCard);
-        emptyState.hidden = true;
         summary.textContent = "Đang tải danh mục xe...";
         try {
             let referenceCatalogue = {};
@@ -470,7 +466,6 @@
                 const databaseCatalogue = await databaseResponse.json();
                 const databaseModels = Array.isArray(databaseCatalogue.models)
                     ? databaseCatalogue.models.filter((model) => text(model.modelName)) : [];
-                catalogueDatabaseConnected = true;
                 catalogueMetadata = { ...referenceCatalogue, ...databaseCatalogue };
                 productModels = databaseModels.map((databaseModel) => {
                     const sameVersion = (referenceCatalogue.models || []).filter((item) =>
@@ -500,11 +495,7 @@
                         || `${text(databaseModel.modelName)}-${text(databaseModel.specificationVersion)}`;
                     return merged;
                 });
-                if (productModels.length === 0 && Array.isArray(referenceCatalogue.models) && referenceCatalogue.models.length > 0) {
-                    productModels = referenceCatalogue.models.filter((model) => text(model.modelName));
-                }
             } catch (databaseCatalogueError) {
-                catalogueDatabaseConnected = false;
                 catalogueMetadata = referenceCatalogue;
                 productModels = Array.isArray(referenceCatalogue.models)
                     ? referenceCatalogue.models.filter((model) => text(model.modelName)) : [];
@@ -512,6 +503,7 @@
             }
             inventoryAvailable = false;
             inventoryByLine = new Map();
+            inventoryByModel = new Map();
             try {
                 const inventoryResponse = await fetch(`${contextPath}/api/ai`, {
                     credentials: "same-origin",
@@ -523,9 +515,18 @@
                     const key = lineKey(vehicle.carLineName || vehicle.modelName);
                     if (!key) continue;
                     inventoryByLine.set(key, (inventoryByLine.get(key) || 0) + Number(vehicle.availableCars || 0));
+                    const modelId = Number(vehicle.modelId);
+                    if (Number.isInteger(modelId) && modelId > 0) {
+                        const colors = Object.entries(vehicle.inventoryByColor || {})
+                            .map(([color, count]) => ({ color: text(color), count: Number(count) }))
+                            .filter(({ color, count }) => color && Number.isFinite(count) && count > 0)
+                            .sort((a, b) => a.color.localeCompare(b.color, "vi"));
+                        inventoryByModel.set(modelId, colors);
+                    }
                 }
                 inventoryAvailable = true;
             } catch (inventoryError) {
+                inventoryByModel = new Map();
                 console.error("Không thể tải tồn kho xe từ database.", inventoryError);
             }
             models = productModels.map((model) => {
@@ -559,9 +560,6 @@
             document.getElementById("catalog-disclaimer").textContent =
                 disclaimer ||
                 "Giá và thông số hiển thị theo dữ liệu tham khảo của từng cấu hình; vui lòng đối chiếu với VinFast trước khi giao dịch.";
-            emptyState.querySelector("h3").textContent = "Chưa tìm thấy mẫu xe phù hợp";
-            emptyState.querySelector("p").textContent = "Thử thay đổi từ khóa hoặc bộ lọc để xem thêm lựa chọn.";
-            document.getElementById("empty-reset").textContent = "Xóa bộ lọc";
             catalogueStatus = "ready";
             render();
             syncCompare();
@@ -570,10 +568,6 @@
             grid.setAttribute("aria-busy", "false");
             grid.replaceChildren();
             grid.hidden = true;
-            emptyState.hidden = false;
-            emptyState.querySelector("h3").textContent = "Chưa thể tải danh mục xe";
-            emptyState.querySelector("p").textContent = "Vui lòng thử tải lại trang hoặc liên hệ để được hỗ trợ.";
-            document.getElementById("empty-reset").textContent = "Thử tải lại";
             summary.textContent = "Danh mục xe hiện chưa sẵn sàng.";
             console.error("Không thể tải danh mục xe VinFast.", error);
         }
@@ -601,7 +595,16 @@
         render();
     });
     document.getElementById("reset-filters").addEventListener("click", resetFilters);
-    document.getElementById("empty-reset").addEventListener("click", resetFilters);
+    document.querySelectorAll("[data-banner][data-model]").forEach((banner) => {
+        banner.addEventListener("click", (event) => {
+            event.preventDefault();
+            const model = banner.dataset.model;
+            search.value = model;
+            modelFilter.value = [...modelFilter.options].find((option) => normalizeSearch(option.value) === normalizeSearch(model))?.value || "";
+            render();
+            document.getElementById("models").scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+    });
     document.getElementById("compare-open").addEventListener("click", openComparison);
     document.getElementById("compare-clear").addEventListener("click", () => {
         selections.clear();

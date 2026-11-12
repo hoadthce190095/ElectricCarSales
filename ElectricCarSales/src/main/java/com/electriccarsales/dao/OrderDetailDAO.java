@@ -13,7 +13,16 @@ import java.util.List;
 
 public class OrderDetailDAO {
     public List<OrderDetail> findByOrderId(int orderId) {
-        String sql = "SELECT OrderDetailID, OrderID, CarID, SalesPrice FROM OrderDetails WHERE OrderID = ?";
+        String sql = """
+            SELECT d.OrderDetailID, d.OrderID, d.CarID, d.SalesPrice,
+                   c.VIN, m.ModelName, v.VersionName, co.ColorName
+            FROM OrderDetails d
+            JOIN Cars c ON c.CarID = d.CarID
+            LEFT JOIN CarModels m ON m.ModelID = c.ModelID
+            LEFT JOIN CarVersions v ON v.VersionID = c.VersionID
+            LEFT JOIN Colors co ON co.ColorID = c.ColorID
+            WHERE d.OrderID = ?
+            """;
         try (Connection conn = DBContext.openConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, orderId);
@@ -26,6 +35,10 @@ public class OrderDetailDAO {
                     d.setVehicleId(rs.getInt("CarID"));
                     d.setQuantity(1);
                     d.setUnitPrice(rs.getBigDecimal("SalesPrice"));
+                    d.setVin(rs.getString("VIN"));
+                    d.setModelName(rs.getString("ModelName"));
+                    d.setVersionName(rs.getString("VersionName"));
+                    d.setColorName(rs.getString("ColorName"));
                     list.add(d);
                 }
                 return list;

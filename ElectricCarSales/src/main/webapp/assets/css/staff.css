@@ -138,6 +138,7 @@ button {
     gap: 4px;
     align-content: start;
     flex: 1;
+    min-height: 0;
     overflow: auto;
     margin: 21px -1px 14px;
     padding: 0 1px;
@@ -169,7 +170,6 @@ button {
     background: #ffffff0c;
     color: #fff;
 }
-
 .staff-nav-link.active {
     background: #e318371b;
     color: #fff;

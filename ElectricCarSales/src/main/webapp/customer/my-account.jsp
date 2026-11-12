@@ -13,7 +13,7 @@ request.setAttribute("customerEyebrow", "CHÀO MỪNG TRỞ LẠI");
         <p>Theo dõi thông tin xe, đơn hàng, thanh toán VietQR OCB và hợp đồng của bạn tại một nơi.</p>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <a class="button button-light" href="<%= customerContext %>/index.jsp?view=customer#models">Khám phá xe <span>↗</span></a>
-            <button type="button" class="button button-secondary" data-open-consult-popup style="background:rgba(255,255,255,0.18);color:#fff;border-color:rgba(255,255,255,0.35);">✧ Mở Popup Tư vấn &amp; Báo giá</button>
+            <button type="button" class="button button-secondary" data-open-consult-popup style="background:rgba(255,255,255,0.18);color:#fff;border-color:rgba(255,255,255,0.35);">✧ Mở popup tư vấn và báo giá</button>
         </div>
     </div>
     <div class="welcome-art" aria-hidden="true">
@@ -58,6 +58,17 @@ request.setAttribute("customerEyebrow", "CHÀO MỪNG TRỞ LẠI");
         <strong><c:out value="${not empty customerContracts ? customerContracts.size() : 0}"/></strong>
         <span class="summary-foot">Hợp đồng &amp; Ký OTP <b>↗</b></span>
     </a>
+</section>
+<section aria-label="Truy cập nhanh các mục tài khoản">
+    <div class="section-heading" style="margin-top:24px;">
+        <div><span class="section-overline">CÁC MỤC TÀI KHOẢN</span><h2>Truy cập nhanh</h2></div>
+    </div>
+    <div class="summary-grid">
+        <a class="summary-card" href="<%= customerContext %>/customer/my-invoices.jsp"><span class="summary-icon icon-contracts">▨</span><span class="summary-label">Hóa đơn</span><strong>Mở hóa đơn</strong><span class="summary-foot">Hóa đơn mua xe <b>↗</b></span></a>
+        <a class="summary-card" href="<%= customerContext %>/customer/ai-assistant.jsp"><span class="summary-icon icon-payments">✧</span><span class="summary-label">Trợ lý xe</span><strong>Tư vấn xe</strong><span class="summary-foot">Tìm xe phù hợp <b>↗</b></span></a>
+        <a class="summary-card" href="<%= customerContext %>/customer/profile?view=profile"><span class="summary-icon icon-contracts">◎</span><span class="summary-label">Hồ sơ cá nhân</span><strong>Thông tin của bạn</strong><span class="summary-foot">Xem và chỉnh sửa <b>↗</b></span></a>
+        <a class="summary-card" href="<%= customerContext %>/index.jsp#models"><span class="summary-icon icon-orders">↗</span><span class="summary-label">Khám phá xe</span><strong>Danh mục VinFast</strong><span class="summary-foot">Chọn mẫu xe <b>↗</b></span></a>
+    </div>
 </section>
 <div class="dashboard-grid">
     <section class="panel recent-panel">
@@ -131,7 +142,10 @@ request.setAttribute("customerEyebrow", "CHÀO MỪNG TRỞ LẠI");
             </div>
         </c:if>
         <div class="profile-summary">
-            <div class="profile-avatar">KH</div>
+            <div class="profile-avatar" data-avatar-wrap>
+                <svg class="avatar-placeholder" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 21c.7-4.1 3.3-6.2 7.5-6.2s6.8 2.1 7.5 6.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                <img data-avatar-image src="<%= customerContext %>/customer/avatar?v=<%= System.currentTimeMillis() %>" alt="Ảnh đại diện" hidden>
+            </div>
             <div>
                 <strong><c:out value="${customer.customerName}" default="Khách hàng" /></strong>
                 <span>Tài khoản: <c:out value="${sessionScope.username}" /></span>
@@ -156,7 +170,7 @@ request.setAttribute("customerEyebrow", "CHÀO MỪNG TRỞ LẠI");
                 <strong><c:out value="${customer.address}" default="Chưa cập nhật" /></strong>
             </div>
         </div>
-        <form id="profile-edit-form" class="customer-form" method="post" action="<%= customerContext %>/customer/profile" hidden style="margin-top:14px;padding-top:14px;border-top:1px solid #e2e8f0;">
+        <form id="profile-edit-form" class="customer-form" method="post" enctype="multipart/form-data" action="<%= customerContext %>/customer/profile" hidden style="margin-top:14px;padding-top:14px;border-top:1px solid #e2e8f0;">
             <label>Họ và tên
                 <input name="customerName" type="text" maxlength="100" value="<c:out value='${customer.customerName}'/>" required>
             </label>
@@ -168,6 +182,9 @@ request.setAttribute("customerEyebrow", "CHÀO MỪNG TRỞ LẠI");
             </label>
             <label>Địa chỉ bàn giao xe
                 <input name="address" type="text" maxlength="255" value="<c:out value='${customer.address}'/>">
+            </label>
+            <label>Ảnh đại diện (JPEG, PNG hoặc WebP · tối đa 2 MB)
+                <input name="avatar" type="file" accept="image/jpeg,image/png,image/webp">
             </label>
             <button type="submit" class="button button-primary">Lưu cập nhật hồ sơ →</button>
         </form>

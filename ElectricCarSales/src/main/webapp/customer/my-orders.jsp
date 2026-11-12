@@ -6,6 +6,12 @@
     <span class="soft-badge">
         <i></i> Dữ liệu cá nhân</span>
 </div>
+<c:if test="${param.cancelled == '1'}">
+    <div class="info-note" style="margin-bottom:16px;border-color:#86efac;background:#f0fdf4;color:#166534;">
+        <span>✓</span>
+        <p>Đã hủy đơn hàng thành công.</p>
+    </div>
+</c:if>
 <section class="panel table-panel">
     <div class="panel-heading">
         <div>
@@ -26,8 +32,7 @@
                     <th>MẪU XE</th>
                     <th>TỔNG GIÁ TRỊ</th>
                     <th>TRẠNG THÁI</th>
-                    <th>
-                    </th>
+                    <th>THAO TÁC</th>
                 </tr>
             </thead>
             <tbody>
@@ -37,25 +42,34 @@
                         <td><c:out value="${order.orderDate}"/></td>
                         <td><c:out value="${order.vehicleName}" default="—"/></td>
                         <td><c:out value="${order.originalAmount}"/> VND</td>
-                        <td><c:out value="${order.status}"/></td>
+                        <td><span class="soft-badge"><c:out value="${order.status}"/></span></td>
                         <td>
-                            <a href="<%= request.getContextPath() %>/payment/detail?orderId=<c:out value='${order.id}'/>">Công nợ</a>
-                            <c:if test="${order.status eq 'PENDING' or order.status eq 'RESERVED'}">
-                                <form method="post" action="<%= request.getContextPath() %>/payment/create">
-                                    <input type="hidden" name="csrfToken" value="<c:out value='${paymentCsrf}'/>">
-                                    <input type="hidden" name="orderId" value="<c:out value='${order.id}'/>">
-                                    <input type="hidden" name="type" value="DEPOSIT">
-                                    <button type="submit">QR cọc 30%</button>
-                                </form>
-                            </c:if>
-                            <c:if test="${(order.status eq 'DEPOSITED' or order.status eq 'PROCESSING') and order.remainingAmount gt 0}">
-                                <form method="post" action="<%= request.getContextPath() %>/payment/create">
-                                    <input type="hidden" name="csrfToken" value="<c:out value='${paymentCsrf}'/>">
-                                    <input type="hidden" name="orderId" value="<c:out value='${order.id}'/>">
-                                    <input type="hidden" name="type" value="REMAINING">
-                                    <button type="submit">QR 70% (chỉ trả thẳng)</button>
-                                </form>
-                            </c:if>
+                            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                                <a href="<%= request.getContextPath() %>/payment/detail?orderId=<c:out value='${order.id}'/>" class="button button-secondary" style="padding:4px 8px;font-size:12px;">Công nợ</a>
+                                <c:if test="${order.status eq 'PENDING' or order.status eq 'RESERVED'}">
+                                    <form method="post" action="<%= request.getContextPath() %>/payment/create" style="display:inline;">
+                                        <input type="hidden" name="csrfToken" value="<c:out value='${paymentCsrf}'/>">
+                                        <input type="hidden" name="orderId" value="<c:out value='${order.id}'/>">
+                                        <input type="hidden" name="type" value="DEPOSIT">
+                                        <button type="submit" class="button button-primary" style="padding:4px 8px;font-size:12px;">QR cọc 30%</button>
+                                    </form>
+                                </c:if>
+                                <c:if test="${order.status eq 'PENDING'}">
+                                    <form method="post" action="<%= request.getContextPath() %>/order-status" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này?');">
+                                        <input type="hidden" name="orderId" value="<c:out value='${order.id}'/>">
+                                        <input type="hidden" name="status" value="CANCELLED">
+                                        <button type="submit" class="button button-secondary" style="padding:4px 8px;font-size:12px;color:#b91c1c;">Hủy đơn</button>
+                                    </form>
+                                </c:if>
+                                <c:if test="${(order.status eq 'DEPOSITED' or order.status eq 'PROCESSING') and order.remainingAmount gt 0}">
+                                    <form method="post" action="<%= request.getContextPath() %>/payment/create" style="display:inline;">
+                                        <input type="hidden" name="csrfToken" value="<c:out value='${paymentCsrf}'/>">
+                                        <input type="hidden" name="orderId" value="<c:out value='${order.id}'/>">
+                                        <input type="hidden" name="type" value="REMAINING">
+                                        <button type="submit" class="button button-primary" style="padding:4px 8px;font-size:12px;">QR 70% (chỉ trả thẳng)</button>
+                                    </form>
+                                </c:if>
+                            </div>
                         </td>
                     </tr>
                 </c:forEach>
