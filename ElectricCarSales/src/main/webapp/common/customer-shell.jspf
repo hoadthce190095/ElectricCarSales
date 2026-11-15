@@ -4,7 +4,7 @@
 response.setCharacterEncoding("UTF-8");
 String customerContext = request.getContextPath();
 String customerPage = request.getRequestURI().substring(request.getRequestURI().lastIndexOf('/') + 1);
-if ("profile".equals(customerPage)) customerPage = "my-account.jsp";
+if ("profile".equals(customerPage)) customerPage = "profile".equals(request.getParameter("view")) ? "my-profile.jsp" : "my-account.jsp";
 String customerTitle = (String) request.getAttribute("customerTitle");
 if (customerTitle == null) customerTitle = "Tài khoản của tôi";
 String customerEyebrow = (String) request.getAttribute("customerEyebrow");
@@ -21,10 +21,9 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="<%= customerContext %>/assets/css/customer.css">
+        <link rel="stylesheet" href="<%= customerContext %>/assets/css/customer.css?v=customer-profile-route-20261112">
         <link rel="stylesheet" href="<%= customerContext %>/assets/css/customer-ai.css">
-        <% if (customerPage.equals("payment-demo.jsp")) { %><link rel="stylesheet" href="<%= customerContext %>/assets/css/payment-demo.css"><% } %>
-        <script src="<%= customerContext %>/assets/js/customer.js?v=inventory-finance-sync-20261112" defer>
+        <script src="<%= customerContext %>/assets/js/customer.js?v=customer-avatar-20261112" defer>
         </script>
     </head>
     <body data-context-path="<%= customerContext %>">
@@ -42,11 +41,6 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
                     <a class="nav-link <%= customerPage.equals("my-account.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/profile">
                         <span class="nav-icon">⌂</span>
                         <span>Tổng quan</span>
-                    </a>
-                    <a class="nav-link <%= customerPage.equals("cart.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/cart.jsp">
-                        <span class="nav-icon">▢</span>
-                        <span>Giỏ hàng</span>
-                        <span class="nav-count" data-cart-count>0</span>
                     </a>
                     <div class="nav-divider">
                         <span>GIAO DỊCH CỦA TÔI</span>
@@ -75,7 +69,7 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
                     <div class="nav-divider">
                         <span>TÀI KHOẢN</span>
                     </div>
-                    <a class="nav-link" href="<%= customerContext %>/customer/profile#profile">
+                    <a class="nav-link <%= customerPage.equals("my-profile.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/profile?view=profile">
                         <span class="nav-icon">◎</span>
                         <span>Hồ sơ cá nhân</span>
                     </a>
@@ -109,12 +103,13 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
                         </strong>
                     </div>
                     <div class="topbar-actions">
-                        <a class="icon-button" href="<%= customerContext %>/customer/cart.jsp" aria-label="Giỏ hàng">▢<span class="cart-dot" data-cart-count>0</span>
-                        </a>
                         <button class="icon-button notification-button" type="button" aria-label="Thông báo" data-notification>♧</button>
                         <span class="topbar-divider"></span>
-                        <a class="user-chip" href="<%= customerContext %>/customer/profile#profile">
-                            <span class="user-avatar">KH</span>
+                        <a class="user-chip" href="<%= customerContext %>/customer/profile?view=profile">
+                            <span class="user-avatar" data-avatar-wrap>
+                                <svg class="avatar-placeholder" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 21c.7-4.1 3.3-6.2 7.5-6.2s6.8 2.1 7.5 6.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                                <img data-avatar-image src="<%= customerContext %>/customer/avatar?v=<%= System.currentTimeMillis() %>" alt="Ảnh đại diện" hidden>
+                            </span>
                             <span class="user-chip-copy">
                                 <strong><c:out value="${empty sessionScope.displayName ? sessionScope.username : sessionScope.displayName}" default="Khách hàng" /></strong>
                                 <small>Tài khoản cá nhân</small>

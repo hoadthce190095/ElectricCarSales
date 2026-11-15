@@ -65,6 +65,8 @@ button {
     inset: 0 auto 0 0;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 .brand {
     display: flex;
@@ -114,6 +116,10 @@ button {
 nav {
     display: grid;
     gap: 6px;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
 }
 .nav-item {
     border: 0;

@@ -100,7 +100,7 @@
     const roleDashboards = {
         sales: ["Tổng quan kinh doanh", "Tiếp nhận tư vấn, quản lý khách hàng, lập đơn hàng (cọc 30% / trả 70%), tạo hợp đồng và phối hợp bàn giao xe theo RDS."],
         operations: ["Tổng quan vận hành", "Quản lý tồn kho, nhập/xuất xe vật lý, cập nhật trạng thái xe và xác nhận bàn giao xe sau khi có hóa đơn."],
-        accountant: ["Tổng quan kế toán", "Đối soát sao kê OCB (0917231548 - Do Tan Dat), xác nhận đặt cọc 30%, xác nhận thanh toán/giải ngân 70%, theo dõi công nợ và phát hành hóa đơn."],
+        accountant: ["Tổng quan kế toán", "Đối soát sao kê MB Bank, xác nhận đặt cọc 30%, xác nhận thanh toán/giải ngân 70%, theo dõi công nợ và phát hành hóa đơn."],
         manager: ["Tổng quan quản lý", "Giám sát toàn bộ giao dịch bán xe, tồn kho và xuất báo cáo doanh thu / xe bán ra theo thời gian thực."],
         admin: ["Không gian quản trị", "Quản lý tồn kho theo quyền Admin đã được RDS cho phép."]
     };
@@ -187,7 +187,7 @@
                 <div class="metric-foot">Mở chức năng →</div></a>`).join("")}
             </section>
             <div class="inline-note" style="margin-top:20px;">
-                <strong>Quy trình chuẩn RDS:</strong> Tư vấn (ConsultationRequests) → Sales lập đơn (Orders + OrderDetails, giữ chỗ xe RESERVED) → Khách xem đơn &amp; Đặt cọc 30% qua VietQR OCB (0917231548 - Do Tan Dat) → Kế toán xác nhận cọc (DEPOSITED) → Sales lập Hợp đồng &amp; Khách ký OTP (SIGNED) → Thanh toán 70% còn lại (hoặc Ngân hàng đối tác giải ngân 70%) → Kế toán xác nhận đủ 100% (PAID) &amp; Xuất Hóa đơn (ISSUED) → Vận hành/Sales xác nhận Xuất kho Bàn giao xe (DELIVERED / COMPLETED).
+                <strong>Quy trình chuẩn RDS:</strong> Tư vấn (ConsultationRequests) → Sales lập đơn (Orders + OrderDetails, giữ chỗ xe RESERVED) → Khách xem đơn &amp; chuyển khoản MB Bank đặt cọc 30% → Kế toán xác nhận cọc (DEPOSITED) → Sales lập Hợp đồng &amp; Khách ký OTP (SIGNED) → Thanh toán 70% còn lại (hoặc Ngân hàng đối tác giải ngân 70%) → Kế toán xác nhận đủ 100% (PAID) &amp; Xuất Hóa đơn (ISSUED) → Vận hành/Sales xác nhận Xuất kho Bàn giao xe (DELIVERED / COMPLETED).
             </div>`;
     }
 
@@ -605,7 +605,7 @@
             <div class="page-heading"><div>
                 <div class="eyebrow"><span class="eyebrow-line"></span>UC-10–12 · KẾ TOÁN ĐỐI SOÁT</div>
                 <h1>${debtsFirst ? "Quản lý công nợ & giải ngân 70%" : "Xác nhận thanh toán"}</h1>
-                <p>Chỉ xác nhận sau khi đối chiếu sao kê OCB hoặc chứng từ giải ngân thật. Thao tác được lưu vào database.</p>
+                <p>Chỉ xác nhận sau khi đối chiếu sao kê MB Bank hoặc chứng từ giải ngân thật. Thao tác được lưu vào database.</p>
             </div></div>
             <div class="inline-note">Trang kế toán chạy trong dashboard. Giải ngân 70% chỉ được tạo chờ xác nhận sau khi hợp đồng đã ký; không tự kết nối/xác nhận với ngân hàng.</div>
             ${debtsFirst ? renderDebts() + renderPending() : renderPending() + renderDebts()}
@@ -639,7 +639,8 @@
         const invoices = invoiceData.invoices || [];
         const orders = orderData.orders || [];
         const canCreateContract = ["sales", "accountant", "admin"].includes(currentRole);
-        const canIssueInvoice = ["accountant", "admin"].includes(currentRole);
+        const canIssueInvoice = currentRole === "accountant";
+        const invoiceCsrfToken = invoiceData.csrfToken || "";
 
         const ordersReadyForContract = orders.filter(o => o.status === "DEPOSITED" && !o.contractStatus);
         const ordersReadyForInvoice = orders.filter(o => o.status === "PAID" && o.contractStatus === "SIGNED" && !o.invoiceNumber);
@@ -756,6 +757,7 @@
                 try {
                     const res = await postForm("/invoice", {
                         orderId: btn.dataset.orderId,
+                        csrfToken: invoiceCsrfToken,
                         note: "Kế toán phát hành hóa đơn chính thức sau khi thu đủ 100%."
                     });
                     notify(res.message);

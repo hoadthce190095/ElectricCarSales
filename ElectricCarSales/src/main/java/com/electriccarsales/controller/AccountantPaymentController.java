@@ -76,7 +76,7 @@ public class AccountantPaymentController extends HttpServlet {
                 BigDecimal received = null;
                 if (confirm) {
                     if (!"on".equals(request.getParameter("checkedStatement"))) {
-                        throw new IllegalArgumentException("Phải đối chiếu với sao kê OCB/đối tác trước khi xác nhận.");
+                        throw new IllegalArgumentException("Phải đối chiếu với sao kê MB Bank/đối tác trước khi xác nhận.");
                     }
                     try { received = new BigDecimal(request.getParameter("receivedAmount")); }
                     catch (NumberFormatException | NullPointerException e) {

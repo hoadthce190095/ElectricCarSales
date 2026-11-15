@@ -125,6 +125,11 @@ public class PortalPageFilter implements Filter {
             return;
         }
 
+        if ("/customer/my-profile.jsp".equals(path)) {
+            response.sendRedirect(request.getContextPath() + "/customer/profile?view=profile");
+            return;
+        }
+
         chain.doFilter(request, response);
     }
 

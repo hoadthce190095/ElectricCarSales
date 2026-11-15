@@ -34,7 +34,8 @@ button { cursor: pointer; }
 .header-contact span:first-child { color: var(--home-blue); font-size: 17px; }
 .account-link { padding: 10px 15px; border: 1px solid var(--home-line); border-radius: 7px; transition: border-color .18s, background .18s; }
 .account-link:hover { border-color: #b7c9e5; background: #f4f7fc; }
-.account-icon { color: var(--home-blue); font-size: 17px; }
+.account-icon { width: 24px; height: 24px; display: inline-grid; place-items: center; overflow: hidden; border-radius: 50%; background: #eef2f8; color: var(--home-blue); font-size: 17px; flex: 0 0 24px; }
+.account-icon .avatar-placeholder { width: 17px; height: 17px; }
 .mobile-menu-toggle { display: none; border: 0; background: transparent; color: var(--home-ink); font-size: 22px; }
 main { width: min(1440px, calc(100% - 72px)); margin: 0 auto; }
 .showcase { padding: 31px 0 25px; }

@@ -324,6 +324,8 @@ CREATE TABLE Customers (
     Phone VARCHAR(20) NOT NULL UNIQUE,
     Email VARCHAR(100) NULL,
     Address NVARCHAR(255) NULL,
+    AvatarData VARBINARY(MAX) NULL,
+    AvatarContentType VARCHAR(30) NULL,
 
     CONSTRAINT FK_Customers_Users
         FOREIGN KEY (UserID)

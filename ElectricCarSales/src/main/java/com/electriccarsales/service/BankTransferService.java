@@ -4,8 +4,8 @@ import com.electriccarsales.dao.FinanceConnection;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,22 +14,28 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Properties;
 
 /** Real bank-transfer instructions; only an accountant can confirm received funds. */
 public class BankTransferService {
-    public static final String BANK = "OCB";
-    public static final String ACCOUNT = "0917231548";
-    public static final String ACCOUNT_NAME = "Do Tan Dat";
+    private static final String BANK = "MB Bank";
+    private static final String DEFAULT_MB_ACCOUNT = "0917231548";
+    private static final String DEFAULT_MB_ACCOUNT_NAME = "Do Tan Dat";
+    private static final Properties LOCAL_CONFIG = loadLocalConfig();
 
     public record Transfer(int paymentId, int orderId, String type, String status,
-                           BigDecimal amount, String reference, String qrUrl, String methodName) {
+                           BigDecimal amount, String reference, String bankName,
+                           String accountNumber, String accountName, String methodName,
+                           boolean bankReported) {
         public int getPaymentId() { return paymentId; }
         public int getOrderId() { return orderId; }
         public String getType() { return type; }
         public String getStatus() { return status; }
         public BigDecimal getAmount() { return amount; }
         public String getReference() { return reference; }
-        public String getQrUrl() { return qrUrl; }
+        public String getBankName() { return bankName; }
+        public String getAccountNumber() { return accountNumber; }
+        public String getAccountName() { return accountName; }
         public String getMethodName() { return methodName; }
     }
     public record Pending(int paymentId, int orderId, String type, BigDecimal amount,
@@ -41,6 +47,7 @@ public class BankTransferService {
         public String getReference() { return reference; }
         public String getCustomer() { return customer; }
         public String getNote() { return note; }
+        public boolean isBankReported() { return note != null && note.contains("SEPAY_ID="); }
     }
     public record Debt(int orderId, BigDecimal totalAmount, BigDecimal depositAmount,
                        BigDecimal remainingAmount, String orderStatus, String paymentMethod,
@@ -58,6 +65,7 @@ public class BankTransferService {
 
     public Transfer createForCustomer(int orderId, int customerId, String requestedType) throws SQLException {
         if (orderId <= 0 || customerId <= 0) throw new IllegalArgumentException("Mã đơn hàng không hợp lệ.");
+        BankDetails bankDetails = new BankDetails(BANK, mbAccountNumber(), mbAccountName());
         String type = normalizeType(requestedType);
         try (Connection c = FinanceConnection.open()) {
             c.setAutoCommit(false);
@@ -80,7 +88,7 @@ public class BankTransferService {
                     throw new IllegalStateException("Yêu cầu đang chờ không còn khớp số tiền đơn hàng.");
                 if (transfer == null) transfer = insertPending(c, orderId, "BANK_TRANSFER", type, due);
                 c.commit();
-                return transfer;
+                return withBankDetails(transfer, bankDetails);
             } catch (SQLException | RuntimeException ex) {
                 c.rollback();
                 throw ex;
@@ -123,7 +131,7 @@ public class BankTransferService {
     public Transfer findCustomerTransfer(int paymentId, int customerId) throws SQLException {
         if (paymentId <= 0 || customerId <= 0) throw new IllegalArgumentException("Giao dịch không hợp lệ.");
         try (Connection c = FinanceConnection.open()) {
-            String sql = "SELECT p.PaymentID,p.OrderID,pt.TypeName,ps.StatusID,p.PaymentAmount,p.ReferenceCode,pm.MethodName "
+            String sql = "SELECT p.PaymentID,p.OrderID,pt.TypeName,ps.StatusID,p.PaymentAmount,p.ReferenceCode,p.Note,pm.MethodName "
                     + "FROM Payments p JOIN Orders o ON o.OrderID=p.OrderID "
                     + "JOIN PaymentTypes pt ON pt.PaymentTypeID=p.PaymentTypeID "
                     + "JOIN PaymentStatuses ps ON ps.PaymentStatusID=p.PaymentStatusID "
@@ -181,7 +189,7 @@ public class BankTransferService {
         }
     }
 
-    /** Accountant must first compare the REAL bank statement; this method never contacts OCB. */
+    /** Accountant must first compare the REAL MB Bank statement; no bank API is called. */
     public void decide(int paymentId, int accountantUserId, boolean confirm, String bankTransaction,
                        BigDecimal receivedAmount, String reason) throws SQLException {
         if (paymentId <= 0 || accountantUserId <= 0) throw new IllegalArgumentException("Thiếu mã giao dịch/nhân viên.");
@@ -310,7 +318,7 @@ public class BankTransferService {
     }
 
     private static Transfer pendingOfType(Connection c, int orderId, String type) throws SQLException {
-        String sql = "SELECT TOP (1) p.PaymentID,p.OrderID,pt.TypeName,ps.StatusID,p.PaymentAmount,p.ReferenceCode,pm.MethodName "
+        String sql = "SELECT TOP (1) p.PaymentID,p.OrderID,pt.TypeName,ps.StatusID,p.PaymentAmount,p.ReferenceCode,p.Note,pm.MethodName "
                 + "FROM Payments p JOIN PaymentTypes pt ON pt.PaymentTypeID=p.PaymentTypeID "
                 + "JOIN PaymentStatuses ps ON ps.PaymentStatusID=p.PaymentStatusID "
                 + "JOIN PaymentMethods pm ON pm.PaymentMethodID=p.PaymentMethodID "
@@ -348,7 +356,8 @@ public class BankTransferService {
             ps.setInt(2, paymentId);
             ps.executeUpdate();
         }
-        return new Transfer(paymentId, orderId, type, "PENDING", amount, ref, qrUrl(amount, ref), method);
+        return new Transfer(paymentId, orderId, type, "PENDING", amount, ref, BANK,
+                mbAccountNumber(), mbAccountName(), method, false);
     }
 
     private static BigDecimal expectedAmount(Connection c, OrderData o, String type) throws SQLException {
@@ -463,22 +472,42 @@ public class BankTransferService {
     private static Transfer transfer(ResultSet rs) throws SQLException {
         BigDecimal amount = rs.getBigDecimal("PaymentAmount");
         String ref = rs.getString("ReferenceCode");
+        String note = rs.getString("Note");
         return new Transfer(rs.getInt("PaymentID"), rs.getInt("OrderID"), rs.getString("TypeName"),
-                rs.getString("StatusID"), amount, ref, qrUrl(amount, ref), rs.getString("MethodName"));
+                rs.getString("StatusID"), amount, ref, BANK,
+                mbAccountNumber(), mbAccountName(), rs.getString("MethodName"),
+                note != null && note.contains("SEPAY_ID="));
     }
 
-    public static String qrUrl(BigDecimal amount, String reference) {
-        BigDecimal vnd = wholeVnd(amount);
-        String amountText = vnd.toBigIntegerExact().toString();
-        if (amountText.length() > 13) {
-            throw new IllegalArgumentException("Số tiền vượt giới hạn tạo VietQR (13 chữ số). Hãy liên hệ kế toán.");
+    public static String mbAccountNumber() {
+        return configured("ECS_MB_ACCOUNT", DEFAULT_MB_ACCOUNT);
+    }
+
+    public static String mbAccountName() {
+        return configured("ECS_MB_ACCOUNT_NAME", DEFAULT_MB_ACCOUNT_NAME);
+    }
+
+    private static String configured(String key, String fallback) {
+        String value = System.getProperty(key);
+        if (value == null || value.isBlank()) value = System.getenv(key);
+        if (value == null || value.isBlank()) value = LOCAL_CONFIG.getProperty(key);
+        return value == null || value.isBlank() ? fallback : value.trim();
+    }
+
+    private static Properties loadLocalConfig() {
+        Properties properties = new Properties();
+        try (InputStream input = BankTransferService.class.getClassLoader().getResourceAsStream("db.properties")) {
+            if (input != null) properties.load(input);
+        } catch (IOException exception) {
+            throw new ExceptionInInitializerError(exception);
         }
-        if (reference == null || !reference.matches("ECS[0-9]+[DR][0-9]+")) {
-            throw new IllegalArgumentException("Mã tham chiếu chuyển khoản không hợp lệ.");
-        }
-        return "https://img.vietqr.io/image/970448-" + ACCOUNT + "-compact2.svg?amount="
-                + amountText + "&addInfo=" + URLEncoder.encode(reference, StandardCharsets.UTF_8)
-                + "&accountName=" + URLEncoder.encode(ACCOUNT_NAME, StandardCharsets.UTF_8);
+        return properties;
+    }
+
+    private static Transfer withBankDetails(Transfer transfer, BankDetails details) {
+        return new Transfer(transfer.paymentId(), transfer.orderId(), transfer.type(), transfer.status(),
+                transfer.amount(), transfer.reference(), details.bankName(), details.accountNumber(),
+                details.accountName(), transfer.methodName(), transfer.bankReported());
     }
 
     private static BigDecimal wholeVnd(BigDecimal amount) {
@@ -492,4 +521,5 @@ public class BankTransferService {
 
     private record OrderData(int id, int customerId, BigDecimal total, BigDecimal deposit,
                              BigDecimal remaining, String status, String method, Integer companyId) { }
+    private record BankDetails(String bankName, String accountNumber, String accountName) { }
 }

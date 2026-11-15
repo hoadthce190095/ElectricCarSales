@@ -16,6 +16,20 @@
 
     const menuToggle = document.querySelector("[data-menu-toggle]");
     const sidebar = document.querySelector("#customer-sidebar");
+    document.querySelectorAll("[data-avatar-image]").forEach((image) => {
+        const setPlaceholder = () => {
+            image.hidden = true;
+            const placeholder = image.parentElement?.querySelector(".avatar-placeholder");
+            if (placeholder) placeholder.hidden = false;
+        };
+        image.addEventListener("load", () => {
+            image.hidden = false;
+            const placeholder = image.parentElement?.querySelector(".avatar-placeholder");
+            if (placeholder) placeholder.hidden = true;
+        });
+        image.addEventListener("error", setPlaceholder);
+        if (image.complete) image.naturalWidth > 0 ? image.dispatchEvent(new Event("load")) : setPlaceholder();
+    });
     menuToggle?.addEventListener("click", () => {
         const open = sidebar.classList.toggle("open");
         menuToggle.setAttribute("aria-expanded", String(open));
@@ -33,6 +47,20 @@
             form.hidden = !form.hidden;
             if (!form.hidden) form.querySelector("input")?.focus();
         }
+    });
+
+    const avatarInput = document.querySelector('#profile-edit-form input[name="avatar"]');
+    avatarInput?.addEventListener("change", () => {
+        const file = avatarInput.files?.[0];
+        if (!file || !file.type.startsWith("image/")) return;
+        const previewUrl = URL.createObjectURL(file);
+        document.querySelectorAll("[data-avatar-image]").forEach((image) => {
+            image.src = previewUrl;
+            image.hidden = false;
+            const placeholder = image.parentElement?.querySelector(".avatar-placeholder");
+            if (placeholder) placeholder.hidden = true;
+        });
+        setTimeout(() => URL.revokeObjectURL(previewUrl), 60000);
     });
 
     document.querySelectorAll(".filter-tab").forEach((tab) => {
@@ -71,7 +99,23 @@
         wrap.className = `ai-message ${role === "user" ? "user-message" : "assistant-message"}`;
         const avatar = document.createElement("span");
         avatar.className = "message-avatar";
-        avatar.textContent = role === "user" ? "KH" : "✳";
+        if (role === "user") {
+            const placeholder = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            placeholder.setAttribute("viewBox", "0 0 24 24");
+            placeholder.setAttribute("fill", "none");
+            placeholder.setAttribute("aria-hidden", "true");
+            placeholder.innerHTML = '<circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 21c.7-4.1 3.3-6.2 7.5-6.2s6.8 2.1 7.5 6.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
+            placeholder.classList.add("avatar-placeholder");
+            const photo = document.createElement("img");
+            photo.src = `${contextPath}/customer/avatar`;
+            photo.alt = "";
+            photo.hidden = true;
+            photo.addEventListener("load", () => { photo.hidden = false; placeholder.hidden = true; }, { once: true });
+            photo.addEventListener("error", () => photo.remove(), { once: true });
+            avatar.append(placeholder, photo);
+        } else {
+            avatar.textContent = "✳";
+        }
         const body = document.createElement("div");
         const p = document.createElement("p");
         p.style.whiteSpace = "pre-line";

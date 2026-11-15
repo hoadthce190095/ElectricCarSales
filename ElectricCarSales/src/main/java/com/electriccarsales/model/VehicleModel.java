@@ -2,6 +2,7 @@ package com.electriccarsales.model;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Public catalogue projection. It excludes vehicle identifiers and business records.
@@ -19,6 +20,7 @@ public class VehicleModel {
     private int availableCars;
     private List<String> versions = List.of();
     private List<String> colors = List.of();
+    private Map<String, Integer> inventoryByColor = Map.of();
     private VehicleSpecifications specifications = new VehicleSpecifications();
 
     public VehicleModel() {
@@ -134,6 +136,14 @@ public class VehicleModel {
 
     public void setColors(List<String> colors) {
         this.colors = colors == null ? List.of() : List.copyOf(colors);
+    }
+
+    public Map<String, Integer> getInventoryByColor() {
+        return inventoryByColor;
+    }
+
+    public void setInventoryByColor(Map<String, Integer> inventoryByColor) {
+        this.inventoryByColor = inventoryByColor == null ? Map.of() : Map.copyOf(inventoryByColor);
     }
 
     public VehicleSpecifications getSpecifications() {

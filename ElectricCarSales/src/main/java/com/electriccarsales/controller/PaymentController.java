@@ -16,7 +16,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
-/** Payment history and balance endpoints. Checkout and callbacks require a configured provider adapter. */
+/** Customer bank-transfer instructions, payment history, and balance endpoints. */
 @WebServlet("/payment/*")
 public class PaymentController extends HttpServlet {
     private PaymentService paymentService;
@@ -43,7 +43,7 @@ public class PaymentController extends HttpServlet {
 
         try {
             String action = action(request);
-            if ("qr".equals(action) || "check".equals(action)) {
+            if ("check".equals(action)) {
                 Integer paymentId = FinanceControllerSupport.positiveInt(request.getParameter("paymentId"));
                 BankTransferService.Transfer transfer = paymentId == null ? null
                         : bankTransferService.findCustomerTransfer(paymentId, customerId);
@@ -52,13 +52,9 @@ public class PaymentController extends HttpServlet {
                     return;
                 }
                 response.setHeader("Cache-Control", "no-store");
-                if ("check".equals(action)) {
-                    response.setContentType("application/json;charset=UTF-8");
-                    response.getWriter().write("{\"status\":\"" + transfer.status() + "\"}");
-                } else {
-                    request.setAttribute("transfer", transfer);
-                    request.getRequestDispatcher("/customer/bank-transfer.jsp").forward(request, response);
-                }
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"status\":\"" + transfer.status()
+                        + "\",\"bankReported\":" + transfer.bankReported() + "}");
                 return;
             }
             String token = ensureCsrf(request);
@@ -99,7 +95,6 @@ public class PaymentController extends HttpServlet {
             }
 
             request.setAttribute("paymentHistory", paymentService.getCustomerPaymentHistory(customerId));
-            request.setAttribute("paymentTestMode", paymentService.isTestMode());
             request.getRequestDispatcher("/customer/my-payments.jsp").forward(request, response);
         } catch (SQLException e) {
             getServletContext().log("Cannot read bank transfer", e);
@@ -121,11 +116,6 @@ public class PaymentController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String action = action(request);
-        if ("callback".equals(action)) {
-            FinanceControllerSupport.sendError(request, response, HttpServletResponse.SC_NOT_IMPLEMENTED,
-                    "Chưa cấu hình adapter cổng để xác minh thông báo giao dịch.");
-            return;
-        }
         Integer customerId = FinanceControllerSupport.customerId(request, response);
         if (customerId == null) return;
         if ("confirm".equals(action)) {

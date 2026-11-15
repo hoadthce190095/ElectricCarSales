@@ -42,7 +42,8 @@ public final class AIDAO implements AICatalogue {
                COALESCE(c.Price, cv_cat.CatalogPrice) AS Price,
                c.CarID AS InventoryCarID, c.Price AS InventoryPrice,
                COALESCE(v.VersionName, cv_cat.VersionName) AS VersionName,
-               COALESCE(color.ColorName, col_cat.ColorName) AS ColorName
+               COALESCE(color.ColorName, col_cat.ColorName) AS ColorName,
+               color.ColorName AS InventoryColorName
         FROM CarModels m
         INNER JOIN CarLines l ON l.CarLineID = m.CarLineID
         INNER JOIN Brands b ON b.BrandID = l.BrandID
@@ -111,6 +112,7 @@ public final class AIDAO implements AICatalogue {
         private final LinkedHashSet<String> versions = new LinkedHashSet<>();
         private final LinkedHashSet<String> colors = new LinkedHashSet<>();
         private final LinkedHashSet<Integer> countedCarIds = new LinkedHashSet<>();
+        private final Map<String, Integer> inventoryByColor = new LinkedHashMap<>();
         private BigDecimal minPrice, maxPrice;
         private BigDecimal inventoryMinPrice, inventoryMaxPrice;
         private int availableCars;
@@ -134,6 +136,10 @@ public final class AIDAO implements AICatalogue {
             boolean physicalCar = !row.wasNull();
             if (physicalCar && countedCarIds.add(carId)) {
                 availableCars++;
+                String inventoryColor = row.getString("InventoryColorName");
+                if (inventoryColor != null && !inventoryColor.isBlank()) {
+                    inventoryByColor.merge(inventoryColor, 1, Integer::sum);
+                }
                 BigDecimal stockPrice = row.getBigDecimal("InventoryPrice");
                 if (stockPrice != null && stockPrice.signum() > 0) {
                     inventoryMinPrice = inventoryMinPrice == null ? stockPrice : inventoryMinPrice.min(stockPrice);
@@ -159,6 +165,7 @@ public final class AIDAO implements AICatalogue {
                 new ArrayList<>(versions), new ArrayList<>(colors), specifications);
             model.setInventoryMinPrice(inventoryMinPrice);
             model.setInventoryMaxPrice(inventoryMaxPrice);
+            model.setInventoryByColor(inventoryByColor);
             return model;
         }
     }
