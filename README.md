@@ -4,25 +4,24 @@ Dự án SWP391 quản lý cửa hàng ô tô điện. Phần của **Phạm Tr�
 
 Chức năng gồm quản trị tài khoản/nhân viên, tạo và sao chép vai trò, phân quyền, khuyến mãi, báo cáo kinh doanh, nhật ký và cấu hình hệ thống, trợ lý tư vấn danh mục xe.
 
-Đã bổ sung tổng quan kinh doanh, đối chiếu báo cáo với kỳ trước, lọc tài khoản theo vai trò/trạng thái, lọc nhân viên, xem hiệu lực và tính thử khuyến mãi, đổi mật khẩu cá nhân và bắt đầu cuộc tư vấn mới. Cách tổ chức giao diện tham khảo Shopify, Salesforce và VinFast; xem [nguồn tham khảo và cách áp dụng](docs/THAM_KHAO_THIET_KE.md).
+Đã bổ sung tổng quan kinh doanh, đối chiếu báo cáo với kỳ trước, lọc tài khoản theo vai trò/trạng thái, lọc nhân viên, quản lý hiệu lực khuyến mãi, đổi mật khẩu cá nhân và bắt đầu cuộc tư vấn mới. Cách tổ chức giao diện tham khảo Shopify, Salesforce và VinFast; xem [nguồn tham khảo và cách áp dụng](docs/THAM_KHAO_THIET_KE.md).
 
-Đọc [hướng dẫn chạy trên IntelliJ](docs/HUONG_DAN_INTELLIJ.md) trước khi triển khai. Mở `ElectricCarSales/pom.xml` dưới dạng Maven project. Trang chủ `/ElectricCarSales/` dùng giao diện VinFast xanh dương theo `main`; không gian quản trị và trợ lý xe ở `/ElectricCarSales/tan.jsp` dùng chung bảng màu và kiểu chữ. Nút **Đăng nhập** mở `/ElectricCarSales/tan.jsp?login=1`.
+## Chạy trên máy của thành viên
 
-Chỉ cần chạy `ElectricCarSalesDB.sql` ở thư mục gốc trong SSMS cho cả database mới và database đã có. File này tạo `ElectricCarSalesDB` nếu thiếu, bổ sung schema chung, rồi nạp danh mục VinFast và 30 xe kho DEMO, tiếp theo là bộ báo cáo giả lập gồm 9 đơn cùng thanh toán, trả góp và khuyến mãi. Khi phát hiện đơn hàng, thanh toán hoặc trả góp không thuộc bộ DEMO, script thông báo bằng `PRINT` và bỏ qua phần nạp báo cáo DEMO; schema và danh mục vẫn chạy. Chạy lại giữ dữ liệu hiện có, không xóa database và không thêm bản ghi trùng. Script không tạo tài khoản hay mật khẩu Admin; tự tạo Admin theo hướng dẫn.
+1. Mở `ElectricCarSales/pom.xml` dưới dạng Maven project với **JDK 24**. Dùng **Tomcat 10.1** để triển khai file `ElectricCarSales/target/ElectricCarSales.war` sau khi chạy `mvn -f ElectricCarSales/pom.xml clean verify`.
+2. Trong SSMS, chạy [ElectricCarSalesDB.sql](ElectricCarSalesDB.sql) rồi [ElectricCarSalesFeatureMigration.sql](ElectricCarSalesFeatureMigration.sql) ở thư mục gốc. Chạy cả hai với database mới hoặc database đã có. Hai file bổ sung schema và các mục danh mục còn thiếu, giữ nguyên dữ liệu kinh doanh. Báo cáo đọc dữ liệu từ các giao dịch hiện có trên từng database.
+3. Chạy `.\Setup-LocalConfig.ps1` rồi sửa `%USERPROFILE%\.electriccarsales\db.properties` theo tên máy, cổng, tài khoản và mật khẩu SQL Server của bạn. Có thể đặt `DB_URL`, `DB_USER`, `DB_PASSWORD` trong môi trường của Tomcat. Khởi động lại Tomcat sau khi đổi cấu hình.
+4. Mở `/ElectricCarSales/`. Nút **Trợ lý xe** mở `/ElectricCarSales/customer/ai-assistant.jsp` và khách có thể tư vấn xe ngay. Đăng nhập bằng tài khoản có quyền để mở **Quản trị** ở `/ElectricCarSales/admin.jsp`. Nếu database chưa có Admin, xem cách tạo tài khoản đầu tiên trong [hướng dẫn chạy trên IntelliJ](docs/HUONG_DAN_INTELLIJ.md#4-tạo-admin-đầu-tiên).
 
-Nếu database đã tồn tại và không chạy lại thiết lập schema, chạy `CustomerAvatarMigration.sql` một lần trong SSMS để thêm các cột ảnh đại diện khách hàng.
+Mở các file SQL dưới dạng UTF-8. Nếu dùng `sqlcmd`, thêm `-b -f 65001` để báo lỗi và giữ đúng dấu tiếng Việt. Xem [nguồn dữ liệu danh mục VinFast](docs/NGUON_DU_LIEU_VINFAST.md).
 
-Bản trình bày có danh mục VinFast VF 3, VF 5, VF 6, VF 7, VF 8, VF 9, tách phiên bản Eco/Plus, hình xe và nguồn thông số/giá. [Nguồn dữ liệu](docs/NGUON_DU_LIEU_VINFAST.md) ghi chuẩn đo tầm hoạt động và phiên bản áp dụng. Xe tồn kho, khách hàng, giao dịch và khuyến mãi DEMO là dữ liệu mô phỏng để minh họa báo cáo, không phải kết quả kinh doanh VinFast. Xem [kịch bản báo cáo](docs/KICH_BAN_BAO_CAO.md).
-
-Trên máy hiện tại, mở thư mục gốc `D:\SWP391-ElectricCars` trong IntelliJ, chọn **ElectricCarSales - Tomcat 10.1** rồi bấm **Run**. Cấu hình dùng JDK 24, build và deploy **ElectricCarSales:war exploded** lên Tomcat 10.1.60 tại `http://localhost:8080/ElectricCarSales/`. Bấm **Stop** trong IntelliJ để dừng server. Plugin Tomcat cần nhóm tính năng Ultimate; sau khi kích hoạt Trial, khởi động lại IDE và Reload All Maven Projects để nạp plugin và artifact web. Cấu hình Maven **ElectricCarSales - Chạy web** / **ElectricCarSales - Dừng web** được giữ làm cách chạy dự phòng.
-
-Nếu muốn chạy bằng script tại thư mục gốc:
+Trên Windows, có thể khởi động Tomcat từ thư mục gốc bằng PowerShell.
 
 ```powershell
 .\docs\Chay-Web.ps1 -Port 8081
 ```
 
-Đặt `JAVA_HOME` tới JDK 24 và `CATALINA_HOME` tới Tomcat 10.1 trên máy đang chạy; hoặc truyền `-JavaHome` và `-TomcatHome` cho script. Địa chỉ web là `http://localhost:8081/ElectricCarSales/`; thêm `-OpenBrowser` để tự mở trình duyệt. Lần đầu vào **Quản trị**, chọn **Tạo Admin đầu tiên**, tự đặt mật khẩu 10–128 ký tự rồi đăng nhập. Dừng web bằng `.\docs\Dung-Web.ps1 -Port 8081`; sau khi sửa code, chạy `.\docs\Chay-Web.ps1 -Port 8081 -Restart -Build` để dừng server của script rồi build sạch. Cấu hình SQL Server bằng `DB_URL`, `DB_USER`, `DB_PASSWORD` hoặc `db.properties` riêng trên từng máy theo hướng dẫn.
+Đặt `JAVA_HOME` tới JDK 24 và `CATALINA_HOME` tới Tomcat 10.1 trên máy đang chạy; hoặc truyền `-JavaHome` và `-TomcatHome` cho script. Địa chỉ web là `http://localhost:8081/ElectricCarSales/`; thêm `-OpenBrowser` để tự mở trình duyệt. Dừng web bằng `.\docs\Dung-Web.ps1 -Port 8081`; sau khi sửa code, chạy `.\docs\Chay-Web.ps1 -Port 8081 -Restart -Build` để dừng server của script rồi build sạch. Cấu hình SQL Server bằng `DB_URL`, `DB_USER`, `DB_PASSWORD` hoặc `db.properties` riêng trên từng máy theo hướng dẫn.
 
 ```text
 ElectricCarSales/src/main/java/
@@ -36,10 +35,11 @@ ElectricCarSales/src/main/java/
     Main.java     Kiểm tra kết nối DB
   util/
     DBContext.java  Kết nối SQL Server dùng chung theo sườn của nhóm
-ElectricCarSales/src/main/webapp/index.jsp, tan.jsp
+ElectricCarSales/src/main/webapp/index.jsp, admin.jsp, customer/ai-assistant.jsp
 ElectricCarSales/src/main/webapp/assets/css/theme.css, home.css
 ElectricCarSales/src/main/webapp/assets/js/home.js
-ElectricCarSales/src/main/webapp/assets/tan-common.js, tan-admin.js, tan-report.js, tan-catalogue.js, tan-ai.js, tan.js
+ElectricCarSales/src/main/webapp/assets/admin-common.js, admin-management.js, sales-reports.js
+ElectricCarSales/src/main/webapp/assets/js/customer-ai.js
 ElectricCarSalesDB.sql
 ```
 
@@ -47,6 +47,6 @@ Package gốc `com.electriccarsales` và bốn package `controller`, `dao`, `mod
 
 Toàn bộ mã nguồn được format với 4 dấu cách, khối điều kiện/vòng lặp có đủ `{ }` và dòng trống giữa các hàm. Có cấu hình dùng lại cho IntelliJ, Maven và Prettier; xem [quy tắc format](docs/FORMAT_CODE.md).
 
-Ngày 17/10/2026 đã chạy build sạch: **92 kiểm thử Java/WAR đạt, 0 lỗi** trên Java 24. Kiểm thử dùng H2 chế độ SQL Server, HTTP trên Tomcat và triển khai WAR ở cả `/ElectricCarSales` và `/showroom`, xác nhận JSP được biên dịch, link assets có phiên bản CSS, đăng nhập, danh mục và tải CSV/XLSX theo context. Cả ba bộ kiểm tra JavaScript đạt, gồm context triển khai, bộ lọc/so sánh trang chủ và phục hồi tải danh mục sau HTTP 503. Bản giao diện xanh dương đã chạy bằng Tomcat native của IntelliJ tại cổng 8080; API trợ lý đọc đủ 10 phiên bản từ SQL Server. Xem [kết quả kiểm tra](docs/KET_QUA_KIEM_TRA.md). WAR loại `db.properties` riêng của máy; bản chia sẻ dùng biến môi trường `DB_*` trong cấu hình chạy Tomcat.
+Chạy `mvn -f ElectricCarSales/pom.xml clean verify` để kiểm tra WAR và các luồng HTTP. Sau khi triển khai, thử mở Quản trị và Trợ lý xe bằng cấu hình SQL Server của máy chạy.
 
 AI dùng chế độ **CATALOG_RULES** chạy từ dữ liệu xe, không gọi mô hình ngôn ngữ bên ngoài. PDF được lưu qua nút **In / Lưu PDF** của trình duyệt; Excel là file XLSX thực. Đăng ký/OTP, thanh toán, bán xe và quản lý kho thuộc phần của các thành viên khác.

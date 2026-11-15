@@ -24,18 +24,6 @@ public class AdministrationDAO {
         + " FROM Users u JOIN Roles r ON r.RoleID=u.RoleID JOIN Statuses s ON"
         + " s.StatusID=u.StatusID LEFT JOIN Employees e ON e.UserID=u.UserID ";
 
-    private boolean hasTable(Connection connection, String tableName) {
-        try (PreparedStatement ps = connection.prepareStatement(
-                "SELECT CASE WHEN OBJECT_ID(?, N'U') IS NOT NULL THEN 1 ELSE 0 END")) {
-            ps.setString(1, "dbo." + tableName);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() && rs.getInt(1) == 1;
-            }
-        } catch (SQLException ex) {
-            return false;
-        }
-    }
-
     public AdministrationLookupsDTO lookups(Connection connection) throws SQLException {
         AdministrationLookupsDTO result = new AdministrationLookupsDTO(lookup(connection, "SELECT RoleID,RoleName FROM Roles ORDER BY RoleID"),
             lookup(connection, "SELECT StatusID,StatusName FROM Statuses ORDER BY StatusID"),
@@ -245,9 +233,10 @@ public class AdministrationDAO {
     }
 
     public List<AdminPromotion> promotions(Connection connection) throws SQLException {
-        if (!hasTable(connection, "Promotions")) {
+        if (!SchemaTables.exists(connection, "Promotions")) {
             return List.of();
         }
+        boolean hasPromotionCars = SchemaTables.exists(connection, "PromotionCars");
         List<AdminPromotion> result = new ArrayList<>();
         try (
             PreparedStatement statement = connection
@@ -256,7 +245,7 @@ public class AdministrationDAO {
             while (resultSet.next()) {
                 List<Integer> ids = new ArrayList<>();
                 int id = resultSet.getInt("PromotionID");
-                if (hasTable(connection, "PromotionCars")) {
+                if (hasPromotionCars) {
                     try (PreparedStatement links = connection
                         .prepareStatement("SELECT ModelID FROM PromotionCars WHERE PromotionID=? ORDER BY ModelID")) {
                         links.setInt(1, id);
@@ -277,7 +266,7 @@ public class AdministrationDAO {
     }
 
     public int savePromotion(Connection connection, Integer id, PromotionRequest promotion) throws SQLException {
-        if (!hasTable(connection, "Promotions")) {
+        if (!SchemaTables.exists(connection, "Promotions")) {
             throw new com.electriccarsales.model.ApiException(503,
                 "Bảng Promotions không có trong schema ElectricCarSalesDB.sql hiện tại.");
         }
@@ -305,7 +294,7 @@ public class AdministrationDAO {
                 }
             }
         }
-        if (hasTable(connection, "PromotionCars")) {
+        if (SchemaTables.exists(connection, "PromotionCars")) {
             try (PreparedStatement statement = connection
                 .prepareStatement("DELETE FROM PromotionCars WHERE PromotionID=?")) {
                 statement.setInt(1, id);
@@ -331,7 +320,7 @@ public class AdministrationDAO {
 
     public PageResponse<SystemLog> logs(Connection connection, String action, Integer userId, LocalDate from,
         LocalDate to, int page, int pageSize, String targetType) throws SQLException {
-        if (!hasTable(connection, "SystemLogs")) {
+        if (!SchemaTables.exists(connection, "SystemLogs")) {
             List<SystemLog> mem = SystemLogDAO.memoryLogs().stream()
                 .filter(l -> (action == null || action.isEmpty() || action.equalsIgnoreCase(l.getAction()))
                     && (userId == null || userId.equals(l.getUserId()))

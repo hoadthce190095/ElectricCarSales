@@ -48,16 +48,10 @@ public class ReportDAO {
               AND inv.CustomerID = o.CustomerID AND inv.TotalAmount = o.TotalAmount))
         """;
 
-    private boolean hasInstallmentTables(Connection connection) {
-        try (PreparedStatement ps = connection.prepareStatement(
-                "SELECT CASE WHEN OBJECT_ID(N'dbo.InstallmentContracts', N'U') IS NOT NULL "
-                + "AND OBJECT_ID(N'dbo.InstallmentSchedules', N'U') IS NOT NULL "
-                + "AND OBJECT_ID(N'dbo.InstallmentPayments', N'U') IS NOT NULL THEN 1 ELSE 0 END");
-             ResultSet rs = ps.executeQuery()) {
-            return rs.next() && rs.getInt(1) == 1;
-        } catch (SQLException ex) {
-            return false;
-        }
+    private boolean hasInstallmentTables(Connection connection) throws SQLException {
+        return SchemaTables.exists(connection, "InstallmentContracts")
+            && SchemaTables.exists(connection, "InstallmentSchedules")
+            && SchemaTables.exists(connection, "InstallmentPayments");
     }
 
     public Snapshot read(ReportFilter filter, LocalDate today) throws SQLException {
@@ -69,13 +63,14 @@ public class ReportDAO {
                 List<OrderRow> orders = orders(connection, filter);
                 List<VehicleRow> vehicles = vehicles(connection, filter);
                 List<PaymentRow> payments = payments(connection, filter);
-                ExtraTotals extras = extras(connection, filter, today);
+                boolean hasInstallments = hasInstallmentTables(connection);
+                ExtraTotals extras = extras(connection, filter, today, hasInstallments);
                 List<StatusTotal> inventory = inventory(connection, filter);
                 boolean containsDemo = hasDemoInventory(connection, filter);
                 if (!containsDemo) {
                     containsDemo = hasDemoPayment(connection, filter);
                 }
-                if (!containsDemo && hasInstallmentTables(connection)) {
+                if (!containsDemo && hasInstallments) {
                     containsDemo = hasDemoInstallmentPayment(connection, filter);
                 }
                 connection.commit();
@@ -162,8 +157,9 @@ public class ReportDAO {
         return rows;
     }
 
-    private ExtraTotals extras(Connection connection, ReportFilter filter, LocalDate today) throws SQLException {
-        if (!hasInstallmentTables(connection)) {
+    private ExtraTotals extras(Connection connection, ReportFilter filter, LocalDate today,
+                               boolean hasInstallments) throws SQLException {
+        if (!hasInstallments) {
             // In ElectricCarSalesDB.sql, installment orders use Orders.CompanyID or PaymentMethods.MethodName = 'INSTALLMENT'
             String countSql = "SELECT COUNT(*) Total FROM Orders o JOIN PaymentMethods pm ON pm.PaymentMethodID = o.PaymentMethodID "
                 + ORDER_JOINS + " WHERE o.OrderDate >= ? AND o.OrderDate < ? "

@@ -39,6 +39,7 @@ boolean customerView = authenticatedUser instanceof SessionUser
             <a class="nav-link current" href="#models">Mua xe</a>
             <a class="nav-link" href="#about">Giới thiệu</a>
             <a class="nav-link" href="<c:url value='/customer/ai-assistant.jsp' />">Trợ lý xe</a>
+            <a class="nav-link" href="<c:url value='/admin.jsp'><c:param name='login' value='1' /></c:url>">Quản trị</a>
         </nav>
         <div class="header-actions">
             <a class="header-contact" href="#" data-open-consult-popup>

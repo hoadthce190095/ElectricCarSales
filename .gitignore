@@ -1,12 +1,9 @@
-<<<<<<< HEAD
 .smarttomcat/
-
-=======
 .codex-input/
 tool/
 out/
 ElectricCarSales/target/
 ElectricCarSales/src/main/resources/db.properties
+ElectricCarSales/src/main/resources/smtp.properties
 *.log
 deliverables/
->>>>>>> origin/Phuc-Tan

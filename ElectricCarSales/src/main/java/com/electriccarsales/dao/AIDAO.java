@@ -60,19 +60,17 @@ public final class AIDAO implements AICatalogue {
         ) c ON c.ModelID = m.ModelID
         LEFT JOIN CarVersions v ON v.VersionID = c.VersionID AND v.ModelID = m.ModelID
         LEFT JOIN Colors color ON color.ColorID = c.ColorID
-        OUTER APPLY (
-            SELECT TOP (1) catalogVersion.CatalogPrice, catalogVersion.VersionName
+        LEFT JOIN CarVersions cv_cat ON cv_cat.VersionID = (
+            SELECT MIN(catalogVersion.VersionID)
             FROM CarVersions catalogVersion
             WHERE catalogVersion.ModelID = m.ModelID
-            ORDER BY catalogVersion.VersionID
-        ) cv_cat
-        OUTER APPLY (
-            SELECT TOP (1) catalogColor.ColorName
+        )
+        LEFT JOIN (
+            SELECT modelColor.ModelID, MIN(catalogColor.ColorName) AS ColorName
             FROM ModelColors modelColor
             JOIN Colors catalogColor ON catalogColor.ColorID = modelColor.ColorID
-            WHERE modelColor.ModelID = m.ModelID
-            ORDER BY catalogColor.ColorName
-        ) col_cat
+            GROUP BY modelColor.ModelID
+        ) col_cat ON col_cat.ModelID = m.ModelID
         ORDER BY m.ModelID
         """;
 

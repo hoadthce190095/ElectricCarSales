@@ -13,18 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SystemConfigurationDAO {
     private static final Map<String, String> MEMORY_FALLBACK = new ConcurrentHashMap<>();
 
-    private boolean hasTable(Connection connection) {
-        try (PreparedStatement ps = connection.prepareStatement(
-                "SELECT CASE WHEN OBJECT_ID(N'dbo.SystemConfigurations', N'U') IS NOT NULL THEN 1 ELSE 0 END");
-             ResultSet rs = ps.executeQuery()) {
-            return rs.next() && rs.getInt(1) == 1;
-        } catch (SQLException ex) {
-            return false;
-        }
-    }
-
     public SystemConfiguration findByKey(Connection connection, String key) throws SQLException {
-        if (!hasTable(connection)) {
+        if (!SchemaTables.exists(connection, "SystemConfigurations")) {
             String val = MEMORY_FALLBACK.get(key);
             return val == null ? null : new SystemConfiguration(key, null, val, null, 0, 0, null, null, null);
         }
@@ -44,7 +34,7 @@ public class SystemConfigurationDAO {
     }
 
     public String findValue(Connection connection, String key) throws SQLException {
-        if (!hasTable(connection)) {
+        if (!SchemaTables.exists(connection, "SystemConfigurations")) {
             return MEMORY_FALLBACK.get(key);
         }
         try (PreparedStatement statement = connection
@@ -58,7 +48,7 @@ public class SystemConfigurationDAO {
 
     public void save(Connection connection, int actorId, String key, String value) throws SQLException {
         MEMORY_FALLBACK.put(key, value);
-        if (!hasTable(connection)) {
+        if (!SchemaTables.exists(connection, "SystemConfigurations")) {
             return;
         }
         int changed;

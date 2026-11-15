@@ -1,12 +1,5 @@
-# Copy to src/main/resources/db.properties for local IntelliJ development.
-# Do NOT commit real secrets or API keys to public Git repositories.
-
-# 1. SQL Server Configuration
+# Copy with Setup-LocalConfig.ps1, then fill in the SQL Server address and credentials for this machine.
+# Adjust host and port to match your local instance. Remove DB_USER and DB_PASSWORD for integrated auth.
 DB_URL=jdbc:sqlserver://localhost:1433;databaseName=ElectricCarSalesDB;encrypt=true;trustServerCertificate=true
-DB_USER=sa
-DB_PASSWORD=123456
-
-# 2. MB Bank transfer configuration (set as Tomcat process environment variables)
-# ECS_MB_ACCOUNT=0917231548
-# ECS_MB_ACCOUNT_NAME=<verify the actual beneficiary name with MB Bank>
-# SEPAY_WEBHOOK_KEY=<rotate the previously exposed key before production>
+DB_USER=your_sql_login
+DB_PASSWORD=your_sql_password

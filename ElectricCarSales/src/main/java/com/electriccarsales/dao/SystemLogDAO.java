@@ -16,8 +16,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Audit writes participate in the same transaction when SystemLogs exists in DB,
- * and safely fall back to application audit log when running on fixed ElectricCarSalesDB.sql schema.
+ * Persists audit records in the same transaction as the business change.
+ * Standalone events can use the application log on older databases.
  */
 public final class SystemLogDAO {
     private static final Logger LOGGER = Logger.getLogger(SystemLogDAO.class.getName());
@@ -30,19 +30,28 @@ public final class SystemLogDAO {
         return copy;
     }
 
-    private boolean hasTable(Connection connection) {
-        if (connection == null) return false;
-        try (PreparedStatement ps = connection.prepareStatement(
-                "SELECT CASE WHEN OBJECT_ID(N'dbo.SystemLogs', N'U') IS NOT NULL THEN 1 ELSE 0 END");
-             ResultSet rs = ps.executeQuery()) {
-            return rs.next() && rs.getInt(1) == 1;
-        } catch (SQLException ex) {
-            return false;
-        }
-    }
-
     public void record(Connection connection, Integer actorId, String action, String targetType, String targetId,
         String detail) throws SQLException {
+        if (SchemaTables.exists(connection, "SystemLogs")) {
+            try (PreparedStatement statement = connection.prepareStatement(
+                "INSERT INTO SystemLogs(UserID,Action,TargetType,TargetID,Detail) VALUES(?,?,?,?,?)")) {
+                if (actorId == null) {
+                    statement.setNull(1, java.sql.Types.INTEGER);
+                } else {
+                    statement.setInt(1, actorId);
+                }
+                statement.setString(2, action);
+                statement.setString(3, targetType);
+                statement.setString(4, targetId);
+                statement.setNString(5, detail);
+                statement.executeUpdate();
+            }
+            return;
+        }
+        if (connection != null && !connection.getAutoCommit()) {
+            throw new SQLException("Không thể ghi nhật ký giao dịch. Hãy cập nhật schema quản trị.");
+        }
+
         String username = null;
         if (connection != null && actorId != null) {
             try (PreparedStatement ps = connection.prepareStatement("SELECT Username FROM Users WHERE UserID = ?")) {
@@ -61,22 +70,5 @@ public final class SystemLogDAO {
         MEMORY_LOGS.add(entry);
         LOGGER.log(Level.INFO, "[AUDIT] user={0} action={1} target={2}:{3} detail={4}",
                 new Object[]{actorId, action, targetType, targetId, detail});
-
-        if (!hasTable(connection)) {
-            return;
-        }
-        try (PreparedStatement statement = connection.prepareStatement(
-            "INSERT INTO SystemLogs(UserID,Action,TargetType,TargetID,Detail) VALUES(?,?,?,?,?)")) {
-            if (actorId == null) {
-                statement.setNull(1, java.sql.Types.INTEGER);
-            } else {
-                statement.setInt(1, actorId);
-            }
-            statement.setString(2, action);
-            statement.setString(3, targetType);
-            statement.setString(4, targetId);
-            statement.setNString(5, detail);
-            statement.executeUpdate();
-        }
     }
 }
