@@ -153,18 +153,27 @@
             if (res.ok) {
                 const data = await res.json();
                 if (data.answer && !data.refused) {
-                    if (pendingP) pendingP.textContent = data.answer;
+                    if (pendingP) {
+                        pendingP.style.whiteSpace = "normal";
+                        pendingP.innerHTML = await queryAIConsultation(q, "", data.answer);
+                    }
                     answered = true;
                 }
             }
             if (!answered) {
                 const fallbackAnswer = await queryAIConsultation(q, "");
-                if (pendingP) pendingP.textContent = fallbackAnswer;
+                if (pendingP) {
+                    pendingP.style.whiteSpace = "normal";
+                    pendingP.innerHTML = fallbackAnswer;
+                }
             }
         } catch (err) {
             try {
                 const fallbackAnswer = await queryAIConsultation(q, "");
-                if (pendingP) pendingP.textContent = fallbackAnswer;
+                if (pendingP) {
+                    pendingP.style.whiteSpace = "normal";
+                    pendingP.innerHTML = fallbackAnswer;
+                }
             } catch (_) {
                 if (pendingP) pendingP.textContent = "Trợ lý AI đang bận. Vui lòng thử lại sau giây lát.";
             }
@@ -455,33 +464,37 @@
     function updateConsultationModeUI(isCustomer) {
         const modeBadge = document.getElementById("ecs-consult-mode-badge");
         const cardTitle = document.getElementById("ecs-consult-card-title");
-        const fieldLabel = document.getElementById("ecs-consult-field-label");
         const submitBtn = document.getElementById("ecs-consult-submit-btn");
         const consultMsg = document.getElementById("ecs-consult-message");
         const aiPrompts = document.getElementById("ecs-popup-ai-prompts");
+        const aiStream = document.getElementById("ecs-ai-consult-result");
+        const loginCta = document.getElementById("ecs-ai-consult-cta");
         const staffSection = document.getElementById("ecs-staff-consult-section");
         if (!submitBtn) return;
         if (isCustomer) {
             if (modeBadge) {
-                modeBadge.textContent = "Sales Staff";
+                modeBadge.textContent = "SALES STAFF";
                 modeBadge.className = "ecs-mode-badge is-staff";
             }
-            if (cardTitle) cardTitle.textContent = "2. Gửi yêu cầu tư vấn & lập đơn cho Sales Staff";
-            if (fieldLabel) fieldLabel.textContent = "Nội dung cần tư vấn (phiên bản, màu xe, yêu cầu lập đơn...):";
-            if (consultMsg) consultMsg.placeholder = "Ví dụ: Tôi muốn tư vấn VF 8 Eco màu Trắng, phương án trả thẳng và nhờ Sales lập đơn giúp...";
+            if (cardTitle) cardTitle.textContent = "2. Tư vấn & Đặt xe với Sales Staff";
+            if (consultMsg) consultMsg.placeholder = "Nhập yêu cầu tư vấn màu xe, phiên bản hoặc nhờ Sales lập đơn...";
             if (aiPrompts) aiPrompts.hidden = true;
+            if (aiStream) aiStream.hidden = true;
+            if (loginCta) loginCta.hidden = true;
             if (staffSection) staffSection.hidden = false;
-            submitBtn.textContent = "Gửi yêu cầu tới Sales Staff →";
+            submitBtn.innerHTML = "Gửi yêu cầu <span>↑</span>";
         } else {
             if (modeBadge) {
-                modeBadge.textContent = "Tư vấn trực tuyến";
+                modeBadge.textContent = "AI ASSISTANT";
                 modeBadge.className = "ecs-mode-badge";
             }
-            if (cardTitle) cardTitle.textContent = "2. Tư vấn trực tuyến & Giải đáp thông tin xe";
-            if (fieldLabel) fieldLabel.textContent = "Nội dung bạn quan tâm (thông số, pin, giá bán, so sánh...):";
-            if (consultMsg) consultMsg.placeholder = "Nhập câu hỏi (ví dụ: Tầm hoạt động VF 7, So sánh VF 5 và VF 6, Xe nào 7 chỗ?)...";
+            if (cardTitle) cardTitle.textContent = "Trợ lý Tư vấn VinFast";
+            if (consultMsg) consultMsg.placeholder = "Hỏi về mẫu xe, thông số, tầm hoạt động hoặc so sánh xe…";
             if (aiPrompts) aiPrompts.hidden = false;
-            submitBtn.textContent = "Xem tư vấn & thông số xe →";
+            if (aiStream) aiStream.hidden = false;
+            if (loginCta) loginCta.hidden = false;
+            if (staffSection) staffSection.hidden = true;
+            submitBtn.innerHTML = "Gửi <span>↑</span>";
         }
     }
 
@@ -511,8 +524,7 @@
         return `
         <div>
             <div class="ecs-catalog-intro">
-                <strong>${escapeHtml(title || "DANH MỤC XE ĐIỆN VINFAST CHỦ LỰC:")}</strong>
-                <div style="font-size:11px;color:#64748b;font-weight:400;margin-top:2px;">Bấm nút "Chọn xe" để tự động tính phương án trả thẳng hoặc vay trả góp ở Cột 1:</div>
+                <strong>${escapeHtml(title || "Danh mục xe điện VinFast")}</strong>
             </div>
             <div class="ecs-catalog-grid">${cardsHtml}</div>
         </div>`;
@@ -520,13 +532,16 @@
 
     function renderSingleCarHero(car, subtitle) {
         const depNum = Math.round(car.priceNum * 0.3);
+        const shortRange = car.range.replace(/\s*\(.*?\)/g, "");
+        const shortPower = car.power.split("(")[0].trim();
+        const shortCharge = car.charge.replace(/Sạc (siêu )?nhanh( công suất cao)?\s*/i, "").split("(")[0].trim();
         return `
         <div class="ecs-vhero">
             <div class="ecs-vhero-head">
                 <div>
                     <span class="ecs-vhero-badge">${escapeHtml(car.segment)}</span>
                     <h4 class="ecs-vhero-title">VinFast ${escapeHtml(car.modelName)}</h4>
-                    ${subtitle ? `<div style="font-size:11.5px;color:#64748b;margin-top:2px;">${escapeHtml(subtitle)}</div>` : ""}
+                    ${subtitle ? `<div style="font-size:10.5px;color:#858a92;margin-top:1px;">${escapeHtml(subtitle)}</div>` : ""}
                 </div>
                 <div class="ecs-vhero-pricebox">
                     <span class="ecs-vhero-price">${escapeHtml(car.price.split('(')[0].trim())}</span>
@@ -536,39 +551,34 @@
             <div class="ecs-vhero-metrics">
                 <div class="ecs-vmetric">
                     <span class="m-icon">🔋</span>
-                    <span class="m-label">Tầm hoạt động</span>
-                    <span class="m-val">${escapeHtml(car.range)}</span>
-                    <span class="m-sub">Pin ${escapeHtml(car.battery)}</span>
+                    <span class="m-label">Quãng đường</span>
+                    <span class="m-val">${escapeHtml(shortRange)}</span>
+                    <span class="m-sub">Pin ${escapeHtml(car.battery.split('(')[0].trim())}</span>
                 </div>
                 <div class="ecs-vmetric">
                     <span class="m-icon">⚡</span>
-                    <span class="m-label">Động cơ &amp; Công suất</span>
-                    <span class="m-val">${escapeHtml(car.power.split('(')[0].trim())}</span>
-                    <span class="m-sub">${escapeHtml(car.seats)}</span>
+                    <span class="m-label">Công suất</span>
+                    <span class="m-val">${escapeHtml(shortPower)}</span>
+                    <span class="m-sub">${escapeHtml(car.seats.split('(')[0].trim())}</span>
                 </div>
                 <div class="ecs-vmetric">
                     <span class="m-icon">⏱</span>
-                    <span class="m-label">Thời gian sạc</span>
-                    <span class="m-val">${escapeHtml(car.charge.split('(')[0].trim())}</span>
+                    <span class="m-label">Sạc nhanh</span>
+                    <span class="m-val">${escapeHtml(shortCharge)}</span>
                     <span class="m-sub">Trạm V-GREEN</span>
                 </div>
                 <div class="ecs-vmetric">
                     <span class="m-icon">🛡</span>
                     <span class="m-label">An toàn</span>
-                    <span class="m-val">${escapeHtml(car.airbags)}</span>
-                    <span class="m-sub">Chuẩn an toàn cao</span>
+                    <span class="m-val">${escapeHtml(car.airbags.replace(/\s*an toàn.*/i, ""))}</span>
+                    <span class="m-sub">Chuẩn VinFast</span>
                 </div>
             </div>
             <div class="ecs-vhero-body">
-                <div class="ecs-vhero-highlight">
-                    <strong>Đặc điểm nổi bật:</strong> ${escapeHtml(car.highlights)}
-                </div>
-                <div class="ecs-vhero-suit">
-                    <strong>Đánh giá phù hợp:</strong> ${escapeHtml(car.suitability)}
-                </div>
+                <strong>Phù hợp:</strong> ${escapeHtml(car.suitability)}
             </div>
             <button type="button" class="ecs-btn-select-main" data-pick-model="${escapeHtml(car.modelName)}">
-                ✓ Chọn ${escapeHtml(car.modelName)} để tính tiền cọc &amp; trả góp ở Cột 1 →
+                ✓ Chọn ${escapeHtml(car.modelName)} để tính cọc &amp; trả góp ở Cột 1 →
             </button>
         </div>`;
     }
@@ -576,7 +586,7 @@
     function renderComparisonTable(m1, m2) {
         return `
         <div class="ecs-cmp-wrap">
-            <div class="ecs-cmp-title">BẢNG SO SÁNH ĐỐI CHIẾU: ${escapeHtml(m1.modelName)} &amp; ${escapeHtml(m2.modelName)}</div>
+            <div class="ecs-cmp-title">SO SÁNH NHANH: ${escapeHtml(m1.modelName)} &amp; ${escapeHtml(m2.modelName)}</div>
             <div class="ecs-cmp-table">
                 <div class="ecs-cmp-row head">
                     <span class="label">Tiêu chí</span>
@@ -584,12 +594,7 @@
                     <span class="col2">${escapeHtml(m2.modelName)}</span>
                 </div>
                 <div class="ecs-cmp-row">
-                    <span class="label">Phân khúc</span>
-                    <span class="col1">${escapeHtml(m1.segment)}</span>
-                    <span class="col2">${escapeHtml(m2.segment)}</span>
-                </div>
-                <div class="ecs-cmp-row">
-                    <span class="label">Giá niêm yết</span>
+                    <span class="label">Giá tham khảo</span>
                     <span class="col1 text-red">${escapeHtml(m1.price.split('(')[0].trim())}</span>
                     <span class="col2 text-red">${escapeHtml(m2.price.split('(')[0].trim())}</span>
                 </div>
@@ -604,14 +609,14 @@
                     <span class="col2"><b>${escapeHtml(m2.range)}</b></span>
                 </div>
                 <div class="ecs-cmp-row">
-                    <span class="label">Động cơ &amp; Sạc</span>
-                    <span class="col1">${escapeHtml(m1.power)} · ${escapeHtml(m1.charge)}</span>
-                    <span class="col2">${escapeHtml(m2.power)} · ${escapeHtml(m2.charge)}</span>
+                    <span class="label">Công suất</span>
+                    <span class="col1">${escapeHtml(m1.power.split('(')[0].trim())}</span>
+                    <span class="col2">${escapeHtml(m2.power.split('(')[0].trim())}</span>
                 </div>
                 <div class="ecs-cmp-row">
-                    <span class="label">Số chỗ &amp; Túi khí</span>
-                    <span class="col1">${escapeHtml(m1.seats)} · ${escapeHtml(m1.airbags)}</span>
-                    <span class="col2">${escapeHtml(m2.seats)} · ${escapeHtml(m2.airbags)}</span>
+                    <span class="label">Số chỗ · Túi khí</span>
+                    <span class="col1">${escapeHtml(m1.seats.split('(')[0].trim())} · ${escapeHtml(m1.airbags)}</span>
+                    <span class="col2">${escapeHtml(m2.seats.split('(')[0].trim())} · ${escapeHtml(m2.airbags)}</span>
                 </div>
             </div>
             <div class="ecs-cmp-actions">
@@ -621,94 +626,68 @@
         </div>`;
     }
 
-    async function queryAIConsultation(question, selectedModelName) {
-        try {
-            const token = await ensureCsrf();
-            const res = await fetch(`${contextPath}/api/ai`, {
-                method: "POST",
-                credentials: "same-origin",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                    ...(token ? { "X-CSRF-Token": token } : {})
-                },
-                body: JSON.stringify({ message: `${selectedModelName ? "[" + selectedModelName + "] " : ""}${question}`, intent: "AUTO" })
-            });
-            if (res.ok) {
-                const data = await res.json();
-                if (data.answer && !data.refused) {
-                    const foundKey = Object.keys(modelProfiles).find(k =>
-                        data.answer.toLowerCase().includes(k.toLowerCase()) || question.toLowerCase().includes(k.toLowerCase())
-                    );
-                    const heroPart = foundKey ? renderSingleCarHero(modelProfiles[foundKey], "Mẫu xe được gợi ý theo câu hỏi") : "";
-                    return `
-                    <div style="margin-bottom:12px;background:#f8fafc;border-left:3px solid #2563eb;padding:9px 12px;border-radius:0 6px 6px 0;font-size:12px;line-height:1.6;color:#1e293b;">
-                        ${escapeHtml(data.answer)}
-                    </div>
-                    ${heroPart || renderCatalogGrid("CÁC MẪU XE VINFAST PHÙ HỢP:")}
-                    `;
-                }
-            }
-        } catch (e) {
-            console.warn("Backend /api/ai không phản hồi, chuyển sang phân tích câu hỏi bằng bộ tri thức VinFast.", e);
-        }
-
+    async function queryAIConsultation(question, selectedModelName, preloadedBackendAnswer) {
         const normQ = normalizeVn(question);
         const normSelected = normalizeVn(selectedModelName);
 
-        const mentionedModels = Object.keys(modelProfiles).filter(key => {
-            const k = normalizeVn(key);
-            return normQ.includes(k) || normSelected.includes(k);
-        });
+        const mentionedInQ = Object.keys(modelProfiles).filter(key => normQ.includes(normalizeVn(key)));
 
-        // 1. TẤT CẢ DÒNG XE
-        if (normQ.includes("cac dong xe") || normQ.includes("nhung xe") || normQ.includes("du an")
-            || normQ.includes("tat ca xe") || normQ.includes("danh sach xe") || normQ.includes("co nhung mau")
-            || normQ.includes("co xe gi") || normQ.includes("mau xe gi")) {
-            return renderCatalogGrid("DANH MỤC CÁC DÒNG XE ĐIỆN VINFAST ĐANG KINH DOANH:");
+        // 1. SO SÁNH 2 XE: Luôn ưu tiên bảng so sánh trực quan, gọn gàng
+        if (normQ.includes("so sanh") || (normQ.includes("va") && mentionedInQ.length >= 2)) {
+            const m1Name = mentionedInQ[0] || "VF 5";
+            const m2Name = mentionedInQ[1] || (m1Name === "VF 5" ? "VF 6" : "VF 5");
+            return renderComparisonTable(modelProfiles[m1Name] || modelProfiles["VF 5"], modelProfiles[m2Name] || modelProfiles["VF 6"]);
         }
 
-        // 2. XE RẺ NHẤT / TIẾT KIỆM
-        if (normQ.includes("re nhat") || normQ.includes("it tien nhat") || normQ.includes("thap nhat") || normQ.includes("tiet kiem nhat")) {
-            return renderSingleCarHero(modelProfiles["VF 3"], "Dòng xe có giá bán và chi phí sạc tối ưu nhất trong danh mục");
+        // 2. TẤT CẢ DÒNG XE
+        if (normQ.includes("cac dong xe") || normQ.includes("tat ca") || normQ.includes("danh muc")
+            || normQ.includes("danh sach") || normQ.includes("co nhung mau")) {
+            return renderCatalogGrid("Danh mục các dòng xe điện VinFast:");
         }
 
-        // 3. XE CAO CẤP / ĐẮT NHẤT / XA NHẤT
-        if (normQ.includes("dat nhat") || normQ.includes("cao cap nhat") || normQ.includes("sang nhat") || normQ.includes("xa nhat") || normQ.includes("pin khung nhat")) {
-            return renderSingleCarHero(modelProfiles["VF 9"], "Mẫu E-SUV full-size đầu bảng với cụm pin 123 kWh đi 626 km");
-        }
-
-        // 4. SO SÁNH 2 XE
-        if (normQ.includes("so sanh") || normQ.includes("khac") || normQ.includes("hay") || (normQ.includes("va") && mentionedModels.length >= 2)) {
-            const m1Name = mentionedModels[0] || "VF 5";
-            const m2Name = mentionedModels[1] || (m1Name === "VF 5" ? "VF 6" : "VF 5");
-            const m1 = modelProfiles[m1Name] || modelProfiles["VF 5"];
-            const m2 = modelProfiles[m2Name] || modelProfiles["VF 6"];
-            return renderComparisonTable(m1, m2);
-        }
-
-        // 5. SỐ CHỖ / GIA ĐÌNH
-        if (normQ.includes("cho") || normQ.includes("ghe") || normQ.includes("nguoi") || normQ.includes("gia dinh")) {
-            if (normQ.includes("7") || normQ.includes("bay") || normQ.includes("dong nguoi")) {
-                return renderSingleCarHero(modelProfiles["VF 9"], "Dòng xe DUY NHẤT 7 chỗ trong danh mục VinFast, hoàn hảo cho gia đình đông người");
+        // 3. KẾT HỢP DỮ LIỆU TỪ /api/ai (NẾU CÓ) NHƯNG HIỂN THỊ DẠNG CARD THAY VÌ ĐỐNG CHỮ DÀI
+        let apiAnswer = preloadedBackendAnswer || "";
+        if (!apiAnswer) {
+            try {
+                const token = await ensureCsrf();
+                const res = await fetch(`${contextPath}/api/ai`, {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                        ...(token ? { "X-CSRF-Token": token } : {})
+                    },
+                    body: JSON.stringify({ message: `${selectedModelName ? "[" + selectedModelName + "] " : ""}${question}`, intent: "AUTO" })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.answer && !data.refused) {
+                        apiAnswer = data.answer;
+                    }
+                }
+            } catch (_) {
+                // Chuyển sang bộ tri thức thẻ xe trực quan
             }
-            if (normQ.includes("4") || normQ.includes("bon") || normQ.includes("nho")) {
-                return renderSingleCarHero(modelProfiles["VF 3"], "Dòng xe 4 chỗ nhỏ gọn, tối ưu đi phố che nắng che mưa");
-            }
-            return `
-            <div>
-                <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:8px;">GỢI Ý MẪU XE THEO SỐ LƯỢNG CHỖ NGỒI:</div>
-                <div style="display:flex;flex-direction:column;gap:10px;">
-                    ${renderSingleCarHero(modelProfiles["VF 9"], "Tùy chọn 7 chỗ (dành cho đại gia đình)")}
-                    ${renderSingleCarHero(modelProfiles["VF 7"], "Tùy chọn 5 chỗ rộng rãi, thiết kế thể thao cao cấp")}
-                </div>
-            </div>`;
         }
 
-        // 6. THÔNG TIN XE CỤ THỂ HOẶC THEO XE ĐANG CHỌN
-        const targetKey = mentionedModels[0] || Object.keys(modelProfiles).find(k => normSelected.includes(normalizeVn(k))) || "VF 7";
+        if (normQ.includes("re nhat") || normQ.includes("it tien") || normQ.includes("tiet kiem") || normQ.includes("4 cho")) {
+            return renderSingleCarHero(modelProfiles["VF 3"], "Dòng xe tối ưu chi phí nhất trong danh mục");
+        }
+        if (normQ.includes("7 cho") || normQ.includes("bay cho") || normQ.includes("dong nguoi") || normQ.includes("cao cap nhat") || normQ.includes("xa nhat")) {
+            return renderSingleCarHero(modelProfiles["VF 9"], "SUV 7 chỗ cỡ lớn đầu bảng · Pin 123 kWh");
+        }
+
+        const matchedFromApi = Object.keys(modelProfiles).filter(k =>
+            apiAnswer.toLowerCase().includes(k.toLowerCase())
+        );
+        const targetKey = mentionedInQ[0]
+            || matchedFromApi[0]
+            || Object.keys(modelProfiles).find(k => normSelected.includes(normalizeVn(k)))
+            || "VF 7";
+
         const car = modelProfiles[targetKey] || modelProfiles["VF 7"];
-        return renderSingleCarHero(car, "Thông số kỹ thuật chính thức & phương án dự kiến");
+        return renderSingleCarHero(car, "Thông số tóm tắt & mức đặt cọc 30%");
     }
 
     function renderChatBubbles(content, staffName, status) {
@@ -724,23 +703,32 @@
             if (staffMatch) {
                 hasStaffReply = true;
                 bubbles.push(`
-                    <div class="ecs-bubble staff">
-                        <span class="ecs-bubble-label">Sales Staff (${escapeHtml(staffName || staffMatch[1])}):</span>
-                        ${escapeHtml(staffMatch[2])}
+                    <div class="ecs-bubble-row staff">
+                        <span class="ecs-bubble-ava">✦</span>
+                        <div class="ecs-bubble">
+                            <span class="ecs-bubble-label">Sales Staff (${escapeHtml(staffName || staffMatch[1])})</span>
+                            ${escapeHtml(staffMatch[2])}
+                        </div>
                     </div>
                 `);
             } else if (customerMatch) {
                 bubbles.push(`
-                    <div class="ecs-bubble customer">
-                        <span class="ecs-bubble-label">Bạn:</span>
-                        ${escapeHtml(customerMatch[1])}
+                    <div class="ecs-bubble-row customer">
+                        <span class="ecs-bubble-ava">KH</span>
+                        <div class="ecs-bubble">
+                            <span class="ecs-bubble-label">Bạn</span>
+                            ${escapeHtml(customerMatch[1])}
+                        </div>
                     </div>
                 `);
             } else {
                 bubbles.push(`
-                    <div class="ecs-bubble customer">
-                        <span class="ecs-bubble-label">Yêu cầu tư vấn:</span>
-                        ${escapeHtml(line)}
+                    <div class="ecs-bubble-row customer">
+                        <span class="ecs-bubble-ava">KH</span>
+                        <div class="ecs-bubble">
+                            <span class="ecs-bubble-label">Yêu cầu của bạn</span>
+                            ${escapeHtml(line)}
+                        </div>
                     </div>
                 `);
             }
@@ -748,15 +736,29 @@
 
         if (staffName && !hasStaffReply) {
             bubbles.push(`
-                <div class="ecs-bubble staff">
-                    <span class="ecs-bubble-label">Sales Staff (${escapeHtml(staffName)}):</span>
-                    ${status === 'COMPLETED' ? 'Đã hoàn tất hỗ trợ tư vấn và lập phương án cho yêu cầu này.' : 'Đã tiếp nhận yêu cầu và đang liên hệ hỗ trợ bạn.'}
+                <div class="ecs-bubble-row staff">
+                    <span class="ecs-bubble-ava">✦</span>
+                    <div class="ecs-bubble">
+                        <span class="ecs-bubble-label">Sales Staff (${escapeHtml(staffName)})</span>
+                        ${status === 'COMPLETED' ? 'Đã hoàn tất hỗ trợ tư vấn và lập phương án cho yêu cầu này.' : 'Đã tiếp nhận yêu cầu và đang hỗ trợ bạn.'}
+                    </div>
                 </div>
             `);
         }
 
         return bubbles.join("");
     }
+
+    document.querySelectorAll("[data-consult-thread]").forEach((threadEl) => {
+        const raw = threadEl.textContent || "";
+        const staffName = threadEl.dataset.staffName || "";
+        const status = (threadEl.dataset.consultStatus || "").toUpperCase();
+        const html = renderChatBubbles(raw, staffName, status);
+        if (html) {
+            threadEl.style.whiteSpace = "normal";
+            threadEl.innerHTML = html;
+        }
+    });
 
     async function loadPopupConsultations() {
         if (!historyList) return;
@@ -990,22 +992,38 @@
         const aiResultBox = document.getElementById("ecs-ai-consult-result");
         const aiResultText = document.getElementById("ecs-ai-consult-text");
 
-        // 1. NẾU CHƯA ĐĂNG NHẬP: CHẠY TRỢ LÝ TỰ ĐỘNG TƯ VẤN SẢN PHẨM TRỰC QUAN
+        // 1. NẾU CHƯA ĐĂNG NHẬP: HIỂN THỊ KHUNG CHAT BONG BÓNG + THẺ XE GỌN ĐẸP ĐỒNG BỘ HỆ THỐNG
         if (!isCustomerSession) {
             submitButton.disabled = true;
-            submitButton.textContent = "Đang tra cứu dữ liệu xe...";
+            submitButton.innerHTML = "Đang tra cứu…";
+            msgInput.value = "";
             try {
                 const answer = await queryAIConsultation(message, modelName);
                 if (aiResultBox && aiResultText) {
-                    aiResultText.innerHTML = answer; // Render HTML card trực quan, không còn là đống chữ thô
+                    aiResultText.innerHTML = `
+                        <div class="ecs-msg user" style="margin-top:8px;">
+                            <span class="ecs-msg-avatar">KH</span>
+                            <div class="ecs-msg-bubble">
+                                <div>${escapeHtml(message)}</div>
+                                <small>Bạn</small>
+                            </div>
+                        </div>
+                        <div class="ecs-msg assistant" style="margin-top:8px;">
+                            <span class="ecs-msg-avatar">✳</span>
+                            <div class="ecs-msg-bubble">
+                                ${answer}
+                                <small>Trợ lý VinFast · Thông số tóm tắt</small>
+                            </div>
+                        </div>
+                    `;
                     aiResultBox.hidden = false;
-                    aiResultBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                    aiResultBox.scrollTop = aiResultBox.scrollHeight;
                 }
             } catch (err) {
                 notify("Hệ thống tra cứu đang bận. Vui lòng thử lại sau.");
             } finally {
                 submitButton.disabled = false;
-                submitButton.textContent = "Hỏi thêm câu hỏi khác →";
+                submitButton.innerHTML = "Gửi <span>↑</span>";
             }
             return;
         }

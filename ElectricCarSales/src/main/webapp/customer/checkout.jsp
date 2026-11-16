@@ -137,19 +137,19 @@
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
-                                <td style="min-width:320px;">
-                                    <div style="white-space:pre-line;font-size:13px;margin-bottom:8px;background:#f8fafc;padding:8px 10px;border-radius:6px;border:1px solid #e2e8f0;"><c:out value="${cr.content}"/></div>
+                                <td style="min-width:340px;">
+                                    <div class="ecs-chat-thread" data-consult-thread data-staff-name="<c:out value='${cr.staffName}'/>" data-consult-status="<c:out value='${cr.status}'/>" style="margin-bottom:8px;padding:10px;background:#fcfcfc;border:1px solid #ededee;border-radius:8px;display:flex;flex-direction:column;gap:7px;white-space:pre-line;font-size:12px;"><c:out value="${cr.content}"/></div>
                                     <c:choose>
                                         <c:when test="${cr.status == 'PENDING' or cr.status == 'IN_PROGRESS'}">
                                             <form method="post" action="<%= customerContext %>/consultation" style="display:flex;gap:6px;">
                                                 <input type="hidden" name="action" value="reply">
                                                 <input type="hidden" name="requestId" value="${cr.id}">
-                                                <input type="text" name="message" maxlength="300" placeholder="Nhập tin nhắn tiếp theo cho Sales Staff..." required style="flex:1;padding:6px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">
-                                                <button type="submit" class="button button-primary" style="padding:6px 14px;font-size:12px;">Gửi phản hồi</button>
+                                                <input type="text" name="message" maxlength="300" placeholder="Nhập tin nhắn tiếp theo cho Sales Staff..." required style="flex:1;padding:7px 10px;border:1px solid #e5e6e8;border-radius:6px;font-size:12px;">
+                                                <button type="submit" class="button button-primary" style="padding:6px 14px;font-size:12px;">Gửi <span>↑</span></button>
                                             </form>
                                         </c:when>
                                         <c:when test="${cr.status == 'COMPLETED'}">
-                                            <div style="display:inline-flex;align-items:center;gap:6px;color:#16a34a;font-size:12px;font-weight:600;padding:4px 0;">
+                                            <div style="display:inline-flex;align-items:center;gap:6px;color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:11.5px;font-weight:600;padding:5px 10px;">
                                                 <span>✓</span> Phiên tư vấn đã hoàn tất (không thể nhắn thêm).
                                             </div>
                                         </c:when>
