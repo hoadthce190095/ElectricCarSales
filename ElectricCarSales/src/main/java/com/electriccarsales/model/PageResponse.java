@@ -7,6 +7,8 @@ public class PageResponse<T> {
     private int page;
     private long total;
     private int pageSize;
+    private boolean available = true;
+    private String message;
 
     public PageResponse() {
     }
@@ -48,5 +50,21 @@ public class PageResponse<T> {
 
     public void setPageSize(int pageSize) {
         this.pageSize = pageSize;
+    }
+
+    public boolean isAvailable() {
+        return available;
+    }
+
+    public void setAvailable(boolean available) {
+        this.available = available;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 }

@@ -22,7 +22,9 @@
         .register-form .field-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
         .register-form .field-label { margin: 1px 0 -6px 12px; color:#85898e; font-size:9px; }
         .register-form .input-wrap input:invalid:not(:placeholder-shown) { border-color:#e7aab4; }
-        .server-message { display:block; margin:0 0 12px; }
+        .server-message { display:block; margin:0 0 10px; padding:0; border:0; background:transparent; color:#c62828; font-size:11px; line-height:1.4; }
+        .client-message { display:block; margin:0 0 10px; color:#c62828; font-size:11px; line-height:1.4; }
+        .client-message[hidden] { display:none; }
         .success-message { border-color:#cde8d7; background:#f4fff7; color:#237044; }
         .register-content .form-intro { margin-bottom:15px; }
         @media(max-width:760px) {
@@ -58,7 +60,8 @@
                 <c:if test="${not empty error}">
                     <p class="form-message server-message" role="alert"><c:out value="${error}"/></p>
                 </c:if>
-                <form id="register-form" class="auth-form register-form" action="${pageContext.request.contextPath}/register" method="post">
+                <p id="register-validation" class="client-message" role="alert" aria-live="polite" hidden></p>
+                <form id="register-form" class="auth-form register-form" action="${pageContext.request.contextPath}/register" method="post" novalidate>
                     <label class="field-label" for="name">Họ và tên</label>
                     <div class="input-wrap"><input id="name" name="name" type="text" placeholder="HỌ VÀ TÊN" value="<c:out value='${name}'/>" autocomplete="name" maxlength="100" required></div>
                     <div class="field-row">
@@ -70,7 +73,7 @@
                     <label class="field-label" for="address">Địa chỉ (không bắt buộc)</label>
                     <div class="input-wrap"><input id="address" name="address" type="text" placeholder="ĐỊA CHỈ" value="<c:out value='${address}'/>" autocomplete="street-address" maxlength="255"></div>
                     <div class="field-row">
-                        <div><label class="field-label" for="password">Mật khẩu</label><div class="input-wrap"><input id="password" name="password" type="password" placeholder="TỐI THIỂU 8 KÝ TỰ" autocomplete="new-password" minlength="8" maxlength="72" required></div></div>
+                        <div><label class="field-label" for="password">Mật khẩu</label><div class="input-wrap"><input id="password" name="password" type="password" placeholder="TỐI THIỂU 8 KÝ TỰ" autocomplete="new-password" minlength="8" maxlength="72" pattern="(?=.*[0-9])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,72}" title="Tối thiểu 8 ký tự, gồm 1 số, 1 chữ in hoa và 1 ký tự đặc biệt." required></div></div>
                         <div><label class="field-label" for="confirmPassword">Nhập lại mật khẩu</label><div class="input-wrap"><input id="confirmPassword" name="confirmPassword" type="password" placeholder="NHẬP LẠI MẬT KHẨU" autocomplete="new-password" minlength="8" maxlength="72" required></div></div>
                     </div>
                     <button class="submit-button" type="submit">Đăng ký tài khoản <span aria-hidden="true">→</span></button>
@@ -81,5 +84,61 @@
         </div>
     </section>
 </main>
+<script>
+(() => {
+    const form = document.getElementById('register-form');
+    const message = document.getElementById('register-validation');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirmPassword');
+
+    function validateForm(event) {
+        confirmPassword.setCustomValidity(
+            confirmPassword.value && confirmPassword.value !== password.value
+                ? 'Mật khẩu nhập lại không khớp.' : ''
+        );
+        if (form.checkValidity()) {
+            message.hidden = true;
+            message.textContent = '';
+            return true;
+        }
+        if (event) event.preventDefault();
+        const invalid = form.querySelector(':invalid');
+        let text = 'Vui lòng nhập đầy đủ và kiểm tra lại thông tin.';
+        if (invalid === password && password.validity.patternMismatch) {
+            text = 'Mật khẩu cần tối thiểu 8 ký tự, gồm 1 số, 1 chữ in hoa và 1 ký tự đặc biệt.';
+        } else if (invalid === confirmPassword && confirmPassword.validity.customError) {
+            text = 'Mật khẩu nhập lại không khớp.';
+        } else if (invalid && invalid.validity.valueMissing) {
+            text = 'Vui lòng điền đầy đủ thông tin bắt buộc.';
+        } else if (invalid && invalid.validity.typeMismatch) {
+            text = 'Email không đúng định dạng.';
+        } else if (invalid && invalid.validity.patternMismatch) {
+            text = invalid.id === 'phone'
+                ? 'Số điện thoại phải bắt đầu bằng 0 và có 10 hoặc 11 chữ số.'
+                : 'Tên đăng nhập phải có 5–50 ký tự, chỉ gồm chữ, số và dấu gạch dưới.';
+        } else if (invalid && invalid.validity.tooShort) {
+            text = 'Tên đăng nhập cần có ít nhất 5 ký tự.';
+        }
+        message.textContent = text;
+        message.hidden = false;
+        if (event && event.type === 'submit') invalid.focus();
+        return false;
+    }
+
+    form.addEventListener('submit', validateForm);
+    [password, confirmPassword].forEach(input => input.addEventListener('input', () => {
+        confirmPassword.setCustomValidity(
+            confirmPassword.value && confirmPassword.value !== password.value
+                ? 'Mật khẩu nhập lại không khớp.' : ''
+        );
+        if (!message.hidden) validateForm();
+    }));
+    form.addEventListener('input', event => {
+        if (event.target !== password && event.target !== confirmPassword && !message.hidden) {
+            validateForm();
+        }
+    });
+})();
+</script>
 </body>
 </html>

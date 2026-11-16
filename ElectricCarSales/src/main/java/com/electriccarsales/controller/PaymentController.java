@@ -1,22 +1,26 @@
 package com.electriccarsales.controller;
 
 import com.electriccarsales.dao.FinanceDAOException;
-import com.electriccarsales.service.PaymentService;
 import com.electriccarsales.service.BankTransferService;
-import jakarta.servlet.http.HttpSession;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.sql.SQLException;
-import java.util.UUID;
+import com.electriccarsales.service.PaymentService;
+import com.electriccarsales.service.SePayService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.sql.SQLException;
+import java.util.UUID;
 
-/** Customer bank-transfer instructions, payment history, and balance endpoints. */
+/**
+ * Quản lý các yêu cầu thanh toán của khách hàng: tạo giao dịch VietQR SePay + MB Bank,
+ * chuyển tiền mặt tại showroom, lịch sử và đối soát công nợ.
+ */
 @WebServlet("/payment/*")
 public class PaymentController extends HttpServlet {
     private PaymentService paymentService;
@@ -38,11 +42,12 @@ public class PaymentController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        String action = action(request);
+
         Integer customerId = FinanceControllerSupport.customerId(request, response);
         if (customerId == null) return;
 
         try {
-            String action = action(request);
             if ("check".equals(action)) {
                 Integer paymentId = FinanceControllerSupport.positiveInt(request.getParameter("paymentId"));
                 BankTransferService.Transfer transfer = paymentId == null ? null
@@ -57,9 +62,55 @@ public class PaymentController extends HttpServlet {
                         + "\",\"bankReported\":" + transfer.bankReported() + "}");
                 return;
             }
+
             String token = ensureCsrf(request);
             request.setAttribute("paymentCsrf", token);
             Integer orderId = FinanceControllerSupport.positiveInt(request.getParameter("orderId"));
+
+            if ("transfer".equals(action)) {
+                Integer requestedPaymentId = FinanceControllerSupport.positiveInt(request.getParameter("paymentId"));
+                String requestedType = request.getParameter("type");
+                BankTransferService.Transfer transfer = null;
+                if (requestedPaymentId != null) {
+                    transfer = bankTransferService.findCustomerTransfer(requestedPaymentId, customerId);
+                    if (transfer != null) {
+                        orderId = transfer.orderId();
+                    }
+                } else if (orderId != null) {
+                    transfer = bankTransferService.findPendingCustomerTransferByOrder(orderId, customerId, requestedType);
+                }
+
+                if (transfer == null && orderId != null) {
+                    try {
+                        transfer = bankTransferService.createForCustomer(
+                                orderId, customerId, requestedType != null ? requestedType : "DEPOSIT", "BANK_TRANSFER");
+                    } catch (Exception ex) {
+                        request.setAttribute("sepayError", ex.getMessage());
+                        request.setAttribute("orderId", orderId);
+                        request.setAttribute("type", requestedType != null ? requestedType : "DEPOSIT");
+                        request.getRequestDispatcher("/customer/bank-transfer.jsp").forward(request, response);
+                        return;
+                    }
+                } else if (transfer != null && "CASH".equals(transfer.methodName())) {
+                    try {
+                        transfer = bankTransferService.createForCustomer(
+                                transfer.orderId(), customerId, transfer.type(), "BANK_TRANSFER");
+                    } catch (Exception ignored) {
+                    }
+                }
+
+                if (transfer == null) {
+                    FinanceControllerSupport.sendError(request, response, HttpServletResponse.SC_NOT_FOUND,
+                            "Không tìm thấy yêu cầu chuyển khoản.");
+                    return;
+                }
+                request.setAttribute("transfer", transfer);
+                request.setAttribute("orderId", transfer.orderId());
+                request.setAttribute("type", transfer.type());
+                request.getRequestDispatcher("/customer/bank-transfer.jsp").forward(request, response);
+                return;
+            }
+
             if ("status".equals(action)) {
                 Integer paymentId = FinanceControllerSupport.positiveInt(request.getParameter("paymentId"));
                 if (paymentId != null) {
@@ -73,6 +124,7 @@ public class PaymentController extends HttpServlet {
                     orderId = payment.getOrderID();
                 }
             }
+
             if ("detail".equals(action) || "status".equals(action) || ("history".equals(action) && orderId != null)) {
                 if (orderId == null) {
                     FinanceControllerSupport.sendError(request, response, HttpServletResponse.SC_BAD_REQUEST,
@@ -118,33 +170,71 @@ public class PaymentController extends HttpServlet {
         String action = action(request);
         Integer customerId = FinanceControllerSupport.customerId(request, response);
         if (customerId == null) return;
+
         if ("confirm".equals(action)) {
             FinanceControllerSupport.sendError(request, response, HttpServletResponse.SC_NOT_IMPLEMENTED,
                     "Không thể xác nhận thanh toán từ trình duyệt khách hàng.");
             return;
         }
+
         if (!"create".equals(action)) {
             FinanceControllerSupport.sendError(request, response, HttpServletResponse.SC_NOT_FOUND,
                     "Chức năng thanh toán không tồn tại.");
             return;
         }
+
         Integer orderId = FinanceControllerSupport.positiveInt(request.getParameter("orderId"));
         if (orderId == null) {
             FinanceControllerSupport.sendError(request, response, HttpServletResponse.SC_BAD_REQUEST,
                     "Thiếu mã đơn hàng hợp lệ.");
             return;
         }
+
         if (!validCsrf(request)) {
             FinanceControllerSupport.sendError(request, response, 403, "Phiên xác nhận không hợp lệ. Mở lại trang thanh toán.");
             return;
         }
+
+        String method = request.getParameter("method") == null ? "BANK_TRANSFER" : request.getParameter("method");
+        String type = request.getParameter("type");
+
+        if ("BANK_TRANSFER".equals(method) && !SePayService.isReady()) {
+            boolean jsonRequested = "json".equalsIgnoreCase(request.getParameter("format"))
+                    || (request.getHeader("Accept") != null && request.getHeader("Accept").toLowerCase(java.util.Locale.ROOT).contains("application/json"));
+            String err = SePayService.configStatus();
+            if (jsonRequested) {
+                FinanceControllerSupport.sendError(request, response, 409, err);
+                return;
+            }
+            request.setAttribute("sepayError", err);
+            request.setAttribute("orderId", orderId);
+            request.setAttribute("type", type);
+            request.setAttribute("paymentCsrf", ensureCsrf(request));
+            request.getRequestDispatcher("/customer/bank-transfer.jsp").forward(request, response);
+            return;
+        }
+
         try {
             BankTransferService.Transfer transfer = bankTransferService.createForCustomer(
-                    orderId, customerId, request.getParameter("type"));
-            request.setAttribute("transfer", transfer);
-            request.getRequestDispatcher("/customer/bank-transfer.jsp").forward(request, response);
+                    orderId, customerId, type, method);
+            if ("CASH".equals(transfer.methodName())) {
+                response.sendRedirect(request.getContextPath() + "/payment/detail?orderId=" + transfer.orderId());
+                return;
+            }
+            response.sendRedirect(request.getContextPath() + "/payment/transfer?orderId=" + transfer.orderId()
+                    + "&type=" + transfer.type());
         } catch (IllegalArgumentException | IllegalStateException e) {
-            FinanceControllerSupport.sendError(request, response, 409, e.getMessage());
+            boolean jsonRequested = "json".equalsIgnoreCase(request.getParameter("format"))
+                    || (request.getHeader("Accept") != null && request.getHeader("Accept").toLowerCase(java.util.Locale.ROOT).contains("application/json"));
+            if (jsonRequested) {
+                FinanceControllerSupport.sendError(request, response, 409, e.getMessage());
+            } else {
+                request.setAttribute("sepayError", e.getMessage());
+                request.setAttribute("orderId", orderId);
+                request.setAttribute("type", type);
+                request.setAttribute("paymentCsrf", ensureCsrf(request));
+                request.getRequestDispatcher("/customer/bank-transfer.jsp").forward(request, response);
+            }
         } catch (SQLException e) {
             getServletContext().log("Bank transfer creation failed", e);
             FinanceControllerSupport.sendError(request, response, 503, "Không thể tạo yêu cầu chuyển khoản.");

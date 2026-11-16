@@ -6,7 +6,7 @@
 <main>
     <h1>Đối chiếu tiền thực nhận (Accountant)</h1>
     <p><a href="<%= request.getContextPath() %>/staff/dashboard">← Trang nhân viên</a></p>
-    <p>Chỉ xác nhận sau khi kiểm tra sao kê MB Bank hoặc chứng từ giải ngân từ đối tác tài chính. Mã tham chiếu và số tiền phải trùng khớp thực tế.</p>
+    <p>Chỉ xác nhận sau khi kiểm tra sao kê ngân hàng hoặc chứng từ giải ngân từ đối tác tài chính. Mã tham chiếu và số tiền phải trùng khớp thực tế.</p>
     <c:if test="${param.updated eq '1'}"><p role="status">Thao tác đã được lưu vào cơ sở dữ liệu.</p></c:if>
     <section class="finance-panel"><h2>Theo dõi công nợ đơn hàng</h2>
         <c:if test="${empty openDebts}"><p>Không có đơn hàng còn công nợ.</p></c:if>
@@ -31,16 +31,16 @@
     <c:forEach var="p" items="${pendingPayments}">
       <section class="finance-panel">
         <h3>Khoản #<c:out value="${p.paymentId}"/> · Đơn #<c:out value="${p.orderId}"/></h3>
-        <p>Khách hàng: <c:out value="${p.customer}"/> — Loại: <c:out value="${p.type}"/></p>
+        <p>Khách hàng: <c:out value="${p.customer}"/> — Loại: <c:out value="${p.type}"/> — Kênh: <c:out value="${p.methodName}"/></p>
         <p>Số tiền yêu cầu: <strong><c:out value="${p.amount}"/> VND</strong></p>
         <p>Nội dung đối chiếu: <strong><c:out value="${p.reference}"/></strong></p>
-        <p>Đối soát tự động: <c:choose><c:when test="${p.bankReported}"><strong>SePay đã ghi nhận giao dịch khớp; cần kế toán kiểm tra sao kê trước khi xác nhận.</strong><small><c:out value="${p.note}"/></small></c:when><c:otherwise>Chưa có giao dịch SePay khớp. Kiểm tra sao kê thủ công trước khi quyết định.</c:otherwise></c:choose></p>
+        <p>Đối soát tự động: <c:choose><c:when test="${p.bankReported}"><strong>Đã nhận giao dịch đối soát SePay / ngân hàng.</strong> <small><c:out value="${p.note}"/></small></c:when><c:otherwise>Kiểm tra chứng từ/sao kê thủ công trước khi quyết định.</c:otherwise></c:choose></p>
         <form method="post" action="<%= request.getContextPath() %>/staff/payment-review">
             <input type="hidden" name="csrfToken" value="<c:out value='${csrfTokenForPayment}'/>">
             <input type="hidden" name="paymentId" value="<c:out value='${p.paymentId}'/>">
             <input type="hidden" name="action" value="confirm">
             <label>Số tiền thực nhận từ sao kê (VND) <input name="receivedAmount" type="number" step="1" min="1" required></label>
-            <label>Mã giao dịch thật trên sao kê <input name="bankTransaction" maxlength="80" pattern="[A-Za-z0-9./_-]{4,80}" required></label>
+            <label>Mã sao kê hoặc chứng từ <input name="bankTransaction" maxlength="80" pattern="[A-Za-z0-9./_-]{4,80}" required></label>
             <label><input type="checkbox" name="checkedStatement" required> Tôi đã đối chiếu sao kê/ngân hàng và khoản này thực sự được nhận đủ.</label>
             <button type="submit">Xác nhận tiền đã nhận</button>
         </form>
@@ -52,5 +52,20 @@
             <button type="submit" class="finance-reject">Từ chối yêu cầu</button>
         </form>
       </section>
+    </c:forEach>
+    <h2>Khoản đã xác nhận</h2>
+    <c:if test="${empty completedPayments}"><p>Chưa có khoản đã xác nhận.</p></c:if>
+    <c:forEach var="p" items="${completedPayments}">
+        <section class="finance-panel">
+            <strong>Khoản #<c:out value="${p.paymentId}"/> · Đơn #<c:out value="${p.orderId}"/></strong>
+            <p><c:out value="${p.methodName}"/> · <c:out value="${p.amount}"/> VND</p>
+            <c:if test="${p.type eq 'DEPOSIT'}"><a href="${pageContext.request.contextPath}/staff/sales-document?kind=deposit&amp;orderId=${p.orderId}">Tải biên nhận cọc Word</a></c:if>
+            <c:if test="${not empty p.sePayEvidence}">
+                <p>SePay #<c:out value="${p.sePayEvidence.eventId}"/>
+                    · Ngân hàng: <c:out value="${p.sePayEvidence.gateway}" default="MBBank"/>
+                    · <c:out value="${p.sePayEvidence.payDate}" default="—"/>
+                    · Tiền thực nhận: <c:out value="${p.sePayEvidence.received}"/> VND</p>
+            </c:if>
+        </section>
     </c:forEach>
 </main></body></html>

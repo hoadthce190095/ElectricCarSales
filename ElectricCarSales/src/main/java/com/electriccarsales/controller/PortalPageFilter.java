@@ -24,7 +24,9 @@ import java.util.Set;
 @WebFilter(urlPatterns = {
     "/customer/*",
     "/staff/*",
+    "/admin",
     "/admin/*",
+    "/admin.jsp",
     "/orders",
     "/payment/*"
 })
@@ -47,11 +49,17 @@ public class PortalPageFilter implements Filter {
 
         response.setHeader("Cache-Control", "no-store");
 
+        String path = request.getServletPath();
+        boolean assistant = "/customer/ai-assistant.jsp".equals(path);
         HttpSession session = request.getSession(false);
         Object sessionUser = session == null ? null : session.getAttribute("user");
 
         if (!(sessionUser instanceof SessionUser)) {
-            response.sendRedirect(request.getContextPath() + "/login");
+            if (assistant) {
+                chain.doFilter(request, response);
+                return;
+            }
+            loginRequired(request, response);
             return;
         }
 
@@ -69,7 +77,7 @@ public class PortalPageFilter implements Filter {
                 account.getPasswordHash())) {
 
                 session.invalidate();
-                response.sendRedirect(request.getContextPath() + "/login");
+                loginRequired(request, response);
                 return;
             }
 
@@ -89,21 +97,24 @@ public class PortalPageFilter implements Filter {
             return;
         }
 
-        String path = request.getServletPath();
-
         boolean salesCustomerList = "/customer/profile".equals(path)
             && "staff".equalsIgnoreCase(request.getParameter("mode"))
             && Set.of("SALES", "MANAGER", "ADMIN").contains(role);
 
-        if (path.startsWith("/customer/") && !"CUSTOMER".equals(role) && !salesCustomerList) {
+        if (!assistant && path.startsWith("/customer/") && !"CUSTOMER".equals(role) && !salesCustomerList) {
             writeError(request, response, HttpServletResponse.SC_FORBIDDEN,
                 "Vai trò hiện tại không có quyền truy cập trang khách hàng này.");
             return;
         }
 
-        if (path.startsWith("/admin/") && !"ADMIN".equals(role)) {
+        if (("/admin".equals(path) || path.startsWith("/admin/") || "/admin.jsp".equals(path)) && !"ADMIN".equals(role)) {
             writeError(request, response, HttpServletResponse.SC_FORBIDDEN,
                 "Chỉ Admin được truy cập trang này.");
+            return;
+        }
+
+        if ("/admin".equals(path) || "/admin/".equals(path) || "/admin/admin.html".equals(path)) {
+            response.sendRedirect(request.getContextPath() + "/admin.jsp");
             return;
         }
 
@@ -131,6 +142,15 @@ public class PortalPageFilter implements Filter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    private static void loginRequired(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        if ("json".equalsIgnoreCase(request.getParameter("format"))
+                || (request.getHeader("Accept") != null && request.getHeader("Accept").contains("application/json"))) {
+            writeError(request, response, 401, "Vui lòng đăng nhập lại.");
+        } else {
+            response.sendRedirect(request.getContextPath() + "/login");
+        }
     }
 
     private static void writeError(HttpServletRequest request, HttpServletResponse response,

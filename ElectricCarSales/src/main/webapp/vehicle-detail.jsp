@@ -42,6 +42,14 @@
         .specs-title { grid-column: 1 / -1; margin: 0 0 4px; font-size: 18px; }
         .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 20px; }
         .contact-link { padding: 10px 16px; border: 1px solid #24568a; background: #24568a; color: #fff; font-size: 13px; font-weight: 700; text-decoration: none; border-radius: 6px; cursor: pointer; }
+        .promo-box { margin: 18px 0; padding: 14px 16px; background: #fff5f5; border: 1px solid #fed7d7; border-left: 4px solid #e31837; border-radius: 8px; }
+        .promo-box-title { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: #c53030; margin: 0 0 10px 0; }
+        .promo-item { padding: 6px 0; border-bottom: 1px dashed #fed7d7; }
+        .promo-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .promo-item-header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; }
+        .promo-badge-tag { display: inline-block; background: #e31837; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+        .promo-desc { margin: 4px 0 0; color: #4a5568; font-size: 13px; line-height: 1.5; }
+        .promo-date { display: block; margin-top: 3px; font-size: 11px; color: #718096; }
         @media (max-width: 700px) { main { margin: 16px auto; } .detail-card { grid-template-columns: 1fr; gap: 18px; padding: 14px; } .gallery { min-height: 0; } .gallery img { height: clamp(230px, 68vw, 310px); } .gallery-message { min-height: 230px; } }
     </style>
 </head>
@@ -81,6 +89,41 @@
                 <h2 class="specs-title">Thông số kỹ thuật</h2>
                 <p class="spec-note" id="specification-status" role="status" aria-live="polite">Đang tải thông số xe...</p>
             </section>
+
+            <c:if test="${promotionLoadFailed}">
+                <p role="status">Chưa thể tải ưu đãi hiện tại.</p>
+            </c:if>
+            <c:if test="${not empty activePromotions}">
+                <section class="promo-box" aria-labelledby="vehicle-promotions">
+                    <h2 class="promo-box-title" id="vehicle-promotions">
+                        <span aria-hidden="true">🎁</span> Chương trình ưu đãi đang áp dụng
+                    </h2>
+                    <c:forEach var="promotion" items="${activePromotions}">
+                        <div class="promo-item">
+                            <div class="promo-item-header">
+                                <strong><c:out value="${promotion.promotionName}"/></strong>
+                                <c:if test="${not empty promotion.discountValue}">
+                                    <span class="promo-badge-tag">
+                                        Giảm <c:out value="${promotion.discountValue.stripTrailingZeros().toPlainString()}"/>
+                                        <c:choose><c:when test="${promotion.discountType eq 'PERCENTAGE'}">%</c:when><c:otherwise>₫</c:otherwise></c:choose>
+                                    </span>
+                                </c:if>
+                            </div>
+                            <c:if test="${not empty promotion.description}">
+                                <p class="promo-desc"><c:out value="${promotion.description}"/></p>
+                            </c:if>
+                            <c:if test="${promotion.discountType eq 'PERCENTAGE'}">
+                                <p class="promo-calc-hint" style="margin:4px 0 0;font-size:12px;color:#b91c1c;font-weight:600">
+                                    💡 Công thức: Số tiền giảm = Giá xe × <c:out value="${promotion.discountValue.stripTrailingZeros().toPlainString()}"/>% (trừ trực tiếp vào giá bán)
+                                </p>
+                            </c:if>
+                            <c:if test="${not empty promotion.endDate}">
+                                <span class="promo-date">Áp dụng đến: <c:out value="${promotion.endDate.toLocalDate()}"/></span>
+                            </c:if>
+                        </div>
+                    </c:forEach>
+                </section>
+            </c:if>
 
             <div class="actions">
                 <a class="back-link" href="<c:url value='/index.jsp#models'/>">← Quay lại danh sách xe</a>
@@ -135,9 +178,35 @@
             const valueOrPending = (value) => value == null || String(value).trim() === ""
                 ? "Đang cập nhật"
                 : String(value);
+
+            let hasPromo = false;
+            let discount = 0;
+            let finalPrice = null;
+            let promo = null;
+            if (Array.isArray(model.promotions) && model.promotions.length > 0 && model.priceVnd) {
+                promo = model.promotions[0];
+                const basePrice = Number(model.priceVnd);
+                if (promo.discountValue) {
+                    if (promo.discountType === "PERCENTAGE") {
+                        discount = Math.round((basePrice * Number(promo.discountValue)) / 100);
+                    } else {
+                        discount = Math.min(basePrice, Number(promo.discountValue));
+                    }
+                    finalPrice = Math.max(0, basePrice - discount);
+                    hasPromo = discount > 0;
+                }
+            }
+
             const rows = [
                 ["Phiên bản", valueOrPending(model.specificationVersion)],
-                ["Giá tham khảo", model.priceVnd == null ? "Liên hệ" : formatNumber(model.priceVnd, " ₫")],
+                hasPromo
+                    ? ["Giá niêm yết", formatNumber(model.priceVnd, " ₫")]
+                    : ["Giá tham khảo", model.priceVnd == null ? "Liên hệ" : formatNumber(model.priceVnd, " ₫")],
+                ...(hasPromo ? [
+                    ["Ưu đãi áp dụng", promo.name + " (-" + (promo.discountType === "PERCENTAGE" ? promo.discountValue + "%" : formatNumber(discount, " ₫")) + ")"],
+                    ["Mức giảm tiền", "Trừ " + formatNumber(discount, " ₫") + " vào giá xe"],
+                    ["Giá sau ưu đãi", formatNumber(finalPrice, " ₫")]
+                ] : []),
                 ["Đặt cọc 30% (RDS)", model.priceVnd == null ? "Đang cập nhật" : formatNumber(Math.round(model.priceVnd * 0.30), " ₫")],
                 ["Quãng đường công bố", formatNumber(model.rangeKm, " km")],
                 ["Tiêu chuẩn quãng đường", valueOrPending(model.rangeStandard)],

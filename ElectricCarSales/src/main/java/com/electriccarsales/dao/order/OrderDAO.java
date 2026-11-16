@@ -131,7 +131,10 @@ public class OrderDAO {
         if (customerId <= 0) throw new IllegalArgumentException("Khách hàng không hợp lệ.");
         String sql = "SELECT o.OrderID,o.CustomerID,o.EmployeeID,o.PaymentMethodID,o.TotalAmount,"
                 + "o.DepositAmount,o.RemainingAmount,o.OrderDate,o.Note,s.StatusName,"
-                + "m.ModelName FROM Orders o JOIN OrderStatuses s ON s.OrderStatusID=o.OrderStatusID "
+                + "m.ModelName,pm.MethodName,ct.Status AS ContractStatus "
+                + "FROM Orders o JOIN OrderStatuses s ON s.OrderStatusID=o.OrderStatusID "
+                + "JOIN PaymentMethods pm ON pm.PaymentMethodID=o.PaymentMethodID "
+                + "LEFT JOIN Contracts ct ON ct.OrderID=o.OrderID "
                 + "LEFT JOIN OrderDetails d ON d.OrderID=o.OrderID "
                 + "LEFT JOIN Cars c ON c.CarID=d.CarID "
                 + "LEFT JOIN CarModels m ON m.ModelID=c.ModelID "
@@ -154,6 +157,8 @@ public class OrderDAO {
                     order.setOrderDate(rows.getTimestamp("OrderDate"));
                     order.setNote(rows.getString("Note"));
                     order.setVehicleName(rows.getString("ModelName"));
+                    order.setPaymentMethodName(rows.getString("MethodName"));
+                    order.setContractStatus(rows.getString("ContractStatus"));
                     orders.add(order);
                 }
                 return orders;

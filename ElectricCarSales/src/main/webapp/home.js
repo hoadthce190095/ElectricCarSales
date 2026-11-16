@@ -164,6 +164,43 @@
         detailLink.href = detailUrl;
         photo.append(badge, detailLink);
 
+        let hasPromo = false;
+        let discount = 0;
+        let finalPrice = null;
+        let promo = null;
+        let promoTag = null;
+        let promoCalc = null;
+        if (Array.isArray(model.promotions) && model.promotions.length > 0) {
+            promo = model.promotions[0];
+            const basePrice = Number(model.priceVnd) || 0;
+            if (basePrice > 0 && promo.discountValue) {
+                if (promo.discountType === "PERCENTAGE") {
+                    discount = Math.round((basePrice * Number(promo.discountValue)) / 100);
+                } else {
+                    discount = Math.min(basePrice, Number(promo.discountValue));
+                }
+                finalPrice = Math.max(0, basePrice - discount);
+                hasPromo = discount > 0;
+            }
+
+            const promoBadgeText = promo.discountType === "PERCENTAGE"
+                ? `-${promo.discountValue}% ƯU ĐÃI`
+                : `-${price(discount || promo.discountValue)}`;
+            const promoBadge = make("span", "promo-badge", promoBadgeText);
+            photo.append(promoBadge);
+
+            if (hasPromo) {
+                promoCalc = make(
+                    "div",
+                    "vehicle-promo-calc",
+                    promo.discountType === "PERCENTAGE"
+                        ? `Giảm ${promo.discountValue}% (-${price(discount)}) trực tiếp`
+                        : `Giảm trực tiếp -${price(discount)}`
+                );
+            }
+            promoTag = make("div", "home-promo-tag", `🎁 ${promo.name}`);
+        }
+
         const body = make("div", "vehicle-card-body");
         const title = make("h3", "vehicle-name", text(model.modelName));
         const version = make("p", "vehicle-version", text(model.specificationVersion) || "Phiên bản theo danh mục");
@@ -173,8 +210,19 @@
             item.append(make("span", "", label), make("strong", "", value));
             specs.append(item);
         });
-        const priceLabel = make("span", "vehicle-price-label", "Giá tham khảo · đã gồm pin");
-        const priceValue = make("strong", "vehicle-price", price(model.priceVnd));
+        const priceSection = make("div", "vehicle-price-wrap");
+        if (hasPromo && finalPrice != null) {
+            const priceLabel = make("span", "vehicle-price-label", "Giá ưu đãi đã trừ khuyến mãi:");
+            const originalPrice = make("span", "vehicle-price-original", price(model.priceVnd));
+            const priceValue = make("strong", "vehicle-price has-discount", price(finalPrice));
+            const priceRow = make("div", "vehicle-price-row");
+            priceRow.append(priceValue, originalPrice);
+            priceSection.append(priceLabel, priceRow, promoCalc);
+        } else {
+            const priceLabel = make("span", "vehicle-price-label", "Giá tham khảo · đã gồm pin");
+            const priceValue = make("strong", "vehicle-price", price(model.priceVnd));
+            priceSection.append(priceLabel, priceValue);
+        }
         const footer = make("div", "vehicle-card-footer");
         const sourceUrl = safeOfficialUrl(model.priceSourceUrl);
         if (sourceUrl) {
@@ -191,7 +239,7 @@
         compareButton.setAttribute("aria-pressed", String(selected));
         compareButton.addEventListener("click", () => toggleCompare(id, model));
         footer.append(compareButton);
-        body.append(title, version, specs, priceLabel, priceValue, footer);
+        body.append(title, version, ...(promoTag ? [promoTag] : []), specs, priceSection, footer);
         article.append(photo, body);
         return article;
     }
@@ -268,6 +316,14 @@
     }
 
     function openComparison() {
+        if (selections.size === 0) {
+            showCompareNotice("Vui lòng chọn xe để so sánh.");
+            return;
+        }
+        if (selections.size === 1) {
+            showCompareNotice("Vui lòng chọn thêm ít nhất 1 xe nữa để so sánh (tối thiểu 2 xe).");
+            return;
+        }
         persistCompareSelections();
         const query = new URLSearchParams();
         selections.forEach((key) => query.append("key", key));

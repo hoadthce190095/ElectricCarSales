@@ -4,8 +4,16 @@
 <%
 Object authenticatedUser = session.getAttribute("user");
 Object legacyUserId = session.getAttribute("userID");
-boolean customerView = authenticatedUser instanceof SessionUser
-    ? "CUSTOMER".equalsIgnoreCase(((SessionUser) authenticatedUser).getRole())
+SessionUser sessionUserObj = authenticatedUser instanceof SessionUser ? (SessionUser) authenticatedUser : null;
+String userRole = sessionUserObj != null ? sessionUserObj.getRole() : String.valueOf(session.getAttribute("roleName"));
+String userName = sessionUserObj != null ? sessionUserObj.getUsername() : String.valueOf(session.getAttribute("username"));
+if (userName == null || "null".equals(userName)) userName = "";
+
+boolean isAdmin = "ADMIN".equalsIgnoreCase(userRole);
+boolean isStaff = "SALES".equalsIgnoreCase(userRole) || "ACCOUNTANT".equalsIgnoreCase(userRole)
+    || "OPERATIONS".equalsIgnoreCase(userRole) || "MANAGER".equalsIgnoreCase(userRole);
+boolean customerView = sessionUserObj != null
+    ? "CUSTOMER".equalsIgnoreCase(sessionUserObj.getRole())
     : legacyUserId instanceof Number && ((Number) legacyUserId).intValue() > 0
         && "CUSTOMER".equalsIgnoreCase(String.valueOf(session.getAttribute("roleName")));
 %>
@@ -25,7 +33,7 @@ boolean customerView = authenticatedUser instanceof SessionUser
     <link rel="stylesheet" href="<c:url value='/assets/css/customer.css'><c:param name='v' value='customer-avatar-navigation-20261112' /></c:url>">
     <link rel="stylesheet" href="<c:url value='/assets/css/home.css'><c:param name='v' value='home-tweaks-20261112' /></c:url>">
     <script src="<c:url value='/assets/js/customer.js'><c:param name='v' value='customer-avatar-20261112' /></c:url>" defer></script>
-    <script src="<c:url value='/assets/js/home.js'><c:param name='v' value='home-tweaks-20261112' /></c:url>" defer></script>
+    <script src="<c:url value='/assets/js/home.js'><c:param name='v' value='home-compare-direct-20261116' /></c:url>" defer></script>
 </head>
 <body class="home-page" data-context-path="<c:out value='${pageContext.request.contextPath}' />">
 <header class="site-header">
@@ -39,12 +47,33 @@ boolean customerView = authenticatedUser instanceof SessionUser
             <a class="nav-link current" href="#models">Mua xe</a>
             <a class="nav-link" href="#about">Giới thiệu</a>
             <a class="nav-link" href="<c:url value='/customer/ai-assistant.jsp' />">Trợ lý xe</a>
+            <% if (isAdmin) { %>
+            <a class="nav-link" href="<c:url value='/admin.jsp' />" style="color:var(--primary);font-weight:700">⚙ Quản trị Showroom</a>
+            <% } else if (isStaff) { %>
+            <a class="nav-link" href="<c:url value='/staff/dashboard' />" style="color:var(--primary);font-weight:700">💼 Khu vực nhân viên</a>
+            <% } %>
         </nav>
         <div class="header-actions">
             <a class="header-contact" href="#" data-open-consult-popup>
                 <span aria-hidden="true">✉</span><span>Tư vấn &amp; Báo giá</span>
             </a>
-            <% if (customerView) { %>
+            <% if (isAdmin) { %>
+            <a class="account-link" href="<c:url value='/admin.jsp' />" title="Quay lại bảng điều khiển Quản trị">
+                <span class="account-icon" aria-hidden="true">⚙</span>
+                <span><strong>Admin: <%= !userName.isBlank() ? userName : "Quản trị" %></strong></span>
+            </a>
+            <form method="post" action="<c:url value='/logout' />" style="margin:0">
+                <button class="account-link" type="submit" style="background:white;cursor:pointer">Đăng xuất</button>
+            </form>
+            <% } else if (isStaff) { %>
+            <a class="account-link" href="<c:url value='/staff/dashboard' />" title="Khu vực nhân viên">
+                <span class="account-icon" aria-hidden="true">💼</span>
+                <span><strong><%= !userName.isBlank() ? userName : userRole %> (<%= userRole %>)</strong></span>
+            </a>
+            <form method="post" action="<c:url value='/logout' />" style="margin:0">
+                <button class="account-link" type="submit" style="background:white;cursor:pointer">Đăng xuất</button>
+            </form>
+            <% } else if (customerView) { %>
             <a class="account-link" href="<c:url value='/customer/profile?view=profile' />"><span class="account-icon" data-avatar-wrap aria-hidden="true"><svg class="avatar-placeholder" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 21c.7-4.1 3.3-6.2 7.5-6.2s6.8 2.1 7.5 6.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><img data-avatar-image src="<c:url value='/customer/avatar' />?v=<%= System.currentTimeMillis() %>" alt=""></span><c:out value="${empty sessionScope.displayName ? sessionScope.username : sessionScope.displayName}" default="Tài khoản của tôi" /></a>
             <form method="post" action="<c:url value='/logout' />" style="margin:0">
                 <button class="account-link" type="submit" style="background:white;cursor:pointer">Đăng xuất</button>

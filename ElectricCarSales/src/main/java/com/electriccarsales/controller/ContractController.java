@@ -23,7 +23,9 @@ import java.util.Map;
 
 @WebServlet(name = "ContractController", urlPatterns = {"/contract"})
 public class ContractController extends HttpServlet {
-    private static final ObjectMapper JSON = new ObjectMapper();
+    private static final ObjectMapper JSON = new ObjectMapper()
+            .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
+            .disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     private ContractsService contractsService;
     private InstallmentService installmentService;
 
@@ -43,7 +45,8 @@ public class ContractController extends HttpServlet {
         HttpSession session = request.getSession(false);
         SessionUser user = session == null ? null : (SessionUser) session.getAttribute("user");
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
+            if (jsonRequested) FinanceControllerSupport.sendError(request, response, 401, "Vui lòng đăng nhập lại.");
+            else response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
         String role = user.getRole() == null ? "" : user.getRole().trim().toUpperCase(Locale.ROOT);
@@ -53,42 +56,54 @@ public class ContractController extends HttpServlet {
             if ("CUSTOMER".equals(role)) {
                 Customer customer = new CustomerDAO().findByUserId(user.getUserId());
                 if (customer == null) {
-                    response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                    FinanceControllerSupport.sendError(request, response, 403, "Bạn không có quyền xem mục này.");
                     return;
                 }
                 contracts = contractsService.getCustomerContracts(customer.getCustomerID());
+                request.setAttribute("customerOrders", new com.electriccarsales.dao.order.OrderDAO().findByCustomerId(customer.getCustomerID()));
             } else if (List.of("SALES", "ACCOUNTANT", "MANAGER", "ADMIN", "OPERATIONS").contains(role)) {
                 contracts = contractsService.getAllContracts();
             } else {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                FinanceControllerSupport.sendError(request, response, 403, "Bạn không có quyền xem mục này.");
                 return;
             }
-
-            request.setAttribute("contractList", contracts);
-            request.setAttribute("installmentPlans", installmentService.getPlans());
-            request.setAttribute("financialCompanies", new FinancialCompanyDAO().findAll());
 
             if (jsonRequested) {
                 response.setContentType("application/json;charset=UTF-8");
                 Map<String, Object> payload = new LinkedHashMap<>();
                 payload.put("contracts", contracts);
-                payload.put("installmentPlans", installmentService.getPlans());
-                payload.put("financialCompanies", new FinancialCompanyDAO().findAll());
-                JSON.writeValue(response.getWriter(), payload);
+                if ("SALES".equals(role)) payload.put("csrfToken", PaymentController.ensureCsrf(request));
+                if (!"CUSTOMER".equals(role)) {
+                    try {
+                        payload.put("installmentPlans", installmentService.getPlans());
+                    } catch (Exception ex) {
+                        log("Could not load installment plans", ex);
+                        payload.put("installmentPlans", List.of());
+                    }
+                    try {
+                        payload.put("financialCompanies", new FinancialCompanyDAO().findAll());
+                    } catch (Exception ex) {
+                        log("Could not load financial companies", ex);
+                        payload.put("financialCompanies", List.of());
+                    }
+                }
+                response.getWriter().write(JSON.writeValueAsString(payload));
                 return;
             }
+            request.setAttribute("contractList", contracts);
+            request.setAttribute("contractCsrf", PaymentController.ensureCsrf(request));
 
             if ("CUSTOMER".equals(role)) {
                 request.getRequestDispatcher("/customer/my-contracts.jsp").forward(request, response);
             } else {
                 response.sendRedirect(request.getContextPath() + "/staff/dashboard#contracts");
             }
-        } catch (RuntimeException ex) {
+        } catch (RuntimeException | com.fasterxml.jackson.core.JsonProcessingException ex) {
             log("Could not load contracts", ex);
             if (jsonRequested) {
                 response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
                 response.setContentType("application/json;charset=UTF-8");
-                JSON.writeValue(response.getWriter(), Map.of("error", ex.getMessage()));
+                JSON.writeValue(response.getWriter(), Map.of("error", "Không thể tải dữ liệu hợp đồng hoặc đối tác."));
             } else {
                 response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Không thể tải danh sách hợp đồng.");
             }
@@ -109,6 +124,10 @@ public class ContractController extends HttpServlet {
             return;
         }
         String role = user.getRole() == null ? "" : user.getRole().trim().toUpperCase(Locale.ROOT);
+        if (!PaymentController.validCsrf(request)) {
+            FinanceControllerSupport.sendError(request, response, 403, "Phiên thao tác không hợp lệ.");
+            return;
+        }
         String action = request.getParameter("action");
         if (action == null || action.isBlank()) {
             action = "create";
@@ -116,9 +135,9 @@ public class ContractController extends HttpServlet {
 
         try {
             if ("create".equalsIgnoreCase(action)) {
-                if (!List.of("SALES", "ACCOUNTANT", "ADMIN").contains(role)) {
+                if (!"SALES".equals(role)) {
                     sendResponse(request, response, jsonRequested, HttpServletResponse.SC_FORBIDDEN, false,
-                            "Theo RDS (UC-13), chỉ Sales Staff hoặc Accountant mới có quyền lập hợp đồng.", "/staff/dashboard#contracts");
+                            "Chỉ Sales Staff được lập hợp đồng.", "/staff/dashboard#contracts");
                     return;
                 }
                 int orderId = Integer.parseInt(request.getParameter("orderId"));
@@ -145,9 +164,12 @@ public class ContractController extends HttpServlet {
 
             int contractId = Integer.parseInt(request.getParameter("contractId"));
             if ("requestOtp".equalsIgnoreCase(action)) {
+                if (!"true".equals(request.getParameter("agreeToSign"))) {
+                    throw new IllegalArgumentException("Vui lòng xác nhận đã đọc và đồng ý ký hợp đồng.");
+                }
                 contractsService.requestSigningOtp(contractId, customer.getCustomerID(), user.getUserId());
                 sendResponse(request, response, jsonRequested, HttpServletResponse.SC_OK, true,
-                        "Đã gửi mã OTP ký hợp đồng (hiệu lực 5 phút). Vui lòng kiểm tra email hoặc Console của IntelliJ.",
+                        "Đã gửi mã OTP ký hợp đồng (hiệu lực 5 phút). Vui lòng kiểm tra email đã đăng ký.",
                         "/contract?otpSent=" + contractId);
                 return;
             }

@@ -136,9 +136,16 @@ public class ConsultationRequestDAO {
         if (current == null) {
             throw new IllegalArgumentException("Không tìm thấy yêu cầu tư vấn #" + requestId);
         }
+        if (employeeId != null && current.getStaffId() != 0 && current.getStaffId() != employeeId) {
+            throw new IllegalStateException("Yêu cầu đã được phân công cho nhân viên khác.");
+        }
         String status = (newStatus == null || newStatus.isBlank())
                 ? current.getStatus()
                 : newStatus.trim().toUpperCase(Locale.ROOT);
+        if (appendedMessage != null && !appendedMessage.isBlank()
+                && ("COMPLETED".equals(current.getStatus()) || "CANCELLED".equals(current.getStatus()))) {
+            throw new IllegalStateException("Cuộc trò chuyện đã kết thúc.");
+        }
         String updatedContent = current.getContent() == null ? "" : current.getContent();
         if (appendedMessage != null && !appendedMessage.isBlank()) {
             String candidate = updatedContent + "\n" + appendedMessage.trim();
@@ -156,7 +163,9 @@ public class ConsultationRequestDAO {
             SET EmployeeID = ?,
                 ConsultationStatusID = (SELECT ConsultationStatusID FROM ConsultationStatuses WHERE StatusName = ?),
                 RequestContent = ?
-            WHERE ConsultationRequestID = ?
+            WHERE ConsultationRequestID = ? AND RequestContent = ?
+              AND COALESCE(EmployeeID,0) = ?
+              AND ConsultationStatusID = (SELECT ConsultationStatusID FROM ConsultationStatuses WHERE StatusName = ?)
             """;
         try (Connection connection = connections.open();
              PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -168,6 +177,9 @@ public class ConsultationRequestDAO {
             ps.setString(2, status);
             ps.setNString(3, updatedContent);
             ps.setInt(4, requestId);
+            ps.setNString(5, current.getContent());
+            ps.setInt(6, current.getStaffId());
+            ps.setString(7, current.getStatus());
             if (ps.executeUpdate() != 1) {
                 throw new IllegalStateException("Yêu cầu tư vấn vừa thay đổi hoặc không còn tồn tại. Hãy tải lại danh sách.");
             }

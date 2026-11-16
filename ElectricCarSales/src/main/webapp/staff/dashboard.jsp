@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="<%= appContext %>/assets/css/staff.css">
 
     <!-- Vẫn nạp staff.js để chạy menu bên trái, nhưng cần xóa đoạn code ghi đè thẻ <main> trong file JS này -->
-    <script src="<%= appContext %>/assets/js/staff.js?v=staff-workflow-filter-fix-20261111" defer></script>
+    <script src="<%= appContext %>/assets/js/staff.js?v=sepay-customer-kyc-chat-compare-20261116b" defer></script>
 </head>
 <body data-context-path="<%= appContext %>">
 <%
@@ -89,11 +89,11 @@
 
         <%-- Dashboard sẽ được staff.js dựng theo vai trò. Chỉ hiển thị bảng khi Servlet tồn kho được gọi. --%>
         <main class="staff-content p-4" id="staff-content" tabindex="-1" aria-live="polite" style="overflow-y: auto;">
-          <% if ("ACCOUNTANT".equalsIgnoreCase(roleName)) { %>
-            <p><a href="<%= appContext %>/staff/dashboard#payments">Đối chiếu thanh toán thật →</a></p>
+          <% if ("ACCOUNTANT".equalsIgnoreCase(roleName) || "MANAGER".equalsIgnoreCase(roleName) || "ADMIN".equalsIgnoreCase(roleName)) { %>
+            <p><a href="<%= appContext %>/staff/dashboard#payments">Đối chiếu thanh toán thật →</a> | <a href="<%= appContext %>/invoice">Quản lý &amp; Phát hành hóa đơn (Invoices) →</a></p>
           <% } %>
-          <% if ("SALES".equalsIgnoreCase(roleName)) { %>
-            <p><a href="<%= appContext %>/orders">Lập đơn bán xe →</a></p>
+          <% if ("SALES".equalsIgnoreCase(roleName) || "MANAGER".equalsIgnoreCase(roleName) || "ADMIN".equalsIgnoreCase(roleName)) { %>
+            <p><a href="<%= appContext %>/orders">Lập đơn bán xe →</a> | <a href="<%= appContext %>/consultation">Quản lý Yêu cầu tư vấn →</a></p>
           <% } %>
           <% if (inventoryPage) { %>
             <div class="mb-4">

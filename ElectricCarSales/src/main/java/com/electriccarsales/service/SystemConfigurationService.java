@@ -61,9 +61,12 @@ public class SystemConfigurationService {
 
     public List<SystemConfiguration> list() throws SQLException {
         try (Connection connection = DBContext.openConnection()) {
+            boolean tableExists = com.electriccarsales.dao.SchemaTables.exists(connection, "SystemConfigurations");
             List<SystemConfiguration> configurations = new ArrayList<>();
             for (String key : new TreeSet<>(DEFINITIONS.keySet())) {
-                configurations.add(read(connection, key));
+                SystemConfiguration config = read(connection, key);
+                config.setAvailable(true);
+                configurations.add(config);
             }
             return configurations;
         }
@@ -107,7 +110,7 @@ public class SystemConfigurationService {
                 }
                 SystemConfiguration previous = read(connection, key);
                 configurationDAO.save(connection, actorId, key, value);
-                systemLogDAO.record(connection, actorId, "CONFIGURATION_UPDATE", "CONFIGURATION", key,
+                systemLogDAO.recordRequired(connection, actorId, "CONFIGURATION_UPDATE", "CONFIGURATION", key,
                     "before=" + previous.getValue() + "; after=" + value);
                 SystemConfiguration result = read(connection, key);
                 connection.commit();

@@ -104,6 +104,9 @@ public class RegisterController extends HttpServlet {
         if (email.isBlank() || email.length() > 100 || !EMAIL.matcher(email).matches()) return "Email không hợp lệ.";
         if (password == null || password.length() < 8 || password.length() > 72)
             return "Mật khẩu phải có từ 8 đến 72 ký tự.";
+        if (!password.matches(".*[0-9].*")) return "Mật khẩu phải có ít nhất 1 chữ số.";
+        if (!password.matches(".*[A-Z].*")) return "Mật khẩu phải có ít nhất 1 chữ in hoa.";
+        if (!password.matches(".*[^A-Za-z0-9].*")) return "Mật khẩu phải có ít nhất 1 ký tự đặc biệt.";
         if (confirm == null || !password.equals(confirm)) return "Mật khẩu nhập lại không khớp.";
         return null;
     }

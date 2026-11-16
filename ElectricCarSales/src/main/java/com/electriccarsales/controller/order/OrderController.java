@@ -42,9 +42,10 @@ public class OrderController extends HttpServlet {
             try {
                 if (jsonRequested) {
                     Map<String, Object> payload = salesOrders.dashboardData();
-                    if ("SALES".equals(role)) {
+                    if ("SALES".equals(role) || "OPERATIONS".equals(role)) {
                         payload.put("csrfToken", ensureCsrf(session));
-                    } else {
+                    }
+                    if (!"SALES".equals(role)) {
                         payload.remove("customers");
                         payload.remove("cars");
                         payload.remove("paymentMethods");
@@ -61,6 +62,8 @@ public class OrderController extends HttpServlet {
                 String csrfToken = ensureCsrf(session);
                 request.setAttribute("orderOptions", salesOrders.getOptions());
                 request.setAttribute("paymentCsrf", csrfToken);
+                request.setAttribute("selectedCustomerId", request.getParameter("customerId"));
+                request.setAttribute("selectedModelId", request.getParameter("modelId"));
                 request.getRequestDispatcher("/staff/create-order.jsp").forward(request, response);
             } catch (SQLException e) {
                 getServletContext().log("Cannot load Sales order data", e);
@@ -89,6 +92,7 @@ public class OrderController extends HttpServlet {
                 return;
             }
             request.setAttribute("orders", service.getCustomerOrders(customerId));
+            request.setAttribute("sepayReady", com.electriccarsales.service.SePayService.isReady());
             String csrfToken = ensureCsrf(session);
             request.setAttribute("paymentCsrf", csrfToken);
             request.getRequestDispatcher("/customer/my-orders.jsp").forward(request, response);
@@ -119,7 +123,14 @@ public class OrderController extends HttpServlet {
             int car = Integer.parseInt(request.getParameter("carId"));
             String partnerValue = request.getParameter("companyId");
             Integer partner = partnerValue == null || partnerValue.isBlank() ? null : Integer.parseInt(partnerValue);
-            int orderId = salesOrders.create(user.getUserId(), customer, car, request.getParameter("method"), partner);
+            String verifiedName = request.getParameter("customerName");
+            String verifiedPhone = request.getParameter("customerPhone");
+            String verifiedEmail = request.getParameter("customerEmail");
+            String verifiedAddress = request.getParameter("customerAddress");
+            String salesNote = request.getParameter("salesNote");
+
+            int orderId = salesOrders.create(user.getUserId(), customer, car, request.getParameter("method"), partner,
+                    verifiedName, verifiedPhone, verifiedEmail, verifiedAddress, salesNote);
             if (jsonRequested(request)) {
                 response.setStatus(HttpServletResponse.SC_CREATED);
                 response.setContentType("application/json;charset=UTF-8");

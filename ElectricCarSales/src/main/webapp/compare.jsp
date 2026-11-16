@@ -63,7 +63,12 @@
                 </c:choose>
             </p>
         </div>
-        <a class="back-link" href="<c:url value='/index.jsp#models'/>">← Quay lại danh sách xe</a>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <c:if test="${not empty comparisonColumns and comparisonColumns.size() lt 3}">
+                <a class="back-link" style="background:#f0fdf4;border-color:#86efac;color:#166534;" href="<c:url value='/index.jsp#models'/>">➕ Thêm xe khác để so sánh</a>
+            </c:if>
+            <a class="back-link" href="<c:url value='/index.jsp#models'/>">← Quay lại danh sách xe</a>
+        </div>
     </div>
 
     <c:if test="${not empty comparisonNotice}">
@@ -88,7 +93,10 @@
                                         </c:if>
                                         <span class="vehicle-name"><c:out value="${vehicle.modelName}"/></span>
                                         <span class="vehicle-version"><c:out value="${vehicle.specificationVersion}"/></span>
-                                        <a href="<c:url value='/detail'><c:param name='id' value='${vehicle.modelID}'/></c:url>">Xem chi tiết ↗</a>
+                                        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:4px;">
+                                            <a href="<c:url value='/detail'><c:param name='id' value='${vehicle.modelID}'/></c:url>">Xem chi tiết ↗</a>
+                                            <button type="button" class="btn-remove-compare" data-key="<c:out value='${vehicle.comparisonKey}'/>" title="Bỏ xe này khỏi bảng so sánh" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;font-weight:600;">✕ Bỏ</button>
+                                        </div>
                                     </div>
                                 </th>
                             </c:forEach>
@@ -117,5 +125,33 @@
     </section>
 </main>
 <footer class="page-footer">Thông tin sản phẩm mang tính tham khảo. Vui lòng đối chiếu cấu hình với VinFast trước khi giao dịch.</footer>
+<script>
+(function() {
+    const removeButtons = document.querySelectorAll(".btn-remove-compare");
+    const activeKeys = Array.from(removeButtons).map(b => b.dataset.key).filter(Boolean);
+    if (activeKeys.length > 0) {
+        try {
+            sessionStorage.setItem("electriccarsale.compareSelections", JSON.stringify(activeKeys));
+        } catch (_) {}
+    }
+    removeButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const targetKey = btn.dataset.key;
+            const remaining = activeKeys.filter(k => k !== targetKey);
+            if (remaining.length < 2) {
+                if (confirm("Nếu bỏ xe này thì chỉ còn 1 xe (cần ít nhất 2 xe để so sánh). Quay lại danh mục chọn xe?")) {
+                    try { sessionStorage.setItem("electriccarsale.compareSelections", JSON.stringify(remaining)); } catch (_) {}
+                    window.location.href = "<c:url value='/index.jsp#models'/>";
+                }
+                return;
+            }
+            try { sessionStorage.setItem("electriccarsale.compareSelections", JSON.stringify(remaining)); } catch (_) {}
+            const params = new URLSearchParams();
+            remaining.forEach(k => params.append("key", k));
+            window.location.href = "<c:url value='/comparison'/>?" + params.toString();
+        });
+    });
+})();
+</script>
 </body>
 </html>

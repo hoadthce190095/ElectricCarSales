@@ -1,12 +1,24 @@
-# Copy to src/main/resources/db.properties for local IntelliJ development.
+# Copy to ~/.electriccarsales/db.properties for local IntelliJ or Tomcat development.
 # Do NOT commit real secrets or API keys to public Git repositories.
 
 # 1. SQL Server Configuration
-DB_URL=jdbc:sqlserver://localhost:1433;databaseName=ElectricCarSalesDB;encrypt=true;trustServerCertificate=true
+DB_URL=jdbc:sqlserver://localhost:1433;databaseName=ElectricCarSalesDB;encrypt=true;trustServerCertificate=true;
 DB_USER=sa
 DB_PASSWORD=123456
 
-# 2. MB Bank transfer configuration (set as Tomcat process environment variables)
-# ECS_MB_ACCOUNT=0917231548
-# ECS_MB_ACCOUNT_NAME=<verify the actual beneficiary name with MB Bank>
-# SEPAY_WEBHOOK_KEY=<rotate the previously exposed key before production>
+# 2. Cấu hình SePay + MB Bank (VietQR Động)
+# Ngân hàng nhận thanh toán (MB / MBBank)
+SEPAY_BANK_CODE=MB
+
+# Số tài khoản MB Bank thụ hưởng
+SEPAY_ACCOUNT_NUMBER=0917231548
+
+# Tên chủ tài khoản MB Bank
+SEPAY_ACCOUNT_NAME=Do Tan Dat
+
+# Khóa bí mật API Key xác thực Webhook từ SePay Dashboard (Header Authorization: Apikey <key>)
+# Lấy tại SePay Dashboard -> Cấu hình Webhook
+SEPAY_WEBHOOK_KEY=YOUR_SEPAY_API_KEY
+
+# Môi trường (production / sandbox)
+SEPAY_ENVIRONMENT=production

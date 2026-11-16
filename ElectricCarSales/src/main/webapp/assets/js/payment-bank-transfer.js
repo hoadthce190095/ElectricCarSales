@@ -45,7 +45,7 @@
                 return;
             }
             if (payment.status === 'COMPLETED') {
-                status.textContent = 'Kế toán đã xác nhận thanh toán.';
+                status.textContent = 'Thanh toán thành công.';
                 status.classList.add('is-complete');
                 window.location.assign(panel.dataset.successUrl);
             } else if (payment.status === 'CANCELLED' || payment.status === 'FAILD') {

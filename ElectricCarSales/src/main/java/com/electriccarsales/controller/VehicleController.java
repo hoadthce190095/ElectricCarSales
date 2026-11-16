@@ -80,8 +80,15 @@ public class VehicleController extends HttpServlet {
                 vehicles = vehicles.stream().filter(vehicle -> keys.contains(comparisonKey(vehicle))).toList();
             }
 
+            Map<Integer, List<com.electriccarsales.model.AdminPromotion>> activePromos = Map.of();
+            try (java.sql.Connection conn = util.DBContext.openConnection()) {
+                activePromos = com.electriccarsales.dao.PromotionDAO.findAllActiveByModel(conn);
+            } catch (Exception ex) {
+                log("Không thể tải danh mục khuyến mãi cho danh mục xe.", ex);
+            }
+            final Map<Integer, List<com.electriccarsales.model.AdminPromotion>> promos = activePromos;
             String payload = vehicles.stream()
-                    .map(VehicleController::toJson)
+                    .map(v -> toJson(v, promos.getOrDefault(v.modelID(), List.of())))
                     .collect(Collectors.joining(",", "{\"note\":" +
                             jsonString("Thông tin và thông số xe được lấy từ danh mục trong cơ sở dữ liệu.") +
                             ",\"models\":[", "]}"));
@@ -93,6 +100,20 @@ public class VehicleController extends HttpServlet {
     }
 
     private static String toJson(CatalogVehicle vehicle) {
+        return toJson(vehicle, List.of());
+    }
+
+    private static String toJson(CatalogVehicle vehicle, List<com.electriccarsales.model.AdminPromotion> promotions) {
+        String promoJson = (promotions == null || promotions.isEmpty()) ? "[]" :
+                promotions.stream().map(p -> "{"
+                        + "\"id\":" + p.getPromotionId()
+                        + ",\"name\":" + jsonString(p.getPromotionName())
+                        + ",\"discountType\":" + jsonString(p.getDiscountType())
+                        + ",\"discountValue\":" + (p.getDiscountValue() == null ? "null" : p.getDiscountValue().stripTrailingZeros().toPlainString())
+                        + ",\"description\":" + jsonString(p.getDescription())
+                        + ",\"endDate\":" + jsonString(p.getEndDate() == null ? null : p.getEndDate().toLocalDate().toString())
+                        + "}").collect(Collectors.joining(",", "[", "]"));
+
         return "{"
                 + "\"modelID\":" + vehicle.modelID()
                 + ",\"versionID\":" + vehicle.versionID()
@@ -121,6 +142,7 @@ public class VehicleController extends HttpServlet {
                 + ",\"rapidChargeMinutes\":" + jsonNumber(vehicle.rapidChargeMinutes())
                 + ",\"priceNote\":" + jsonString(vehicle.priceNote())
                 + ",\"specificationNote\":" + jsonString(vehicle.specificationNote())
+                + ",\"promotions\":" + promoJson
                 + "}";
     }
 

@@ -24,18 +24,6 @@ public class AdministrationDAO {
         + " FROM Users u JOIN Roles r ON r.RoleID=u.RoleID JOIN Statuses s ON"
         + " s.StatusID=u.StatusID LEFT JOIN Employees e ON e.UserID=u.UserID ";
 
-    private boolean hasTable(Connection connection, String tableName) {
-        try (PreparedStatement ps = connection.prepareStatement(
-                "SELECT CASE WHEN OBJECT_ID(?, N'U') IS NOT NULL THEN 1 ELSE 0 END")) {
-            ps.setString(1, "dbo." + tableName);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() && rs.getInt(1) == 1;
-            }
-        } catch (SQLException ex) {
-            return false;
-        }
-    }
-
     public AdministrationLookupsDTO lookups(Connection connection) throws SQLException {
         AdministrationLookupsDTO result = new AdministrationLookupsDTO(lookup(connection, "SELECT RoleID,RoleName FROM Roles ORDER BY RoleID"),
             lookup(connection, "SELECT StatusID,StatusName FROM Statuses ORDER BY StatusID"),
@@ -245,9 +233,10 @@ public class AdministrationDAO {
     }
 
     public List<AdminPromotion> promotions(Connection connection) throws SQLException {
-        if (!hasTable(connection, "Promotions")) {
+        if (!SchemaTables.exists(connection, "Promotions")) {
             return List.of();
         }
+        boolean hasPromotionCars = SchemaTables.exists(connection, "PromotionCars");
         List<AdminPromotion> result = new ArrayList<>();
         try (
             PreparedStatement statement = connection
@@ -256,7 +245,7 @@ public class AdministrationDAO {
             while (resultSet.next()) {
                 List<Integer> ids = new ArrayList<>();
                 int id = resultSet.getInt("PromotionID");
-                if (hasTable(connection, "PromotionCars")) {
+                if (hasPromotionCars) {
                     try (PreparedStatement links = connection
                         .prepareStatement("SELECT ModelID FROM PromotionCars WHERE PromotionID=? ORDER BY ModelID")) {
                         links.setInt(1, id);
@@ -277,9 +266,9 @@ public class AdministrationDAO {
     }
 
     public int savePromotion(Connection connection, Integer id, PromotionRequest promotion) throws SQLException {
-        if (!hasTable(connection, "Promotions")) {
+        if (!SchemaTables.exists(connection, "Promotions") || !SchemaTables.exists(connection, "PromotionCars")) {
             throw new com.electriccarsales.model.ApiException(503,
-                "Bảng Promotions không có trong schema ElectricCarSalesDB.sql hiện tại.");
+                "Cần có bảng Promotions và PromotionCars để lưu khuyến mãi.");
         }
         String sql = id == null
             ? "INSERT INTO Promotions(PromotionName,Description,DiscountType,DiscountValue,StartDate,EndDate,Status) VALUES(?,?,?,?,?,?,?)"
@@ -305,21 +294,19 @@ public class AdministrationDAO {
                 }
             }
         }
-        if (hasTable(connection, "PromotionCars")) {
-            try (PreparedStatement statement = connection
-                .prepareStatement("DELETE FROM PromotionCars WHERE PromotionID=?")) {
+        try (PreparedStatement statement = connection
+            .prepareStatement("DELETE FROM PromotionCars WHERE PromotionID=?")) {
+            statement.setInt(1, id);
+            statement.executeUpdate();
+        }
+        try (PreparedStatement statement = connection
+            .prepareStatement("INSERT INTO PromotionCars(PromotionID,ModelID) VALUES(?,?)")) {
+            for (int model : promotion.getModelIds()) {
                 statement.setInt(1, id);
-                statement.executeUpdate();
+                statement.setInt(2, model);
+                statement.addBatch();
             }
-            try (PreparedStatement statement = connection
-                .prepareStatement("INSERT INTO PromotionCars(PromotionID,ModelID) VALUES(?,?)")) {
-                for (int model : promotion.getModelIds()) {
-                    statement.setInt(1, id);
-                    statement.setInt(2, model);
-                    statement.addBatch();
-                }
-                statement.executeBatch();
-            }
+            statement.executeBatch();
         }
         return id;
     }
@@ -331,17 +318,8 @@ public class AdministrationDAO {
 
     public PageResponse<SystemLog> logs(Connection connection, String action, Integer userId, LocalDate from,
         LocalDate to, int page, int pageSize, String targetType) throws SQLException {
-        if (!hasTable(connection, "SystemLogs")) {
-            List<SystemLog> mem = SystemLogDAO.memoryLogs().stream()
-                .filter(l -> (action == null || action.isEmpty() || action.equalsIgnoreCase(l.getAction()))
-                    && (userId == null || userId.equals(l.getUserId()))
-                    && (targetType == null || targetType.isEmpty() || targetType.equalsIgnoreCase(l.getTargetType()))
-                    && (from == null || !l.getCreatedDate().toLocalDate().isBefore(from))
-                    && (to == null || !l.getCreatedDate().toLocalDate().isAfter(to)))
-                .toList();
-            int start = Math.min(mem.size(), Math.max(0, (page - 1) * pageSize));
-            int end = Math.min(mem.size(), start + pageSize);
-            return new PageResponse<>(mem.subList(start, end), page, mem.size(), pageSize);
+        if (!SchemaTables.exists(connection, "SystemLogs")) {
+            return readAlternativeLogs(connection, action, userId, from, to, page, pageSize, targetType);
         }
         String where = " WHERE (?='' OR l.Action=?) AND (? IS NULL OR l.UserID=?) AND l.CreatedDate>=? AND"
             + " l.CreatedDate<? AND (?='' OR l.TargetType=?)";
@@ -377,6 +355,108 @@ public class AdministrationDAO {
             }
         }
         return new PageResponse<>(result, page, total, pageSize);
+    }
+
+    private PageResponse<SystemLog> readAlternativeLogs(Connection connection, String action, Integer userId,
+        LocalDate from, LocalDate to, int page, int pageSize, String targetType) throws SQLException {
+        List<SystemLog> allLogs = new ArrayList<>();
+
+        if (SchemaTables.exists(connection, "OrderStatusHistory")) {
+            String sql = """
+                SELECT h.OrderStatusHistoryID, e.UserID, COALESCE(u.Username, e.EmployeeName, N'Khách hàng/Hệ thống') AS Username,
+                    N'ĐƠN HÀNG: ' + COALESCE(os.StatusName, N'CẬP NHẬT') AS ActionName,
+                    'ORDER' AS TargetType, CAST(h.OrderID AS VARCHAR(50)) AS TargetID,
+                    COALESCE(h.Note, N'Cập nhật trạng thái đơn hàng #' + CAST(h.OrderID AS NVARCHAR(20))) AS Detail,
+                    h.ChangedDate AS CreatedDate
+                FROM OrderStatusHistory h
+                LEFT JOIN OrderStatuses os ON os.OrderStatusID = h.OrderStatusID
+                LEFT JOIN Employees e ON e.EmployeeID = h.EmployeeID
+                LEFT JOIN Users u ON u.UserID = e.UserID
+                WHERE h.ChangedDate >= ? AND h.ChangedDate < ?
+                """;
+            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+                stmt.setTimestamp(1, Timestamp.valueOf(from.atStartOfDay()));
+                stmt.setTimestamp(2, Timestamp.valueOf(to.plusDays(1).atStartOfDay()));
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        allLogs.add(new SystemLog(
+                            rs.getLong("OrderStatusHistoryID"),
+                            rs.getObject("UserID", Integer.class),
+                            rs.getString("Username"),
+                            rs.getString("ActionName"),
+                            rs.getString("TargetType"),
+                            rs.getString("TargetID"),
+                            rs.getNString("Detail"),
+                            rs.getTimestamp("CreatedDate").toLocalDateTime()
+                        ));
+                    }
+                }
+            }
+        }
+
+        if (SchemaTables.exists(connection, "InventoryTransactions")) {
+            String sql = """
+                SELECT it.InventoryTransactionID, e.UserID, COALESCE(u.Username, e.EmployeeName, N'Nhân viên kho') AS Username,
+                    N'KHO XE: ' + COALESCE(it.TransactionType, N'GIAO DỊCH') AS ActionName,
+                    'CAR' AS TargetType, CAST(it.CarID AS VARCHAR(50)) AS TargetID,
+                    COALESCE(it.Note, N'Giao dịch kho xe #' + CAST(it.CarID AS NVARCHAR(20))) AS Detail,
+                    it.TransactionDate AS CreatedDate
+                FROM InventoryTransactions it
+                LEFT JOIN Employees e ON e.EmployeeID = it.EmployeeID
+                LEFT JOIN Users u ON u.UserID = e.UserID
+                WHERE it.TransactionDate >= ? AND it.TransactionDate < ?
+                """;
+            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+                stmt.setTimestamp(1, Timestamp.valueOf(from.atStartOfDay()));
+                stmt.setTimestamp(2, Timestamp.valueOf(to.plusDays(1).atStartOfDay()));
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        allLogs.add(new SystemLog(
+                            100000L + rs.getLong("InventoryTransactionID"),
+                            rs.getObject("UserID", Integer.class),
+                            rs.getString("Username"),
+                            rs.getString("ActionName"),
+                            rs.getString("TargetType"),
+                            rs.getString("TargetID"),
+                            rs.getNString("Detail"),
+                            rs.getTimestamp("CreatedDate").toLocalDateTime()
+                        ));
+                    }
+                }
+            }
+        }
+
+        synchronized (SystemLogDAO.RUNTIME_LOGS) {
+            for (SystemLog runtimeLog : SystemLogDAO.RUNTIME_LOGS) {
+                if (!runtimeLog.getCreatedDate().isBefore(from.atStartOfDay())
+                    && runtimeLog.getCreatedDate().isBefore(to.plusDays(1).atStartOfDay())) {
+                    allLogs.add(runtimeLog);
+                }
+            }
+        }
+
+        List<SystemLog> filtered = allLogs.stream().filter(l -> {
+            if (action != null && !action.isBlank()
+                && !l.getAction().equalsIgnoreCase(action.trim())
+                && !l.getAction().toUpperCase().contains(action.trim().toUpperCase())) {
+                return false;
+            }
+            if (userId != null && !userId.equals(l.getUserId())) {
+                return false;
+            }
+            if (targetType != null && !targetType.isBlank()
+                && !l.getTargetType().equalsIgnoreCase(targetType.trim())) {
+                return false;
+            }
+            return true;
+        }).sorted((a, b) -> b.getCreatedDate().compareTo(a.getCreatedDate())).toList();
+
+        long total = filtered.size();
+        int offset = (page - 1) * pageSize;
+        List<SystemLog> pageItems = filtered.stream().skip(Math.max(0, offset)).limit(pageSize).toList();
+        PageResponse<SystemLog> response = new PageResponse<>(pageItems, page, total, pageSize);
+        response.setAvailable(true);
+        return response;
     }
 
     private void bindLogs(PreparedStatement statement, String action, Integer userId, LocalDate from, LocalDate to)

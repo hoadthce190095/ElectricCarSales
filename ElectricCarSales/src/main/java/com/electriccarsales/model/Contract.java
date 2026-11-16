@@ -15,6 +15,8 @@ public class Contract {
 
     private String customerName;
     private String customerPhone;
+    private String customerEmail;
+    private String customerAddress;
     private String employeeName;
     private String modelName;
     private String versionName;
@@ -61,6 +63,10 @@ public class Contract {
     public void setCustomerName(String customerName) { this.customerName = customerName; }
     public String getCustomerPhone() { return customerPhone; }
     public void setCustomerPhone(String customerPhone) { this.customerPhone = customerPhone; }
+    public String getCustomerEmail() { return customerEmail; }
+    public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
+    public String getCustomerAddress() { return customerAddress; }
+    public void setCustomerAddress(String customerAddress) { this.customerAddress = customerAddress; }
     public String getEmployeeName() { return employeeName; }
     public void setEmployeeName(String employeeName) { this.employeeName = employeeName; }
     public String getModelName() { return modelName; }

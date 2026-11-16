@@ -1,41 +1,145 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<% request.setAttribute("customerTitle", "Chuyển khoản MB Bank"); request.setAttribute("customerEyebrow", "THANH TOÁN CHUYỂN KHOẢN · CHỜ ĐỐI CHIẾU"); %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<% request.setAttribute("customerTitle", "Thanh toán VietQR · SePay + MB Bank"); request.setAttribute("customerEyebrow", "CỔNG CHUYỂN KHOẢN VIETQR · MB BANK"); %>
 <%@ include file="../common/customer-shell.jspf" %>
 <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/payment-bank-transfer.css">
-<section class="panel bank-transfer-panel" data-payment-id="<c:out value='${transfer.paymentId}'/>"
-         data-check-url="<%= request.getContextPath() %>/payment/check?paymentId=<c:out value='${transfer.paymentId}'/>"
-         data-success-url="<%= request.getContextPath() %>/payment/detail?orderId=<c:out value='${transfer.orderId}'/>">
-    <div class="transfer-heading">
-        <div><span class="section-overline">ĐƠN HÀNG #<c:out value="${transfer.orderId}"/></span>
-            <h2>Chuyển khoản <c:out value="${transfer.type eq 'DEPOSIT' ? 'đặt cọc 30%' : '70% còn lại'}"/></h2></div>
-        <span class="transfer-badge">Mã thanh toán <c:out value="${transfer.paymentId}"/></span>
-    </div>
-    <div class="transfer-summary">
-        <span>Số tiền cần chuyển</span>
-        <strong><c:out value="${transfer.amount}"/> ₫</strong>
-        <small>Vui lòng chuyển đúng số tiền và giữ nguyên nội dung bên dưới.</small>
-    </div>
-    <dl class="bank-transfer-details">
-        <dt>Ngân hàng</dt><dd><c:out value="${transfer.bankName}"/></dd>
-        <dt>Chủ tài khoản</dt><dd><c:out value="${transfer.accountName}"/></dd>
-        <dt>Số tài khoản</dt><dd><span id="bank-account"><c:out value="${transfer.accountNumber}"/></span>
-            <button class="copy-button" type="button" data-copy="bank-account">Sao chép</button></dd>
-        <dt>Số tiền</dt><dd><span id="bank-amount"><c:out value="${transfer.amount}"/></span> VND
-            <button class="copy-button" type="button" data-copy="bank-amount">Sao chép</button></dd>
-        <dt>Nội dung chuyển khoản</dt><dd><span id="bank-reference"><c:out value="${transfer.reference}"/></span>
-            <button class="copy-button" type="button" data-copy="bank-reference">Sao chép</button></dd>
-    </dl>
-    <div class="info-note"><span>i</span><p>Hãy tự mở ứng dụng MB Bank để chuyển khoản và kiểm tra tên người nhận hiển thị trước khi xác nhận. Tên chủ tài khoản đang dùng theo thông tin đã cung cấp; hệ thống không xác minh tên với ngân hàng. Website không yêu cầu mật khẩu, thông tin thẻ hoặc OTP ngân hàng. Bấm sao chép chỉ giúp điền thông tin, không xác nhận thanh toán.</p></div>
-    <p id="bank-transfer-state" class="transfer-state" role="status">
-        <c:choose>
-            <c:when test="${transfer.status eq 'COMPLETED'}">Đã được kế toán xác nhận.</c:when>
-            <c:when test="${transfer.status eq 'FAILD' or transfer.status eq 'CANCELLED'}">Giao dịch bị từ chối hoặc hủy.</c:when>
-            <c:when test="${transfer.bankReported}">Đã nhận thông tin giao dịch, chờ kế toán xác nhận.</c:when>
-            <c:otherwise>Chờ chuyển khoản hoặc ngân hàng ghi nhận giao dịch.</c:otherwise>
-        </c:choose>
-    </p>
-    <p><a class="button button-primary" href="<%= request.getContextPath() %>/payment/detail?orderId=<c:out value='${transfer.orderId}'/>">Xem lịch sử và công nợ</a></p>
-</section>
-<script src="<%= request.getContextPath() %>/assets/js/payment-bank-transfer.js" defer></script>
+
+<c:choose>
+    <c:when test="${not empty transfer and not empty transfer.paymentUrl}">
+        <section class="panel bank-transfer-panel" data-payment-id="<c:out value='${transfer.paymentId}'/>"
+                 data-check-url="<%= request.getContextPath() %>/payment/check?paymentId=<c:out value='${transfer.paymentId}'/>"
+                 data-success-url="<%= request.getContextPath() %>/payment/detail?orderId=<c:out value='${transfer.orderId}'/>">
+            <div class="transfer-heading">
+                <div>
+                    <span class="section-overline">ĐƠN HÀNG #<c:out value="${transfer.orderId}"/></span>
+                    <h2>Thanh toán chuyển khoản <c:out value="${transfer.type eq 'DEPOSIT' ? 'đặt cọc 30%' : '70% còn lại'}"/></h2>
+                </div>
+                <span class="transfer-badge">Mã thanh toán #<c:out value="${transfer.paymentId}"/></span>
+            </div>
+
+            <div class="info-note" style="border-color: #93c5fd; background: #eff6ff; color: #1e40af; margin: 16px 0;">
+                <span>ℹ</span>
+                <div>
+                    <strong>Chuyển khoản VietQR tự động qua SePay + MB Bank</strong>
+                    <p>Quý khách mở ứng dụng MB Bank hoặc bất kỳ ứng dụng ngân hàng nào (Vietcombank, BIDV, Techcombank, MoMo...) và quét mã VietQR bên dưới. Số tài khoản, số tiền và nội dung chuyển khoản được tự động điền chính xác. Giao dịch sẽ được SePay tự động ghi nhận trong 1-3 giây.</p>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 32px; align-items: flex-start; justify-content: center; flex-wrap: wrap; margin: 24px 0;">
+                <%-- KHỐI HIỂN THỊ MÃ VIETQR ĐỘNG TỪ SEPAY --%>
+                <div style="text-align: center; max-width: 320px; width: 100%; background: #ffffff; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+                    <img src="<c:out value='${transfer.paymentUrl}'/>" alt="Mã VietQR Chuyển khoản MB Bank SePay"
+                         id="sepay-vietqr-image"
+                         style="width: 100%; max-width: 280px; height: auto; border-radius: 8px; display: block; margin: 0 auto;">
+                    <p style="margin: 10px 0 0; font-size: 0.85rem; color: #475569; font-weight: 500;">
+                        Quét mã bằng ứng dụng ngân hàng để thanh toán nhanh
+                    </p>
+                </div>
+
+                <%-- KHỐI THÔNG TIN CHUYỂN KHOẢN CHI TIẾT --%>
+                <div style="flex: 1; min-width: 290px; max-width: 500px;">
+                    <div class="transfer-summary" style="margin-bottom: 16px;">
+                        <span>Số tiền cần thanh toán</span>
+                        <strong><fmt:formatNumber value="${transfer.amount}" type="number" groupingUsed="true"/> ₫</strong>
+                        <small>Vui lòng chuyển khoản đúng số tiền để hệ thống tự động xác nhận.</small>
+                    </div>
+
+                    <dl class="bank-transfer-details">
+                        <dt>Ngân hàng nhận</dt>
+                        <dd><strong><c:out value="${transfer.bankName}"/></strong></dd>
+
+                        <dt>Số tài khoản</dt>
+                        <dd style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                            <strong id="bank-account" style="font-size: 1.1rem; color: #0f172a;"><c:out value="${transfer.accountNumber}"/></strong>
+                            <button type="button" class="button button-secondary" data-copy="bank-account" style="padding: 3px 8px; font-size: 11px;">Sao chép</button>
+                        </dd>
+
+                        <dt>Chủ tài khoản</dt>
+                        <dd style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                            <strong id="bank-name"><c:out value="${transfer.accountName}"/></strong>
+                            <button type="button" class="button button-secondary" data-copy="bank-name" style="padding: 3px 8px; font-size: 11px;">Sao chép</button>
+                        </dd>
+
+                        <dt>Nội dung chuyển khoản</dt>
+                        <dd style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                            <strong id="bank-reference" style="font-size: 1.15rem; color: #0284c7; letter-spacing: 0.5px;"><c:out value="${transfer.reference}"/></strong>
+                            <button type="button" class="button button-secondary" data-copy="bank-reference" style="padding: 3px 8px; font-size: 11px;">Sao chép</button>
+                        </dd>
+
+                        <dt>Khoản thanh toán</dt>
+                        <dd><c:out value="${transfer.type eq 'DEPOSIT' ? 'Đặt cọc 30% giá trị hợp đồng' : 'Thanh toán 70% còn lại'}"/></dd>
+
+                        <dt>Trạng thái yêu cầu</dt>
+                        <dd><span class="soft-badge"><c:out value="${transfer.status}"/></span></dd>
+                    </dl>
+
+                    <%-- KHỐI TRẠNG THÁI REAL-TIME POLLING --%>
+                    <div id="bank-transfer-state" class="transfer-state-box"
+                         style="margin-top: 16px; padding: 12px; border-radius: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; font-size: 0.9rem; text-align: center;">
+                        ⏳ Đang chờ giao dịch chuyển khoản... Hệ thống sẽ tự động chuyển hướng khi nhận được tiền.
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 14px; margin: 20px 0; font-size: 0.88rem; color: #92400e; line-height: 1.6;">
+                <strong>⚠️ Lưu ý quan trọng khi chuyển khoản:</strong>
+                <ul style="margin: 6px 0 0 18px; padding: 0;">
+                    <li>Giữ nguyên nội dung chuyển khoản là mã <strong><c:out value="${transfer.reference}"/></strong> để hệ thống tự động đối chiếu webhook SePay.</li>
+                    <li>Không tự ý sửa số tiền thanh toán; số tiền phải đúng từng đồng theo yêu cầu.</li>
+                    <li>Sau khi chuyển khoản thành công, vui lòng giữ màn hình này từ 1-5 giây để hệ thống tự động cập nhật đơn hàng.</li>
+                </ul>
+            </div>
+
+            <div style="margin-top: 24px; padding-top: 16px; border-top: 1px dashed #e5e7eb; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <form method="post" action="<%= request.getContextPath() %>/payment/create">
+                    <input type="hidden" name="csrfToken" value="<c:out value='${paymentCsrf}'/>">
+                    <input type="hidden" name="orderId" value="<c:out value='${transfer.orderId}'/>">
+                    <input type="hidden" name="type" value="<c:out value='${transfer.type}'/>">
+                    <input type="hidden" name="method" value="CASH">
+                    <button class="button button-secondary" type="submit">Chuyển sang thanh toán Tiền mặt (CASH) tại showroom</button>
+                </form>
+                <a class="button button-secondary" href="<%= request.getContextPath() %>/payment/detail?orderId=<c:out value='${transfer.orderId}'/>">Xem chi tiết đơn &amp; công nợ</a>
+            </div>
+        </section>
+        <script src="<%= request.getContextPath() %>/assets/js/payment-bank-transfer.js" defer></script>
+    </c:when>
+    <c:otherwise>
+        <c:set var="resolvedOrderId" value="${not empty orderId ? orderId : (not empty transfer ? transfer.orderId : '')}"/>
+        <c:set var="resolvedType" value="${not empty type ? type : (not empty transfer ? transfer.type : 'DEPOSIT')}"/>
+        <section class="panel bank-transfer-panel">
+            <div class="transfer-heading">
+                <div>
+                    <span class="section-overline">ĐƠN HÀNG #<c:out value="${resolvedOrderId}"/></span>
+                    <h2>Thông báo thanh toán</h2>
+                </div>
+            </div>
+            <div class="info-note" style="border-color:#fca5a5;background:#fef2f2;color:#991b1b;margin:16px 0;">
+                <span>!</span>
+                <div>
+                    <strong><c:out value="${not empty sepayError ? sepayError : 'Cổng thanh toán SePay + MB Bank chưa sẵn sàng.'}"/></strong>
+                </div>
+            </div>
+            <p>Để đảm bảo an toàn tuyệt đối, hệ thống chỉ mở thanh toán trực tuyến khi thông tin tài khoản MB Bank thụ hưởng đã được cấu hình hợp lệ. Quý khách có thể chọn hình thức <strong>Thanh toán tiền mặt (CASH)</strong> tại showroom hoặc quay lại trang đơn hàng.</p>
+
+            <c:if test="${not empty resolvedOrderId}">
+                <div style="margin: 24px 0; display:flex; gap:12px; align-items:center; flex-wrap: wrap;">
+                    <form method="post" action="<%= request.getContextPath() %>/payment/create">
+                        <input type="hidden" name="csrfToken" value="<c:out value='${paymentCsrf}'/>">
+                        <input type="hidden" name="orderId" value="<c:out value='${resolvedOrderId}'/>">
+                        <input type="hidden" name="type" value="<c:out value='${resolvedType}'/>">
+                        <input type="hidden" name="method" value="CASH">
+                        <button class="button button-primary" type="submit">Yêu cầu thanh toán Tiền mặt (CASH) tại showroom <span>→</span></button>
+                    </form>
+                    <a class="button button-secondary" href="<%= request.getContextPath() %>/payment/detail?orderId=<c:out value='${resolvedOrderId}'/>">Xem chi tiết đơn hàng</a>
+                    <a class="button button-secondary" href="<%= request.getContextPath() %>/orders">Quay lại danh sách đơn hàng</a>
+                </div>
+            </c:if>
+            <c:if test="${empty resolvedOrderId}">
+                <p><a class="button button-primary" href="<%= request.getContextPath() %>/orders">Quay lại danh sách đơn hàng</a></p>
+            </c:if>
+        </section>
+    </c:otherwise>
+</c:choose>
+
 <%@ include file="../common/customer-shell-end.jspf" %>

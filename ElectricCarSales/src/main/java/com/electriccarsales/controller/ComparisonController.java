@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -73,6 +74,7 @@ public class ComparisonController extends HttpServlet {
 
     private static List<Map<String, Object>> createRows(List<CatalogVehicle> vehicles) {
         List<ComparisonRow> rows = List.of(
+                new ComparisonRow("Dòng xe", CatalogVehicle::carLine),
                 new ComparisonRow("Phiên bản", CatalogVehicle::specificationVersion),
                 new ComparisonRow("Giá tham khảo", vehicle -> vehicle.priceVnd() == null
                         ? "Liên hệ" : formatNumber(vehicle.priceVnd(), " ₫")),
@@ -101,11 +103,15 @@ public class ComparisonController extends HttpServlet {
 
     private static List<Map<String, Object>> createColumns(List<CatalogVehicle> vehicles) {
         return vehicles.stream()
-                .map(vehicle -> Map.<String, Object>of(
-                        "modelID", vehicle.modelID(),
-                        "modelName", valueOrPending(vehicle.modelName()),
-                        "specificationVersion", valueOrPending(vehicle.specificationVersion()),
-                        "imageUrl", vehicle.imageUrl() == null ? "" : vehicle.imageUrl()))
+                .map(vehicle -> {
+                    Map<String, Object> map = new LinkedHashMap<>();
+                    map.put("modelID", vehicle.modelID());
+                    map.put("modelName", valueOrPending(vehicle.modelName()));
+                    map.put("specificationVersion", valueOrPending(vehicle.specificationVersion()));
+                    map.put("imageUrl", vehicle.imageUrl() == null ? "" : vehicle.imageUrl());
+                    map.put("comparisonKey", comparisonKey(vehicle));
+                    return map;
+                })
                 .toList();
     }
 

@@ -5,6 +5,7 @@ import java.util.List;
 public class RolesResponse {
     private List<AdminRole> roles;
     private List<PermissionDTO> permissions;
+    private boolean available = true;
 
     public RolesResponse() {
     }
@@ -12,6 +13,14 @@ public class RolesResponse {
     public RolesResponse(List<AdminRole> roles, List<PermissionDTO> permissions) {
         this.roles = roles;
         this.permissions = permissions;
+    }
+
+    public boolean isAvailable() {
+        return available;
+    }
+
+    public void setAvailable(boolean available) {
+        this.available = available;
     }
 
     public List<AdminRole> getRoles() {

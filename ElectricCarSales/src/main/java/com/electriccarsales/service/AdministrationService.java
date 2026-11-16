@@ -256,7 +256,7 @@ public class AdministrationService {
                     }
                 }
                 int key = repository.savePromotion(connection, id, input);
-                logs.record(connection, actor, id == null ? "PROMOTION_CREATE" : "PROMOTION_UPDATE", "PROMOTION",
+                logs.recordRequired(connection, actor, id == null ? "PROMOTION_CREATE" : "PROMOTION_UPDATE", "PROMOTION",
                     String.valueOf(key), "before=" + old + "; after=" + input);
                 connection.commit();
                 return new AdminPromotion(key, input.getPromotionName(), input.getDescription(), input.getDiscountType(),
@@ -281,7 +281,7 @@ public class AdministrationService {
                         throw new ApiException(404, "Không tìm thấy khuyến mãi.");
                     }
                 }
-                logs.record(connection, actor, "PROMOTION_DEACTIVATE", "PROMOTION", String.valueOf(id),
+                logs.recordRequired(connection, actor, "PROMOTION_DEACTIVATE", "PROMOTION", String.valueOf(id),
                     "status -> INACTIVE");
                 connection.commit();
             } catch (SQLException | RuntimeException exception) {

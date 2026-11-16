@@ -83,7 +83,14 @@ public class CarDAO extends DBContext {
     }
 
     public boolean updateCarStatus(int carId, String statusName) {
-        String sql = "UPDATE Cars SET CarStatusID = (SELECT TOP 1 CarStatusID FROM CarStatuses WHERE StatusName = ?) WHERE CarID = ?";
+        String sql = """
+                UPDATE Cars SET CarStatusID = (SELECT TOP 1 CarStatusID FROM CarStatuses WHERE StatusName = ?)
+                WHERE CarID = ? AND NOT EXISTS (SELECT 1 FROM OrderDetails WHERE CarID=Cars.CarID)
+                  AND CarStatusID NOT IN (SELECT CarStatusID FROM CarStatuses
+                                          WHERE UPPER(StatusName) IN ('RESERVED','DEPOSITED','SOLD','DELIVERED'))
+                """;
+        if (statusName == null || List.of("RESERVED", "DEPOSITED", "SOLD", "DELIVERED")
+                .contains(statusName.strip().toUpperCase(java.util.Locale.ROOT))) return false;
         try (Connection connection = getConnection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setNString(1, statusName);

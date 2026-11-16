@@ -1,8 +1,7 @@
-
 package com.electriccarsales.controller;
 
-import com.electriccarsales.dao.FinanceConnection;
 import com.electriccarsales.service.BankTransferService;
+import com.electriccarsales.service.SePayService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.annotation.WebServlet;
@@ -12,275 +11,157 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.sql.*;
-import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.sql.SQLException;
 
-@WebServlet("/webhook/sepay")
+/**
+ * Controller tiếp nhận Webhook biến động số dư tức thời từ SePay (SePay + MB Bank).
+ * Endpoint: /webhook/sepay và /api/sepay-webhook
+ *
+ * Kiểm tra xác thực (Authorization: Apikey <key>), kiểm tra đúng tài khoản MB Bank,
+ * chỉ nhận tiền vào (transferType = "in"), kiểm tra số tiền, chống xử lý trùng lặp (idempotent),
+ * và cập nhật giao dịch theo giao dịch Serializable.
+ */
+@WebServlet(urlPatterns = {"/webhook/sepay", "/api/sepay-webhook"})
 public class SePayWebhookController extends HttpServlet {
 
     private static final ObjectMapper JSON = new ObjectMapper();
-
-    private static final Pattern PAYMENT_CODE = Pattern.compile(
-        "(?<![A-Z0-9])ECS\\d+[DR]\\d+(?![A-Z0-9])"
-    );
+    private final SePayService sePayService = new SePayService();
+    private final BankTransferService bankTransferService = new BankTransferService();
 
     @Override
-    protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response) throws IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write("{\"status\":\"active\",\"gateway\":\"SePay MB Bank\",\"accountNumber\":\""
+                + sePayService.getAccountNumber() + "\"}");
+    }
 
-        String apiKey = System.getenv("SEPAY_WEBHOOK_KEY");
-        String mbAccount = BankTransferService.mbAccountNumber();
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        response.setHeader("Cache-Control", "no-store");
 
-        if (apiKey == null || apiKey.isBlank()) {
-            response.sendError(503, "Webhook chưa cấu hình.");
+        // 1. Kiểm tra xác thực Webhook (Authorization: Apikey <key>)
+        String authHeader = request.getHeader("Authorization");
+        if (!sePayService.verifyWebhookKey(authHeader)) {
+            logMessage("SePay Webhook: Xác thực không hợp lệ.");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("{\"success\":false,\"error\":\"Invalid webhook key\"}");
             return;
         }
 
-        String authorization = request.getHeader("Authorization");
-        String expected = "Apikey " + apiKey;
-
-        if (authorization == null
-            || !MessageDigest.isEqual(
-            authorization.getBytes(StandardCharsets.UTF_8),
-            expected.getBytes(StandardCharsets.UTF_8))) {
-            response.sendError(401, "Invalid webhook key");
-            return;
-        }
-
-        byte[] body = request.getInputStream().readNBytes(16385);
-        if (body.length > 16384) {
-            response.sendError(413);
+        // 2. Đọc payload JSON an toàn (giới hạn 32KB chống DoS)
+        byte[] body = request.getInputStream().readNBytes(32769);
+        if (body.length > 32768) {
+            response.setStatus(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
+            response.getWriter().write("{\"success\":false,\"error\":\"Payload too large\"}");
             return;
         }
 
         JsonNode data;
         try {
             data = JSON.readTree(body);
-        } catch (IOException e) {
-            response.sendError(400, "Invalid JSON");
+        } catch (Exception e) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("{\"success\":false,\"error\":\"Invalid JSON\"}");
             return;
         }
 
-
-        // Chỉ xử lý dữ liệu Gửi thử của SePay.
-        // Không ghi nhận thanh toán vào Database.
-        if (data != null
-            && data.isObject()
-            && data.path("id").asLong(-1) == 0
-            && "SEPAYTEST".equals(data.path("code").asText())) {
-
-            getServletContext().log(
-                "SePay TEST received - no payment recorded"
-            );
-
-            success(response);
+        if (data == null || !data.isObject()) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("{\"success\":false,\"error\":\"Empty payload\"}");
             return;
         }
 
-        if (data == null || !data.isObject()
-            || data.path("id").asLong(0) <= 0
-            || !data.path("transferAmount").isNumber()) {
-            response.sendError(400, "Invalid transaction");
+        // 3. Xử lý webhook Test Mode của SePay Dashboard (Gửi thử dữ liệu)
+        long eventId = data.path("id").asLong(-1);
+        String code = data.path("code").asText("");
+        if (eventId == 0 || "SEPAYTEST".equalsIgnoreCase(code)) {
+            logMessage("SePay: Đã nhận webhook kiểm thử (Test Mode), không ghi vào database.");
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write("{\"success\":true,\"message\":\"SePay test webhook acknowledged\"}");
             return;
         }
 
-        String account = data.path("accountNumber").asText();
-        if (!mbAccount.equals(account)) {
-            response.sendError(422, "Wrong bank account");
+        if (eventId <= 0 || !data.path("transferAmount").isNumber()) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("{\"success\":false,\"error\":\"Invalid transaction data\"}");
             return;
         }
 
-        if (!"in".equalsIgnoreCase(
-            data.path("transferType").asText())) {
-            success(response);
+        // 4. Kiểm tra tài khoản nhận
+        String accountNumber = data.path("accountNumber").asText("").trim();
+        String expectedAccount = SePayService.getAccountNumber();
+        if (!expectedAccount.equals(accountNumber)) {
+            logMessage("SePay event " + eventId + ": Sai số tài khoản nhận (" + accountNumber + "), yêu cầu " + expectedAccount);
+            response.setStatus(422);
+            response.getWriter().write("{\"success\":false,\"error\":\"Wrong bank account\"}");
             return;
         }
 
-        BigDecimal received = data.path("transferAmount")
-            .decimalValue();
-
-        if (received.signum() <= 0) {
-            response.sendError(400, "Invalid amount");
+        // 5. Chỉ xử lý tiền vào (transferType = "in")
+        String transferType = data.path("transferType").asText("").trim();
+        if (!"in".equalsIgnoreCase(transferType)) {
+            logMessage("SePay event " + eventId + ": Bỏ qua giao dịch tiền ra (transferType=" + transferType + ")");
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write("{\"success\":true,\"message\":\"Ignored transfer out\"}");
             return;
         }
 
-        long eventId = data.path("id").asLong();
-        String content = data.path("content").asText("")
-            .toUpperCase(Locale.ROOT);
-
-        Matcher matcher = PAYMENT_CODE.matcher(content);
-        if (!matcher.find()) {
-            getServletContext().log(
-                "SePay event " + eventId
-                    + ": không tìm thấy mã thanh toán ECS."
-            );
-            success(response);
+        BigDecimal transferAmount = data.path("transferAmount").decimalValue();
+        if (transferAmount == null || transferAmount.signum() <= 0) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("{\"success\":false,\"error\":\"Invalid amount\"}");
             return;
         }
-        String paymentReference = matcher.group();
-        if (matcher.find()) {
-            getServletContext().log("SePay event " + eventId
-                + ": nội dung có nhiều mã thanh toán ECS, cần đối soát thủ công.");
-            success(response);
-            return;
-        }
-        String reportedCode = data.path("code").asText("").toUpperCase(Locale.ROOT);
-        if (PAYMENT_CODE.matcher(reportedCode).matches()
-            && !paymentReference.equals(reportedCode)) {
-            getServletContext().log("SePay event " + eventId
-                + ": code và content không trùng mã Payment.");
-            success(response);
-            return;
-        }
-        String eventTag = "SEPAY_ID=" + eventId + ";";
-        String bankReference = safeAuditValue(data.path("referenceCode").asText(""), 80);
-        if (!bankReference.matches("[A-Za-z0-9./_-]{1,80}")) bankReference = "";
-        String transactionDate = safeAuditValue(data.path("transactionDate").asText(""), 32);
-        String transferContent = safeAuditValue(data.path("content").asText(""), 140);
-        String bankReferenceTag = bankReference.isBlank() ? ""
-            : "SEPAY_REF=" + bankReference + ";";
 
-        try (Connection connection = FinanceConnection.open()) {
-            connection.setAutoCommit(false);
-            connection.setTransactionIsolation(
-                Connection.TRANSACTION_SERIALIZABLE
-            );
+        String gateway = data.path("gateway").asText("MBBank");
+        String content = data.path("content").asText("");
+        String referenceCode = data.path("referenceCode").asText("");
+        String transactionDate = data.path("transactionDate").asText("");
 
-            try {
-                // Khóa khi đối soát để tránh xử lý trùng.
-                try (Statement lock = connection.createStatement()) {
-                    lock.executeQuery(
-                        "SELECT COUNT(*) FROM Payments "
-                            + "WITH (TABLOCKX, HOLDLOCK)"
-                    ).close();
-                }
+        try {
+            boolean success = bankTransferService.processSePaySuccess(
+                    eventId, gateway, accountNumber, transferType, transferAmount,
+                    content, referenceCode, transactionDate);
 
-                boolean processed = false;
-
-                try (PreparedStatement ps = connection.prepareStatement(
-                    "SELECT COUNT(*) FROM Payments "
-                        + "WHERE CHARINDEX(?, COALESCE(Note,'')) > 0")) {
-                    ps.setString(1, eventTag);
-
-                    try (ResultSet rs = ps.executeQuery()) {
-                        rs.next();
-                        processed = rs.getInt(1) > 0;
-                    }
-                }
-
-                if (!processed) {
-                    String sql =
-                        "SELECT p.PaymentID, p.PaymentAmount, "
-                            + "p.Note, ps.StatusID "
-                            + "FROM Payments p "
-                            + "JOIN PaymentStatuses ps "
-                            + "ON p.PaymentStatusID = ps.PaymentStatusID "
-                            + "JOIN PaymentMethods pm "
-                            + "ON p.PaymentMethodID = pm.PaymentMethodID "
-                            + "WHERE p.ReferenceCode = ? "
-                            + "AND pm.MethodName = 'BANK_TRANSFER'";
-
-                    try (PreparedStatement ps =
-                             connection.prepareStatement(sql)) {
-
-                        ps.setString(1, paymentReference);
-
-                        try (ResultSet rs = ps.executeQuery()) {
-                            if (rs.next()
-                                && "PENDING".equals(rs.getString("StatusID"))
-                                && received.compareTo(
-                                rs.getBigDecimal("PaymentAmount")) == 0) {
-
-                                int paymentId = rs.getInt("PaymentID");
-                                String oldNote = rs.getString("Note");
-                                boolean bankReferenceUsed = false;
-                                if (!bankReferenceTag.isBlank()) {
-                                    try (PreparedStatement duplicate = connection.prepareStatement(
-                                        "SELECT COUNT(*) FROM Payments WHERE PaymentID<>? "
-                                            + "AND CHARINDEX(?, COALESCE(Note,'')) > 0")) {
-                                        duplicate.setInt(1, paymentId);
-                                        duplicate.setString(2, bankReferenceTag);
-                                        try (ResultSet duplicateResult = duplicate.executeQuery()) {
-                                            duplicateResult.next();
-                                            bankReferenceUsed = duplicateResult.getInt(1) > 0;
-                                        }
-                                    }
-                                }
-                                if (bankReferenceUsed) {
-                                    getServletContext().log("SePay event " + eventId
-                                        + ": mã giao dịch ngân hàng đã gắn với Payment khác.");
-                                    connection.commit();
-                                    success(response);
-                                    return;
-                                }
-
-                                String note = (oldNote == null ? "" : oldNote + " ")
-                                    + eventTag
-                                    + (bankReferenceTag.isBlank() ? "" : " " + bankReferenceTag)
-                                    + (transactionDate.isBlank() ? "" : " SEPAY_DATE=" + transactionDate + ";")
-                                    + (transferContent.isBlank() ? "" : " SEPAY_CONTENT=" + transferContent + ";")
-                                    + " SEPAY_RECEIVED="
-                                    + received.toPlainString() + ";";
-
-                                if (note.length() > 500) {
-                                    throw new SQLException(
-                                        "Payment note too long");
-                                }
-
-                                try (PreparedStatement update =
-                                         connection.prepareStatement(
-                                             "UPDATE Payments SET Note=? "
-                                                 + "WHERE PaymentID=?")) {
-                                    update.setNString(1, note);
-                                    update.setInt(2, paymentId);
-                                    update.executeUpdate();
-                                }
-
-                                getServletContext().log(
-                                    "SePay: đã đối soát đúng khoản #"
-                                        + paymentId
-                                        + ", chờ Accountant xác nhận."
-                                );
-                            } else {
-                                getServletContext().log(
-                                    "SePay event " + eventId
-                                        + ": mã hoặc số tiền không khớp PENDING."
-                                );
-                            }
-                        }
-                    }
-                }
-
-                connection.commit();
-
-            } catch (SQLException | RuntimeException e) {
-                connection.rollback();
-                throw e;
+            if (success) {
+                logMessage("SePay: Xác nhận thanh toán thành công cho GD #" + eventId + ", số tiền " + transferAmount);
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.getWriter().write("{\"success\":true,\"message\":\"Payment confirmed\"}");
+            } else {
+                logMessage("SePay event " + eventId + ": Không tìm thấy mã thanh toán ECS hoặc đơn hàng PENDING phù hợp.");
+                // Trả HTTP 200 để SePay ghi nhận đã tiếp nhận thành công, tránh SePay gửi lại liên tục với giao dịch cá nhân khác
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.getWriter().write("{\"success\":true,\"message\":\"No matching pending order found\"}");
             }
-
+        } catch (IllegalStateException e) {
+            logMessage("SePay event " + eventId + " lỗi trạng thái / số tiền: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write("{\"success\":false,\"error\":\"" + escapeJson(e.getMessage()) + "\"}");
         } catch (SQLException e) {
-            getServletContext().log("SePay database error", e);
-            response.sendError(503, "Database unavailable");
-            return;
+            logMessage("SePay event " + eventId + " lỗi cơ sở dữ liệu: " + e.getMessage(), e);
+            response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+            response.getWriter().write("{\"success\":false,\"error\":\"Database error\"}");
         }
-
-        success(response);
     }
 
-    private static void success(HttpServletResponse response)
-        throws IOException {
-        response.setStatus(201);
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write("{\"success\":true}");
+    private void logMessage(String message, Throwable... t) {
+        try {
+            if (getServletContext() != null) {
+                if (t.length > 0 && t[0] != null) {
+                    getServletContext().log(message, t[0]);
+                } else {
+                    getServletContext().log(message);
+                }
+            } else {
+                System.out.println(message);
+            }
+        } catch (Exception ignored) {
+        }
     }
 
-    private static String safeAuditValue(String value, int maxLength) {
-        if (value == null) return "";
-        String normalized = value.replaceAll("[\\p{Cntrl};=]", " ").trim();
-        return normalized.length() <= maxLength ? normalized : normalized.substring(0, maxLength);
+    private static String escapeJson(String str) {
+        if (str == null) return "";
+        return str.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r");
     }
 }

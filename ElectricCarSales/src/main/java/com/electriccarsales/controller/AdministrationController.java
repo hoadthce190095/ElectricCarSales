@@ -72,6 +72,9 @@ public class AdministrationController extends JsonServlet {
                 date(request, "from"), date(request, "to"), page(request), request.getParameter("targetType"), export,
                 actor(request));
             if (export) {
+                if (!result.isAvailable()) {
+                    throw new ApiException(503, result.getMessage());
+                }
                 response.setContentType("text/csv;charset=UTF-8");
                 response.setHeader("Content-Disposition", "attachment; filename=system-logs.csv");
                 var writer = response.getWriter();

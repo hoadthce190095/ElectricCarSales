@@ -62,7 +62,7 @@ public class AdminSetupService {
                     userId = result.getInt(1);
                 }
             }
-            new SystemLogDAO().record(connection, userId, "ADMIN_BOOTSTRAP", "USER", String.valueOf(userId), origin);
+            new SystemLogDAO().recordRequired(connection, userId, "ADMIN_BOOTSTRAP", "USER", String.valueOf(userId), origin);
             connection.commit();
             return userId;
         } catch (SQLException | RuntimeException exception) {

@@ -100,7 +100,7 @@
     const roleDashboards = {
         sales: ["Tổng quan kinh doanh", "Tiếp nhận tư vấn, quản lý khách hàng, lập đơn hàng (cọc 30% / trả 70%), tạo hợp đồng và phối hợp bàn giao xe theo RDS."],
         operations: ["Tổng quan vận hành", "Quản lý tồn kho, nhập/xuất xe vật lý, cập nhật trạng thái xe và xác nhận bàn giao xe sau khi có hóa đơn."],
-        accountant: ["Tổng quan kế toán", "Đối soát sao kê MB Bank, xác nhận đặt cọc 30%, xác nhận thanh toán/giải ngân 70%, theo dõi công nợ và phát hành hóa đơn."],
+        accountant: ["Tổng quan kế toán", "Đối soát sao kê ngân hàng, xác nhận đặt cọc 30%, xác nhận thanh toán/giải ngân 70%, theo dõi công nợ và phát hành hóa đơn."],
         manager: ["Tổng quan quản lý", "Giám sát toàn bộ giao dịch bán xe, tồn kho và xuất báo cáo doanh thu / xe bán ra theo thời gian thực."],
         admin: ["Không gian quản trị", "Quản lý tồn kho theo quyền Admin đã được RDS cho phép."]
     };
@@ -187,7 +187,7 @@
                 <div class="metric-foot">Mở chức năng →</div></a>`).join("")}
             </section>
             <div class="inline-note" style="margin-top:20px;">
-                <strong>Quy trình chuẩn RDS:</strong> Tư vấn (ConsultationRequests) → Sales lập đơn (Orders + OrderDetails, giữ chỗ xe RESERVED) → Khách xem đơn &amp; chuyển khoản MB Bank đặt cọc 30% → Kế toán xác nhận cọc (DEPOSITED) → Sales lập Hợp đồng &amp; Khách ký OTP (SIGNED) → Thanh toán 70% còn lại (hoặc Ngân hàng đối tác giải ngân 70%) → Kế toán xác nhận đủ 100% (PAID) &amp; Xuất Hóa đơn (ISSUED) → Vận hành/Sales xác nhận Xuất kho Bàn giao xe (DELIVERED / COMPLETED).
+                <strong>Quy trình chuẩn RDS:</strong> Tư vấn (ConsultationRequests) → Sales lập đơn (Orders + OrderDetails, giữ chỗ xe RESERVED) → Khách xem đơn &amp; thanh toán chuyển khoản VietQR (SePay - MB Bank) đặt cọc 30% → Kế toán xác nhận cọc (DEPOSITED) → Sales lập Hợp đồng &amp; Khách ký OTP (SIGNED) → Thanh toán 70% còn lại (hoặc Ngân hàng đối tác giải ngân 70%) → Kế toán xác nhận đủ 100% (PAID) &amp; Xuất Hóa đơn (ISSUED) → Vận hành/Sales xác nhận Xuất kho Bàn giao xe (DELIVERED / COMPLETED).
             </div>`;
     }
 
@@ -199,6 +199,7 @@
             <div class="page-heading"><div>
                 <div class="eyebrow"><span class="eyebrow-line"></span>UC-06 · QUẢN LÝ TƯ VẤN</div>
                 <h1>Yêu cầu tư vấn khách hàng (${list.length})</h1>
+                <a href="${appContext}/sales-chat">Mở trang trò chuyện</a>
                 <p>Tiếp nhận yêu cầu tư vấn, ghi phản hồi tư vấn giá/phương án trả thẳng - trả góp và chuyển sang lập đơn hàng.</p>
             </div></div>
             <div class="table-responsive bg-white rounded shadow-sm border" style="padding:16px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;">
@@ -357,35 +358,65 @@
             ${canCreateOrder && !onlyDeposits ? `
             <section style="padding:18px;background:#fff;border-radius:12px;border:1px solid #cbd5e1;margin-bottom:20px;">
                 <h3 style="margin:0 0 12px;font-size:16px;">+ Lập đơn hàng bán xe mới (Sales Staff - UC-08)</h3>
-                <form id="staff-create-order-form" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:12px;align-items:end;">
-                    <label style="font-size:12px;font-weight:600;">Khách hàng *
-                        <select name="customerId" id="so-customer" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
-                            <option value="">-- Chọn khách hàng --</option>
-                            ${customers.map(c => `<option value="${c.customerID}" ${prefillOrderCustomer?.customerId === c.customerID ? "selected" : ""}>#${c.customerID} · ${esc(c.customerName)} (${esc(c.phone)})</option>`).join("")}
-                        </select>
-                    </label>
-                    <label style="font-size:12px;font-weight:600;">Xe vật lý có sẵn (AVAILABLE) *
-                        <select name="carId" id="so-car" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
-                            <option value="">${cars.length ? "-- Chọn xe có sẵn trong kho --" : "-- Kho chưa có xe vật lý khả dụng --"}</option>
-                            ${cars.map(car => `<option value="${car.carID}" data-price="${car.price}" ${prefillOrderCustomer?.modelId === car.modelID ? "selected" : ""}>${esc(car.modelName)} (${esc(car.versionName)} - ${esc(car.colorName)}) · VIN: ${esc(car.vin)} · ${fmtMoney(car.price)}</option>`).join("")}
-                        </select>
-                    </label>
-                    <label style="font-size:12px;font-weight:600;">Phương thức thanh toán *
-                        <select name="paymentMethodId" id="so-method" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
-                            ${methods.map(m => `<option value="${m.paymentMethodID}" data-name="${m.methodName}">${esc(m.methodName)} — ${esc(m.description)}</option>`).join("")}
-                        </select>
-                    </label>
-                    <label id="so-company-wrap" style="font-size:12px;font-weight:600;display:none;">Ngân hàng đối tác (Bắt buộc khi Trả góp) *
-                        <select name="companyId" id="so-company" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
-                            <option value="">-- Chọn đối tác tài chính --</option>
-                            ${companies.map(fc => `<option value="${fc.companyID}">${esc(fc.companyName)}</option>`).join("")}
-                        </select>
-                    </label>
-                    <label style="font-size:12px;font-weight:600;">Ghi chú đơn hàng
-                        <input type="text" name="note" maxlength="300" placeholder="Ghi chú giao dịch..." style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
-                    </label>
-                    <div>
-                        <button type="submit" class="button button-primary" style="width:100%;padding:10px;">Tạo đơn hàng (Cọc 30% / Còn 70%) →</button>
+                <form id="staff-create-order-form" style="display:flex;flex-direction:column;gap:14px;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:12px;align-items:end;">
+                        <label style="font-size:12px;font-weight:600;">Khách hàng *
+                            <select name="customerId" id="so-customer" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
+                                <option value="">-- Chọn khách hàng --</option>
+                                ${customers.map(c => `<option value="${c.customerID}" ${prefillOrderCustomer?.customerId === c.customerID ? "selected" : ""}>#${c.customerID} · ${esc(c.customerName)} (${esc(c.phone)})</option>`).join("")}
+                            </select>
+                        </label>
+                        <label style="font-size:12px;font-weight:600;">Xe vật lý có sẵn (AVAILABLE) *
+                            <select name="carId" id="so-car" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
+                                <option value="">${cars.length ? "-- Chọn xe có sẵn trong kho --" : "-- Kho chưa có xe vật lý khả dụng --"}</option>
+                                ${cars.map(car => `<option value="${car.carID}" data-price="${car.price}" ${prefillOrderCustomer?.modelId === car.modelID ? "selected" : ""}>${esc(car.modelName)} (${esc(car.versionName)} - ${esc(car.colorName)}) · VIN: ${esc(car.vin)} · ${fmtMoney(car.price)}</option>`).join("")}
+                            </select>
+                        </label>
+                        <label style="font-size:12px;font-weight:600;">Phương thức thanh toán *
+                            <select name="paymentMethodId" id="so-method" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
+                                ${methods.map(m => `<option value="${m.paymentMethodID}" data-name="${m.methodName}">${esc(m.methodName)} — ${esc(m.description)}</option>`).join("")}
+                            </select>
+                        </label>
+                        <label id="so-company-wrap" style="font-size:12px;font-weight:600;display:none;">Ngân hàng đối tác (Bắt buộc khi Trả góp) *
+                            <select name="companyId" id="so-company" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
+                                <option value="">-- Chọn đối tác tài chính --</option>
+                                ${companies.map(fc => `<option value="${fc.companyID}">${esc(fc.companyName)}</option>`).join("")}
+                            </select>
+                        </label>
+                    </div>
+
+                    <!-- KHỐI THÔNG TIN NGƯỜI MUA XE (XÁC MINH THEO CHAT/HỒ SƠ) -->
+                    <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:14px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+                            <strong style="font-size:13px;color:#0f172a;">Thông tin người mua xe (Dùng lập Hợp đồng OTP &amp; Xuất Hóa đơn)</strong>
+                            <button type="button" id="so-btn-autofill" class="button button-secondary" style="padding:4px 10px;font-size:12px;">⚡ Lấy thông tin từ hồ sơ khách hàng</button>
+                        </div>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:10px;">
+                            <label style="font-size:12px;font-weight:600;">Họ và tên người mua *
+                                <input type="text" name="customerName" id="so-cust-name" required maxlength="100" placeholder="Họ và tên khách hàng" style="width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
+                            </label>
+                            <label style="font-size:12px;font-weight:600;">Số điện thoại liên lạc chính thức *
+                                <input type="tel" name="customerPhone" id="so-cust-phone" required maxlength="20" placeholder="Ví dụ: 0912345678" style="width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
+                            </label>
+                            <label style="font-size:12px;font-weight:600;">Email nhận chứng từ &amp; thông báo
+                                <input type="email" name="customerEmail" id="so-cust-email" maxlength="100" placeholder="Ví dụ: customer@example.com" style="width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
+                            </label>
+                            <label style="font-size:12px;font-weight:600;">Địa chỉ bàn giao xe / thường trú *
+                                <input type="text" name="customerAddress" id="so-cust-address" required maxlength="255" placeholder="Địa chỉ thường trú / nhận xe" style="width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
+                            </label>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+                            <label style="font-size:12px;font-weight:600;">Ghi chú xác minh từ Sales Staff (nguồn chat / thỏa thuận)
+                                <input type="text" name="salesNote" id="so-sales-note" maxlength="200" placeholder="Đã xác nhận CCCD/thông tin qua chat..." style="width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
+                            </label>
+                            <label style="font-size:12px;font-weight:600;">Ghi chú đơn hàng (nội bộ)
+                                <input type="text" name="note" id="so-order-note" maxlength="300" placeholder="Ghi chú giao dịch..." style="width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;justify-content:flex-end;">
+                        <button type="submit" class="button button-primary" style="padding:10px 24px;font-size:14px;font-weight:600;">Tạo đơn hàng (Cọc 30% / Còn 70%) →</button>
                     </div>
                 </form>
                 ${!cars.length ? `<div role="status" style="margin-top:10px;padding:10px 12px;border:1px solid #f5c16c;background:#fffbeb;color:#854d0e;border-radius:7px;font-size:12px;">
@@ -441,13 +472,14 @@
                                 </td>
                                 <td style="padding:10px;min-width:210px;">
                                     <div style="display:flex;flex-direction:column;gap:6px;">
-                                        ${o.status === "DEPOSITED" && !o.contractStatus && ["sales", "accountant", "admin"].includes(currentRole) ? `
+                                        ${o.status === "DEPOSITED" && !o.contractStatus && currentRole === "sales" ? `
                                             <button type="button" class="button button-primary btn-quick-contract" data-order-id="${o.id}" style="padding:6px 10px;font-size:12px;">+ Lập Hợp đồng (RDS 9.1)</button>
                                         ` : ""}
-                                        ${o.status === "PAID" && o.invoiceNumber && o.deliveryStatus !== "DELIVERED" && ["sales", "operations", "admin"].includes(currentRole) ? `
+                                        ${o.status === "PAID" && o.invoiceNumber && o.deliveryStatus !== "DELIVERED" && currentRole === "operations" ? `
                                             <button type="button" class="button button-primary btn-quick-handover" data-order-id="${o.id}" style="padding:6px 10px;font-size:12px;">✓ Xác nhận Bàn giao xe</button>
                                         ` : ""}
                                         ${(o.status === "PENDING" || o.status === "RESERVED") && ["sales", "admin"].includes(currentRole) ? `
+                                            <button type="button" class="button button-secondary btn-send-payment-chat" data-order-id="${o.id}" data-customer-id="${o.customerId}" data-model="${esc(o.modelName || "")}" data-deposit="${o.depositAmount}" style="padding:5px 10px;font-size:12px;color:#1e40af;">✉ Gửi YC cọc qua chat</button>
                                             <button type="button" class="button button-secondary btn-cancel-order" data-order-id="${o.id}" style="padding:5px 10px;font-size:12px;color:#b91c1c;">Hủy đơn hàng</button>
                                         ` : ""}
                                     </div>
@@ -460,10 +492,52 @@
         `;
         prefillOrderCustomer = null;
 
+        const customerSelect = document.getElementById("so-customer");
         const carSelect = document.getElementById("so-car");
         const methodSelect = document.getElementById("so-method");
         const companyWrap = document.getElementById("so-company-wrap");
         const preview = document.getElementById("so-calc-preview");
+        const btnAutofill = document.getElementById("so-btn-autofill");
+
+        async function autofillCustomerInfo(force = false) {
+            const selectedId = Number(customerSelect?.value);
+            if (!selectedId) {
+                if (force) notify("Vui lòng chọn khách hàng trước khi lấy thông tin.");
+                return;
+            }
+            const nameInput = document.getElementById("so-cust-name");
+            const phoneInput = document.getElementById("so-cust-phone");
+            const emailInput = document.getElementById("so-cust-email");
+            const addrInput = document.getElementById("so-cust-address");
+
+            // 1. Thử điền nhanh từ mảng cache sẵn trong payload
+            const found = customers.find(c => Number(c.customerID) === selectedId);
+            if (found) {
+                if (nameInput) nameInput.value = found.customerName || "";
+                if (phoneInput) phoneInput.value = found.phone || "";
+                if (emailInput) emailInput.value = found.email || "";
+                if (addrInput) addrInput.value = found.address || "";
+            }
+
+            // 2. Gọi API backend lấy dữ liệu mới nhất từ database
+            try {
+                const res = await fetchJson(`/customer/profile?mode=staff&customerId=${selectedId}`);
+                if (res && res.customer) {
+                    const c = res.customer;
+                    if (nameInput) nameInput.value = c.customerName || "";
+                    if (phoneInput) phoneInput.value = c.phone || "";
+                    if (emailInput) emailInput.value = c.email || "";
+                    if (addrInput) addrInput.value = c.address || "";
+                    if (force) notify(`Đã lấy thông tin mới nhất từ database của khách #${selectedId}.`);
+                }
+            } catch (err) {
+                console.warn("Could not fetch realtime customer profile", err);
+            }
+        }
+
+        customerSelect?.addEventListener("change", () => autofillCustomerInfo(false));
+        btnAutofill?.addEventListener("click", () => autofillCustomerInfo(true));
+        if (customerSelect?.value) autofillCustomerInfo(false);
 
         function updateOrderPreview() {
             if (!carSelect || !preview) return;
@@ -492,6 +566,11 @@
                     carId: f.carId.value,
                     method: f.paymentMethodId.selectedOptions[0]?.dataset?.name,
                     companyId: f.companyId?.value || "",
+                    customerName: f.customerName?.value || "",
+                    customerPhone: f.customerPhone?.value || "",
+                    customerEmail: f.customerEmail?.value || "",
+                    customerAddress: f.customerAddress?.value || "",
+                    salesNote: f.salesNote?.value || "",
                     note: f.note.value,
                     csrfToken: data.csrfToken
                 });
@@ -507,6 +586,7 @@
                 try {
                     const res = await postForm("/contract", {
                         action: "create",
+                        csrfToken: data.csrfToken,
                         orderId: btn.dataset.orderId,
                         note: "Hợp đồng mua bán xe điện VinFast theo quy chuẩn RDS."
                     });
@@ -523,6 +603,7 @@
                 try {
                     const res = await postForm("/delivery", {
                         action: "handover",
+                        csrfToken: data.csrfToken,
                         orderId: btn.dataset.orderId,
                         deliveryAddress: "Showroom VinFast Cần Thơ",
                         note: "Đã kiểm tra hóa đơn và xuất kho bàn giao xe."
@@ -531,6 +612,32 @@
                     await loadTransactionsAndDepositsView(onlyDeposits);
                 } catch (err) {
                     notify(err.message);
+                }
+            });
+        });
+
+        content.querySelectorAll(".btn-send-payment-chat").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                const orderId = btn.dataset.orderId;
+                const dep = fmtMoney(Number(btn.dataset.deposit || 0));
+                const model = btn.dataset.model || "xe";
+                try {
+                    const consultData = await fetchJson("/consultation?format=json");
+                    const customerConsult = (consultData.consultations || []).find(c => Number(c.customerId) === Number(btn.dataset.customerId));
+                    if (!customerConsult) {
+                        notify(`Khách hàng #${btn.dataset.customerId} chưa có yêu cầu tư vấn trên hệ thống. Khách có thể thanh toán trực tiếp tại mục Đơn hàng.`);
+                        return;
+                    }
+                    const noteText = `[YÊU CẦU THANH TOÁN ĐẶT CỌC]: Đơn hàng #${orderId} (${model}). Số tiền cọc 30%: ${dep}. Quý khách vui lòng kiểm tra và thanh toán đặt cọc qua VietQR (SePay - MB Bank).`;
+                    const res = await postForm("/consultation", {
+                        action: "update",
+                        requestId: customerConsult.id,
+                        status: customerConsult.status === "PENDING" ? "IN_PROGRESS" : customerConsult.status,
+                        note: noteText
+                    });
+                    notify(res.message || `Đã gửi yêu cầu cọc đơn #${orderId} vào hội thoại #${customerConsult.id}.`);
+                } catch (err) {
+                    notify(err.message || "Không thể gửi yêu cầu cọc qua chat.");
                 }
             });
         });
@@ -581,7 +688,7 @@
                 ${pending.length ? pending.map(p => `
                     <article style="padding:16px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;margin:12px 0;">
                         <h3 style="margin:0 0 8px;">Khoản #${p.paymentId} · Đơn #${p.orderId}</h3>
-                        <p>Khách hàng ${esc(p.customer)} · Loại ${esc(p.type)}</p>
+                        <p>Khách hàng ${esc(p.customer)} · Loại ${esc(p.type)} · ${esc(p.methodName)}</p>
                         <p>Số tiền yêu cầu <strong>${fmtMoney(p.amount)}</strong></p>
                         <p>Nội dung đối chiếu <strong>${esc(p.reference)}</strong></p>
                         ${p.note ? `<p>Ghi chú: ${esc(p.note)}</p>` : ""}
@@ -589,8 +696,8 @@
                             <input type="hidden" name="csrfToken" value="${csrf}"><input type="hidden" name="format" value="json">
                             <input type="hidden" name="paymentId" value="${p.paymentId}"><input type="hidden" name="action" value="confirm">
                             <label style="display:grid;gap:4px;">Số tiền thực nhận (VND)<input name="receivedAmount" type="number" min="1" step="1" required></label>
-                            <label style="display:grid;gap:4px;">Mã giao dịch trên sao kê<input name="bankTransaction" maxlength="80" pattern="[A-Za-z0-9./_-]{4,80}" required></label>
-                            <label style="display:flex;gap:6px;align-items:center;"><input name="checkedStatement" type="checkbox" required>Đã đối chiếu sao kê thực tế</label>
+                            <label style="display:grid;gap:4px;">Mã sao kê hoặc chứng từ<input name="bankTransaction" maxlength="80" pattern="[A-Za-z0-9./_-]{4,80}" required></label>
+                            <label style="display:flex;gap:6px;align-items:center;"><input name="checkedStatement" type="checkbox" required>Đã đối chiếu chứng từ thực nhận</label>
                             <button type="submit" class="button button-primary">Xác nhận đã nhận tiền</button>
                         </form>
                         <form class="accountant-review-form" style="display:flex;gap:8px;margin-top:10px;align-items:end;" data-action-label="Đã từ chối khoản #${p.paymentId}.">
@@ -605,10 +712,34 @@
             <div class="page-heading"><div>
                 <div class="eyebrow"><span class="eyebrow-line"></span>UC-10–12 · KẾ TOÁN ĐỐI SOÁT</div>
                 <h1>${debtsFirst ? "Quản lý công nợ & giải ngân 70%" : "Xác nhận thanh toán"}</h1>
-                <p>Chỉ xác nhận sau khi đối chiếu sao kê MB Bank hoặc chứng từ giải ngân thật. Thao tác được lưu vào database.</p>
+                <p>Chỉ xác nhận sau khi đối chiếu sao kê ngân hàng hoặc chứng từ giải ngân thật. Thao tác được lưu vào database.</p>
             </div></div>
             <div class="inline-note">Trang kế toán chạy trong dashboard. Giải ngân 70% chỉ được tạo chờ xác nhận sau khi hợp đồng đã ký; không tự kết nối/xác nhận với ngân hàng.</div>
             ${debtsFirst ? renderDebts() + renderPending() : renderPending() + renderDebts()}
+            <section>
+                <h2>Khoản đã xác nhận (${(data.completedPayments || []).length})</h2>
+                ${(data.completedPayments || []).map(p => `
+                    <article style="padding:14px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;margin:10px 0;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <strong>Khoản #${esc(p.paymentId)} · Đơn #${esc(p.orderId)} · ${fmtMoney(p.amount)}</strong>
+                            <span class="status-pill" style="background:#dcfce7;color:#166534;border:1px solid #86efac;font-size:11px;font-weight:700;">COMPLETED</span>
+                        </div>
+                        <p style="margin:4px 0;">Phương thức: <strong>${esc(p.methodName)}</strong> · Loại: <strong>${esc(p.type)}</strong> · Mã đối chiếu: <code>${esc(p.reference)}</code></p>
+                        ${p.type === "DEPOSIT" ? `<p style="margin:4px 0;"><a href="${appContext}/staff/sales-document?kind=deposit&amp;orderId=${p.orderId}" class="text-link" style="font-size:12px;">📥 Tải biên nhận cọc (Word)</a></p>` : ""}
+                        ${p.sePayEvidence ? `
+                            <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:8px 12px;margin-top:6px;font-size:12px;color:#166534;">
+                                <strong>Bằng chứng giao dịch SePay (MB Bank · 0917231548 · Do Tan Dat):</strong><br>
+                                Mã GD SePay: <strong>#${esc(p.sePayEvidence.eventId || p.sePayEvidence.transactionNo)}</strong>
+                                · Cổng: <strong>${esc(p.sePayEvidence.gateway || p.sePayEvidence.bankCode || "MBBank")}</strong>
+                                · Thời gian: <strong>${esc(p.sePayEvidence.payDate || p.sePayEvidence.transactionDate || "—")}</strong><br>
+                                Số tiền thực nhận ngân hàng (Chỉ đọc): <strong style="font-size:13px;color:#059669;">${fmtMoney(p.sePayEvidence.received)}</strong>
+                            </div>
+                        ` : ""}
+                        <div style="margin-top:6px;font-size:11px;color:#64748b;">
+                            Trạng thái đối soát: Tự động ghi nhận qua Webhook SePay. <em>(Lưu cờ [Đã đối chiếu] độc lập: BLOCKED do schema DB chưa có cột Reconciled/ReconciledBy/ReconciledAt)</em>
+                        </div>
+                    </article>`).join("") || "<p>Chưa có khoản đã xác nhận.</p>"}
+            </section>
         `;
         content.querySelectorAll(".accountant-review-form").forEach(form => form.addEventListener("submit", async event => {
             event.preventDefault();
@@ -642,7 +773,7 @@
         const canIssueInvoice = currentRole === "accountant";
         const invoiceCsrfToken = invoiceData.csrfToken || "";
 
-        const ordersReadyForContract = orders.filter(o => o.status === "DEPOSITED" && !o.contractStatus);
+        const ordersReadyForContract = orders.filter(o => currentRole === "sales" && o.status === "DEPOSITED" && !o.contractStatus);
         const ordersReadyForInvoice = orders.filter(o => o.status === "PAID" && o.contractStatus === "SIGNED" && !o.invoiceNumber);
 
         content.innerHTML = `
@@ -724,7 +855,8 @@
                     <tbody>
                         ${invoices.length ? invoices.map(inv => `
                             <tr style="border-bottom:1px solid #f1f5f9;">
-                                <td style="padding:10px;"><strong>${esc(inv.invoiceNumber)}</strong></td>
+                                <td style="padding:10px;"><strong>${esc(inv.invoiceNumber)}</strong>
+                                ${currentRole === "accountant" && inv.status === "ISSUED" ? `<a href="${appContext}/staff/sales-document?kind=invoice&amp;orderId=${inv.orderID}">Tải Word</a>` : ""}</td>
                                 <td style="padding:10px;">#${inv.orderID}</td>
                                 <td style="padding:10px;">${esc(inv.invoiceDate)}</td>
                                 <td style="padding:10px;"><strong>${fmtMoney(inv.totalAmount)}</strong></td>
@@ -742,6 +874,7 @@
                 try {
                     const res = await postForm("/contract", {
                         action: "create",
+                        csrfToken: contractData.csrfToken,
                         orderId: btn.dataset.orderId
                     });
                     notify(res.message);
@@ -846,7 +979,7 @@
         const versions = delData.versions || [];
         const colors = delData.colors || [];
         const orders = ordData.orders || [];
-        const readyOrders = orders.filter(o => o.status === "PAID" && o.invoiceNumber && o.deliveryStatus !== "DELIVERED");
+        const readyOrders = orders.filter(o => currentRole === "operations" && o.contractStatus === "SIGNED" && o.status === "PAID" && o.invoiceNumber && o.deliveryStatus !== "DELIVERED");
 
         if (subMode === "vehicle-movements") {
             content.innerHTML = `
@@ -1059,6 +1192,7 @@
                 try {
                     const res = await postForm("/delivery", {
                         action: "handover",
+                        csrfToken: delData.csrfToken,
                         orderId: form.dataset.orderId,
                         deliveryAddress: form.deliveryAddress.value,
                         note: form.note.value

@@ -32,6 +32,11 @@ public class ConsultationService {
     }
 
     public boolean updateByStaff(int requestId, Integer employeeId, String staffName, String newStatus, String responseNote) {
+        ConsultationRequest assigned = dao.findById(requestId);
+        if (assigned == null || employeeId == null || employeeId <= 0
+                || (assigned.getStaffId() != 0 && assigned.getStaffId() != employeeId)) {
+            throw new IllegalArgumentException("Bạn không được phân công cuộc trò chuyện này.");
+        }
         String normalizedStatus = newStatus == null || newStatus.isBlank()
                 ? "IN_PROGRESS"
                 : newStatus.trim().toUpperCase(Locale.ROOT);

@@ -21,8 +21,13 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+        <% if ("ai-assistant.jsp".equals(customerPage)) { %>
+        <link rel="stylesheet" href="<%= customerContext %>/assets/css/theme.css">
+        <% } %>
         <link rel="stylesheet" href="<%= customerContext %>/assets/css/customer.css?v=customer-profile-route-20261112">
-        <link rel="stylesheet" href="<%= customerContext %>/assets/css/customer-ai.css">
+        <% if ("ai-assistant.jsp".equals(customerPage)) { %>
+        <link rel="stylesheet" href="<%= customerContext %>/assets/css/customer-ai.css?v=customer-ai-20261028">
+        <% } %>
         <script src="<%= customerContext %>/assets/js/customer.js?v=customer-avatar-20261112" defer>
         </script>
     </head>
@@ -60,6 +65,10 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
                     <a class="nav-link <%= customerPage.equals("my-invoices.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/my-invoices.jsp">
                         <span class="nav-icon">▨</span>
                         <span>Hóa đơn</span>
+                    </a>
+                    <a class="nav-link <%= customerPage.equals("my-consultation.jsp") ? "active" : "" %>" href="<%= customerContext %>/consultation">
+                        <span class="nav-icon">💬</span>
+                        <span>Tư vấn &amp; Trao đổi</span>
                     </a>
                     <a class="nav-link <%= customerPage.equals("ai-assistant.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/ai-assistant.jsp">
                         <span class="nav-icon">✳</span>

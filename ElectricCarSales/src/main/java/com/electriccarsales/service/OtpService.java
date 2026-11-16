@@ -38,6 +38,19 @@ public class OtpService {
         return otpDAO.verifyPurposeOtp(userId, purpose, code);
     }
 
+    public String issueContractSigningOtp(int userId, String purpose) {
+        String email = otpDAO.findUserEmail(userId);
+        if (!isSmtpConfigured() || email == null || email.isBlank()) {
+            throw new IllegalStateException("Chưa thiết lập gửi OTP tới email đã đăng ký.");
+        }
+        String code = generateRegistrationCode();
+        if (!otpDAO.issuePurposeOtp(userId, purpose, code)) {
+            throw new IllegalStateException("Không lưu được mã OTP ký hợp đồng.");
+        }
+        sendEmailOtp(email, code, "SIGN_CONTRACT");
+        return code;
+    }
+
     public String issuePurposeOtp(int userId, String purpose) {
         String code = generateRegistrationCode();
         if (!otpDAO.issuePurposeOtp(userId, purpose, code)) {

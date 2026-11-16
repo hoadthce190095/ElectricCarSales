@@ -12,6 +12,7 @@ public class SystemConfiguration {
     private String description;
     private Integer updatedBy;
     private LocalDateTime updatedDate;
+    private boolean available = true;
 
     public SystemConfiguration() {
     }
@@ -99,5 +100,13 @@ public class SystemConfiguration {
 
     public void setUpdatedDate(LocalDateTime updatedDate) {
         this.updatedDate = updatedDate;
+    }
+
+    public boolean isAvailable() {
+        return available;
+    }
+
+    public void setAvailable(boolean available) {
+        this.available = available;
     }
 }

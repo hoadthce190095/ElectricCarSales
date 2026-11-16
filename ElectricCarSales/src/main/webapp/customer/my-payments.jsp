@@ -1,7 +1,9 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="com.electriccarsales.model.SalesPreviewKind,com.electriccarsales.service.SalesPreviewService" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <% request.setAttribute("customerTitle", "Thanh toán"); request.setAttribute("customerEyebrow", "THANH TOÁN AN TOÀN"); %>
 <%@ include file="../common/customer-shell.jspf" %>
+<% request.setAttribute("wordPreviewEnabled", SalesPreviewService.isAvailable(SalesPreviewKind.DEPOSIT)); %>
 <div class="page-intro">
     <p>Xem lịch sử tiền cọc và thanh toán 70% được xác nhận. Trả góp hằng tháng được thực hiện với đối tác tài chính, không qua website.</p>
     <a class="button button-primary" href="<%= request.getContextPath() %>/orders">Chọn đơn hàng để thanh toán <span>→</span></a>
@@ -59,7 +61,16 @@
                                 <td><c:out value="${payment.paymentTypeName}" default="—"/></td>
                                 <td><c:out value="${payment.paymentDate}" default="—"/></td>
                                 <td><c:out value="${payment.paymentAmount}"/> ₫</td>
-                                <td><c:out value="${payment.paymentStatusCode}" default="—"/></td>
+                                <td>
+                                    <c:out value="${payment.paymentStatusCode}" default="—"/>
+                                    <c:if test="${payment.paymentTypeName eq 'DEPOSIT' and payment.paymentStatusCode eq 'COMPLETED'}">
+                                        <c:url var="previewUrl" value="/customer/sales-document">
+                                            <c:param name="kind" value="deposit"/>
+                                            <c:param name="orderId" value="${payment.orderID}"/>
+                                        </c:url>
+                                        <a href="<c:out value='${previewUrl}'/>">Tải biên nhận Word</a>
+                                    </c:if>
+                                </td>
                             </tr>
                         </c:forEach>
                     </c:when>

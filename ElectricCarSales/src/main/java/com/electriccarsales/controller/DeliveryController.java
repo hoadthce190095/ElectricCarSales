@@ -51,6 +51,7 @@ public class DeliveryController extends HttpServlet {
                 response.setContentType("application/json;charset=UTF-8");
                 Map<String, Object> payload = new LinkedHashMap<>();
                 payload.put("deliveries", deliveries);
+                payload.put("csrfToken", PaymentController.ensureCsrf(request));
                 payload.put("cars", new CarDAO().getAllCars());
                 payload.put("carStatuses", new CarStatusDAO().getAllCarStatuses());
                 payload.put("inventoryTransactions", new InventoryTransactionDAO().getAllTransactions());
@@ -151,16 +152,23 @@ public class DeliveryController extends HttpServlet {
                 }
                 int carId = Integer.parseInt(request.getParameter("carId"));
                 String statusName = request.getParameter("statusName");
-                new CarDAO().updateCarStatus(carId, statusName);
+                if (!new CarDAO().updateCarStatus(carId, statusName)) {
+                    throw new IllegalStateException("Xe không đủ điều kiện cập nhật trạng thái kho.");
+                }
                 sendResponse(request, response, jsonRequested, HttpServletResponse.SC_OK, true,
                         "Đã cập nhật trạng thái xe #" + carId + " sang " + statusName + ".");
                 return;
             }
 
             // Default: handover
-            if (!List.of("OPERATIONS", "SALES", "ADMIN").contains(role)) {
+            if (!"OPERATIONS".equals(role)) {
                 sendResponse(request, response, jsonRequested, HttpServletResponse.SC_FORBIDDEN, false,
-                        "Theo RDS (UC-14), chỉ Operations Officer hoặc Sales Staff mới có quyền xác nhận bàn giao xe.");
+                        "Chỉ Operations Officer có quyền xác nhận bàn giao xe.");
+                return;
+            }
+            if (!PaymentController.validCsrf(request)) {
+                sendResponse(request, response, jsonRequested, HttpServletResponse.SC_FORBIDDEN, false,
+                        "Phiên thao tác không hợp lệ.");
                 return;
             }
             int orderId = Integer.parseInt(request.getParameter("orderId"));

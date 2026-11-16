@@ -573,6 +573,37 @@ public class PaymentDAO extends FinanceDAOBase {
         });
     }
 
+    static void requireExactSettlement(Connection connection, int orderId) throws SQLException {
+        String sql = """
+                SELECT o.TotalAmount, o.DepositAmount, o.RemainingAmount,
+                       COALESCE(SUM(p.PaymentAmount), 0) AS Paid,
+                       COALESCE(SUM(CASE WHEN pt.TypeName='DEPOSIT' THEN p.PaymentAmount ELSE 0 END), 0) AS DepositPaid,
+                       COALESCE(SUM(CASE WHEN pt.TypeName='REMAINING' THEN p.PaymentAmount ELSE 0 END), 0) AS RemainingPaid
+                FROM Orders o
+                LEFT JOIN Payments p ON p.OrderID=o.OrderID AND p.PaymentStatusID IN
+                    (SELECT PaymentStatusID FROM PaymentStatuses WHERE StatusID='COMPLETED')
+                LEFT JOIN PaymentTypes pt ON pt.PaymentTypeID=p.PaymentTypeID
+                WHERE o.OrderID=?
+                GROUP BY o.TotalAmount, o.DepositAmount, o.RemainingAmount
+                """;
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    BigDecimal total = rs.getBigDecimal("TotalAmount");
+                    BigDecimal requiredDeposit = total.multiply(new BigDecimal("0.30"))
+                            .setScale(2, java.math.RoundingMode.HALF_UP);
+                    if (total.signum() > 0 && rs.getBigDecimal("RemainingAmount").signum() == 0
+                            && requiredDeposit.compareTo(rs.getBigDecimal("DepositAmount")) == 0
+                            && requiredDeposit.compareTo(rs.getBigDecimal("DepositPaid")) == 0
+                            && total.subtract(requiredDeposit).compareTo(rs.getBigDecimal("RemainingPaid")) == 0
+                            && total.compareTo(rs.getBigDecimal("Paid")) == 0) return;
+                }
+            }
+        }
+        throw new IllegalStateException("Chưa đối chiếu đủ khoản cọc 30% và khoản thanh toán hoặc giải ngân 70%.");
+    }
+
     public BigDecimal sumSuccessfulPaymentsByOrder(int orderId) {
         return withConnection(connection -> sum(connection,
                 "SELECT COALESCE(SUM(p.PaymentAmount), 0) FROM Payments p "

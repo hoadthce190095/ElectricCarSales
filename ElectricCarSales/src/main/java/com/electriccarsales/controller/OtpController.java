@@ -27,7 +27,7 @@ public class OtpController extends HttpServlet {
         if ("resetPassword".equalsIgnoreCase(req.getParameter("mode"))) {
             HttpSession resetSession = req.getSession(false);
             if (isResetAuthorized(resetSession)) {
-                req.getRequestDispatcher("/WEB-INF/auth/reset-password.jsp").forward(req, resp);
+                req.getRequestDispatcher("/auth/reset-password.jsp").forward(req, resp);
             } else {
                 if (resetSession != null) {
                     resetSession.removeAttribute(RESET_AUTH_UNTIL);
@@ -171,19 +171,19 @@ public class OtpController extends HttpServlet {
         String confirmPassword = req.getParameter("confirmPassword");
         if (newPassword == null || newPassword.length() < 8 || newPassword.length() > 72) {
             req.setAttribute("error", "Mật khẩu mới phải có từ 8 đến 72 ký tự.");
-            req.getRequestDispatcher("/WEB-INF/auth/reset-password.jsp").forward(req, resp);
+            req.getRequestDispatcher("/auth/reset-password.jsp").forward(req, resp);
             return;
         }
         if (!newPassword.equals(confirmPassword)) {
             req.setAttribute("error", "Mật khẩu xác nhận không khớp.");
-            req.getRequestDispatcher("/WEB-INF/auth/reset-password.jsp").forward(req, resp);
+            req.getRequestDispatcher("/auth/reset-password.jsp").forward(req, resp);
             return;
         }
         try {
             UserDAO userDAO = new UserDAO();
             if (userDAO.passwordMatches(userId, newPassword)) {
                 req.setAttribute("error", "Mật khẩu mới không được trùng với mật khẩu hiện tại. Vui lòng nhập mật khẩu khác.");
-                req.getRequestDispatcher("/WEB-INF/auth/reset-password.jsp").forward(req, resp);
+                req.getRequestDispatcher("/auth/reset-password.jsp").forward(req, resp);
                 return;
             }
             new OTPVerificationDAO().updatePasswordHash(userId, userDAO.hashPassword(newPassword));
@@ -193,7 +193,7 @@ public class OtpController extends HttpServlet {
         } catch (RuntimeException e) {
             log("Reset password failed", e);
             req.setAttribute("error", "Không thể đặt lại mật khẩu.");
-            req.getRequestDispatcher("/WEB-INF/auth/reset-password.jsp").forward(req, resp);
+            req.getRequestDispatcher("/auth/reset-password.jsp").forward(req, resp);
         }
     }
 

@@ -57,11 +57,34 @@ public class CustomerController extends HttpServlet {
         }
         String roleName = req.getSession(false) == null ? "" : String.valueOf(req.getSession(false).getAttribute("roleName"));
         if ("staff".equalsIgnoreCase(req.getParameter("mode"))) {
-            if (!List.of("SALES", "MANAGER", "ADMIN").contains(roleName.toUpperCase())) {
+            if (!List.of("SALES", "MANAGER", "ADMIN", "ACCOUNTANT", "OPERATIONS").contains(roleName.toUpperCase())) {
                 resp.sendError(HttpServletResponse.SC_FORBIDDEN);
                 return;
             }
             resp.setContentType("application/json;charset=UTF-8");
+            String cidParam = req.getParameter("customerId");
+            if (cidParam != null && !cidParam.isBlank()) {
+                try {
+                    int cid = Integer.parseInt(cidParam.trim());
+                    Customer c = customerService.getCustomerById(cid);
+                    if (c == null) {
+                        resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                        JSON.writeValue(resp.getWriter(), Map.of("error", "Không tìm thấy thông tin khách hàng #" + cid));
+                        return;
+                    }
+                    JSON.writeValue(resp.getWriter(), Map.of("customer", c));
+                    return;
+                } catch (NumberFormatException e) {
+                    resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    JSON.writeValue(resp.getWriter(), Map.of("error", "Mã khách hàng không hợp lệ."));
+                    return;
+                } catch (Exception e) {
+                    log("Error getting customer by id", e);
+                    resp.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+                    JSON.writeValue(resp.getWriter(), Map.of("error", "Không thể tải hồ sơ khách hàng."));
+                    return;
+                }
+            }
             JSON.writeValue(resp.getWriter(), Map.of("customers", customerService.getAllCustomers()));
             return;
         }

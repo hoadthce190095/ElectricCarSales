@@ -12,7 +12,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class InvoiceDAO extends DBContext {
     public List<Invoices> findByCustomerId(int customerId) {
@@ -125,10 +127,12 @@ public class InvoiceDAO extends DBContext {
                 if (contractStatus == null || !"SIGNED".equalsIgnoreCase(contractStatus)) {
                     throw new IllegalStateException("Theo RDS (Mục II.9.3 PRE-1), hợp đồng của đơn hàng phải ở trạng thái đã ký (SIGNED) trước khi xuất hóa đơn.");
                 }
-                if (remainingAmount == null || remainingAmount.signum() > 0 || !"PAID".equalsIgnoreCase(orderStatus)) {
+                if (remainingAmount == null || remainingAmount.signum() != 0 || !"PAID".equalsIgnoreCase(orderStatus)) {
                     throw new IllegalStateException("Theo RDS (Mục II.9.3 BR3), chỉ được xuất hóa đơn sau khi đơn hàng đã xác nhận thanh toán đủ 100% (RemainingAmount = 0, trạng thái PAID). Công nợ hiện tại: "
                             + (remainingAmount == null ? "?" : remainingAmount.toPlainString()) + " VND.");
                 }
+
+                PaymentDAO.requireExactSettlement(connection, orderId);
 
                 try (PreparedStatement check = connection.prepareStatement("SELECT InvoiceID FROM Invoices WHERE OrderID = ?")) {
                     check.setInt(1, orderId);
@@ -167,6 +171,16 @@ public class InvoiceDAO extends DBContext {
                     }
                 }
 
+                // Some paid orders predate the SOLD transition at payment completion.
+                try (PreparedStatement ps = connection.prepareStatement("""
+                        UPDATE Cars SET CarStatusID=(SELECT CarStatusID FROM CarStatuses WHERE UPPER(StatusName)='SOLD')
+                        WHERE CarID IN (SELECT CarID FROM OrderDetails WHERE OrderID=?)
+                          AND CarStatusID IN (SELECT CarStatusID FROM CarStatuses WHERE UPPER(StatusName) IN ('DEPOSITED','SOLD'))
+                        """)) {
+                    ps.setInt(1, orderId);
+                    if (ps.executeUpdate() != 1) throw new IllegalStateException("Không xác định được xe đã bán của đơn hàng.");
+                }
+
                 OrderStatusHistory history = new OrderStatusHistory();
                 history.setOrderId(orderId);
                 history.setStatus(orderStatus);
@@ -182,6 +196,54 @@ public class InvoiceDAO extends DBContext {
             }
         } catch (SQLException e) {
             throw new IllegalStateException("Không thể phát hành hóa đơn.", e);
+        }
+    }
+
+    /**
+     * Truy vấn tất cả Orders có trạng thái PAID/DEPOSITED/PROCESSING kèm thông tin
+     * Customer, Car, Contract, Invoice để hiển thị trên trang staff/invoices.jsp.
+     */
+    public List<Map<String, Object>> findOrdersForInvoicePage() {
+        String sql = "SELECT o.OrderID, o.TotalAmount, o.RemainingAmount,"
+                + " os.StatusName AS OrderStatus,"
+                + " ct.Status AS ContractStatus,"
+                + " cu.CustomerName, cu.Phone,"
+                + " c.VIN, cm.ModelName, cv.VersionName,"
+                + " inv.InvoiceID"
+                + " FROM Orders o"
+                + " JOIN OrderStatuses os ON os.OrderStatusID = o.OrderStatusID"
+                + " JOIN Customers cu ON cu.CustomerID = o.CustomerID"
+                + " LEFT JOIN OrderDetails od ON od.OrderID = o.OrderID"
+                + " LEFT JOIN Cars c ON c.CarID = od.CarID"
+                + " LEFT JOIN CarModels cm ON cm.ModelID = c.ModelID"
+                + " LEFT JOIN CarVersions cv ON cv.VersionID = c.VersionID"
+                + " LEFT JOIN Contracts ct ON ct.OrderID = o.OrderID"
+                + " LEFT JOIN Invoices inv ON inv.OrderID = o.OrderID"
+                + " WHERE os.StatusName IN ('PAID','DEPOSITED','PROCESSING')"
+                + " ORDER BY o.OrderID DESC";
+        List<Map<String, Object>> rows = new ArrayList<>();
+        try (Connection connection = getConnection();
+             PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("orderId", rs.getInt("OrderID"));
+                row.put("totalAmount", rs.getBigDecimal("TotalAmount"));
+                row.put("remainingAmount", rs.getBigDecimal("RemainingAmount"));
+                row.put("orderStatus", rs.getString("OrderStatus"));
+                row.put("contractStatus", rs.getString("ContractStatus"));
+                row.put("customerName", rs.getString("CustomerName"));
+                row.put("phone", rs.getString("Phone"));
+                row.put("vin", rs.getString("VIN"));
+                row.put("modelName", rs.getString("ModelName"));
+                row.put("versionName", rs.getString("VersionName"));
+                int invoiceId = rs.getInt("InvoiceID");
+                row.put("invoiceId", rs.wasNull() ? null : invoiceId);
+                rows.add(row);
+            }
+            return rows;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể truy vấn danh sách đơn hàng cho trang hóa đơn.", e);
         }
     }
 

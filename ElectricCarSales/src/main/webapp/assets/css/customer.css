@@ -988,7 +988,11 @@ h1,h2,p {
     border-color: #d36172;
     box-shadow: 0 0 0 3px #e3183710;
 }
-.customer-form input: :placeholder,.customer-form textarea::placeholder,.search-field input::placeholder {
+.customer-form input::placeholder,
+.customer-form textarea::placeholder,
+.search-field input::placeholder {
+    color: #b0b2b7;
+} {
     color: #b0b2b7;
 }
 .customer-form textarea {

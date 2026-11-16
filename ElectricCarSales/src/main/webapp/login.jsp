@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<c:url value='/assets/css/login.css'><c:param name='v' value='login-post-20261021' /></c:url>">
-    <script src="<c:url value='/assets/js/login.js'><c:param name='v' value='login-post-20261021' /></c:url>" defer></script>
+    <script src="<c:url value='/assets/js/login.js'><c:param name='v' value='login-admin-setup-20261115' /></c:url>" defer></script>
 </head>
 <body class="login-page">
 <main class="login-layout">
@@ -61,6 +61,19 @@
                     <button class="submit-button" type="submit">Đăng nhập <span aria-hidden="true">→</span></button>
                 </form>
 
+                <c:if test="${localAdminSetup}">
+                    <details id="admin-setup" data-url="<c:url value='/api/setup' />"
+                             data-auth-url="<c:url value='/api/auth' />" hidden>
+                        <summary>Tạo tài khoản Admin đầu tiên</summary>
+                        <form class="auth-form" method="post">
+                            <label>Tên đăng nhập <input name="username" value="admin" required minlength="3" maxlength="50" autocomplete="username"></label>
+                            <label>Mật khẩu <input name="password" type="password" required minlength="10" maxlength="128" autocomplete="new-password"></label>
+                            <label>Nhập lại mật khẩu <input name="confirmPassword" type="password" required minlength="10" maxlength="128" autocomplete="new-password"></label>
+                            <p data-setup-message role="status"></p>
+                            <button class="submit-button" type="submit">Tạo Admin</button>
+                        </form>
+                    </details>
+                </c:if>
                 <div class="form-bottom"><span>Bạn chưa có tài khoản?</span><a class="text-button" href="<c:url value='/register' />">Đăng ký</a></div>
                 <p class="role-note">Sau khi xác thực, hệ thống sẽ mở giao diện phù hợp với vai trò tài khoản của bạn.</p>
             </div>

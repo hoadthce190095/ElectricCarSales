@@ -23,7 +23,7 @@ import java.util.Set;
 /** Protects shared operational lists, including direct access to their JSP views. */
 @WebFilter(urlPatterns = {
     "/car", "/car.jsp",
-    "/contract", "/contract.jsp",
+    "/contract", "/contract.jsp", "/invoice",
     "/delivery", "/delivery.jsp",
 })
 public class OperationsPageFilter implements Filter {
@@ -39,7 +39,7 @@ public class OperationsPageFilter implements Filter {
         HttpSession session = request.getSession(false);
         SessionUser user = session == null ? null : (SessionUser) session.getAttribute("user");
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
+            loginRequired(request, response);
             return;
         }
         try (Connection connection = DBContext.openConnection()) {
@@ -47,7 +47,7 @@ public class OperationsPageFilter implements Filter {
             if (account == null || !"ACTIVE".equals(account.getStatus())
                 || !PasswordSession.matches(session.getAttribute(PasswordSession.ATTRIBUTE), account.getPasswordHash())) {
                 session.invalidate();
-                response.sendRedirect(request.getContextPath() + "/login");
+                loginRequired(request, response);
                 return;
             }
             String role = account.getRole() == null ? "" : account.getRole().toUpperCase(Locale.ROOT);
@@ -66,7 +66,7 @@ public class OperationsPageFilter implements Filter {
                 allowed = "ADMIN".equals(role);
             } else if (path.startsWith("/staff/inventory")) {
                 allowed = Set.of("OPERATIONS", "MANAGER", "ADMIN").contains(role);
-            } else if ("/contract".equals(path)) {
+            } else if ("/contract".equals(path) || "/invoice".equals(path)) {
                 // RDS 8.3 & 9.2: Both Customer and Staff/Admin access /contract according to their role scope
                 allowed = "CUSTOMER".equals(role) || STAFF_ROLES.contains(role);
             } else {
@@ -85,6 +85,11 @@ public class OperationsPageFilter implements Filter {
             return;
         }
         chain.doFilter(request, response);
+    }
+
+    private static void loginRequired(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        if (wantsJson(request)) writeError(request, response, 401, "Vui lòng đăng nhập lại.");
+        else response.sendRedirect(request.getContextPath() + "/login");
     }
 
     private static void writeError(HttpServletRequest request, HttpServletResponse response,

@@ -385,40 +385,19 @@
         const selectedModels = [...selections]
             .map((id) => models.find((model) => (text(model.comparisonKey) || `${text(model.modelName)}-${text(model.specificationVersion)}`) === id))
             .filter(Boolean);
-        if (selectedModels.length < 2) {
-            showCompareNotice("Vui lòng chọn ít nhất 2 xe để so sánh.");
+        if (selectedModels.length === 0) {
+            showCompareNotice("Vui lòng chọn xe để so sánh.");
             return;
         }
+        if (selectedModels.length === 1) {
+            showCompareNotice("Vui lòng chọn thêm ít nhất 1 xe nữa để so sánh (tối thiểu 2 xe).");
+            return;
+        }
+        persistCompareSelections();
         const comparisonQuery = new URLSearchParams();
         selectedModels.forEach((model) => comparisonQuery.append("key", text(model.comparisonKey)
             || `${text(model.modelName)}-${text(model.specificationVersion)}`));
-        const pageLink = document.getElementById("compare-page-link");
-        if (pageLink) pageLink.href = `${contextPath}/comparison?${comparisonQuery.toString()}`;
-        const table = make("table", "compare-table");
-        const head = make("tr");
-        head.append(make("th", "", "Thông tin"));
-        selectedModels.forEach((model) => head.append(make("th", "", text(model.modelName))));
-        const thead = make("thead");
-        thead.append(head);
-        const tbody = make("tbody");
-        const rows = [
-            ["Phiên bản", (model) => text(model.specificationVersion) || "—"],
-            ["Giá tham khảo", (model) => price(model.priceVnd)],
-            ["Quãng đường công bố", range],
-            ["Dung lượng pin", battery],
-            ["Số chỗ ngồi", seats],
-            ["Kích thước", (model) => text(model.dimensions) || "Đang cập nhật"],
-            ["Tiêu chuẩn quãng đường", (model) => text(model.rangeStandard) || "Chưa ghi nhận"]
-        ];
-        rows.forEach(([label, value]) => {
-            const row = make("tr");
-            row.append(make("td", "", label));
-            selectedModels.forEach((model) => row.append(make("td", "", value(model))));
-            tbody.append(row);
-        });
-        table.append(thead, tbody);
-        compareTable.replaceChildren(table);
-        compareDialog.showModal();
+        window.location.href = `${contextPath}/comparison?${comparisonQuery.toString()}`;
     }
 
     function resetFilters() {

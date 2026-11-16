@@ -37,7 +37,8 @@ public class InvoiceController extends HttpServlet {
         HttpSession session = req.getSession(false);
         SessionUser user = session == null ? null : (SessionUser) session.getAttribute("user");
         if (user == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
+            if (jsonRequested) FinanceControllerSupport.sendError(req, resp, 401, "Vui lòng đăng nhập lại.");
+            else resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
         try {
@@ -46,16 +47,18 @@ public class InvoiceController extends HttpServlet {
             if ("CUSTOMER".equals(role)) {
                 Customer customer = new CustomerDAO().findByUserId(user.getUserId());
                 if (customer == null) {
-                    resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+                    FinanceControllerSupport.sendError(req, resp, 403, "Bạn không có quyền xem mục này.");
                     return;
                 }
                 invoices = invoiceService.getCustomerInvoices(customer.getCustomerID());
+                req.setAttribute("customerOrders", new com.electriccarsales.dao.order.OrderDAO().findByCustomerId(customer.getCustomerID()));
+                req.setAttribute("customerContracts", new com.electriccarsales.dao.ContractsDAO().findByCustomerId(customer.getCustomerID()));
             } else if ("SALES".equals(role)) {
                 invoices = invoiceService.getAllInvoices();
             } else if (List.of("ACCOUNTANT", "MANAGER", "ADMIN", "OPERATIONS").contains(role)) {
                 invoices = invoiceService.getAllInvoices();
             } else {
-                resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+                FinanceControllerSupport.sendError(req, resp, 403, "Bạn không có quyền xem mục này.");
                 return;
             }
             req.setAttribute("invoices", invoices);
@@ -63,10 +66,10 @@ public class InvoiceController extends HttpServlet {
             if (jsonRequested) {
                 resp.setContentType("application/json;charset=UTF-8");
                 if ("ACCOUNTANT".equals(role)) {
-                    JSON.writeValue(resp.getWriter(), Map.of("invoices", invoices,
-                            "csrfToken", PaymentController.ensureCsrf(req)));
+                    resp.getWriter().write(JSON.writeValueAsString(Map.of("invoices", invoices,
+                            "csrfToken", PaymentController.ensureCsrf(req))));
                 } else {
-                    JSON.writeValue(resp.getWriter(), Map.of("invoices", invoices));
+                    resp.getWriter().write(JSON.writeValueAsString(Map.of("invoices", invoices)));
                 }
                 return;
             }
@@ -74,11 +77,28 @@ public class InvoiceController extends HttpServlet {
             if ("CUSTOMER".equals(role)) {
                 req.getRequestDispatcher("/customer/my-invoices.jsp").forward(req, resp);
             } else {
-                resp.sendRedirect(req.getContextPath() + "/staff/dashboard#contracts");
+                // Staff: load eligible orders and forward to dedicated JSP
+                List<java.util.Map<String, Object>> allOrders = invoiceService.getOrdersForInvoicePage();
+                // Phân tách: đủ điều kiện phát hành (SIGNED + PAID + chưa có invoice)
+                java.util.List<java.util.Map<String, Object>> eligibleOrders = new java.util.ArrayList<>();
+                java.util.List<java.util.Map<String, Object>> issuedOrders = new java.util.ArrayList<>();
+                for (java.util.Map<String, Object> row : allOrders) {
+                    if (row.get("invoiceId") != null) {
+                        issuedOrders.add(row);
+                    } else if ("SIGNED".equalsIgnoreCase(String.valueOf(row.get("contractStatus")))
+                            && "PAID".equalsIgnoreCase(String.valueOf(row.get("orderStatus")))) {
+                        eligibleOrders.add(row);
+                    }
+                }
+                req.setAttribute("allOrders", allOrders);
+                req.setAttribute("eligibleOrders", eligibleOrders);
+                req.setAttribute("issuedOrders", issuedOrders);
+                req.setAttribute("csrfToken", PaymentController.ensureCsrf(req));
+                req.getRequestDispatcher("/staff/invoices.jsp").forward(req, resp);
             }
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | com.fasterxml.jackson.core.JsonProcessingException e) {
             log("Could not load invoices", e);
-            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Không thể tải hóa đơn.");
+            FinanceControllerSupport.sendError(req, resp, 503, "Không thể tải dữ liệu hóa đơn.");
         }
     }
 
@@ -104,7 +124,7 @@ public class InvoiceController extends HttpServlet {
             return;
         }
         if (!PaymentController.validCsrf(req)) {
-            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Phiên thao tác không hợp lệ. Tải lại trang rồi thử lại.");
+            FinanceControllerSupport.sendError(req, resp, 403, "Phiên thao tác không hợp lệ. Tải lại trang rồi thử lại.");
             return;
         }
 
@@ -113,7 +133,7 @@ public class InvoiceController extends HttpServlet {
             String note = req.getParameter("note");
             Integer empId = (Integer) session.getAttribute("employeeId");
             if (empId == null || empId <= 0) {
-                resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Tài khoản kế toán chưa có hồ sơ nhân viên hợp lệ.");
+                FinanceControllerSupport.sendError(req, resp, 403, "Tài khoản kế toán chưa có hồ sơ nhân viên hợp lệ.");
                 return;
             }
             Invoices issued = invoiceService.issueInvoice(orderId, empId, note);
@@ -125,7 +145,7 @@ public class InvoiceController extends HttpServlet {
                         "message", "Đã phát hành hóa đơn " + issued.getInvoiceNumber() + " cho đơn hàng #" + orderId + ".",
                         "invoice", issued));
             } else {
-                resp.sendRedirect(req.getContextPath() + "/staff/dashboard#contracts");
+                resp.sendRedirect(req.getContextPath() + "/invoice?issued=1");
             }
         } catch (IllegalArgumentException | IllegalStateException ex) {
             if (jsonRequested) {
@@ -133,7 +153,7 @@ public class InvoiceController extends HttpServlet {
                 resp.setContentType("application/json;charset=UTF-8");
                 JSON.writeValue(resp.getWriter(), Map.of("success", false, "error", ex.getMessage()));
             } else {
-                resp.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+                resp.sendRedirect(req.getContextPath() + "/invoice?error=" + java.net.URLEncoder.encode(ex.getMessage(), java.nio.charset.StandardCharsets.UTF_8));
             }
         }
     }

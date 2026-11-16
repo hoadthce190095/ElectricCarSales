@@ -19,6 +19,7 @@ import java.util.List;
 public class LoginController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        req.setAttribute("localAdminSetup", AdminSetupController.allowedHere(req));
         if ("1".equals(req.getParameter("registered"))) req.setAttribute("success", "Đăng ký thành công. Bạn có thể đăng nhập.");
         if ("1".equals(req.getParameter("reset"))) req.setAttribute("success", "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới.");
         if ("1".equals(req.getParameter("loggedOut"))) req.setAttribute("success", "Bạn đã đăng xuất thành công.");
@@ -54,7 +55,7 @@ public class LoginController extends HttpServlet {
             if ("CUSTOMER".equals(role)) {
                 resp.sendRedirect(req.getContextPath() + "/index.jsp");
             } else if ("ADMIN".equals(role)) {
-                resp.sendRedirect(req.getContextPath() + "/admin/admin.html");
+                resp.sendRedirect(req.getContextPath() + "/admin.jsp");
             } else if (List.of("SALES", "OPERATIONS", "ACCOUNTANT", "MANAGER").contains(role)) {
                 resp.sendRedirect(req.getContextPath() + "/staff/dashboard");
             } else {

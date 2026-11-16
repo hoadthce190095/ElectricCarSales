@@ -22,15 +22,35 @@ public class SalesOrderService {
         public int getId() { return id; }
         public String getLabel() { return label; }
     }
-    public record Options(List<Choice> customers, List<Choice> cars, List<Choice> partners) {
-        public List<Choice> getCustomers() { return customers; }
+    public record CustomerChoice(int id, String label, String name, String phone, String email, String address) {
+        public int getId() { return id; }
+        public String getLabel() { return label; }
+        public String getName() { return name != null ? name : ""; }
+        public String getPhone() { return phone != null ? phone : ""; }
+        public String getEmail() { return email != null ? email : ""; }
+        public String getAddress() { return address != null ? address : ""; }
+    }
+    public record Options(List<CustomerChoice> customers, List<Choice> cars, List<Choice> partners) {
+        public List<CustomerChoice> getCustomers() { return customers; }
         public List<Choice> getCars() { return cars; }
         public List<Choice> getPartners() { return partners; }
     }
 
     public Options getOptions() throws SQLException {
         try (Connection c = FinanceConnection.open()) {
-            List<Choice> customers = choices(c, "SELECT CustomerID,CustomerName FROM Customers ORDER BY CustomerName");
+            List<CustomerChoice> customers = new ArrayList<>();
+            String custSql = "SELECT CustomerID,CustomerName,Phone,Email,Address FROM Customers ORDER BY CustomerName";
+            try (PreparedStatement ps = c.prepareStatement(custSql); ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int id = rs.getInt("CustomerID");
+                    String name = rs.getString("CustomerName");
+                    String phone = rs.getString("Phone");
+                    String email = rs.getString("Email");
+                    String address = rs.getString("Address");
+                    customers.add(new CustomerChoice(id, name != null ? name : ("Khách hàng #" + id),
+                            name, phone, email, address));
+                }
+            }
             List<Choice> cars = choices(c, "SELECT c.CarID,CONCAT(c.CarCode,' - ',m.ModelName,' - ',c.Price,' VND') "
                     + "FROM Cars c JOIN CarStatuses s ON s.CarStatusID=c.CarStatusID "
                     + "JOIN CarModels m ON m.ModelID=c.ModelID "
@@ -75,7 +95,7 @@ public class SalesOrderService {
                 ) paid ON paid.OrderID=o.OrderID
                 ORDER BY o.OrderDate DESC,o.OrderID DESC
                 """));
-            data.put("customers", query(c, "SELECT CustomerID AS customerID,CustomerName AS customerName,Phone AS phone FROM Customers ORDER BY CustomerName"));
+            data.put("customers", query(c, "SELECT CustomerID AS customerID,CustomerName AS customerName,Phone AS phone,COALESCE(Email,'') AS email,COALESCE(Address,'') AS address FROM Customers ORDER BY CustomerName"));
             data.put("cars", query(c, """
                 SELECT car.CarID AS carID,car.ModelID AS modelID,car.Price AS price,car.VIN AS vin,
                        cm.ModelName AS modelName,cv.VersionName AS versionName,co.ColorName AS colorName
@@ -104,6 +124,18 @@ public class SalesOrderService {
 
     public int create(int salesUserId, int customerId, int carId, String paymentMethod, Integer companyId)
             throws SQLException {
+        return create(salesUserId, customerId, carId, paymentMethod, companyId, null, null, null, null);
+    }
+
+    public int create(int salesUserId, int customerId, int carId, String paymentMethod, Integer companyId,
+                      String verifiedName, String verifiedPhone, String verifiedAddress, String salesNote)
+            throws SQLException {
+        return create(salesUserId, customerId, carId, paymentMethod, companyId, verifiedName, verifiedPhone, null, verifiedAddress, salesNote);
+    }
+
+    public int create(int salesUserId, int customerId, int carId, String paymentMethod, Integer companyId,
+                      String verifiedName, String verifiedPhone, String verifiedEmail, String verifiedAddress, String salesNote)
+            throws SQLException {
         if (salesUserId <= 0 || customerId <= 0 || carId <= 0 || paymentMethod == null) {
             throw new IllegalArgumentException("Thiếu nhân viên, khách hàng, xe hoặc phương thức thanh toán.");
         }
@@ -123,6 +155,58 @@ public class SalesOrderService {
                 if (!exists(c, "SELECT 1 FROM Customers WHERE CustomerID=?", customerId)) {
                     throw new IllegalArgumentException("Khách hàng không tồn tại.");
                 }
+
+                // Kiểm tra validation thông tin người mua
+                String cleanName = (verifiedName != null && !verifiedName.isBlank()) ? verifiedName.trim() : null;
+                String cleanPhone = (verifiedPhone != null && !verifiedPhone.isBlank()) ? verifiedPhone.trim() : null;
+                String cleanEmail = (verifiedEmail != null && !verifiedEmail.isBlank()) ? verifiedEmail.trim() : null;
+                String cleanAddress = (verifiedAddress != null && !verifiedAddress.isBlank()) ? verifiedAddress.trim() : null;
+
+                if (cleanName != null && cleanName.length() > 100) {
+                    throw new IllegalArgumentException("Họ và tên không được vượt quá 100 ký tự.");
+                }
+                if (cleanPhone != null) {
+                    if (!cleanPhone.matches("^[0-9+() -]{8,20}$")) {
+                        throw new IllegalArgumentException("Số điện thoại không đúng định dạng (8-20 ký tự số).");
+                    }
+                    try (PreparedStatement checkPhone = c.prepareStatement(
+                            "SELECT 1 FROM Customers WHERE Phone=? AND CustomerID<>?")) {
+                        checkPhone.setString(1, cleanPhone);
+                        checkPhone.setInt(2, customerId);
+                        try (ResultSet rs = checkPhone.executeQuery()) {
+                            if (rs.next()) {
+                                throw new IllegalArgumentException("Số điện thoại này đã được sử dụng bởi khách hàng khác.");
+                            }
+                        }
+                    }
+                }
+                if (cleanEmail != null) {
+                    if (!cleanEmail.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}$") || cleanEmail.length() > 100) {
+                        throw new IllegalArgumentException("Email không đúng định dạng hoặc vượt quá 100 ký tự.");
+                    }
+                }
+                if (cleanAddress != null && cleanAddress.length() > 255) {
+                    throw new IllegalArgumentException("Địa chỉ không được vượt quá 255 ký tự.");
+                }
+
+                // Cập nhật thông tin khách hàng phục vụ đơn hàng (không chạm đến Users.Phone / Users.Email xác thực)
+                if (cleanName != null || cleanPhone != null || cleanEmail != null || cleanAddress != null) {
+                    String updateCust = "UPDATE Customers SET "
+                            + "CustomerName = COALESCE(NULLIF(?, ''), CustomerName), "
+                            + "Phone = COALESCE(NULLIF(?, ''), Phone), "
+                            + "Email = COALESCE(NULLIF(?, ''), Email), "
+                            + "Address = COALESCE(NULLIF(?, ''), Address) "
+                            + "WHERE CustomerID = ?";
+                    try (PreparedStatement ps = c.prepareStatement(updateCust)) {
+                        ps.setString(1, cleanName);
+                        ps.setString(2, cleanPhone);
+                        ps.setString(3, cleanEmail);
+                        ps.setString(4, cleanAddress);
+                        ps.setInt(5, customerId);
+                        ps.executeUpdate();
+                    }
+                }
+
                 if (companyId != null && !exists(c, "SELECT 1 FROM FinancialCompanies WHERE CompanyID=?", companyId)) {
                     throw new IllegalArgumentException("Đối tác tài chính không tồn tại.");
                 }
@@ -151,9 +235,12 @@ public class SalesOrderService {
                 int statusId = lookup(c, "SELECT OrderStatusID FROM OrderStatuses WHERE StatusName=?", "PENDING");
                 int methodId = lookup(c, "SELECT PaymentMethodID FROM PaymentMethods WHERE MethodName=?", method);
                 int orderId;
+                String orderNote = (salesNote != null && !salesNote.isBlank())
+                        ? ("VERIFIED: " + salesNote.trim())
+                        : "VERIFIED_BY_SALES";
                 try (PreparedStatement ps = c.prepareStatement("INSERT INTO Orders(CustomerID,EmployeeID,OrderStatusID,"
-                        + "PaymentMethodID,OrderDate,TotalAmount,DepositAmount,RemainingAmount,CompanyID) "
-                        + "VALUES(?,?,?,?,SYSDATETIME(),?,?,?,?)", Statement.RETURN_GENERATED_KEYS)) {
+                        + "PaymentMethodID,OrderDate,TotalAmount,DepositAmount,RemainingAmount,Note,CompanyID) "
+                        + "VALUES(?,?,?,?,SYSDATETIME(),?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS)) {
                     ps.setInt(1, customerId);
                     ps.setInt(2, employee);
                     ps.setInt(3, statusId);
@@ -161,8 +248,9 @@ public class SalesOrderService {
                     ps.setBigDecimal(5, price);
                     ps.setBigDecimal(6, deposit);
                     ps.setBigDecimal(7, remaining);
-                    if (companyId == null) ps.setNull(8, Types.INTEGER);
-                    else ps.setInt(8, companyId);
+                    ps.setNString(8, orderNote);
+                    if (companyId == null) ps.setNull(9, Types.INTEGER);
+                    else ps.setInt(9, companyId);
                     ps.executeUpdate();
                     try (ResultSet keys = ps.getGeneratedKeys()) {
                         if (!keys.next()) throw new SQLException("Cannot obtain OrderID");

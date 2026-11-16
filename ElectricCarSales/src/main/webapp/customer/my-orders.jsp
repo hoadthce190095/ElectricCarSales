@@ -40,20 +40,34 @@
                         <td><c:out value="${order.status}"/></td>
                         <td>
                             <a href="<%= request.getContextPath() %>/payment/detail?orderId=<c:out value='${order.id}'/>">Công nợ</a>
+                            <c:if test="${order.status eq 'DEPOSITED' or order.status eq 'PROCESSING' or order.status eq 'PAID' or order.status eq 'COMPLETED'}">
+                                | <a href="<%= request.getContextPath() %>/customer/sales-document?kind=deposit&amp;orderId=<c:out value='${order.id}'/>">Biên nhận cọc</a>
+                            </c:if>
+                            <c:if test="${order.contractStatus eq 'SIGNED'}">
+                                | <a href="<%= request.getContextPath() %>/customer/sales-document?kind=contract&amp;orderId=<c:out value='${order.id}'/>">Hợp đồng</a>
+                            </c:if>
+                            <c:if test="${order.status eq 'PAID' or order.status eq 'COMPLETED'}">
+                                | <a href="<%= request.getContextPath() %>/customer/sales-document?kind=invoice&amp;orderId=<c:out value='${order.id}'/>">Hóa đơn</a>
+                            </c:if>
                             <c:if test="${order.status eq 'PENDING' or order.status eq 'RESERVED'}">
                                 <form method="post" action="<%= request.getContextPath() %>/payment/create">
                                     <input type="hidden" name="csrfToken" value="<c:out value='${paymentCsrf}'/>">
                                     <input type="hidden" name="orderId" value="<c:out value='${order.id}'/>">
                                     <input type="hidden" name="type" value="DEPOSIT">
-                                    <button type="submit">Thanh toán cọc 30%</button>
+                                    <button type="submit" name="method" value="BANK_TRANSFER" <c:if test="${not sepayReady}">title="Cổng thanh toán VietQR MB Bank chưa sẵn sàng"</c:if>>Thanh toán cọc 30% qua VietQR (MB Bank)<c:if test="${not sepayReady}"> (!)</c:if></button>
+                                    <button type="submit" name="method" value="CASH">Yêu cầu thanh toán tiền mặt</button>
                                 </form>
                             </c:if>
-                            <c:if test="${(order.status eq 'DEPOSITED' or order.status eq 'PROCESSING') and order.remainingAmount gt 0}">
+                            <c:if test="${order.paymentMethodName eq 'INSTALLMENT' and order.contractStatus eq 'SIGNED' and order.remainingAmount gt 0}">
+                                <span>Chờ đối tác tài chính giải ngân 70%.</span>
+                            </c:if>
+                            <c:if test="${(order.status eq 'DEPOSITED' or order.status eq 'PROCESSING') and order.contractStatus eq 'SIGNED' and order.paymentMethodName ne 'INSTALLMENT' and order.remainingAmount gt 0}">
                                 <form method="post" action="<%= request.getContextPath() %>/payment/create">
                                     <input type="hidden" name="csrfToken" value="<c:out value='${paymentCsrf}'/>">
                                     <input type="hidden" name="orderId" value="<c:out value='${order.id}'/>">
                                     <input type="hidden" name="type" value="REMAINING">
-                                    <button type="submit">Thanh toán 70% còn lại</button>
+                                    <button type="submit" name="method" value="BANK_TRANSFER" <c:if test="${not sepayReady}">title="Cổng thanh toán VietQR MB Bank chưa sẵn sàng"</c:if>>Thanh toán 70% còn lại qua VietQR (MB Bank)<c:if test="${not sepayReady}"> (!)</c:if></button>
+                                    <button type="submit" name="method" value="CASH">Yêu cầu thanh toán tiền mặt</button>
                                 </form>
                             </c:if>
                         </td>

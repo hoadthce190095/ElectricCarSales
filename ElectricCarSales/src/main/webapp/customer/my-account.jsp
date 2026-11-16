@@ -10,7 +10,7 @@ request.setAttribute("customerEyebrow", "CHÀO MỪNG TRỞ LẠI");
     <div class="welcome-copy">
         <span class="welcome-kicker">VINFAST ELECTRIC CAR SALE</span>
         <h2>Mỗi hành trình xanh<br>đều bắt đầu từ bạn.</h2>
-        <p>Theo dõi thông tin xe, đơn hàng, chuyển khoản MB Bank và hợp đồng của bạn tại một nơi.</p>
+        <p>Theo dõi thông tin xe, đơn hàng, thanh toán chuyển khoản VietQR và hợp đồng của bạn tại một nơi.</p>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <a class="button button-light" href="<%= customerContext %>/index.jsp?view=customer#models">Khám phá xe <span>↗</span></a>
             <button type="button" class="button button-secondary" data-open-consult-popup style="background:rgba(255,255,255,0.18);color:#fff;border-color:rgba(255,255,255,0.35);">✧ Mở popup tư vấn và báo giá</button>

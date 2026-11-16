@@ -2,6 +2,7 @@ package com.electriccarsales.controller;
 
 import com.electriccarsales.model.CarModel;
 import com.electriccarsales.service.VehicleCatalogService;
+import com.electriccarsales.service.PromotionService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -9,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 @WebServlet(name = "VehicleDetailController", urlPatterns = "/detail")
 public class VehicleDetailController extends HttpServlet {
@@ -64,6 +66,12 @@ public class VehicleDetailController extends HttpServlet {
             request.setAttribute("car", car);
             request.setAttribute("specification", service.getSpecificationByModelId(modelID));
             request.setAttribute("carImages", service.getImagesByModelId(modelID));
+            try {
+                request.setAttribute("activePromotions", PromotionService.activeForModel(modelID));
+            } catch (SQLException e) {
+                log("Không thể tải khuyến mãi của mẫu xe " + modelID, e);
+                request.setAttribute("promotionLoadFailed", true);
+            }
             request.getRequestDispatcher("/vehicle-detail.jsp").forward(request, response);
         } catch (RuntimeException e) {
             log("Không thể tải thông tin xe với ModelID " + modelID, e);

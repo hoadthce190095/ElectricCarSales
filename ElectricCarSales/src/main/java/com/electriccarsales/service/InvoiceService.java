@@ -4,6 +4,7 @@ import com.electriccarsales.dao.InvoiceDAO;
 import com.electriccarsales.model.Invoices;
 
 import java.util.List;
+import java.util.Map;
 
 public class InvoiceService {
     private final InvoiceDAO invoiceDAO = new InvoiceDAO();
@@ -30,5 +31,10 @@ public class InvoiceService {
     public Invoices issueInvoice(int orderId, Integer accountantEmployeeId, String note) {
         if (orderId <= 0) throw new IllegalArgumentException("Mã đơn hàng không hợp lệ.");
         return invoiceDAO.issueInvoice(orderId, accountantEmployeeId, note);
+    }
+
+    /** Trả danh sách tất cả Orders có trạng thái liên quan (PAID/DEPOSITED/PROCESSING) kèm thông tin Invoice. */
+    public List<Map<String, Object>> getOrdersForInvoicePage() {
+        return invoiceDAO.findOrdersForInvoicePage();
     }
 }

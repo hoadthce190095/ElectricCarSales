@@ -16,6 +16,11 @@ public class CustomerService {
         return customerDAO.findByUserId(userId);
     }
 
+    public Customer getCustomerById(int customerId) {
+        if (customerId <= 0) throw new IllegalArgumentException("Mã khách hàng không hợp lệ.");
+        return customerDAO.findById(customerId);
+    }
+
     public List<Customer> getAllCustomers() {
         return customerDAO.findAll();
     }

@@ -9,21 +9,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class AdminRoleDAO {
-    private static final Map<Integer, List<String>> MEMORY_PERMISSIONS = new ConcurrentHashMap<>();
-
-    private boolean hasRolePermissionsTable(Connection connection) {
-        try (PreparedStatement ps = connection.prepareStatement(
-                "SELECT CASE WHEN OBJECT_ID(N'dbo.RolePermissions', N'U') IS NOT NULL THEN 1 ELSE 0 END");
-             ResultSet rs = ps.executeQuery()) {
-            return rs.next() && rs.getInt(1) == 1;
-        } catch (SQLException ex) {
-            return false;
-        }
-    }
+    private static final java.util.Map<Integer, List<String>> RUNTIME_PERMISSIONS = new java.util.concurrent.ConcurrentHashMap<>();
 
     public List<AdminRole> findAll(Connection connection) throws SQLException {
         List<AdminRole> roles = new ArrayList<>();
@@ -48,10 +36,9 @@ public class AdminRoleDAO {
     }
 
     public List<String> findPermissions(Connection connection, int roleId) throws SQLException {
-        if (!hasRolePermissionsTable(connection)) {
-            List<String> custom = MEMORY_PERMISSIONS.get(roleId);
-            if (custom != null) {
-                return custom;
+        if (!SchemaTables.exists(connection, "RolePermissions")) {
+            if (RUNTIME_PERMISSIONS.containsKey(roleId)) {
+                return RUNTIME_PERMISSIONS.get(roleId);
             }
             String roleName = findRoleName(connection, roleId);
             if (roleName == null) {
@@ -89,8 +76,8 @@ public class AdminRoleDAO {
     }
 
     public void replacePermissions(Connection connection, int roleId, List<String> permissions) throws SQLException {
-        MEMORY_PERMISSIONS.put(roleId, List.copyOf(permissions));
-        if (!hasRolePermissionsTable(connection)) {
+        if (!SchemaTables.exists(connection, "RolePermissions")) {
+            RUNTIME_PERMISSIONS.put(roleId, new ArrayList<>(permissions));
             return;
         }
         try (PreparedStatement statement = connection.prepareStatement("DELETE FROM RolePermissions WHERE RoleID=?")) {
@@ -101,8 +88,8 @@ public class AdminRoleDAO {
     }
 
     public void addPermissions(Connection connection, int roleId, List<String> permissions) throws SQLException {
-        MEMORY_PERMISSIONS.put(roleId, List.copyOf(permissions));
-        if (!hasRolePermissionsTable(connection)) {
+        if (!SchemaTables.exists(connection, "RolePermissions")) {
+            RUNTIME_PERMISSIONS.computeIfAbsent(roleId, k -> new ArrayList<>()).addAll(permissions);
             return;
         }
         try (PreparedStatement statement = connection

@@ -1,5 +1,0 @@
-# Copy to db.properties for local IntelliJ development, then enter your SQL Server settings.
-# Packaged WAR uses DB_URL, DB_USER and DB_PASSWORD environment variables.
-DB_URL=jdbc:sqlserver://localhost:1433;databaseName=ElectricCarSalesDB;encrypt=true;trustServerCertificate=true
-DB_USER=YOUR_SQL_LOGIN
-DB_PASSWORD=YOUR_SQL_PASSWORD

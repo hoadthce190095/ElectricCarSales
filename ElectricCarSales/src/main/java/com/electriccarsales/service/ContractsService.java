@@ -50,16 +50,14 @@ public class ContractsService {
         if ("SIGNED".equalsIgnoreCase(c.getStatus())) {
             throw new IllegalStateException("Hợp đồng này đã được ký.");
         }
-        return otpService.issuePurposeOtp(userId, "SIGN_CONTRACT");
+        contractsDAO.requireSigningEligible(contractId, customerId, userId);
+        return otpService.issueContractSigningOtp(userId, ContractsDAO.signingPurpose(contractId));
     }
 
     public Contract verifyOtpAndSignContract(int contractId, int customerId, int userId, String otpCode) {
         if (otpCode == null || !otpCode.trim().matches("\\d{6}")) {
             throw new IllegalArgumentException("Vui lòng nhập mã OTP gồm 6 chữ số để ký hợp đồng.");
         }
-        if (!otpService.verifyPurposeOtp(userId, "SIGN_CONTRACT", otpCode.trim())) {
-            throw new IllegalArgumentException("Mã OTP ký hợp đồng không đúng hoặc đã hết hạn.");
-        }
-        return contractsDAO.signContract(contractId, customerId);
+        return contractsDAO.signContract(contractId, customerId, userId, otpCode.trim());
     }
 }

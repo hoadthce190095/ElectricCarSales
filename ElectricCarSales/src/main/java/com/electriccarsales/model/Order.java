@@ -15,6 +15,13 @@ public class Order {
     private Timestamp orderDate;
     private String note;
     private String vehicleName;
+    private String paymentMethodName;
+    private String contractStatus;
+
+    public String getPaymentMethodName() { return paymentMethodName; }
+    public void setPaymentMethodName(String paymentMethodName) { this.paymentMethodName = paymentMethodName; }
+    public String getContractStatus() { return contractStatus; }
+    public void setContractStatus(String contractStatus) { this.contractStatus = contractStatus; }
 
     public String getVehicleName() { return vehicleName; }
     public void setVehicleName(String vehicleName) { this.vehicleName = vehicleName; }

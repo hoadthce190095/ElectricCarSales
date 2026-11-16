@@ -30,11 +30,13 @@ public class AccountantPaymentController extends HttpServlet {
         try {
             var pendingPayments = service.pendingPayments();
             var openDebts = service.openDebts();
+            var completedPayments = service.completedPayments();
             String csrfToken = PaymentController.ensureCsrf(request);
             if (jsonRequested) {
                 response.setContentType("application/json;charset=UTF-8");
                 Map<String, Object> payload = new LinkedHashMap<>();
                 payload.put("pendingPayments", pendingPayments);
+                payload.put("completedPayments", completedPayments);
                 payload.put("openDebts", openDebts);
                 payload.put("csrfToken", csrfToken);
                 JSON.writeValue(response.getWriter(), payload);
@@ -42,6 +44,7 @@ public class AccountantPaymentController extends HttpServlet {
             }
             request.setAttribute("pendingPayments", pendingPayments);
             request.setAttribute("openDebts", openDebts);
+            request.setAttribute("completedPayments", completedPayments);
             request.setAttribute("csrfTokenForPayment", csrfToken);
             request.getRequestDispatcher("/staff/payment-review.jsp").forward(request, response);
         } catch (SQLException e) {
@@ -76,7 +79,7 @@ public class AccountantPaymentController extends HttpServlet {
                 BigDecimal received = null;
                 if (confirm) {
                     if (!"on".equals(request.getParameter("checkedStatement"))) {
-                        throw new IllegalArgumentException("Phải đối chiếu với sao kê MB Bank/đối tác trước khi xác nhận.");
+                        throw new IllegalArgumentException("Phải đối chiếu với sao kê, chứng từ tiền mặt hoặc chứng từ giải ngân trước khi xác nhận.");
                     }
                     try { received = new BigDecimal(request.getParameter("receivedAmount")); }
                     catch (NumberFormatException | NullPointerException e) {

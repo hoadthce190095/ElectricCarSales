@@ -3,11 +3,15 @@ package com.electriccarsales.controller;
 import com.electriccarsales.dao.CarModelDAO;
 import com.electriccarsales.dao.CustomerDAO;
 import com.electriccarsales.dao.FinancialCompanyDAO;
+import com.electriccarsales.dao.order.OrderDAO;
 import com.electriccarsales.model.CarModel;
+import com.electriccarsales.model.CatalogVehicle;
 import com.electriccarsales.model.ConsultationRequest;
 import com.electriccarsales.model.Customer;
+import com.electriccarsales.model.Order;
 import com.electriccarsales.model.SessionUser;
 import com.electriccarsales.service.ConsultationService;
+import com.electriccarsales.service.VehicleCatalogService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -70,17 +74,32 @@ public class ConsultationController extends HttpServlet {
             request.setAttribute("carModels", models);
             request.setAttribute("financialCompanies", companies);
 
+            List<CatalogVehicle> catalogVehicles = List.of();
+            try {
+                catalogVehicles = new VehicleCatalogService().getCatalogVehicles();
+            } catch (Exception ex) {
+                log("Cannot load catalog vehicles for consultation", ex);
+            }
+            request.setAttribute("catalogVehicles", catalogVehicles);
+
             List<ConsultationRequest> consultations = List.of();
+            List<Order> customerOrders = List.of();
             if ("CUSTOMER".equals(role)) {
                 Customer customer = new CustomerDAO().findByUserId(user.getUserId());
                 if (customer != null) {
                     consultations = service.getCustomerRequests(customer.getCustomerID());
                     request.setAttribute("customer", customer);
+                    try {
+                        customerOrders = new OrderDAO().findByCustomerId(customer.getCustomerID());
+                    } catch (Exception ex) {
+                        log("Cannot load customer orders for consultation", ex);
+                    }
                 }
             } else if (List.of("SALES", "MANAGER", "ADMIN").contains(role)) {
                 consultations = service.getAllRequests();
             }
             request.setAttribute("consultations", consultations);
+            request.setAttribute("customerOrders", customerOrders);
 
             if (jsonRequested) {
                 response.setContentType("application/json;charset=UTF-8");
@@ -94,11 +113,18 @@ public class ConsultationController extends HttpServlet {
                 return;
             }
 
+            String csrf = com.electriccarsales.controller.PaymentController.ensureCsrf(request);
+            request.setAttribute("csrfToken", csrf);
+
             if (List.of("SALES", "MANAGER", "ADMIN").contains(role)) {
-                response.sendRedirect(request.getContextPath() + "/staff/dashboard#consultations");
+                request.getRequestDispatcher("/staff/consultations.jsp").forward(request, response);
                 return;
             }
-            request.getRequestDispatcher("/customer/checkout.jsp").forward(request, response);
+            if ("checkout".equalsIgnoreCase(request.getParameter("view"))) {
+                request.getRequestDispatcher("/customer/checkout.jsp").forward(request, response);
+            } else {
+                request.getRequestDispatcher("/customer/my-consultation.jsp").forward(request, response);
+            }
         } catch (RuntimeException ex) {
             log("Consultation GET failed", ex);
             if (jsonRequested) {
@@ -155,19 +181,19 @@ public class ConsultationController extends HttpServlet {
                 }
                 service.updateByStaff(requestId, employeeId, staffName, status, note);
                 sendResult(request, response, jsonRequested, HttpServletResponse.SC_OK, true,
-                        "Đã cập nhật yêu cầu tư vấn #" + requestId + ".", "/staff/dashboard#consultations");
+                        "Đã cập nhật yêu cầu tư vấn #" + requestId + ".", "/consultation?updated=1");
                 return;
             }
 
             if (!"CUSTOMER".equals(role)) {
                 sendResult(request, response, jsonRequested, HttpServletResponse.SC_FORBIDDEN, false,
-                        "Chức năng gửi yêu cầu tư vấn dành cho tài khoản Khách hàng.", "/customer/checkout.jsp");
+                        "Chức năng gửi yêu cầu tư vấn dành cho tài khoản Khách hàng.", "/consultation");
                 return;
             }
             Customer customer = new CustomerDAO().findByUserId(user.getUserId());
             if (customer == null) {
                 sendResult(request, response, jsonRequested, HttpServletResponse.SC_FORBIDDEN, false,
-                        "Tài khoản chưa liên kết hồ sơ khách hàng.", "/customer/checkout.jsp");
+                        "Tài khoản chưa liên kết hồ sơ khách hàng.", "/consultation");
                 return;
             }
             if (customer.getPhone() == null || customer.getPhone().isBlank()) {
@@ -181,7 +207,7 @@ public class ConsultationController extends HttpServlet {
                 String note = request.getParameter("message");
                 service.appendCustomerNote(requestId, customer.getCustomerID(), note);
                 sendResult(request, response, jsonRequested, HttpServletResponse.SC_OK, true,
-                        "Đã gửi phản hồi bổ sung cho yêu cầu tư vấn #" + requestId + ".", "/customer/checkout.jsp?updated=1");
+                        "Đã gửi phản hồi bổ sung cho yêu cầu tư vấn #" + requestId + ".", "/consultation?updated=1");
                 return;
             }
 
@@ -212,14 +238,14 @@ public class ConsultationController extends HttpServlet {
 
             sendResult(request, response, jsonRequested, HttpServletResponse.SC_CREATED, true,
                     "Đã gửi yêu cầu tư vấn #" + cr.getId() + " thành công. Nhân viên Sales sẽ phản hồi sớm.",
-                    "/customer/checkout.jsp?submitted=1");
+                    "/consultation?submitted=1");
         } catch (IllegalArgumentException | IllegalStateException ex) {
             sendResult(request, response, jsonRequested, HttpServletResponse.SC_BAD_REQUEST, false,
-                    ex.getMessage(), "/customer/checkout.jsp");
+                    ex.getMessage(), "/consultation");
         } catch (RuntimeException ex) {
             log("Consultation POST failed", ex);
             sendResult(request, response, jsonRequested, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, false,
-                    "Không thể xử lý yêu cầu tư vấn.", "/customer/checkout.jsp");
+                    "Không thể xử lý yêu cầu tư vấn.", "/consultation");
         }
     }
 

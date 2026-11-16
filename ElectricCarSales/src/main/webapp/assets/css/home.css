@@ -97,6 +97,8 @@ main { width: min(1440px, calc(100% - 72px)); margin: 0 auto; }
 .vehicle-photo img { width: 100%; height: 100%; object-fit: cover; object-position: center; transition: transform .45s; }
 .vehicle-card:hover .vehicle-photo img { transform: scale(1.035); }
 .model-badge { position: absolute; z-index: 1; top: 10px; left: 10px; padding: 4px 8px; border: 1px solid #ffffff99; border-radius: 4px; background: #ffffffed; color: #415575; font-size: 8px; font-weight: 700; }
+.promo-badge { position: absolute; z-index: 2; bottom: 8px; left: 10px; padding: 3px 8px; border-radius: 4px; background: #e31837; color: #fff; font-size: 9px; font-weight: 700; box-shadow: 0 2px 6px rgba(227, 24, 55, 0.35); letter-spacing: 0.2px; }
+.home-promo-tag { display: inline-flex; align-items: center; gap: 4px; margin-top: 5px; padding: 2px 7px; border-radius: 4px; background: #fff1f2; color: #e31837; font-size: 9px; font-weight: 700; line-height: 1.3; }
 .compare-check { position: absolute; z-index: 2; top: 9px; right: 9px; display: flex; align-items: center; gap: 5px; padding: 5px 8px; border: 1px solid #ffffffb5; border-radius: 5px; background: #ffffffeb; color: #53627a; font-size: 8px; font-weight: 600; }
 .compare-check input { width: 12px; height: 12px; margin: 0; accent-color: var(--home-blue); }
 .vehicle-card-body { padding: 13px 13px 12px; }
@@ -110,6 +112,11 @@ main { width: min(1440px, calc(100% - 72px)); margin: 0 auto; }
 .spec-item span { display: block; overflow: hidden; color: #929baa; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
 .spec-item strong { display: block; overflow: hidden; margin-top: 3px; color: #43546f; font: 700 10px/1.35 var(--home-display); text-overflow: ellipsis; white-space: nowrap; }
 .vehicle-price-label { display: block; color: #8d96a4; font-size: 8px; }
+.vehicle-price-wrap { margin-top: 4px; }
+.vehicle-price-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+.vehicle-price-original { color: #8896a6; font-size: 11px; text-decoration: line-through; }
+.vehicle-price.has-discount { color: #e31837; }
+.vehicle-promo-calc { font-size: 10px; font-weight: 700; color: #c53030; margin-top: 3px; line-height: 1.35; }
 .vehicle-price { display: block; margin-top: 2px; color: #203f70; font: 800 16px/1.35 var(--home-display); letter-spacing: -.3px; }
 .vehicle-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 7px; margin-top: 11px; }
 .vehicle-source { overflow: hidden; color: #748096; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }

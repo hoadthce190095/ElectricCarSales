@@ -102,7 +102,6 @@ public class DeliveryDAO extends DBContext {
             connection.setAutoCommit(false);
             try {
                 int customerId;
-                Integer orderEmpId;
                 Integer carId;
                 String orderStatus;
                 String invoiceNumber;
@@ -110,12 +109,13 @@ public class DeliveryDAO extends DBContext {
 
                 String sql = """
                     SELECT o.CustomerID, o.EmployeeID, od.CarID, os.StatusName AS OrderStatus,
-                           inv.InvoiceNumber, cu.Address AS CustomerAddress
+                           inv.InvoiceNumber, ct.Status AS ContractStatus, cu.Address AS CustomerAddress
                     FROM Orders o WITH (UPDLOCK, HOLDLOCK)
                     JOIN OrderStatuses os ON os.OrderStatusID = o.OrderStatusID
                     JOIN Customers cu ON cu.CustomerID = o.CustomerID
                     LEFT JOIN OrderDetails od ON od.OrderID = o.OrderID
-                    LEFT JOIN Invoices inv ON inv.OrderID = o.OrderID
+                    LEFT JOIN Invoices inv ON inv.OrderID = o.OrderID AND inv.Status='ISSUED'
+                    LEFT JOIN Contracts ct ON ct.OrderID = o.OrderID
                     WHERE o.OrderID = ?
                     """;
                 try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -123,11 +123,14 @@ public class DeliveryDAO extends DBContext {
                     try (ResultSet rs = ps.executeQuery()) {
                         if (!rs.next()) throw new IllegalArgumentException("Không tìm thấy đơn hàng #" + orderId);
                         customerId = rs.getInt("CustomerID");
-                        orderEmpId = rs.getObject("EmployeeID", Integer.class);
                         carId = rs.getObject("CarID", Integer.class);
                         orderStatus = rs.getString("OrderStatus");
                         invoiceNumber = rs.getString("InvoiceNumber");
                         customerAddress = rs.getString("CustomerAddress");
+                        if (!"SIGNED".equalsIgnoreCase(rs.getString("ContractStatus"))) {
+                            throw new IllegalStateException("Hợp đồng chưa được ký.");
+                        }
+                        if (rs.next()) throw new IllegalStateException("Đơn hàng phải gắn đúng một xe vật lý.");
                     }
                 }
 
@@ -144,9 +147,11 @@ public class DeliveryDAO extends DBContext {
                     throw new IllegalStateException("Đơn hàng chưa gắn xe vật lý trong OrderDetails.");
                 }
 
-                int respEmp = (employeeId != null && employeeId > 0)
-                        ? employeeId
-                        : (orderEmpId != null && orderEmpId > 0 ? orderEmpId : resolveFallbackEmployeeId(connection));
+                PaymentDAO.requireExactSettlement(connection, orderId);
+                if (employeeId == null || employeeId <= 0) {
+                    throw new IllegalStateException("Không tìm thấy hồ sơ nhân viên bàn giao.");
+                }
+                int respEmp = employeeId;
                 String addr = (deliveryAddress != null && !deliveryAddress.isBlank())
                         ? deliveryAddress.trim()
                         : ((customerAddress != null && !customerAddress.isBlank()) ? customerAddress.trim() : "Showroom VinFast Cần Thơ");
@@ -160,11 +165,12 @@ public class DeliveryDAO extends DBContext {
                         if (rs.next()) {
                             int delId = rs.getInt(1);
                             try (PreparedStatement upDel = connection.prepareStatement(
-                                    "UPDATE Deliveries SET DeliveryStatus = 'DELIVERED', DeliveryAddress = ?, Note = ?, DeliveryDate = SYSDATETIME() WHERE DeliveryID = ?")) {
+                                    "UPDATE Deliveries SET DeliveryStatus = 'DELIVERED', DeliveryAddress = ?, Note = ?, DeliveryDate = SYSDATETIME(), EmployeeID=? WHERE DeliveryID = ? AND DeliveryStatus <> 'DELIVERED'")) {
                                 upDel.setNString(1, addr);
                                 upDel.setNString(2, deliveryNote);
-                                upDel.setInt(3, delId);
-                                upDel.executeUpdate();
+                                upDel.setInt(3, respEmp);
+                                upDel.setInt(4, delId);
+                                if (upDel.executeUpdate() != 1) throw new IllegalStateException("Xe đã được bàn giao.");
                             }
                         } else {
                             try (PreparedStatement inDel = connection.prepareStatement(
@@ -194,11 +200,11 @@ public class DeliveryDAO extends DBContext {
                 // Update Car status to DELIVERED
                 try (PreparedStatement upCar = connection.prepareStatement("""
                         UPDATE Cars
-                        SET CarStatusID = COALESCE((SELECT TOP 1 CarStatusID FROM CarStatuses WHERE StatusName = N'DELIVERED'), CarStatusID)
-                        WHERE CarID = ?
+                        SET CarStatusID = (SELECT CarStatusID FROM CarStatuses WHERE UPPER(StatusName) = 'DELIVERED')
+                        WHERE CarID = ? AND CarStatusID IN (SELECT CarStatusID FROM CarStatuses WHERE UPPER(StatusName) = 'SOLD')
                         """)) {
                     upCar.setInt(1, carId);
-                    upCar.executeUpdate();
+                    if (upCar.executeUpdate() != 1) throw new IllegalStateException("Xe chưa ở trạng thái SOLD.");
                 }
 
                 // Update Order status to COMPLETED
@@ -227,14 +233,6 @@ public class DeliveryDAO extends DBContext {
         } catch (SQLException e) {
             throw new IllegalStateException("Không thể hoàn tất bàn giao xe.", e);
         }
-    }
-
-    private int resolveFallbackEmployeeId(Connection connection) throws SQLException {
-        try (PreparedStatement ps = connection.prepareStatement("SELECT TOP 1 EmployeeID FROM Employees ORDER BY EmployeeID");
-             ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) return rs.getInt(1);
-        }
-        throw new IllegalStateException("Chưa có hồ sơ nhân viên trong bảng Employees.");
     }
 
     private Delivery map(ResultSet rs) throws SQLException {

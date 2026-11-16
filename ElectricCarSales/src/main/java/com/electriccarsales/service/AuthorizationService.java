@@ -49,13 +49,16 @@ public class AuthorizationService {
 
     public RolesResponse roles() throws SQLException {
         try (Connection connection = DBContext.openConnection()) {
+            boolean hasTable = com.electriccarsales.dao.SchemaTables.exists(connection, "RolePermissions");
             List<AdminRole> roles = roleDAO.findAll(connection);
             for (AdminRole role : roles) {
                 role.setPermissions(permissions(connection, role.getRoleId(), role.getRoleName()));
             }
             List<PermissionDTO> definitions = DEFINITIONS.stream()
                 .map(permission -> new PermissionDTO(permission.getCode(), permission.getDescription())).toList();
-            return new RolesResponse(roles, definitions);
+            RolesResponse response = new RolesResponse(roles, definitions);
+            response.setAvailable(true);
+            return response;
         }
     }
 
@@ -86,7 +89,7 @@ public class AuthorizationService {
                 validatePermissions(permissionList);
                 int roleId = roleDAO.create(connection, input.getRoleName());
                 roleDAO.addPermissions(connection, roleId, permissionList);
-                systemLogDAO.record(connection, actorId, "ROLE_CREATE", "ROLE", String.valueOf(roleId),
+                systemLogDAO.recordRequired(connection, actorId, "ROLE_CREATE", "ROLE", String.valueOf(roleId),
                     "role=" + input.getRoleName() + "; permissions=" + permissionList + "; cloneRoleId="
                         + input.getCloneRoleId());
                 connection.commit();
@@ -126,7 +129,7 @@ public class AuthorizationService {
 
                 List<String> previousPermissions = permissions(connection, roleId, roleName);
                 roleDAO.replacePermissions(connection, roleId, input.getPermissions());
-                systemLogDAO.record(connection, actorId, "ROLE_PERMISSIONS_UPDATE", "ROLE", String.valueOf(roleId),
+                systemLogDAO.recordRequired(connection, actorId, "ROLE_PERMISSIONS_UPDATE", "ROLE", String.valueOf(roleId),
                     "role=" + roleName + "; before=" + previousPermissions + "; after=" + input.getPermissions());
                 connection.commit();
                 return new AdminRole(roleId, roleName, List.copyOf(input.getPermissions()));
