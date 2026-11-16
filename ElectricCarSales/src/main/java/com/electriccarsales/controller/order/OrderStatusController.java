@@ -4,7 +4,7 @@ import com.electriccarsales.dao.CustomerDAO;
 import com.electriccarsales.model.Customer;
 import com.electriccarsales.model.Order;
 import com.electriccarsales.model.SessionUser;
-import com.electriccarsales.service.OrderService;
+import com.electriccarsales.service.order.OrderService;
 import com.electriccarsales.service.OrderStatusService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;

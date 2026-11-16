@@ -1,6 +1,6 @@
-package com.electriccarsales.service;
+package com.electriccarsales.service.order;
 
-import com.electriccarsales.dao.OrderDAO;
+import com.electriccarsales.dao.order.OrderDAO;
 import com.electriccarsales.dao.OrderDetailDAO;
 import com.electriccarsales.dao.OrderStatusHistoryDAO;
 import com.electriccarsales.model.Order;

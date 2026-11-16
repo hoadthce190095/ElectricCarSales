@@ -1070,7 +1070,8 @@ BEGIN TRY
 	   DECLARE @CatalogColorImages TABLE (
 	       ModelName NVARCHAR(100) NOT NULL,
 	       ColorName NVARCHAR(50) NOT NULL,
-	       ImageURL NVARCHAR(500) NOT NULL
+	       ImageURL NVAR
+	           CHAR(500) NOT NULL
 	   );
 	   INSERT INTO @CatalogColorImages (ModelName, ColorName, ImageURL)
 	   VALUES

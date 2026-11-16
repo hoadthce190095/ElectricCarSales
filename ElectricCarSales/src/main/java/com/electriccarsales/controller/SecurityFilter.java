@@ -41,17 +41,15 @@ public class SecurityFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest rawRequest, ServletResponse rawResponse, FilterChain chain)
-            throws IOException, ServletException {
+        throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest) rawRequest;
         HttpServletResponse response = (HttpServletResponse) rawResponse;
         response.setHeader("Cache-Control", "no-store");
         response.setHeader("X-Content-Type-Options", "nosniff");
 
-        // Use the mapped path because raw URIs can contain encoded names or matrix
-        // parameters.
+        // Use the mapped path because raw URIs can contain encoded names or matrix parameters.
         String path = request.getServletPath() + (request.getPathInfo() == null ? "" : request.getPathInfo());
-        boolean safe = "GET".equals(request.getMethod()) || "HEAD".equals(request.getMethod())
-                || "/api/ai".equals(path);
+        boolean safe = "GET".equals(request.getMethod()) || "HEAD".equals(request.getMethod());
         HttpSession session = request.getSession(false);
         if (!safe && !validCsrfToken(request, session)) {
             JsonServlet.error(response, 403, "Phiên thao tác không hợp lệ. Tải lại trang rồi thử lại.");
@@ -67,7 +65,7 @@ public class SecurityFilter implements Filter {
                 session.setMaxInactiveInterval(timeout * 60);
                 request.setAttribute("sessionTimeoutMinutes", timeout);
                 if (account == null || !"ACTIVE".equals(account.getStatus()) || !PasswordSession
-                        .matches(session.getAttribute(PasswordSession.ATTRIBUTE), account.getPasswordHash())) {
+                    .matches(session.getAttribute(PasswordSession.ATTRIBUTE), account.getPasswordHash())) {
                     // Đổi hoặc đặt lại mật khẩu sẽ làm mọi phiên cũ hết hiệu lực.
                     session.invalidate();
                     user = null;
@@ -102,7 +100,7 @@ public class SecurityFilter implements Filter {
         String expected = session == null ? null : (String) session.getAttribute("csrfToken");
         String actual = request.getHeader("X-CSRF-Token");
         return expected != null && actual != null && MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8),
-                actual.getBytes(StandardCharsets.UTF_8));
+            actual.getBytes(StandardCharsets.UTF_8));
     }
 
     private String requiredPermission(String path) {

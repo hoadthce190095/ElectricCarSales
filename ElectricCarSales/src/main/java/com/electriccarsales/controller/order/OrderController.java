@@ -1,9 +1,9 @@
-package com.electriccarsales.controller;
+package com.electriccarsales.controller.order;
 
 import com.electriccarsales.dao.FinanceCustomerDAO;
 import com.electriccarsales.model.SessionUser;
 import com.electriccarsales.service.SalesOrderService;
-import com.electriccarsales.service.OrderService;
+import com.electriccarsales.service.order.OrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;

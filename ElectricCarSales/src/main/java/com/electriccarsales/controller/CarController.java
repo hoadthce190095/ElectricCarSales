@@ -24,6 +24,16 @@ public class CarController extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.sendRedirect(request.getContextPath() + "/staff/inventory");
+        response.setContentType("text/html; charset=UTF-8");
+        request.setCharacterEncoding("UTF-8");
+
+
+        List<Car> cars = carService.getAllCars();
+        List<CarStatus> statuses = carService.getAllCarStatuses();
+
+        request.setAttribute("carList", cars);
+        request.setAttribute("statusList", statuses);
+
+        request.getRequestDispatcher("/car.jsp").forward(request, response);
     }
 }

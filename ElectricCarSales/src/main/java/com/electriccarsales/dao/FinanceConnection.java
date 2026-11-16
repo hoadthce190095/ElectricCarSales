@@ -13,13 +13,11 @@ public final class FinanceConnection {
 
     public static Connection open() throws SQLException {
         Properties config = loadLocalConfig();
-        String url = first(config, "ELECTRIC_CAR_SALES_JDBC_URL", "DB_URL", "db.url");
-        String user = first(config, "ELECTRIC_CAR_SALES_DB_USER", "DB_USER", "db.username");
-        String password = first(config, "ELECTRIC_CAR_SALES_DB_PASSWORD", "DB_PASSWORD", "db.password");
+        String url = first(config, "ELECTRIC_CAR_SALES_JDBC_URL", "DB_URL");
+        String user = first(config, "ELECTRIC_CAR_SALES_DB_USER", "DB_USER");
+        String password = first(config, "ELECTRIC_CAR_SALES_DB_PASSWORD", "DB_PASSWORD");
         if (url == null || url.isBlank()) {
-            url = "jdbc:sqlserver://localhost:1433;databaseName=ElectricCarSalesDB;encrypt=true;trustServerCertificate=true";
-            if (user == null || user.isBlank()) user = "sa";
-            if (password == null || password.isBlank()) password = "123456";
+            throw new SQLException("SQL Server chưa được cấu hình. Đặt DB_URL trong db.properties hoặc biến môi trường.");
         }
         if (user == null || user.isBlank()) {
             return DriverManager.getConnection(url);
