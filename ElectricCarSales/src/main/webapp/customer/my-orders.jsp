@@ -51,7 +51,7 @@
                                         <input type="hidden" name="csrfToken" value="<c:out value='${paymentCsrf}'/>">
                                         <input type="hidden" name="orderId" value="<c:out value='${order.id}'/>">
                                         <input type="hidden" name="type" value="DEPOSIT">
-                                        <button type="submit" class="button button-primary" style="padding:4px 8px;font-size:12px;">QR cọc 30%</button>
+                                        <button type="submit" class="button button-primary" style="padding:4px 8px;font-size:12px;">Thanh toán cọc 30%</button>
                                     </form>
                                 </c:if>
                                 <c:if test="${order.status eq 'PENDING'}">
@@ -66,7 +66,7 @@
                                         <input type="hidden" name="csrfToken" value="<c:out value='${paymentCsrf}'/>">
                                         <input type="hidden" name="orderId" value="<c:out value='${order.id}'/>">
                                         <input type="hidden" name="type" value="REMAINING">
-                                        <button type="submit" class="button button-primary" style="padding:4px 8px;font-size:12px;">QR 70% (chỉ trả thẳng)</button>
+                                        <button type="submit" class="button button-primary" style="padding:4px 8px;font-size:12px;">Thanh toán 70% còn lại</button>
                                     </form>
                                 </c:if>
                             </div>

@@ -3,6 +3,19 @@
     const panel = document.querySelector('[data-payment-id][data-check-url]');
     const status = document.getElementById('bank-transfer-state');
     if (!panel || !status) return;
+    document.querySelectorAll('[data-copy]').forEach(button => {
+        button.addEventListener('click', async () => {
+            const value = document.getElementById(button.dataset.copy)?.textContent?.trim();
+            if (!value) return;
+            try {
+                await navigator.clipboard.writeText(value);
+                button.textContent = 'Đã sao chép';
+                window.setTimeout(() => { button.textContent = 'Sao chép'; }, 1600);
+            } catch (_) {
+                status.textContent = 'Trình duyệt không cho phép sao chép tự động. Hãy chọn và sao chép thông tin thủ công.';
+            }
+        });
+    });
     async function check() {
         if (document.hidden) return;
         try {
@@ -32,10 +45,17 @@
                 return;
             }
             if (payment.status === 'COMPLETED') {
-                status.textContent = 'Kế toán đã xác nhận tiền thực nhận. Đang mở kết quả...';
+                status.textContent = 'Kế toán đã xác nhận thanh toán.';
+                status.classList.add('is-complete');
                 window.location.assign(panel.dataset.successUrl);
             } else if (payment.status === 'CANCELLED' || payment.status === 'FAILD') {
                 status.textContent = 'Giao dịch đã bị từ chối/hủy. Kiểm tra lại với kế toán.';
+            } else if (payment.bankReported) {
+                status.textContent = 'Đã nhận thông tin giao dịch, chờ kế toán xác nhận.';
+                status.classList.add('is-reported');
+            } else {
+                status.textContent = 'Chờ chuyển khoản hoặc ngân hàng ghi nhận giao dịch.';
+                status.classList.remove('is-reported', 'is-complete');
             }
         } catch (error) {
             // A network interruption must never be treated as payment success.

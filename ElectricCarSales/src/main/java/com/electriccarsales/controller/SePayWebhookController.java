@@ -2,6 +2,7 @@
 package com.electriccarsales.controller;
 
 import com.electriccarsales.dao.FinanceConnection;
+import com.electriccarsales.service.BankTransferService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.annotation.WebServlet;
@@ -32,10 +33,9 @@ public class SePayWebhookController extends HttpServlet {
                           HttpServletResponse response) throws IOException {
 
         String apiKey = System.getenv("SEPAY_WEBHOOK_KEY");
-        String mbAccount = System.getenv("ECS_MB_ACCOUNT");
+        String mbAccount = BankTransferService.mbAccountNumber();
 
-        if (apiKey == null || apiKey.isBlank()
-            || mbAccount == null || mbAccount.isBlank()) {
+        if (apiKey == null || apiKey.isBlank()) {
             response.sendError(503, "Webhook chưa cấu hình.");
             return;
         }
@@ -113,7 +113,6 @@ public class SePayWebhookController extends HttpServlet {
             .toUpperCase(Locale.ROOT);
 
         Matcher matcher = PAYMENT_CODE.matcher(content);
-
         if (!matcher.find()) {
             getServletContext().log(
                 "SePay event " + eventId
@@ -122,9 +121,28 @@ public class SePayWebhookController extends HttpServlet {
             success(response);
             return;
         }
-
         String paymentReference = matcher.group();
+        if (matcher.find()) {
+            getServletContext().log("SePay event " + eventId
+                + ": nội dung có nhiều mã thanh toán ECS, cần đối soát thủ công.");
+            success(response);
+            return;
+        }
+        String reportedCode = data.path("code").asText("").toUpperCase(Locale.ROOT);
+        if (PAYMENT_CODE.matcher(reportedCode).matches()
+            && !paymentReference.equals(reportedCode)) {
+            getServletContext().log("SePay event " + eventId
+                + ": code và content không trùng mã Payment.");
+            success(response);
+            return;
+        }
         String eventTag = "SEPAY_ID=" + eventId + ";";
+        String bankReference = safeAuditValue(data.path("referenceCode").asText(""), 80);
+        if (!bankReference.matches("[A-Za-z0-9./_-]{1,80}")) bankReference = "";
+        String transactionDate = safeAuditValue(data.path("transactionDate").asText(""), 32);
+        String transferContent = safeAuditValue(data.path("content").asText(""), 140);
+        String bankReferenceTag = bankReference.isBlank() ? ""
+            : "SEPAY_REF=" + bankReference + ";";
 
         try (Connection connection = FinanceConnection.open()) {
             connection.setAutoCommit(false);
@@ -179,9 +197,32 @@ public class SePayWebhookController extends HttpServlet {
 
                                 int paymentId = rs.getInt("PaymentID");
                                 String oldNote = rs.getString("Note");
+                                boolean bankReferenceUsed = false;
+                                if (!bankReferenceTag.isBlank()) {
+                                    try (PreparedStatement duplicate = connection.prepareStatement(
+                                        "SELECT COUNT(*) FROM Payments WHERE PaymentID<>? "
+                                            + "AND CHARINDEX(?, COALESCE(Note,'')) > 0")) {
+                                        duplicate.setInt(1, paymentId);
+                                        duplicate.setString(2, bankReferenceTag);
+                                        try (ResultSet duplicateResult = duplicate.executeQuery()) {
+                                            duplicateResult.next();
+                                            bankReferenceUsed = duplicateResult.getInt(1) > 0;
+                                        }
+                                    }
+                                }
+                                if (bankReferenceUsed) {
+                                    getServletContext().log("SePay event " + eventId
+                                        + ": mã giao dịch ngân hàng đã gắn với Payment khác.");
+                                    connection.commit();
+                                    success(response);
+                                    return;
+                                }
 
                                 String note = (oldNote == null ? "" : oldNote + " ")
                                     + eventTag
+                                    + (bankReferenceTag.isBlank() ? "" : " " + bankReferenceTag)
+                                    + (transactionDate.isBlank() ? "" : " SEPAY_DATE=" + transactionDate + ";")
+                                    + (transferContent.isBlank() ? "" : " SEPAY_CONTENT=" + transferContent + ";")
                                     + " SEPAY_RECEIVED="
                                     + received.toPlainString() + ";";
 
@@ -235,5 +276,11 @@ public class SePayWebhookController extends HttpServlet {
         response.setStatus(201);
         response.setContentType("application/json;charset=UTF-8");
         response.getWriter().write("{\"success\":true}");
+    }
+
+    private static String safeAuditValue(String value, int maxLength) {
+        if (value == null) return "";
+        String normalized = value.replaceAll("[\\p{Cntrl};=]", " ").trim();
+        return normalized.length() <= maxLength ? normalized : normalized.substring(0, maxLength);
     }
 }

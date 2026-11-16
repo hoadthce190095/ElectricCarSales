@@ -62,7 +62,12 @@ public class InvoiceController extends HttpServlet {
 
             if (jsonRequested) {
                 resp.setContentType("application/json;charset=UTF-8");
-                JSON.writeValue(resp.getWriter(), Map.of("invoices", invoices));
+                if ("ACCOUNTANT".equals(role)) {
+                    JSON.writeValue(resp.getWriter(), Map.of("invoices", invoices,
+                            "csrfToken", PaymentController.ensureCsrf(req)));
+                } else {
+                    JSON.writeValue(resp.getWriter(), Map.of("invoices", invoices));
+                }
                 return;
             }
 
@@ -87,7 +92,7 @@ public class InvoiceController extends HttpServlet {
         HttpSession session = req.getSession(false);
         SessionUser user = session == null ? null : (SessionUser) session.getAttribute("user");
         String role = user == null || user.getRole() == null ? "" : user.getRole().trim().toUpperCase(Locale.ROOT);
-        if (!"ACCOUNTANT".equals(role) && !"ADMIN".equals(role)) {
+        if (!"ACCOUNTANT".equals(role)) {
             if (jsonRequested) {
                 resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 resp.setContentType("application/json;charset=UTF-8");
@@ -98,11 +103,19 @@ public class InvoiceController extends HttpServlet {
             }
             return;
         }
+        if (!PaymentController.validCsrf(req)) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Phiên thao tác không hợp lệ. Tải lại trang rồi thử lại.");
+            return;
+        }
 
         try {
             int orderId = Integer.parseInt(req.getParameter("orderId"));
             String note = req.getParameter("note");
             Integer empId = (Integer) session.getAttribute("employeeId");
+            if (empId == null || empId <= 0) {
+                resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Tài khoản kế toán chưa có hồ sơ nhân viên hợp lệ.");
+                return;
+            }
             Invoices issued = invoiceService.issueInvoice(orderId, empId, note);
             if (jsonRequested) {
                 resp.setStatus(HttpServletResponse.SC_CREATED);

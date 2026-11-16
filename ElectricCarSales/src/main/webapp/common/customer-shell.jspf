@@ -23,7 +23,6 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
         <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="<%= customerContext %>/assets/css/customer.css?v=customer-profile-route-20261112">
         <link rel="stylesheet" href="<%= customerContext %>/assets/css/customer-ai.css">
-        <% if (customerPage.equals("payment-demo.jsp")) { %><link rel="stylesheet" href="<%= customerContext %>/assets/css/payment-demo.css"><% } %>
         <script src="<%= customerContext %>/assets/js/customer.js?v=customer-avatar-20261112" defer>
         </script>
     </head>
@@ -42,11 +41,6 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
                     <a class="nav-link <%= customerPage.equals("my-account.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/profile">
                         <span class="nav-icon">⌂</span>
                         <span>Tổng quan</span>
-                    </a>
-                    <a class="nav-link <%= customerPage.equals("cart.jsp") ? "active" : "" %>" href="<%= customerContext %>/customer/cart.jsp">
-                        <span class="nav-icon">▢</span>
-                        <span>Giỏ hàng</span>
-                        <span class="nav-count" data-cart-count>0</span>
                     </a>
                     <div class="nav-divider">
                         <span>GIAO DỊCH CỦA TÔI</span>
@@ -113,8 +107,6 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
                         </strong>
                     </div>
                     <div class="topbar-actions">
-                        <a class="icon-button" href="<%= customerContext %>/customer/cart.jsp" aria-label="Giỏ hàng">▢<span class="cart-dot" data-cart-count>0</span>
-                        </a>
                         <button class="icon-button notification-button" type="button" aria-label="Thông báo" data-notification>♧</button>
                         <span class="topbar-divider"></span>
                         <c:choose>

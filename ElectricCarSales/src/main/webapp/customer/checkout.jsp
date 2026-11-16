@@ -78,8 +78,8 @@
             <li>
                 <span>2</span>
                 <div>
-                    <strong>Đặt cọc 30% (VietQR OCB)</strong>
-                    <p>Khách hàng quét mã VietQR OCB động đúng 30% giá trị đơn. Kế toán xác nhận tiền vào tài khoản.</p>
+                    <strong>Đặt cọc 30% (chuyển khoản MB Bank)</strong>
+                    <p>Khách hàng tự chuyển khoản đúng 30% theo thông tin đơn hàng. Kế toán xác nhận tiền thực nhận.</p>
                 </div>
             </li>
             <li>

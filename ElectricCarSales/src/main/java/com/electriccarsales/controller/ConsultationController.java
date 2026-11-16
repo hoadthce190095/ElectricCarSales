@@ -10,6 +10,8 @@ import com.electriccarsales.model.FinancialCompany;
 import com.electriccarsales.model.SessionUser;
 import com.electriccarsales.service.ConsultationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -26,7 +28,9 @@ import java.util.Map;
 
 @WebServlet(name = "ConsultationController", urlPatterns = {"/consultation"})
 public class ConsultationController extends HttpServlet {
-    private static final ObjectMapper JSON = new ObjectMapper().findAndRegisterModules();
+    private static final ObjectMapper JSON = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     private final ConsultationService service = new ConsultationService();
 
     @Override
