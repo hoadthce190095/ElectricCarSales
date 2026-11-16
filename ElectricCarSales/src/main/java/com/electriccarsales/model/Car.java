@@ -17,6 +17,8 @@ public class Car {
     private String versionName;
     private String colorName;
     private String statusName;
+    private java.sql.Timestamp importDate;
+    private String supplierName;
 
     public Car() {}
 
@@ -68,4 +70,8 @@ public class Car {
     public void setColorName(String colorName) { this.colorName = colorName; }
     public String getStatusName() { return statusName; }
     public void setStatusName(String statusName) { this.statusName = statusName; }
+    public java.sql.Timestamp getImportDate() { return importDate; }
+    public void setImportDate(java.sql.Timestamp importDate) { this.importDate = importDate; }
+    public String getSupplierName() { return supplierName; }
+    public void setSupplierName(String supplierName) { this.supplierName = supplierName; }
 }

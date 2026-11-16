@@ -1,6 +1,10 @@
 package com.electriccarsales.controller;
 
 import com.electriccarsales.dao.FinanceDAOException;
+import com.electriccarsales.dao.ContractsDAO;
+import com.electriccarsales.dao.InvoiceDAO;
+import com.electriccarsales.dao.order.OrderDAO;
+import com.electriccarsales.model.Order;
 import com.electriccarsales.service.BankTransferService;
 import com.electriccarsales.service.PaymentService;
 import com.electriccarsales.service.SePayService;
@@ -15,6 +19,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -48,10 +53,12 @@ public class PaymentController extends HttpServlet {
         if (customerId == null) return;
 
         try {
+            bankTransferService.syncCustomerReportedTransfers(customerId);
+
             if ("check".equals(action)) {
                 Integer paymentId = FinanceControllerSupport.positiveInt(request.getParameter("paymentId"));
                 BankTransferService.Transfer transfer = paymentId == null ? null
-                        : bankTransferService.findCustomerTransfer(paymentId, customerId);
+                        : bankTransferService.checkAndAutoCompleteTransfer(paymentId, customerId);
                 if (transfer == null) {
                     FinanceControllerSupport.sendError(request, response, 404, "Không tìm thấy giao dịch của bạn.");
                     return;
@@ -59,7 +66,8 @@ public class PaymentController extends HttpServlet {
                 response.setHeader("Cache-Control", "no-store");
                 response.setContentType("application/json;charset=UTF-8");
                 response.getWriter().write("{\"status\":\"" + transfer.status()
-                        + "\",\"bankReported\":" + transfer.bankReported() + "}");
+                        + "\",\"bankReported\":" + transfer.bankReported()
+                        + ",\"orderId\":" + transfer.orderId() + "}");
                 return;
             }
 
@@ -125,6 +133,9 @@ public class PaymentController extends HttpServlet {
                 }
             }
 
+            List<Order> customerOrders = new OrderDAO().findByCustomerId(customerId);
+            request.setAttribute("customerOrders", customerOrders);
+
             if ("detail".equals(action) || "status".equals(action) || ("history".equals(action) && orderId != null)) {
                 if (orderId == null) {
                     FinanceControllerSupport.sendError(request, response, HttpServletResponse.SC_BAD_REQUEST,
@@ -144,8 +155,21 @@ public class PaymentController extends HttpServlet {
                 FinanceControllerSupport.sendError(request, response, HttpServletResponse.SC_NOT_FOUND,
                         "Chức năng thanh toán không tồn tại.");
                 return;
+            } else if (orderId == null && customerOrders != null && !customerOrders.isEmpty()) {
+                // Mặc định nạp dữ liệu đơn hàng đầu tiên (mới nhất) để hiển thị đầy đủ thông tin thanh toán & công nợ
+                int defaultOrderId = customerOrders.get(0).getId();
+                request.setAttribute("requestedOrderId", defaultOrderId);
+                try {
+                    request.setAttribute("orderBalance", paymentService.getOrderBalance(defaultOrderId));
+                    request.setAttribute("outstandingDebt", paymentService.getOutstandingDebt(defaultOrderId));
+                    request.setAttribute("orderPayments", paymentService.getOrderHistory(defaultOrderId));
+                } catch (Exception ex) {
+                    getServletContext().log("Could not compute balance for default order #" + defaultOrderId, ex);
+                }
             }
 
+            request.setAttribute("customerInvoices", new InvoiceDAO().findByCustomerId(customerId));
+            request.setAttribute("customerContracts", new ContractsDAO().findByCustomerId(customerId));
             request.setAttribute("paymentHistory", paymentService.getCustomerPaymentHistory(customerId));
             request.getRequestDispatcher("/customer/my-payments.jsp").forward(request, response);
         } catch (SQLException e) {

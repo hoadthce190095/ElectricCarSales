@@ -75,7 +75,8 @@ public class InvoiceController extends HttpServlet {
             }
 
             if ("CUSTOMER".equals(role)) {
-                req.getRequestDispatcher("/customer/my-invoices.jsp").forward(req, resp);
+                resp.sendRedirect(req.getContextPath() + "/payment/history#invoices");
+                return;
             } else {
                 // Staff: load eligible orders and forward to dedicated JSP
                 List<java.util.Map<String, Object>> allOrders = invoiceService.getOrdersForInvoicePage();

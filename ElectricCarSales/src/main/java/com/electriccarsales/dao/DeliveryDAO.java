@@ -208,13 +208,15 @@ public class DeliveryDAO extends DBContext {
                 }
 
                 // Update Order status to COMPLETED
+                int completedStatusId = orderStatusId(connection, "COMPLETED");
                 try (PreparedStatement upOrd = connection.prepareStatement("""
                         UPDATE Orders
-                        SET OrderStatusID = (SELECT OrderStatusID FROM OrderStatuses WHERE StatusName = 'COMPLETED')
+                        SET OrderStatusID = ?
                         WHERE OrderID = ?
                         """)) {
-                    upOrd.setInt(1, orderId);
-                    upOrd.executeUpdate();
+                    upOrd.setInt(1, completedStatusId);
+                    upOrd.setInt(2, orderId);
+                    if (upOrd.executeUpdate() != 1) throw new SQLException("Không cập nhật được đơn hàng sang COMPLETED.");
                 }
 
                 OrderStatusHistory history = new OrderStatusHistory();
@@ -231,8 +233,30 @@ public class DeliveryDAO extends DBContext {
                 throw ex;
             }
         } catch (SQLException e) {
-            throw new IllegalStateException("Không thể hoàn tất bàn giao xe.", e);
+            throw new IllegalStateException("Không thể hoàn tất bàn giao xe: " + e.getMessage(), e);
         }
+    }
+
+    private static int orderStatusId(Connection connection, String status) throws SQLException {
+        if (!"COMPLETED".equals(status)) throw new SQLException("Trạng thái bàn giao không hợp lệ.");
+        try (PreparedStatement ps = connection.prepareStatement(
+                "SELECT OrderStatusID FROM OrderStatuses WITH (UPDLOCK,HOLDLOCK) WHERE StatusName=?")) {
+            ps.setString(1, status);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        // Repair a missing seed value in the same handover transaction.
+        try (PreparedStatement ps = connection.prepareStatement(
+                "INSERT INTO OrderStatuses(StatusName,Description) VALUES(?,?)", Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, status);
+            ps.setNString(2, "Order has been completed");
+            if (ps.executeUpdate() != 1) throw new SQLException("Không thể tạo trạng thái COMPLETED.");
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        throw new SQLException("Không lấy được OrderStatusID cho COMPLETED.");
     }
 
     private Delivery map(ResultSet rs) throws SQLException {

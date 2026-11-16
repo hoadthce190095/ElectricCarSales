@@ -64,13 +64,26 @@ public class AccountantPaymentController extends HttpServlet {
             return;
         }
         try {
-            boolean confirm = "confirm".equals(request.getParameter("action"));
-            if (!confirm && !"reject".equals(request.getParameter("action"))
-                    && !"partner".equals(request.getParameter("action"))) {
+            String action = request.getParameter("action");
+            if ("reconcile".equals(action)) {
+                Integer paymentId = FinanceControllerSupport.positiveInt(request.getParameter("paymentId"));
+                if (paymentId == null) throw new IllegalArgumentException("Thiếu mã thanh toán cần đối soát.");
+                service.reconcile(paymentId, user.getUserId());
+                if (jsonRequested) {
+                    response.setContentType("application/json;charset=UTF-8");
+                    JSON.writeValue(response.getWriter(), Map.of("success", true, "message", "Đã đối soát thành công giao dịch #" + paymentId + "."));
+                } else {
+                    response.sendRedirect(request.getContextPath() + "/staff/payment-review?updated=1#completed");
+                }
+                return;
+            }
+
+            boolean confirm = "confirm".equals(action);
+            if (!confirm && !"reject".equals(action) && !"partner".equals(action)) {
                 throw new IllegalArgumentException("Thao tác không hợp lệ.");
             }
             Integer orderId = FinanceControllerSupport.positiveInt(request.getParameter("orderId"));
-            if ("partner".equals(request.getParameter("action"))) {
+            if ("partner".equals(action)) {
                 if (orderId == null) throw new IllegalArgumentException("Thiếu mã đơn trả góp.");
                 service.createPartnerDisbursement(orderId);
             } else {
@@ -93,8 +106,7 @@ public class AccountantPaymentController extends HttpServlet {
                 response.setContentType("application/json;charset=UTF-8");
                 JSON.writeValue(response.getWriter(), Map.of("success", true, "message", "Đã lưu nghiệp vụ kế toán."));
             } else {
-                String dashboardSection = "partner".equals(request.getParameter("action"))
-                        ? "debts" : "payments";
+                String dashboardSection = "partner".equals(action) ? "debts" : "payments";
                 response.sendRedirect(request.getContextPath() + "/staff/dashboard#" + dashboardSection);
             }
         } catch (SQLException e) {

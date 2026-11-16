@@ -63,6 +63,31 @@ public class VehicleDetailController extends HttpServlet {
 
         modelID = car.getModelID();
         try {
+            String carIdValue = request.getParameter("carId");
+            if (carIdValue != null && !carIdValue.isBlank()) {
+                int carId;
+                try {
+                    carId = Integer.parseInt(carIdValue);
+                } catch (NumberFormatException e) {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mã xe vật lý không hợp lệ.");
+                    return;
+                }
+                int selectedModelID = modelID;
+                var stockVehicle = service.getCatalogVehicles().stream()
+                        .filter(vehicle -> vehicle.stockCarID() != null && vehicle.stockCarID() == carId
+                                && vehicle.modelID() == selectedModelID)
+                        .findFirst().orElse(null);
+                if (stockVehicle == null) {
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "Xe này không còn trong danh mục có sẵn.");
+                    return;
+                }
+                String stockImage = stockVehicle.stockColorName() == null ? null
+                        : stockVehicle.colorImages().get(stockVehicle.stockColorName());
+                request.setAttribute("stockCarID", stockVehicle.stockCarID());
+                request.setAttribute("stockColorName", stockVehicle.stockColorName());
+                request.setAttribute("stockVehicleImage",
+                        stockImage == null || stockImage.isBlank() ? stockVehicle.imageUrl() : stockImage);
+            }
             request.setAttribute("car", car);
             request.setAttribute("specification", service.getSpecificationByModelId(modelID));
             request.setAttribute("carImages", service.getImagesByModelId(modelID));

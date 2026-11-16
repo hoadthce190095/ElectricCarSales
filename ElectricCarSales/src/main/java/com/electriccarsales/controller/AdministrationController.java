@@ -4,6 +4,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import com.electriccarsales.model.AdminUser;
 import com.electriccarsales.model.ConfigurationRequest;
 import com.electriccarsales.model.CreateRoleRequest;
 import com.electriccarsales.model.EmployeeRequest;
@@ -22,6 +23,9 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Map;
 
+/**
+ * Controller quản trị (/api/admin/*): quản lý tài khoản, nhân viên, vai trò/phân quyền, khuyến mãi và nhật ký.
+ */
 @WebServlet("/api/admin/*")
 public class AdministrationController extends JsonServlet {
     private final AdministrationService administrationService;
@@ -56,33 +60,40 @@ public class AdministrationController extends JsonServlet {
     // GET chỉ đọc dữ liệu; POST/PUT/DELETE xử lý thay đổi.
     private void showPage(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String[] path = route(request);
+        // Trả danh sách tài khoản đang thuộc vai trò: GET /api/admin/roles/{id}/users
+        if (path.length == 3 && path[0].equals("roles") && path[2].equals("users")) {
+            writeJson(response, administrationService.users(null, page(request), integer(path[1], "Vai trò"), null));
+            return;
+        }
         if (path.length != 1) {
             throw new ApiException(404, "Đường dẫn không tồn tại.");
         }
+        // Đọc hoặc xuất CSV nhật ký: chỉ ADMIN được xuất CSV, lọc thêm theo nguồn (source) và xuất Nguồn/UserID.
         if (path[0].equals("logs")) {
             String format = request.getParameter("format");
             boolean export = "csv".equalsIgnoreCase(format);
             if (format != null && !format.isBlank() && !export && !"json".equalsIgnoreCase(format)) {
                 throw new ApiException(400, "Định dạng nhật ký phải là json hoặc csv.");
             }
+            SessionUser user = (SessionUser) request.getSession().getAttribute("user");
+            if (export && !"ADMIN".equals(user.getRole())) {
+                throw new ApiException(403, "Chỉ quản trị viên được xuất nhật ký.");
+            }
             PageResponse<SystemLog> result = administrationService.logs(request.getParameter("action"),
                 request.getParameter("userId") == null || request.getParameter("userId").isBlank()
                     ? null
                     : integer(request.getParameter("userId"), "UserID"),
-                date(request, "from"), date(request, "to"), page(request), request.getParameter("targetType"), export,
-                actor(request));
+                date(request, "from"), date(request, "to"), page(request), request.getParameter("targetType"),
+                request.getParameter("source"), export, user.getUserId());
             if (export) {
-                if (!result.isAvailable()) {
-                    throw new ApiException(503, result.getMessage());
-                }
                 response.setContentType("text/csv;charset=UTF-8");
                 response.setHeader("Content-Disposition", "attachment; filename=system-logs.csv");
                 var writer = response.getWriter();
                 writer.write('\uFEFF');
-                csv(writer, "LogID", "Thời gian", "Người dùng", "Thao tác", "Module", "Đối tượng", "Chi tiết");
+                csv(writer, "LogID", "Thời gian", "Người dùng", "Thao tác", "Module", "Đối tượng", "Chi tiết", "Nguồn", "UserID");
                 for (SystemLog log : result.getItems()) {
                     csv(writer, log.getLogId(), log.getCreatedDate(), log.getUsername(), log.getAction(),
-                        log.getTargetType(), log.getTargetId(), log.getDetail());
+                        log.getTargetType(), log.getTargetId(), log.getDetail(), log.getSource(), log.getUserId());
                 }
             } else {
                 writeJson(response, result);
@@ -97,11 +108,6 @@ public class AdministrationController extends JsonServlet {
                 optionalInteger(request, "roleId", "Vai trò"), optionalInteger(request, "statusId", "Trạng thái"));
             case "employees" -> administrationService.employees();
             case "promotions" -> administrationService.promotions();
-            case "logs" -> administrationService.logs(request.getParameter("action"),
-                request.getParameter("userId") == null || request.getParameter("userId").isBlank()
-                    ? null
-                    : integer(request.getParameter("userId"), "UserID"),
-                date(request, "from"), date(request, "to"), page(request));
             default -> throw new ApiException(404, "Đường dẫn không tồn tại.");
         };
         writeJson(response, result);
@@ -114,6 +120,12 @@ public class AdministrationController extends JsonServlet {
 
     private void createData(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String[] path = route(request);
+        // Gán vai trò mới cho tài khoản hiện có: POST /api/admin/roles/assign-user
+        if (path.length == 2 && path[0].equals("roles") && path[1].equals("assign-user")) {
+            AssignUserRole input = readJson(request, AssignUserRole.class);
+            writeJson(response, administrationService.assignUserRole(actor(request), input.targetUserId(), input.roleId()));
+            return;
+        }
         if (path.length != 1) {
             throw new ApiException(404, "Đường dẫn không tồn tại.");
         }
@@ -145,7 +157,13 @@ public class AdministrationController extends JsonServlet {
         }
         int id = integer(path[1], "ID");
         Object result = switch (path[0]) {
-            case "users" -> administrationService.updateUser(actor(request), id, readJson(request, UserRequest.class));
+            case "users" -> {
+                AdminUser user = administrationService.updateUser(actor(request), id, readJson(request, UserRequest.class));
+                if (!"ACTIVE".equals(user.getStatus())) {
+                    AccountSessions.invalidate(user.getUserId());
+                }
+                yield user;
+            }
             case "roles" -> authorizationService.updateRole(actor(request), id, readJson(request, RoleRequest.class));
             case "employees" ->
                 administrationService.updateEmployee(actor(request), id, readJson(request, EmployeeRequest.class));
@@ -172,6 +190,9 @@ public class AdministrationController extends JsonServlet {
 
     private int page(HttpServletRequest request) {
         return request.getParameter("page") == null ? 1 : integer(request.getParameter("page"), "Trang");
+    }
+
+    private record AssignUserRole(int targetUserId, int roleId) {
     }
 
     private Integer optionalInteger(HttpServletRequest request, String name, String field) {

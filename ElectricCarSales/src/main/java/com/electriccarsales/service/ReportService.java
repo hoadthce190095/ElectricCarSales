@@ -75,19 +75,28 @@ public class ReportService {
                 vehicles = List.of();
             }
 
+            String orderStatus = normalizeStatus(order.getStatus());
+            String deliveryStatus = normalizeStatus(order.getDeliveryStatus());
+            // A completed handover is the operational source of truth too. This also
+            // covers older records where the delivery was marked delivered but the
+            // order status was left at PAID.
+            boolean completed = "COMPLETED".equals(orderStatus)
+                || "DELIVERED".equals(deliveryStatus) || "COMPLETED".equals(deliveryStatus);
+            String reportStatus = completed ? "COMPLETED" : orderStatus;
+
             // Tiền chưa thu không được âm, kể cả khi khách hàng đã trả dư.
             BigDecimal remainingAmount = order.getTotalAmount().subtract(order.getPaidAmount()).max(ZERO);
-            sales.add(createSaleReport(order, vehicles, remainingAmount));
+            sales.add(createSaleReport(order, vehicles, remainingAmount, reportStatus));
 
             // Danh sách trạng thái vẫn hiển thị đơn bị hủy hoặc có chứng từ sai.
-            Totals orderStatus = getOrCreateTotals(orderStatusTotals, order.getStatus());
-            orderStatus.count++;
-            orderStatus.amount = orderStatus.amount.add(order.getTotalAmount());
+            Totals statusTotals = getOrCreateTotals(orderStatusTotals, reportStatus);
+            statusTotals.count++;
+            statusTotals.amount = statusTotals.amount.add(order.getTotalAmount());
             YearMonth orderMonth = YearMonth.from(order.getOrderDate());
             Totals month = getOrCreateTotals(monthlyTotals, orderMonth);
             month.count++;
 
-            if ("CANCELLED".equals(order.getStatus())) {
+            if ("CANCELLED".equals(orderStatus)) {
                 cancelledOrders++;
                 continue;
             }
@@ -100,12 +109,12 @@ public class ReportService {
             if (order.getContractNumber() != null) {
                 contracts++;
             }
-            if ("COMPLETED".equals(order.getStatus())) {
+            if ("PAID".equals(orderStatus) || completed) {
                 completedOrders++;
             }
 
             // Giá trị bán hàng chỉ tính đơn đã thanh toán hoặc đã hoàn tất.
-            boolean paidOrder = "PAID".equals(order.getStatus()) || "COMPLETED".equals(order.getStatus());
+            boolean paidOrder = "PAID".equals(orderStatus) || completed;
             if (!paidOrder) {
                 continue;
             }
@@ -183,11 +192,15 @@ public class ReportService {
     }
 
     private SaleReport createSaleReport(ReportDAO.OrderRow order, List<SaleVehicle> vehicles,
-        BigDecimal remainingAmount) {
-        return new SaleReport(order.getOrderId(), order.getOrderDate(), order.getStatus(), order.getCustomerName(),
+        BigDecimal remainingAmount, String reportStatus) {
+        return new SaleReport(order.getOrderId(), order.getOrderDate(), reportStatus, order.getCustomerName(),
             getEmployeeName(order), order.getTotalAmount(), order.getPaidAmount(), remainingAmount,
             order.getContractNumber(), order.getInvoiceNumber(), order.getDeliveryStatus(), order.isEligible(),
             List.copyOf(vehicles));
+    }
+
+    private String normalizeStatus(String status) {
+        return status == null ? "" : status.trim().toUpperCase(java.util.Locale.ROOT);
     }
 
     private String getEmployeeName(ReportDAO.OrderRow order) {
@@ -279,6 +292,8 @@ public class ReportService {
                 + " khách hàng/tổng tiền. Đơn chưa có hợp đồng/hóa đơn vẫn hiển thị theo dữ" + " liệu Orders.");
         definitions.put("vehiclesSold",
             "CarID phân biệt trong OrderDetails của đơn PAID/COMPLETED hợp lệ; mỗi xe tính một" + " lần.");
+        definitions.put("completedOrders",
+            "Đơn hợp lệ có trạng thái PAID, COMPLETED hoặc bản ghi Deliveries ở trạng thái DELIVERED/COMPLETED.");
         definitions.put("modelSalesAmount",
             "Tổng giá bán lịch sử OrderDetails.SalesPrice theo mẫu xe, trước điều chỉnh giảm"
                 + " giá/thuế ở cấp đơn; có thể khác tổng giá trị đơn.");

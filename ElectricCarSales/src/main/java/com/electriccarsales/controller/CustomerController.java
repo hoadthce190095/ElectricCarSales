@@ -5,7 +5,9 @@ import com.electriccarsales.dao.CustomerDAO;
 import com.electriccarsales.dao.order.OrderDAO;
 import com.electriccarsales.dao.PaymentDAO;
 import com.electriccarsales.model.Customer;
+import com.electriccarsales.model.SessionUser;
 import com.electriccarsales.service.CustomerService;
+import com.electriccarsales.service.SalesOrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -14,6 +16,7 @@ import jakarta.servlet.http.Part;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -72,7 +75,14 @@ public class CustomerController extends HttpServlet {
                         JSON.writeValue(resp.getWriter(), Map.of("error", "Không tìm thấy thông tin khách hàng #" + cid));
                         return;
                     }
-                    JSON.writeValue(resp.getWriter(), Map.of("customer", c));
+                    HttpSession currentSession = req.getSession(false);
+                    SessionUser currentUser = currentSession == null ? null : (SessionUser) currentSession.getAttribute("user");
+                    Integer currentUserId = currentUser != null ? currentUser.getUserId() : null;
+                    Map<String, Object> consultingStaff = SalesOrderService.findConsultingStaff(cid, currentUserId);
+                    java.util.Map<String, Object> resultPayload = new java.util.LinkedHashMap<>();
+                    resultPayload.put("customer", c);
+                    resultPayload.put("consultingStaff", consultingStaff);
+                    JSON.writeValue(resp.getWriter(), resultPayload);
                     return;
                 } catch (NumberFormatException e) {
                     resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -122,7 +132,14 @@ public class CustomerController extends HttpServlet {
         String roleName = req.getSession(false) == null ? "" : String.valueOf(req.getSession(false).getAttribute("roleName"));
 
         if ("staff".equalsIgnoreCase(req.getParameter("mode"))) {
-            if (!List.of("SALES", "MANAGER", "ADMIN").contains(roleName.toUpperCase())) {
+            if ("SALES".equalsIgnoreCase(roleName)) {
+                resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                resp.setContentType("application/json;charset=UTF-8");
+                JSON.writeValue(resp.getWriter(), Map.of("success", false,
+                        "error", "Nhân viên Sales chỉ có quyền xem và tra cứu thông tin khách hàng, không được phép thêm, sửa hoặc xóa hồ sơ."));
+                return;
+            }
+            if (!List.of("MANAGER", "ADMIN").contains(roleName.toUpperCase())) {
                 resp.sendError(HttpServletResponse.SC_FORBIDDEN);
                 return;
             }
@@ -160,26 +177,20 @@ public class CustomerController extends HttpServlet {
             return;
         }
         try {
-            Part avatar = req.getPart("avatar");
-            byte[] avatarData = null;
-            String avatarType = null;
-            if (avatar != null && avatar.getSize() > 0) {
-                avatarData = readAvatar(avatar);
-                avatarType = avatarContentType(avatarData);
-                if (avatarType == null) throw new IllegalArgumentException("Ảnh đại diện chỉ nhận JPEG, PNG hoặc WebP (tối đa 2 MB).");
-            }
             String customerName = req.getParameter("customerName");
             String phone = req.getParameter("phone");
-            String email = req.getParameter("email");
-            boolean updated = customerService.updateOwnProfile(userId, customerName, phone, email,
+            Customer currentProfile = customerService.getOwnProfile(userId);
+            if (currentProfile == null) {
+                throw new IllegalArgumentException("Không tìm thấy hồ sơ khách hàng.");
+            }
+            // Customer email was verified by OTP at registration; ignore any submitted email value.
+            String verifiedEmail = currentProfile.getEmail();
+            boolean updated = customerService.updateOwnProfile(userId, customerName, phone, verifiedEmail,
                     req.getParameter("address"));
             if (!updated) throw new IllegalArgumentException("Không thể cập nhật thông tin hồ sơ. Vui lòng kiểm tra lại dữ liệu.");
-            if (avatarData != null && !new CustomerDAO().updateAvatar(userId, avatarData, avatarType)) {
-                throw new IllegalArgumentException("Không tìm thấy hồ sơ để cập nhật ảnh đại diện.");
-            }
             req.getSession(false).setAttribute("displayName", customerName.trim());
             req.getSession(false).setAttribute("phone", phone.trim());
-            req.getSession(false).setAttribute("email", email.trim());
+            req.getSession(false).setAttribute("email", verifiedEmail);
             String returnView = "profile".equals(req.getParameter("view")) ? "?view=profile" : "";
             resp.sendRedirect(req.getContextPath() + "/customer/profile" + returnView + (returnView.isEmpty() ? "?updated=1" : "&updated=1"));
         } catch (IllegalArgumentException e) {

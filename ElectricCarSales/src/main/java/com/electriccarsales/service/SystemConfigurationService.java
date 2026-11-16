@@ -18,7 +18,7 @@ import java.util.TreeSet;
 
 public class SystemConfigurationService {
     private static final Map<String, Definition> DEFINITIONS = Map.of("SESSION_TIMEOUT_MINUTES",
-        new Definition("Thời gian hết hạn phiên", 5, 120, 30, "Số phút không hoạt động trước khi phải đăng nhập lại."),
+        new Definition("Thời gian hết hạn phiên", 1, 120, 30, "Số phút không hoạt động trước khi phải đăng nhập lại."),
         "REPORT_MAX_DAYS", new Definition("Khoảng thời gian báo cáo tối đa", 1, 3660, 3660,
             "Giới hạn số ngày được truy vấn trong một lần báo cáo."));
 

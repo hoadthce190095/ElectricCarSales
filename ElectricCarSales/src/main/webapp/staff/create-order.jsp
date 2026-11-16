@@ -26,7 +26,7 @@
 <main>
   <h1>Lập đơn hàng bán xe</h1>
   <p><a href="<%= request.getContextPath() %>/staff/dashboard">← Trang nhân viên</a></p>
-  <p>Số tiền bán được lấy từ Cars.Price trong Database; hệ thống tự tính cọc 30% và còn lại 70%.</p>
+  <p>Hệ thống lấy giá xe từ Database, tự áp dụng khuyến mãi còn hiệu lực (nếu có), rồi tính cọc 30% và số tiền còn lại.</p>
 
   <c:if test="${not empty param.created}">
     <p role="status" style="padding:12px;border:1px solid #86efac;background:#f0fdf4;color:#166534;border-radius:7px;">
@@ -79,14 +79,14 @@
         </div>
         <div class="kyc-field">
           <label for="customerPhone">Số điện thoại liên lạc chính thức *</label>
-          <input type="tel" name="customerPhone" id="customerPhone" required maxlength="20" placeholder="Ví dụ: 0912345678">
+          <input type="tel" name="customerPhone" id="customerPhone" required pattern="0[0-9]{9}" maxlength="10" placeholder="Ví dụ: 0912345678" title="Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0 (ví dụ: 0912345678)">
         </div>
       </div>
 
       <div class="kyc-grid">
         <div class="kyc-field">
           <label for="customerEmail">Email nhận chứng từ &amp; thông báo</label>
-          <input type="email" name="customerEmail" id="customerEmail" maxlength="100" placeholder="Ví dụ: nguyenvana@example.com">
+          <input type="email" name="customerEmail" id="customerEmail" maxlength="100" pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" placeholder="Ví dụ: nguyenvana@example.com" title="Email phải có định dạng hợp lệ (ví dụ: nguyenvana@example.com)">
         </div>
         <div class="kyc-field">
           <label for="customerAddress">Địa chỉ bàn giao xe / thường trú (để lập hợp đồng &amp; xuất hóa đơn) *</label>
@@ -94,9 +94,22 @@
         </div>
       </div>
 
-      <div class="kyc-field" style="margin-bottom:0;">
-        <label for="salesNote">Ghi chú xác minh từ Sales Staff (nguồn chat / hotline)</label>
-        <input type="text" name="salesNote" id="salesNote" maxlength="200" placeholder="Ví dụ: Đã đối chiếu thông tin CCCD gửi qua chat; khách xác nhận nhận xe tại showroom">
+      <div class="kyc-field" style="margin-bottom:0;grid-column:1/-1;background:#f8fafc;padding:12px 14px;border:1px solid #cbd5e1;border-radius:8px;">
+        <label style="font-size:12px;font-weight:700;color:#1e3a8a;margin-bottom:8px;display:block;text-transform:uppercase;letter-spacing:0.5px;">Thông tin nhân viên đang tư vấn</label>
+        <c:choose>
+          <c:when test="${not empty consultingStaff}">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:8px;font-size:13px;">
+              <div><span style="color:#64748b;">Họ và tên:</span> <strong><c:out value="${consultingStaff.employeeName}"/></strong></div>
+              <div><span style="color:#64748b;">Username:</span> <strong><c:out value="${consultingStaff.username}"/></strong></div>
+              <div><span style="color:#64748b;">Mã nhân viên:</span> <strong><c:out value="${consultingStaff.employeeCode}"/></strong></div>
+              <div><span style="color:#64748b;">Email:</span> <strong><c:out value="${consultingStaff.email}" default="—"/></strong></div>
+              <div><span style="color:#64748b;">Số điện thoại:</span> <strong><c:out value="${consultingStaff.phone}" default="—"/></strong></div>
+            </div>
+          </c:when>
+          <c:otherwise>
+            <div style="color:#94a3b8;font-size:13px;font-style:italic;">Chưa có nhân viên phụ trách tư vấn</div>
+          </c:otherwise>
+        </c:choose>
       </div>
     </div>
 
@@ -104,27 +117,39 @@
       <select name="carId" required>
         <option value="">${empty orderOptions.cars ? 'Kho chưa có xe khả dụng' : 'Chọn xe'}</option>
         <c:forEach var="item" items="${orderOptions.cars}">
-          <option value="<c:out value='${item.id}'/>"><c:out value="${item.label}"/></option>
+          <option value="<c:out value='${item.id}'/>" data-promotion="<c:out value='${item.promotionName}'/>"
+                  data-original-price="<c:out value='${item.originalPrice}'/>" data-sale-price="<c:out value='${item.salePrice}'/>">
+            <c:out value="${item.label}"/>
+          </option>
         </c:forEach>
       </select>
     </label>
 
-    <label>Phương thức đơn hàng
+    <p role="note" style="margin:6px 0 14px;padding:10px 12px;border:1px solid #fed7aa;background:#fff7ed;color:#9a3412;border-radius:7px;font-size:13px;">
+      Khuyến mãi đang hiệu lực được tự động trừ vào giá đơn hàng và ghi rõ tên chương trình, giá gốc, mức giảm trong ghi chú đơn.
+    </p>
+
+    <label>Ghi chú cho đơn hàng (không bắt buộc)
+      <textarea name="salesNote" maxlength="200" rows="2" placeholder="Ghi chú thêm của Sales; thông tin khuyến mãi sẽ được hệ thống tự động bổ sung."></textarea>
+    </label>
+
+    <label>Phương thức thanh toán (Đặt cọc 30%) *
       <select name="method" id="sales-order-method" required>
-        <option value="BANK_TRANSFER">Trả thẳng - chuyển khoản VietQR động (SePay - MB Bank)</option>
-        <option value="CASH">Trả thẳng - tiền mặt tại showroom</option>
-        <option value="INSTALLMENT">Trả góp - đối tác giải ngân 70%</option>
+        <option value="BANK_TRANSFER">Thanh toán bằng ngân hàng (Chuyển khoản VietQR SePay - MB Bank)</option>
+        <option value="INSTALLMENT">Thanh toán qua nhà tài chính (Trả góp - Nhà tài chính giải ngân 70%)</option>
       </select>
     </label>
 
-    <label>Đối tác tài chính (chỉ khi trả góp)
-      <select name="companyId" id="sales-order-partner">
-        <option value="">Không chọn (trả thẳng)</option>
-        <c:forEach var="item" items="${orderOptions.partners}">
-          <option value="<c:out value='${item.id}'/>"><c:out value="${item.label}"/></option>
-        </c:forEach>
-      </select>
-    </label>
+    <div id="sales-order-partner-wrap" style="display:none;margin-top:10px;">
+      <label>Chọn nhà tài chính cho trả góp *
+        <select name="companyId" id="sales-order-partner" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
+          <option value="">-- Chọn nhà tài chính từ database --</option>
+          <c:forEach var="item" items="${orderOptions.partners}">
+            <option value="<c:out value='${item.id}'/>"><c:out value="${item.label}"/></option>
+          </c:forEach>
+        </select>
+      </label>
+    </div>
 
     <c:choose>
       <c:when test="${empty orderOptions.cars}">
@@ -139,9 +164,12 @@
   <script>
     const method = document.getElementById('sales-order-method');
     const partner = document.getElementById('sales-order-partner');
+    const partnerWrap = document.getElementById('sales-order-partner-wrap');
     function updatePartner() {
-      partner.required = method.value === 'INSTALLMENT';
-      if (!partner.required) partner.value = '';
+      const isInstallment = method.value === 'INSTALLMENT';
+      if (partnerWrap) partnerWrap.style.display = isInstallment ? 'block' : 'none';
+      partner.required = isInstallment;
+      if (!isInstallment) partner.value = '';
     }
     method.addEventListener('change', updatePartner);
     updatePartner();

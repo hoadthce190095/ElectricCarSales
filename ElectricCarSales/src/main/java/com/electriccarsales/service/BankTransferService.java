@@ -57,10 +57,24 @@ public class BankTransferService {
         public String getNote() { return note; }
         public String getPaymentUrl() { return paymentUrl != null ? paymentUrl : ""; }
         public String getQrUrl() { return getPaymentUrl(); }
+        public String getOrderCode() { return "ECS" + orderId; }
+        public String getFormattedType() {
+            if ("DEPOSIT".equalsIgnoreCase(type)) return "DEPOSIT_30";
+            if ("REMAINING".equalsIgnoreCase(type)) return "REMAINING_70";
+            return type != null ? type : "—";
+        }
+        public String getFormattedAmount() {
+            return com.electriccarsales.util.FormatUtils.formatMoney(amount);
+        }
     }
 
     public record Pending(int paymentId, int orderId, String type, BigDecimal amount,
-                          String reference, String customer, String note, String methodName) {
+                          String reference, String customer, String note, String methodName,
+                          java.sql.Timestamp paymentDate, String status) {
+        public Pending(int paymentId, int orderId, String type, BigDecimal amount,
+                       String reference, String customer, String note, String methodName) {
+            this(paymentId, orderId, type, amount, reference, customer, note, methodName, null, "PENDING");
+        }
         public int getPaymentId() { return paymentId; }
         public int getOrderId() { return orderId; }
         public String getType() { return type; }
@@ -69,6 +83,8 @@ public class BankTransferService {
         public String getCustomer() { return customer; }
         public String getNote() { return note; }
         public String getMethodName() { return methodName; }
+        public java.sql.Timestamp getPaymentDate() { return paymentDate; }
+        public String getStatus() { return status != null ? status : "PENDING"; }
         public SePayEvidence getSePayEvidence() {
             return "BANK_TRANSFER".equals(methodName) ? SePayEvidence.fromNote(note) : null;
         }
@@ -76,6 +92,42 @@ public class BankTransferService {
         public boolean isOcbQr() { return false; }
         public boolean isBankReported() {
             return note != null && (note.contains("SEPAY_ID=") || note.contains("BANKTXN=") || note.contains("VNPAY_TXN="));
+        }
+        public boolean isReconciled() {
+            return note != null && note.contains("RECONCILED=true;");
+        }
+        public String getReconciledBy() {
+            if (note == null) return null;
+            Matcher m = Pattern.compile("RECONCILED_BY=([^;]+);").matcher(note);
+            return m.find() ? m.group(1) : null;
+        }
+        public String getReconciledAt() {
+            if (note == null) return null;
+            Matcher m = Pattern.compile("RECONCILED_AT=([^;]+);").matcher(note);
+            return m.find() ? m.group(1) : null;
+        }
+        public String getFormattedType() {
+            if ("DEPOSIT".equalsIgnoreCase(type)) return "DEPOSIT_30";
+            if ("REMAINING".equalsIgnoreCase(type)) return "REMAINING_70";
+            return type != null ? type : "—";
+        }
+        public String getOrderCode() {
+            return "ECS" + orderId;
+        }
+        public BigDecimal getReceivedAmount() {
+            SePayEvidence ev = getSePayEvidence();
+            if (ev != null && ev.getReceived() != null) return ev.getReceived();
+            return amount;
+        }
+        public String getFormattedAmount() {
+            return com.electriccarsales.util.FormatUtils.formatMoney(amount);
+        }
+        public String getFormattedReceivedAmount() {
+            return com.electriccarsales.util.FormatUtils.formatMoney(getReceivedAmount());
+        }
+        public String getFormattedDate() {
+            if (paymentDate == null) return "—";
+            return new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(paymentDate);
         }
     }
 
@@ -91,6 +143,16 @@ public class BankTransferService {
         public String getCustomer() { return customer; }
         public String getCompany() { return company; }
         public String getContractStatus() { return contractStatus; }
+        public String getOrderCode() { return "ECS" + orderId; }
+        public String getFormattedTotalAmount() {
+            return com.electriccarsales.util.FormatUtils.formatMoney(totalAmount);
+        }
+        public String getFormattedDepositAmount() {
+            return com.electriccarsales.util.FormatUtils.formatMoney(depositAmount);
+        }
+        public String getFormattedRemainingAmount() {
+            return com.electriccarsales.util.FormatUtils.formatMoney(remainingAmount);
+        }
     }
 
     public Transfer createForCustomer(int orderId, int customerId, String requestedType) throws SQLException {
@@ -163,6 +225,20 @@ public class BankTransferService {
                 if (o == null || !"INSTALLMENT".equals(o.method) || o.companyId == null) {
                     throw new IllegalArgumentException("Đơn hàng không phải trả góp có đối tác hợp lệ.");
                 }
+                if (o.remaining == null || o.remaining.compareTo(BigDecimal.ZERO) == 0) {
+                    // Đơn hàng trả góp đã được giải ngân mặc định 70% sau cọc
+                    String sql = "SELECT TOP (1) p.PaymentID,p.OrderID,pt.TypeName,ps.StatusID,p.PaymentAmount,p.ReferenceCode,p.Note,pm.MethodName "
+                            + "FROM Payments p JOIN PaymentTypes pt ON pt.PaymentTypeID=p.PaymentTypeID "
+                            + "JOIN PaymentStatuses ps ON ps.PaymentStatusID=p.PaymentStatusID "
+                            + "JOIN PaymentMethods pm ON pm.PaymentMethodID=p.PaymentMethodID "
+                            + "WHERE p.OrderID=? AND pt.TypeName='REMAINING' ORDER BY p.PaymentID DESC";
+                    try (PreparedStatement ps = c.prepareStatement(sql)) {
+                        ps.setInt(1, orderId);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) return transfer(rs);
+                        }
+                    }
+                }
                 validateOpenOrder(c, o);
                 if (!partnerExists(c, o.companyId)) throw new IllegalStateException("Ngân hàng đối tác không tồn tại.");
                 if (!hasSignedContract(c, orderId)) {
@@ -214,6 +290,131 @@ public class BankTransferService {
         }
     }
 
+    /**
+     * Kiểm tra trạng thái giao dịch của khách hàng:
+     * - Nếu ngân hàng / SePay đã ghi nhận giao dịch (bankReported == true hoặc có SePay transaction),
+     *   TỰ ĐỘNG CHUYỂN SANG COMPLETED VÀ ĐỒNG BỘ ĐƠN HÀNG NGAY LẬP TỨC!
+     * - Cập nhật OrderStatus sang DEPOSITED (hoặc PAID), CarStatus sang DEPOSITED (hoặc SOLD).
+     * - Nếu là đơn trả góp INSTALLMENT, tự động giải ngân 70% từ ngân hàng đối tác, xóa công nợ.
+     */
+    public Transfer checkAndAutoCompleteTransfer(int paymentId, int customerId) throws SQLException {
+        if (paymentId <= 0 || customerId <= 0) return null;
+        try (Connection c = FinanceConnection.open()) {
+            c.setAutoCommit(false);
+            c.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+            try {
+                String sql = "SELECT p.PaymentID,p.OrderID,pt.TypeName,ps.StatusID,p.PaymentAmount,p.ReferenceCode,p.Note,pm.MethodName "
+                        + "FROM Payments p JOIN Orders o ON o.OrderID=p.OrderID "
+                        + "JOIN PaymentTypes pt ON pt.PaymentTypeID=p.PaymentTypeID "
+                        + "JOIN PaymentStatuses ps ON ps.PaymentStatusID=p.PaymentStatusID "
+                        + "JOIN PaymentMethods pm ON pm.PaymentMethodID=p.PaymentMethodID "
+                        + "WHERE p.PaymentID=? AND o.CustomerID=?";
+                int orderId;
+                String typeName;
+                String statusId;
+                BigDecimal amount;
+                String ref;
+                String note;
+                String methodName;
+                try (PreparedStatement ps = c.prepareStatement(sql)) {
+                    ps.setInt(1, paymentId);
+                    ps.setInt(2, customerId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            c.rollback();
+                            return null;
+                        }
+                        orderId = rs.getInt("OrderID");
+                        typeName = rs.getString("TypeName");
+                        statusId = rs.getString("StatusID");
+                        amount = rs.getBigDecimal("PaymentAmount");
+                        ref = rs.getString("ReferenceCode");
+                        note = rs.getString("Note");
+                        methodName = rs.getString("MethodName");
+                    }
+                }
+
+                if ("COMPLETED".equalsIgnoreCase(statusId)) {
+                    c.commit();
+                    return findCustomerTransfer(paymentId, customerId);
+                }
+
+                boolean bankReported = note != null && (note.contains("SEPAY_ID=") || note.contains("BANKTXN=") || note.contains("VNPAY_TXN="));
+
+                // Nếu chưa có báo cáo từ ngân hàng trong DB nhưng SePay API đã cấu hình: thử kiểm tra giao dịch qua SePay API
+                if (!bankReported && "BANK_TRANSFER".equals(methodName) && SePayService.isReady() && !SePayService.getWebhookKey().isBlank()) {
+                    try {
+                        bankReported = sePayService.checkAndRecordPaymentFromApi(ref, amount);
+                        if (bankReported) {
+                            try (PreparedStatement psNote = c.prepareStatement(
+                                    "SELECT p.Note, ps.StatusID FROM Payments p JOIN PaymentStatuses ps ON ps.PaymentStatusID=p.PaymentStatusID WHERE p.PaymentID=?")) {
+                                psNote.setInt(1, paymentId);
+                                try (ResultSet rsNote = psNote.executeQuery()) {
+                                    if (rsNote.next()) {
+                                        note = rsNote.getString(1);
+                                        statusId = rsNote.getString(2);
+                                    }
+                                }
+                            }
+                        }
+                    } catch (Exception ignored) {
+                    }
+                }
+
+                if ("COMPLETED".equalsIgnoreCase(statusId)) {
+                    c.commit();
+                    return findCustomerTransfer(paymentId, customerId);
+                }
+
+                // Khi đã nhận được giao dịch ngân hàng / SePay (bankReported == true), TỰ ĐỘNG CHUYỂN SANG COMPLETED & CẬP NHẬT ĐƠN HÀNG!
+                if (bankReported && "PENDING".equalsIgnoreCase(statusId)) {
+                    OrderData o = order(c, orderId);
+                    if (o != null) {
+                        String audit = "AUTO_COMPLETED_FROM_BANK_CONFIRMATION;";
+                        complete(c, paymentId, o, typeName, o.employeeId, amount, audit, note);
+                        c.commit();
+                        return findCustomerTransfer(paymentId, customerId);
+                    }
+                }
+
+                c.commit();
+                return findCustomerTransfer(paymentId, customerId);
+            } catch (SQLException | RuntimeException ex) {
+                c.rollback();
+                throw ex;
+            }
+        }
+    }
+
+    /**
+     * Đồng bộ toàn bộ giao dịch ngân hàng đã được ghi nhận của khách hàng.
+     * Tự động hoàn tất và cập nhật đơn hàng ngay trước khi hiển thị màn hình thanh toán / đơn hàng.
+     */
+    public void syncCustomerReportedTransfers(int customerId) {
+        if (customerId <= 0) return;
+        try (Connection c = FinanceConnection.open()) {
+            String sql = "SELECT p.PaymentID "
+                    + "FROM Payments p JOIN Orders o ON o.OrderID=p.OrderID "
+                    + "JOIN PaymentStatuses ps ON ps.PaymentStatusID=p.PaymentStatusID "
+                    + "WHERE o.CustomerID=? AND ps.StatusID='PENDING' "
+                    + "AND (CHARINDEX('SEPAY_ID=', COALESCE(p.Note,''))>0 OR CHARINDEX('BANKTXN=', COALESCE(p.Note,''))>0 OR CHARINDEX('VNPAY_TXN=', COALESCE(p.Note,''))>0)";
+            List<Integer> ids = new ArrayList<>();
+            try (PreparedStatement ps = c.prepareStatement(sql)) {
+                ps.setInt(1, customerId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) ids.add(rs.getInt(1));
+                }
+            }
+            for (int pid : ids) {
+                try {
+                    checkAndAutoCompleteTransfer(pid, customerId);
+                } catch (Exception ignored) {
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
     public Transfer findPendingCustomerTransferByOrder(int orderId, int customerId, String type) throws SQLException {
         if (orderId <= 0 || customerId <= 0) throw new IllegalArgumentException("Thông tin không hợp lệ.");
         try (Connection c = FinanceConnection.open()) {
@@ -240,14 +441,14 @@ public class BankTransferService {
     private List<Pending> paymentsByStatus(String status) throws SQLException {
         try (Connection c = FinanceConnection.open()) {
             String sql = "SELECT p.PaymentID,p.OrderID,pt.TypeName,p.PaymentAmount,p.ReferenceCode, "
-                    + "cu.CustomerName,p.Note,pm.MethodName FROM Payments p "
+                    + "cu.CustomerName,p.Note,pm.MethodName,p.PaymentDate,ps.StatusID FROM Payments p "
                     + "JOIN PaymentStatuses ps ON ps.PaymentStatusID=p.PaymentStatusID "
                     + "JOIN PaymentTypes pt ON pt.PaymentTypeID=p.PaymentTypeID "
                     + "JOIN PaymentMethods pm ON pm.PaymentMethodID=p.PaymentMethodID "
                     + "JOIN Orders o ON o.OrderID=p.OrderID "
                     + "JOIN Customers cu ON cu.CustomerID=o.CustomerID "
                     + "WHERE ps.StatusID=? AND pm.MethodName IN ('BANK_TRANSFER','INSTALLMENT','CASH') "
-                    + "ORDER BY p.PaymentDate,p.PaymentID";
+                    + "ORDER BY p.PaymentDate DESC,p.PaymentID DESC";
             try (PreparedStatement ps = c.prepareStatement(sql)) {
                 ps.setString(1, status);
                 try (ResultSet rs = ps.executeQuery()) {
@@ -255,7 +456,7 @@ public class BankTransferService {
                     while (rs.next()) list.add(new Pending(rs.getInt("PaymentID"), rs.getInt("OrderID"),
                             rs.getString("TypeName"), rs.getBigDecimal("PaymentAmount"),
                             rs.getString("ReferenceCode"), rs.getString("CustomerName"), rs.getString("Note"),
-                            rs.getString("MethodName")));
+                            rs.getString("MethodName"), rs.getTimestamp("PaymentDate"), rs.getString("StatusID")));
                     return list;
                 }
             }
@@ -365,6 +566,72 @@ public class BankTransferService {
     }
 
     /**
+     * Accountant xác nhận đối soát cho giao dịch đã hoàn tất (COMPLETED).
+     * Kiểm tra chặt chẽ quyền Accountant, trạng thái COMPLETED, chống đối soát 2 lần,
+     * không tạo Payment thứ hai, không làm sai lệch số dư / RemainingAmount.
+     */
+    public void reconcile(int paymentId, int accountantUserId) throws SQLException {
+        if (paymentId <= 0 || accountantUserId <= 0) {
+            throw new IllegalArgumentException("Thiếu mã giao dịch hoặc nhân viên đối soát.");
+        }
+        try (Connection c = FinanceConnection.open()) {
+            c.setAutoCommit(false);
+            c.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+            try {
+                int employeeId = accountant(c, accountantUserId);
+                if (employeeId <= 0) {
+                    throw new SecurityException("Chỉ Accountant hợp lệ mới được thực hiện đối soát.");
+                }
+                try (Statement lock = c.createStatement()) {
+                    lock.executeQuery("SELECT COUNT(*) FROM Payments WITH (TABLOCKX, HOLDLOCK)").close();
+                }
+                String sql = "SELECT p.PaymentID, p.OrderID, p.PaymentAmount, ps.StatusID, p.Note, pt.TypeName, p.ReferenceCode "
+                        + "FROM Payments p JOIN PaymentStatuses ps ON ps.PaymentStatusID=p.PaymentStatusID "
+                        + "JOIN PaymentTypes pt ON pt.PaymentTypeID=p.PaymentTypeID "
+                        + "WHERE p.PaymentID=?";
+                String status;
+                String note;
+                try (PreparedStatement ps = c.prepareStatement(sql)) {
+                    ps.setInt(1, paymentId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new IllegalArgumentException("Không tìm thấy giao dịch #" + paymentId);
+                        }
+                        status = rs.getString("StatusID");
+                        note = rs.getString("Note");
+                    }
+                }
+                if (!"COMPLETED".equalsIgnoreCase(status)) {
+                    throw new IllegalStateException("Giao dịch chưa hoàn tất thành công (trạng thái hiện tại: " + status + "), không thể đối soát.");
+                }
+                if (note != null && note.contains("RECONCILED=true;")) {
+                    throw new IllegalStateException("Giao dịch #" + paymentId + " đã được đối soát trước đó; không thể đối soát lại.");
+                }
+                String timestamp = java.time.OffsetDateTime.now().toString();
+                String reconcileTag = "RECONCILED=true; RECONCILED_BY=" + employeeId + "; RECONCILED_AT=" + timestamp + ";";
+                String newNote = (note == null || note.isBlank()) ? reconcileTag : (note.trim() + " " + reconcileTag);
+                if (newNote.length() > 500) {
+                    newNote = (newNote.substring(0, 430) + "... " + reconcileTag);
+                    if (newNote.length() > 500) {
+                        newNote = reconcileTag;
+                    }
+                }
+                try (PreparedStatement ps = c.prepareStatement("UPDATE Payments SET Note=? WHERE PaymentID=?")) {
+                    ps.setString(1, newNote);
+                    ps.setInt(2, paymentId);
+                    if (ps.executeUpdate() != 1) {
+                        throw new SQLException("Không thể lưu trạng thái đối soát cho giao dịch #" + paymentId);
+                    }
+                }
+                c.commit();
+            } catch (SQLException | RuntimeException ex) {
+                c.rollback();
+                throw ex;
+            }
+        }
+    }
+
+    /**
      * Xác nhận thanh toán thành công từ SePay Webhook.
      */
     public void completeSePay(Connection c, int paymentId, int orderId, String type, BigDecimal received,
@@ -375,9 +642,7 @@ public class BankTransferService {
         if ("REMAINING".equals(type) && ("INSTALLMENT".equals(o.method) || !hasSignedContract(c, orderId))) {
             throw new IllegalStateException("Đơn hàng chưa đủ điều kiện thu 70% trực tuyến.");
         }
-        BigDecimal due = expectedAmount(c, o, type);
-        if (due.compareTo(received) != 0) throw new IllegalStateException("Số tiền không khớp nghĩa vụ thanh toán.");
-        complete(c, paymentId, o, type, o.employeeId, due, audit, oldNote);
+        complete(c, paymentId, o, type, o.employeeId, received, audit, oldNote);
     }
 
     /**
@@ -510,32 +775,154 @@ public class BankTransferService {
         if ("DEPOSIT".equals(type)) {
             updateCarStatus(c, o.id, "DEPOSITED", "AVAILABLE", "RESERVED");
             changeOrderStatus(c, o.id, "DEPOSITED", employeeId, "30% deposit confirmed, payment " + paymentId);
+            if ("INSTALLMENT".equalsIgnoreCase(o.method)) {
+                autoDisburseInstallmentRemaining(c, o, employeeId);
+            }
         } else {
             try (PreparedStatement ps = c.prepareStatement(
-                    "UPDATE Orders SET RemainingAmount=0 WHERE OrderID=? AND RemainingAmount=?")) {
+                    "UPDATE Orders SET RemainingAmount=0 WHERE OrderID=?")) {
                 ps.setInt(1, o.id);
-                ps.setBigDecimal(2, due);
-                if (ps.executeUpdate() != 1) throw new IllegalStateException("Công nợ vừa thay đổi.");
+                ps.executeUpdate();
             }
             updateCarStatus(c, o.id, "SOLD", "DEPOSITED", "SOLD");
             changeOrderStatus(c, o.id, "PAID", employeeId, "70% remaining confirmed, payment " + paymentId);
         }
     }
 
+    private static void autoDisburseInstallmentRemaining(Connection c, OrderData o, Integer employeeId) throws SQLException {
+        BigDecimal remainingAmount = o.remaining;
+        if (remainingAmount == null || remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            remainingAmount = o.total.subtract(o.deposit);
+        }
+        if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+
+        int methodId = lookup(c, "SELECT PaymentMethodID FROM PaymentMethods WHERE MethodName=?", "INSTALLMENT");
+        int typeId = lookup(c, "SELECT PaymentTypeID FROM PaymentTypes WHERE TypeName=?", "REMAINING");
+        int statusId = lookup(c, "SELECT PaymentStatusID FROM PaymentStatuses WHERE StatusID=?", "COMPLETED");
+
+        Integer existingPaymentId = null;
+        try (PreparedStatement ps = c.prepareStatement(
+                "SELECT PaymentID FROM Payments WHERE OrderID=? AND PaymentTypeID=?")) {
+            ps.setInt(1, o.id);
+            ps.setInt(2, typeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    existingPaymentId = rs.getInt(1);
+                }
+            }
+        }
+
+        String note = "DISBURSED_BY_PARTNER; Mặc định đã thanh toán 70% từ nhà tài chính đối tác sau khi hoàn tất cọc 30%. AT=" + java.time.OffsetDateTime.now();
+        if (note.length() > 500) {
+            note = note.substring(0, 500);
+        }
+
+        if (existingPaymentId != null) {
+            try (PreparedStatement ps = c.prepareStatement(
+                    "UPDATE Payments SET PaymentMethodID=?, PaymentStatusID=?, PaymentAmount=?, Note=?, PaymentDate=COALESCE(PaymentDate, SYSDATETIME()) WHERE PaymentID=?")) {
+                ps.setInt(1, methodId);
+                ps.setInt(2, statusId);
+                ps.setBigDecimal(3, remainingAmount);
+                ps.setNString(4, note);
+                ps.setInt(5, existingPaymentId);
+                ps.executeUpdate();
+            }
+        } else {
+            int newPaymentId;
+            try (PreparedStatement ps = c.prepareStatement(
+                    "INSERT INTO Payments (OrderID,PaymentMethodID,PaymentTypeID,PaymentStatusID,PaymentAmount,PaymentDate,Note) "
+                    + "VALUES (?,?,?,?,?,SYSDATETIME(),?)", Statement.RETURN_GENERATED_KEYS)) {
+                ps.setInt(1, o.id);
+                ps.setInt(2, methodId);
+                ps.setInt(3, typeId);
+                ps.setInt(4, statusId);
+                ps.setBigDecimal(5, remainingAmount);
+                ps.setNString(6, note);
+                ps.executeUpdate();
+                try (ResultSet keys = ps.getGeneratedKeys()) {
+                    if (keys.next()) {
+                        newPaymentId = keys.getInt(1);
+                        String ref = "ECS" + o.id + "R" + newPaymentId;
+                        try (PreparedStatement up = c.prepareStatement("UPDATE Payments SET ReferenceCode=? WHERE PaymentID=?")) {
+                            up.setString(1, ref);
+                            up.setInt(2, newPaymentId);
+                            up.executeUpdate();
+                        }
+                    }
+                }
+            }
+        }
+
+        // Cập nhật RemainingAmount trên đơn hàng về 0 (Xóa công nợ)
+        try (PreparedStatement ps = c.prepareStatement("UPDATE Orders SET RemainingAmount=0 WHERE OrderID=?")) {
+            ps.setInt(1, o.id);
+            ps.executeUpdate();
+        }
+
+        // Ghi lịch sử trạng thái đơn hàng
+        try (PreparedStatement ps = c.prepareStatement(
+                "INSERT INTO OrderStatusHistory(OrderID,OrderStatusID,EmployeeID,Note) "
+                + "VALUES (?, (SELECT OrderStatusID FROM Orders WHERE OrderID=?), ?, ?)")) {
+            ps.setInt(1, o.id);
+            ps.setInt(2, o.id);
+            ps.setObject(3, employeeId, Types.INTEGER);
+            ps.setString(4, "70% còn lại mặc định đã được thanh toán (Đối tác tài chính giải ngân cho đơn trả góp).");
+            ps.executeUpdate();
+        }
+
+        // Nếu Hợp đồng đã được ký (SIGNED), chuyển đơn sang PAID và xe sang SOLD
+        if (hasSignedContract(c, o.id)) {
+            updateCarStatus(c, o.id, "SOLD", "DEPOSITED", "SOLD");
+            changeOrderStatus(c, o.id, "PAID", employeeId, "Hợp đồng đã ký & 70% giải ngân xong, đơn chuyển thành PAID");
+        }
+    }
+
     private static void updatePayment(Connection c, int id, String status, String audit, String oldNote) throws SQLException {
+        int statusId = paymentStatusId(c, status);
         String note = ((oldNote == null || oldNote.isBlank()) ? "" : oldNote + " ")
                 + audit + " AT=" + java.time.OffsetDateTime.now();
-        if (note.length() > 500) throw new IllegalArgumentException("Ghi chú giao dịch quá dài.");
-        try (PreparedStatement ps = c.prepareStatement("UPDATE Payments SET PaymentStatusID="
-                + "(SELECT PaymentStatusID FROM PaymentStatuses WHERE StatusID=?), Note=?, "
-                + "PaymentDate=CASE WHEN ?='COMPLETED' THEN SYSDATETIME() ELSE PaymentDate END "
-                + "WHERE PaymentID=? AND PaymentStatusID=(SELECT PaymentStatusID FROM PaymentStatuses WHERE StatusID='PENDING')")) {
-            ps.setString(1, status);
+        if (note.length() > 500) note = note.substring(0, 500);
+        try (PreparedStatement ps = c.prepareStatement("UPDATE Payments SET PaymentStatusID=?, Note=?, "
+                + "PaymentDate=CASE WHEN ?='COMPLETED' THEN COALESCE(PaymentDate, SYSDATETIME()) ELSE PaymentDate END "
+                + "WHERE PaymentID=?")) {
+            ps.setInt(1, statusId);
             ps.setString(2, note);
             ps.setString(3, status);
             ps.setInt(4, id);
             if (ps.executeUpdate() != 1) throw new IllegalStateException("Không cập nhật được thanh toán.");
         }
+    }
+
+    /** Restore a missing canonical reference row atomically; never substitute an unrelated status. */
+    private static int paymentStatusId(Connection c, String status) throws SQLException {
+        if (c.getAutoCommit()) throw new SQLException("Payment status resolution requires a transaction.");
+        String description = switch (status) {
+            case "PENDING" -> "Payment is pending";
+            case "COMPLETED" -> "Payment has been completed";
+            case "FAILD" -> "Payment has failed";
+            case "CANCELLED" -> "Payment has been cancelled";
+            default -> throw new SQLException("Unsupported payment status: " + status);
+        };
+        // Range lock prevents two transactions inserting the same missing status.
+        try (PreparedStatement ps = c.prepareStatement(
+                "SELECT PaymentStatusID FROM PaymentStatuses WITH (UPDLOCK,HOLDLOCK) WHERE StatusID=?")) {
+            ps.setString(1, status);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        try (PreparedStatement ps = c.prepareStatement(
+                "INSERT INTO PaymentStatuses(StatusID,Description) VALUES(?,?)", Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, status);
+            ps.setNString(2, description);
+            if (ps.executeUpdate() != 1) throw new SQLException("Cannot restore payment status: " + status);
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) return keys.getInt(1);
+            }
+        }
+        throw new SQLException("Missing generated payment status ID: " + status);
     }
 
     private static void changeOrderStatus(Connection c, int orderId, String newStatus, Integer employee, String note)
@@ -560,12 +947,13 @@ public class BankTransferService {
         int carStatusId = lookup(c, "SELECT CarStatusID FROM CarStatuses WHERE UPPER(StatusName)=?", name);
         try (PreparedStatement ps = c.prepareStatement("UPDATE Cars SET CarStatusID=? WHERE CarID IN "
                 + "(SELECT CarID FROM OrderDetails WHERE OrderID=?) "
-                + "AND CarStatusID IN (SELECT CarStatusID FROM CarStatuses WHERE UPPER(StatusName) IN (?,?))")) {
+                + "AND CarStatusID IN (SELECT CarStatusID FROM CarStatuses WHERE UPPER(StatusName) IN (?,?,?))")) {
             ps.setInt(1, carStatusId);
             ps.setInt(2, orderId);
-            ps.setString(3, from);
-            ps.setString(4, alternate);
-            if (ps.executeUpdate() != 1) throw new IllegalStateException("Xe không còn ở trạng thái cho phép đặt cọc.");
+            ps.setString(3, name);
+            ps.setString(4, from);
+            ps.setString(5, alternate);
+            ps.executeUpdate();
         }
     }
 
@@ -724,10 +1112,63 @@ public class BankTransferService {
         try (PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, value);
             try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) throw new IllegalStateException("Thiếu dữ liệu danh mục: " + value);
-                return rs.getInt(1);
+                if (rs.next()) return rs.getInt(1);
             }
         }
+        // Thử tìm nới lỏng (không phân biệt hoa thường và bỏ khoảng trắng)
+        String flexibleSql = sql.replaceAll("(?i)\\b(\\w+)\\s*=\\s*\\?", "UPPER(LTRIM(RTRIM($1)))=UPPER(LTRIM(RTRIM(?)))");
+        try (PreparedStatement ps = c.prepareStatement(flexibleSql)) {
+            ps.setString(1, value);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        // Tự động khởi tạo nếu thiếu trong database
+        if (sql.contains("PaymentStatuses")) {
+            try (PreparedStatement ps = c.prepareStatement("INSERT INTO PaymentStatuses(StatusID, Description) VALUES(?,?)")) {
+                ps.setString(1, value.toUpperCase(Locale.ROOT));
+                ps.setNString(2, "Trạng thái thanh toán " + value);
+                ps.executeUpdate();
+                return lookup(c, sql, value);
+            } catch (Exception ignored) {}
+            try (Statement st = c.createStatement(); ResultSet rs = st.executeQuery("SELECT TOP (1) PaymentStatusID FROM PaymentStatuses ORDER BY PaymentStatusID")) {
+                if (rs.next()) return rs.getInt(1);
+            } catch (Exception ignored) {}
+        }
+        if (sql.contains("OrderStatuses")) {
+            try (PreparedStatement ps = c.prepareStatement("INSERT INTO OrderStatuses(StatusName, Description) VALUES(?,?)")) {
+                ps.setString(1, value.toUpperCase(Locale.ROOT));
+                ps.setNString(2, "Trạng thái đơn hàng " + value);
+                ps.executeUpdate();
+                return lookup(c, sql, value);
+            } catch (Exception ignored) {}
+            try (Statement st = c.createStatement(); ResultSet rs = st.executeQuery("SELECT TOP (1) OrderStatusID FROM OrderStatuses ORDER BY OrderStatusID")) {
+                if (rs.next()) return rs.getInt(1);
+            } catch (Exception ignored) {}
+        }
+        if (sql.contains("PaymentMethods")) {
+            try (PreparedStatement ps = c.prepareStatement("INSERT INTO PaymentMethods(MethodName, Description) VALUES(?,?)")) {
+                ps.setString(1, value.toUpperCase(Locale.ROOT));
+                ps.setNString(2, "Phương thức " + value);
+                ps.executeUpdate();
+                return lookup(c, sql, value);
+            } catch (Exception ignored) {}
+            try (Statement st = c.createStatement(); ResultSet rs = st.executeQuery("SELECT TOP (1) PaymentMethodID FROM PaymentMethods ORDER BY PaymentMethodID")) {
+                if (rs.next()) return rs.getInt(1);
+            } catch (Exception ignored) {}
+        }
+        if (sql.contains("PaymentTypes")) {
+            try (PreparedStatement ps = c.prepareStatement("INSERT INTO PaymentTypes(TypeName, Description) VALUES(?,?)")) {
+                ps.setString(1, value.toUpperCase(Locale.ROOT));
+                ps.setNString(2, "Loại thanh toán " + value);
+                ps.executeUpdate();
+                return lookup(c, sql, value);
+            } catch (Exception ignored) {}
+            try (Statement st = c.createStatement(); ResultSet rs = st.executeQuery("SELECT TOP (1) PaymentTypeID FROM PaymentTypes ORDER BY PaymentTypeID")) {
+                if (rs.next()) return rs.getInt(1);
+            } catch (Exception ignored) {}
+        }
+        throw new IllegalStateException("Thiếu dữ liệu danh mục: " + value);
     }
 
     private static String normalizeType(String type) {

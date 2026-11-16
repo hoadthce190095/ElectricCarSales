@@ -37,6 +37,16 @@ public class CatalogVehicleDAO extends DBContext {
                 ORDER BY line.CarLineName, m.ModelName, v.VersionName
                 """;
         Map<Integer, CatalogVehicleBuilder> vehicles = new LinkedHashMap<>();
+        if (conn == null) {
+            try {
+                conn = getConnection();
+            } catch (SQLException e) {
+                return List.of();
+            }
+        }
+        if (conn == null) {
+            return List.of();
+        }
         try (PreparedStatement statement = conn.prepareStatement(sql);
              ResultSet results = statement.executeQuery()) {
             while (results.next()) {
@@ -69,11 +79,82 @@ public class CatalogVehicleDAO extends DBContext {
         }
 
         loadColors(vehicles);
-        return vehicles.values().stream().map(CatalogVehicleBuilder::build).toList();
+        List<CatalogVehicle> catalogue = new ArrayList<>(
+                vehicles.values().stream().map(CatalogVehicleBuilder::build).toList());
+        catalogue.addAll(getAvailablePriceOverrides());
+        return List.copyOf(catalogue);
+    }
+
+    private List<CatalogVehicle> getAvailablePriceOverrides() {
+        String sql = """
+                SELECT c.CarID, c.ModelID, c.VersionID, c.Price, color.ColorName,
+                       model.ModelName, line.CarLineName, version.VersionName,
+                       spec.Dimensions, spec.BatteryCapacity, spec.RangeKM, spec.MaxPower,
+                       spec.SeatingCapacity, version.RangeStandard, spec.WheelType,
+                       spec.AirbagCount, spec.MaxSpeed,
+                       version.RapidChargeMinutes, version.PriceNote,
+                       spec.Description AS SpecificationNote,
+                       colorImage.ColorImageURL, image.ImageURL
+                FROM Cars c
+                INNER JOIN CarStatuses carStatus ON carStatus.CarStatusID = c.CarStatusID
+                INNER JOIN CarModels model ON model.ModelID = c.ModelID
+                INNER JOIN CarLines line ON line.CarLineID = model.CarLineID
+                INNER JOIN Brands brand ON brand.BrandID = line.BrandID
+                INNER JOIN CarVersions version ON version.VersionID = c.VersionID
+                    AND version.ModelID = c.ModelID
+                LEFT JOIN Colors color ON color.ColorID = c.ColorID
+                LEFT JOIN Specifications spec ON spec.ModelID = model.ModelID
+                OUTER APPLY (
+                    SELECT TOP (1) mc.ColorImageURL
+                    FROM ModelColors mc
+                    WHERE mc.ModelID = c.ModelID AND mc.ColorID = c.ColorID
+                ) colorImage
+                OUTER APPLY (
+                    SELECT TOP (1) ci.ImageURL
+                    FROM CarImages ci
+                    WHERE ci.ModelID = c.ModelID
+                    ORDER BY ci.IsPrimary DESC, ci.DisplayOrder, ci.CarImageID
+                ) image
+                WHERE brand.BrandStatusID IN (
+                    SELECT BrandStatusID FROM BrandStatuses WHERE StatusName = 'ACTIVE'
+                )
+                  AND UPPER(LTRIM(RTRIM(carStatus.StatusName))) = 'AVAILABLE'
+                  AND c.Price > 0
+                  AND (version.CatalogPrice IS NULL OR c.Price <> version.CatalogPrice)
+                  AND NOT EXISTS (SELECT 1 FROM OrderDetails od WHERE od.CarID = c.CarID)
+                ORDER BY line.CarLineName, model.ModelName, version.VersionName, c.CarID
+                """;
+        List<CatalogVehicle> vehicles = new ArrayList<>();
+        try (PreparedStatement statement = conn.prepareStatement(sql);
+             ResultSet results = statement.executeQuery()) {
+            while (results.next()) {
+                String colorName = results.getString("ColorName");
+                String colorImage = results.getString("ColorImageURL");
+                List<String> colors = colorName == null || colorName.isBlank()
+                        ? List.of() : List.of(colorName);
+                Map<String, String> colorImages = colorImage == null || colorImage.isBlank() || colors.isEmpty()
+                        ? Map.of() : Map.of(colorName, colorImage);
+                vehicles.add(new CatalogVehicle(
+                        results.getInt("ModelID"), results.getInt("VersionID"),
+                        results.getString("ModelName"), results.getString("CarLineName"),
+                        results.getString("VersionName"), results.getBigDecimal("Price"),
+                        results.getString("Dimensions"), results.getBigDecimal("BatteryCapacity"),
+                        results.getBigDecimal("RangeKM"), results.getBigDecimal("MaxPower"),
+                        getNullableInteger(results, "SeatingCapacity"), results.getString("RangeStandard"),
+                        null, null,
+                        results.getString("ImageURL"), colors, colorImages, results.getString("WheelType"),
+                        getNullableInteger(results, "AirbagCount"), results.getBigDecimal("MaxSpeed"),
+                        getNullableInteger(results, "RapidChargeMinutes"), results.getString("PriceNote"),
+                        results.getString("SpecificationNote"), results.getInt("CarID"), colorName));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error in CatalogVehicleDAO.getAvailablePriceOverrides(): " + e.getMessage(), e);
+        }
+        return vehicles;
     }
 
     private void loadColors(Map<Integer, CatalogVehicleBuilder> vehicles) {
-        if (vehicles.isEmpty()) {
+        if (conn == null || vehicles.isEmpty()) {
             return;
         }
 
@@ -174,7 +255,8 @@ public class CatalogVehicleDAO extends DBContext {
             return new CatalogVehicle(modelID, versionID, modelName, carLine, specificationVersion,
                     priceVnd, dimensions, batteryKwh, rangeKm, maxPowerKw, seats, rangeStandard,
                     sourceUrl, priceSourceUrl, imageUrl, List.copyOf(colors), Map.copyOf(colorImages),
-                    wheelType, airbagCount, maxSpeedKmh, rapidChargeMinutes, priceNote, specificationNote);
+                    wheelType, airbagCount, maxSpeedKmh, rapidChargeMinutes, priceNote, specificationNote,
+                    null, null);
         }
     }
 }

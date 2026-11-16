@@ -207,15 +207,12 @@ public class ConsultationController extends HttpServlet {
                 String note = request.getParameter("message");
                 service.appendCustomerNote(requestId, customer.getCustomerID(), note);
                 sendResult(request, response, jsonRequested, HttpServletResponse.SC_OK, true,
-                        "Đã gửi phản hồi bổ sung cho yêu cầu tư vấn #" + requestId + ".", "/consultation?updated=1");
+                        "Đã gửi phản hồi bổ sung cho yêu cầu tư vấn #" + requestId + ".", "/consultation?updated=1", null);
                 return;
             }
 
             Integer modelId = parseModelId(request.getParameter("modelId"), request.getParameter("model"));
             String message = request.getParameter("message");
-            if (modelId == null) {
-                throw new IllegalArgumentException("Vui lòng chọn mẫu xe quan tâm trong danh mục.");
-            }
             String paymentPreference = request.getParameter("paymentPreference");
             if (message == null || message.isBlank()) {
                 throw new IllegalArgumentException("Vui lòng nhập nội dung cần tư vấn.");
@@ -238,43 +235,72 @@ public class ConsultationController extends HttpServlet {
 
             sendResult(request, response, jsonRequested, HttpServletResponse.SC_CREATED, true,
                     "Đã gửi yêu cầu tư vấn #" + cr.getId() + " thành công. Nhân viên Sales sẽ phản hồi sớm.",
-                    "/consultation?submitted=1");
+                    "/consultation?submitted=1", cr);
         } catch (IllegalArgumentException | IllegalStateException ex) {
+            log("Consultation POST failed: " + ex.getMessage(), ex);
             sendResult(request, response, jsonRequested, HttpServletResponse.SC_BAD_REQUEST, false,
-                    ex.getMessage(), "/consultation");
+                    ex.getMessage(), "/consultation", null);
         } catch (RuntimeException ex) {
-            log("Consultation POST failed", ex);
+            log("Consultation POST runtime error: " + ex.getMessage(), ex);
             sendResult(request, response, jsonRequested, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, false,
-                    "Không thể xử lý yêu cầu tư vấn.", "/consultation");
+                    "Không thể xử lý yêu cầu tư vấn: " + ex.getMessage(), "/consultation", null);
         }
     }
 
     private Integer parseModelId(String modelIdParam, String modelNameParam) {
+        CarModelDAO modelDAO = new CarModelDAO();
+        List<CarModel> allModels = List.of();
+        try {
+            allModels = modelDAO.getAll();
+        } catch (Exception ex) {
+            log("Không thể tải danh sách CarModels: " + ex.getMessage(), ex);
+        }
+
         if (modelIdParam != null && !modelIdParam.isBlank()) {
             try {
                 int id = Integer.parseInt(modelIdParam.trim());
-                if (id > 0) return id;
+                if (id > 0) {
+                    for (CarModel m : allModels) {
+                        if (m.getModelID() == id) return id;
+                    }
+                }
             } catch (NumberFormatException ignored) {
             }
         }
         if (modelNameParam != null && !modelNameParam.isBlank() && !"Chưa xác định".equalsIgnoreCase(modelNameParam.trim())) {
-            CarModelDAO modelDAO = new CarModelDAO();
-            for (CarModel m : modelDAO.getAll()) {
+            for (CarModel m : allModels) {
                 if (m.getModelName() != null && (m.getModelName().equalsIgnoreCase(modelNameParam.trim())
-                        || m.getModelName().toLowerCase(Locale.ROOT).startsWith(modelNameParam.trim().toLowerCase(Locale.ROOT)))) {
+                        || m.getModelName().toLowerCase(Locale.ROOT).startsWith(modelNameParam.trim().toLowerCase(Locale.ROOT))
+                        || modelNameParam.trim().toLowerCase(Locale.ROOT).contains(m.getModelName().toLowerCase(Locale.ROOT)))) {
                     return m.getModelID();
                 }
             }
+        }
+        if (!allModels.isEmpty()) {
+            return allModels.get(0).getModelID();
         }
         return null;
     }
 
     private void sendResult(HttpServletRequest req, HttpServletResponse resp, boolean jsonRequested,
                             int status, boolean success, String message, String redirectPath) throws IOException, ServletException {
+        sendResult(req, resp, jsonRequested, status, success, message, redirectPath, null);
+    }
+
+    private void sendResult(HttpServletRequest req, HttpServletResponse resp, boolean jsonRequested,
+                            int status, boolean success, String message, String redirectPath,
+                            ConsultationRequest cr) throws IOException, ServletException {
         if (jsonRequested) {
             resp.setStatus(status);
             resp.setContentType("application/json;charset=UTF-8");
-            JSON.writeValue(resp.getWriter(), Map.of("success", success, "message", message));
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("success", success);
+            payload.put("message", message);
+            if (cr != null && cr.getId() > 0) {
+                payload.put("requestId", cr.getId());
+                payload.put("consultation", cr);
+            }
+            JSON.writeValue(resp.getWriter(), payload);
             return;
         }
         if (success) {

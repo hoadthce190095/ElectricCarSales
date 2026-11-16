@@ -359,27 +359,47 @@ public class ContractsDAO extends DBContext {
                     ps.executeUpdate();
                 }
 
-                // Transition order from DEPOSITED to PROCESSING when contract is signed
+                // Transition order when contract is signed (PAID if 0 remaining / INSTALLMENT, else PROCESSING)
                 String orderStatus;
+                java.math.BigDecimal remainingAmount = java.math.BigDecimal.ZERO;
                 try (PreparedStatement ordPs = connection.prepareStatement("""
-                        SELECT os.StatusName FROM Orders o
+                        SELECT os.StatusName, o.RemainingAmount FROM Orders o
                         JOIN OrderStatuses os ON os.OrderStatusID = o.OrderStatusID
                         WHERE o.OrderID = ?
                         """)) {
                     ordPs.setInt(1, orderId);
                     try (ResultSet rs = ordPs.executeQuery()) {
-                        orderStatus = rs.next() ? rs.getString(1) : "PROCESSING";
+                        if (rs.next()) {
+                            orderStatus = rs.getString(1);
+                            remainingAmount = rs.getBigDecimal(2);
+                        } else {
+                            orderStatus = "PROCESSING";
+                        }
                     }
                 }
-                String nextOrderStatus = "DEPOSITED".equalsIgnoreCase(orderStatus) ? "PROCESSING" : orderStatus;
-                if ("PROCESSING".equals(nextOrderStatus) && !"PROCESSING".equalsIgnoreCase(orderStatus)) {
+                boolean isFullyPaid = remainingAmount != null
+                        && remainingAmount.compareTo(java.math.BigDecimal.ZERO) <= 0;
+                String targetStatus = isFullyPaid ? "PAID" : "PROCESSING";
+                String nextOrderStatus = "DEPOSITED".equalsIgnoreCase(orderStatus) ? targetStatus : orderStatus;
+                if (!nextOrderStatus.equalsIgnoreCase(orderStatus)) {
+                    int nextOrderStatusId = resolveOrderStatusId(connection, nextOrderStatus);
                     try (PreparedStatement upOrd = connection.prepareStatement("""
                             UPDATE Orders
-                            SET OrderStatusID = (SELECT OrderStatusID FROM OrderStatuses WHERE StatusName = 'PROCESSING')
+                            SET OrderStatusID = ?
                             WHERE OrderID = ?
                             """)) {
-                        upOrd.setInt(1, orderId);
-                        upOrd.executeUpdate();
+                        upOrd.setInt(1, nextOrderStatusId);
+                        upOrd.setInt(2, orderId);
+                        if (upOrd.executeUpdate() != 1) throw new SQLException("Không cập nhật được trạng thái đơn hàng sau khi ký.");
+                    }
+                    if ("PAID".equals(nextOrderStatus)) {
+                        try (PreparedStatement upCar = connection.prepareStatement("""
+                                UPDATE Cars SET CarStatusID = (SELECT CarStatusID FROM CarStatuses WHERE StatusName = 'SOLD')
+                                WHERE CarID IN (SELECT CarID FROM OrderDetails WHERE OrderID = ?)
+                                """)) {
+                            upCar.setInt(1, orderId);
+                            upCar.executeUpdate();
+                        }
                     }
                 }
 
@@ -397,8 +417,34 @@ public class ContractsDAO extends DBContext {
                 throw ex;
             }
         } catch (SQLException e) {
-            throw new IllegalStateException("Không thể cập nhật trạng thái ký hợp đồng.", e);
+            throw new IllegalStateException("Không thể cập nhật trạng thái ký hợp đồng: " + e.getMessage(), e);
         }
+    }
+
+    private static int resolveOrderStatusId(Connection connection, String status) throws SQLException {
+        String description = switch (status) {
+            case "PROCESSING" -> "Order is being processed";
+            case "PAID" -> "Full payment has been completed";
+            default -> throw new SQLException("Trạng thái đơn hàng sau khi ký không hợp lệ: " + status);
+        };
+        try (PreparedStatement ps = connection.prepareStatement(
+                "SELECT OrderStatusID FROM OrderStatuses WITH (UPDLOCK,HOLDLOCK) WHERE StatusName=?")) {
+            ps.setString(1, status);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        // Some installations are missing seeded lookup rows; repair only this canonical value in the signing transaction.
+        try (PreparedStatement ps = connection.prepareStatement(
+                "INSERT INTO OrderStatuses(StatusName,Description) VALUES(?,?)", Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, status);
+            ps.setNString(2, description);
+            if (ps.executeUpdate() != 1) throw new SQLException("Không thể bổ sung trạng thái đơn hàng " + status);
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        throw new SQLException("Không lấy được mã trạng thái đơn hàng " + status);
     }
 
     private int resolveFallbackEmployeeId(Connection connection) throws SQLException {

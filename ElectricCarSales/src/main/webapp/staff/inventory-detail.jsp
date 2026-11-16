@@ -109,18 +109,23 @@
                                     <td>
                                         <!-- Tự động tô màu nút theo trạng thái sử dụng class status-pill -->
                                         <c:choose>
-                                            <c:when test="${car.status == 'Có sẵn'}">
-                                                <span class="status-pill success">${car.status}</span>
+                                            <c:when test="${car.status == 'AVAILABLE' || car.status == 'Có sẵn'}">
+                                                <span class="status-pill success"><c:out value="${car.status}" /></span>
                                             </c:when>
-                                            <c:when test="${car.status == 'Đã đặt cọc'}">
-                                                <span class="status-pill warning">${car.status}</span>
+                                            <c:when test="${car.status == 'RESERVED' || car.status == 'Đã giữ chỗ'}">
+                                                <span class="status-pill warning"><c:out value="${car.status}" /></span>
                                             </c:when>
-                                            <c:when test="${car.status == 'Đã bàn giao'}">
-                                                <span class="status-pill info">${car.status}</span>
+                                            <c:when test="${car.status == 'DEPOSITED' || car.status == 'Đã đặt cọc'}">
+                                                <span class="status-pill warning"><c:out value="${car.status}" /></span>
+                                            </c:when>
+                                            <c:when test="${car.status == 'SOLD' || car.status == 'Đã bán'}">
+                                                <span class="status-pill info"><c:out value="${car.status}" /></span>
+                                            </c:when>
+                                            <c:when test="${car.status == 'DELIVERED' || car.status == 'Đã bàn giao' || car.status == 'EXPORTED'}">
+                                                <span class="status-pill info"><c:out value="${car.status}" /></span>
                                             </c:when>
                                             <c:otherwise>
-                                                <!-- Dành cho trạng thái khác (hết hàng, lỗi, v.v.) -->
-                                                <span class="status-pill danger">${car.status}</span>
+                                                <span class="status-pill danger"><c:out value="${car.status}" /></span>
                                             </c:otherwise>
                                         </c:choose>
                                     </td>

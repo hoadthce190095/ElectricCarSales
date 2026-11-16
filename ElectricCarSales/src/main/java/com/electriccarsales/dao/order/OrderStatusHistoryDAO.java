@@ -58,7 +58,7 @@ public class OrderStatusHistoryDAO {
     public void insert(Connection conn, OrderStatusHistory history) throws SQLException {
         String sql = """
             INSERT INTO OrderStatusHistory (OrderID, OrderStatusID, EmployeeID, ChangedDate, Note)
-            VALUES (?, (SELECT OrderStatusID FROM OrderStatuses WHERE StatusName = ?), ?, SYSDATETIME(), ?)
+            VALUES (?, (SELECT TOP 1 OrderStatusID FROM OrderStatuses WHERE UPPER(LTRIM(RTRIM(StatusName))) = UPPER(LTRIM(RTRIM(?)))), ?, SYSDATETIME(), ?)
             """;
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, history.getOrderId());

@@ -18,68 +18,104 @@ public class VehicleCatalogService {
     private CatalogVehicleDAO catalogVehicleDAO;
 
     public VehicleCatalogService() {
-        brandDAO = new BrandDAO();
-        carLineDAO = new CarLineDAO();
-        carModelDAO = new CarModelDAO();
-        carVersionDAO = new CarVersionDAO();
-        specificationDAO = new SpecificationDAO();
-        colorDAO = new ColorDAO();
-        modelColorDAO = new ModelColorDAO();
-        carImageDAO = new CarImageDAO();
-        catalogVehicleDAO = new CatalogVehicleDAO();
+    }
+
+    private BrandDAO getBrandDAO() {
+        if (brandDAO == null) brandDAO = new BrandDAO();
+        return brandDAO;
+    }
+
+    private CarLineDAO getCarLineDAO() {
+        if (carLineDAO == null) carLineDAO = new CarLineDAO();
+        return carLineDAO;
+    }
+
+    private CarModelDAO getCarModelDAO() {
+        if (carModelDAO == null) carModelDAO = new CarModelDAO();
+        return carModelDAO;
+    }
+
+    private CarVersionDAO getCarVersionDAO() {
+        if (carVersionDAO == null) carVersionDAO = new CarVersionDAO();
+        return carVersionDAO;
+    }
+
+    private SpecificationDAO getSpecificationDAO() {
+        if (specificationDAO == null) specificationDAO = new SpecificationDAO();
+        return specificationDAO;
+    }
+
+    private ColorDAO getColorDAO() {
+        if (colorDAO == null) colorDAO = new ColorDAO();
+        return colorDAO;
+    }
+
+    private ModelColorDAO getModelColorDAO() {
+        if (modelColorDAO == null) modelColorDAO = new ModelColorDAO();
+        return modelColorDAO;
+    }
+
+    private CarImageDAO getCarImageDAO() {
+        if (carImageDAO == null) carImageDAO = new CarImageDAO();
+        return carImageDAO;
+    }
+
+    private CatalogVehicleDAO getCatalogVehicleDAO() {
+        if (catalogVehicleDAO == null) catalogVehicleDAO = new CatalogVehicleDAO();
+        return catalogVehicleDAO;
     }
 
     public List<Brand> getAllBrands() {
-        return brandDAO.getAll();
+        return getBrandDAO().getAll();
     }
 
     public List<CarLine> getAllCarLines() {
-        return carLineDAO.getAll();
+        return getCarLineDAO().getAll();
     }
 
     public List<CarModel> getAllCarModels() {
-        return carModelDAO.getAll();
+        return getCarModelDAO().getAll();
     }
 
     public List<CarModel> searchCarModels(String keyword, Integer brandId, Integer carLineId,
                                           BigDecimal maxPrice, BigDecimal minRange, Integer colorId,
                                           String sort) {
-        return carModelDAO.search(keyword, brandId, carLineId, maxPrice, minRange, colorId, sort);
+        return getCarModelDAO().search(keyword, brandId, carLineId, maxPrice, minRange, colorId, sort);
     }
 
     public List<CatalogVehicle> getCatalogVehicles() {
-        return catalogVehicleDAO.getAll();
+        return getCatalogVehicleDAO().getAll();
     }
 
     public List<CarVersion> getAllCarVersions() {
-        return carVersionDAO.getAll();
+        return getCarVersionDAO().getAll();
     }
 
     public List<Specification> getAllSpecifications() {
-        return specificationDAO.getAll();
+        return getSpecificationDAO().getAll();
     }
 
     public List<Color> getAllColors() {
-        return colorDAO.getAll();
+        return getColorDAO().getAll();
     }
 
     public List<ModelColor> getAllModelColors() {
-        return modelColorDAO.getAll();
+        return getModelColorDAO().getAll();
     }
 
     public List<CarImage> getAllCarImages() {
-        return carImageDAO.getAll();
+        return getCarImageDAO().getAll();
     }
 
 
     // Lấy thông tin chi tiết một mẫu xe theo ModelID
     public CarModel getCarModelById(int modelID) {
-        return carModelDAO.getById(modelID);
+        return getCarModelDAO().getById(modelID);
     }
 
     public CarModel getCarModelByNameOrLine(String modelName, String carLineName) {
         if (modelName != null && !modelName.isBlank()) {
-            return carModelDAO.getByName(modelName);
+            return getCarModelDAO().getByName(modelName);
         }
 
         if (carLineName == null || carLineName.isBlank()) {
@@ -87,7 +123,7 @@ public class VehicleCatalogService {
         }
 
         String requestedLine = normalizeName(carLineName);
-        List<Integer> matchingLineIds = carLineDAO.getAll().stream()
+        List<Integer> matchingLineIds = getCarLineDAO().getAll().stream()
                 .filter(line -> normalizeName(line.getCarLineName()).equals(requestedLine))
                 .map(CarLine::getCarLineID)
                 .toList();
@@ -95,7 +131,7 @@ public class VehicleCatalogService {
             return null;
         }
 
-        List<CarModel> matchingModels = carModelDAO.getAll().stream()
+        List<CarModel> matchingModels = getCarModelDAO().getAll().stream()
                 .filter(car -> matchingLineIds.contains(car.getCarLineID()))
                 .toList();
         return matchingModels.size() == 1 ? matchingModels.get(0) : null;
@@ -107,12 +143,12 @@ public class VehicleCatalogService {
 
     // Lấy thông số kỹ thuật theo ModelID
     public Specification getSpecificationByModelId(int modelID) {
-        return specificationDAO.getByModelId(modelID);
+        return getSpecificationDAO().getByModelId(modelID);
     }
 
     // Lấy danh sách hình ảnh theo ModelID
     public List<CarImage> getImagesByModelId(int modelID) {
-        return carImageDAO.getByModelId(modelID);
+        return getCarImageDAO().getByModelId(modelID);
     }
 
 }

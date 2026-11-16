@@ -142,9 +142,11 @@
         const article = make("article", `vehicle-card${selected ? " selected-for-compare" : ""}`);
         const photo = make("div", "vehicle-photo");
         const badge = make("span", "model-badge", className(model));
-        const selectedColor = colorFilter.value && Array.isArray(model.colors)
-            ? model.colors.find((color) => colorCategory(color)?.value === colorFilter.value)
-            : "";
+        const selectedColor = model.stockCarID != null
+            ? text(model.stockColorName)
+            : colorFilter.value && Array.isArray(model.colors)
+                ? model.colors.find((color) => colorCategory(color)?.value === colorFilter.value)
+                : "";
         const colorImageUrl = selectedColor ? model.colorImages?.[selectedColor] : "";
         const imageUrl = safeOfficialUrl(colorImageUrl) || safeOfficialUrl(model.imageUrl);
         if (imageUrl) {
@@ -159,7 +161,7 @@
             image.addEventListener("error", () => image.remove(), { once: true });
             photo.append(image);
         }
-        const detailUrl = `${contextPath}/detail?id=${encodeURIComponent(model.modelID)}`;
+        const detailUrl = `${contextPath}/detail?id=${encodeURIComponent(model.modelID)}${model.stockCarID ? `&carId=${encodeURIComponent(model.stockCarID)}` : ""}`;
         const detailLink = make("a", "vehicle-detail-link", "Xem chi tiết ↗");
         detailLink.href = detailUrl;
         photo.append(badge, detailLink);
@@ -200,10 +202,16 @@
             }
             promoTag = make("div", "home-promo-tag", `🎁 ${promo.name}`);
         }
+        const stockBadge = model.stockCarID != null
+            ? make("span", "stock-price-badge", `XE KHO${model.stockColorName ? ` · ${text(model.stockColorName)}` : " · CÓ SẴN"}`)
+            : null;
+        if (stockBadge) photo.append(stockBadge);
 
         const body = make("div", "vehicle-card-body");
         const title = make("h3", "vehicle-name", text(model.modelName));
-        const version = make("p", "vehicle-version", text(model.specificationVersion) || "Phiên bản theo danh mục");
+        const versionLabel = text(model.specificationVersion) || "Phiên bản theo danh mục";
+        const version = make("p", "vehicle-version", model.stockCarID != null && model.stockColorName
+            ? `${versionLabel} · ${text(model.stockColorName)}` : versionLabel);
         const specs = make("div", "vehicle-specs");
         [["Quãng đường", range(model)], ["Pin", battery(model)], ["Chỗ ngồi", seats(model)]].forEach(([label, value]) => {
             const item = make("div", "spec-item");
@@ -219,7 +227,8 @@
             priceRow.append(priceValue, originalPrice);
             priceSection.append(priceLabel, priceRow, promoCalc);
         } else {
-            const priceLabel = make("span", "vehicle-price-label", "Giá tham khảo · đã gồm pin");
+            const priceLabel = make("span", "vehicle-price-label", model.stockCarID != null
+                ? "Giá xe thực tế đang có trong kho" : "Giá tham khảo · đã gồm pin");
             const priceValue = make("strong", "vehicle-price", price(model.priceVnd));
             priceSection.append(priceLabel, priceValue);
         }

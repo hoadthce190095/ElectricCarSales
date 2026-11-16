@@ -2,7 +2,6 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <% request.setAttribute("customerTitle", "Yêu cầu tư vấn & Đặt xe"); request.setAttribute("customerEyebrow", "TƯ VẤN BÁN HÀNG"); %>
 <%@ include file="../common/customer-shell.jspf" %>
-<p><a href="${pageContext.request.contextPath}/sales-chat">Mở trang trò chuyện với Sales</a></p>
 <div class="checkout-notice">
     <span>i</span>
     <div>

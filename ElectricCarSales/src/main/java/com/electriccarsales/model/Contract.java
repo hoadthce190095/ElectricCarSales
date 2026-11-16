@@ -41,6 +41,7 @@ public class Contract {
     }
 
     public int getContractID() { return contractID; }
+    public int getContractId() { return contractID; }
     public void setContractID(int contractID) { this.contractID = contractID; }
     public int getOrderID() { return orderID; }
     public void setOrderID(int orderID) { this.orderID = orderID; }

@@ -35,8 +35,11 @@ public class OrderStatusService {
             throw new IllegalArgumentException("Không tìm thấy đơn hàng #" + orderId);
         }
         if ("CANCELLED".equals(normalized)
-                && ("PAID".equalsIgnoreCase(current.getStatus()) || "COMPLETED".equalsIgnoreCase(current.getStatus()))) {
-            throw new IllegalStateException("Không thể hủy đơn hàng đã thanh toán đủ 100% hoặc đã bàn giao xe.");
+                && (current.getPaidAmount().signum() > 0
+                || "PAID".equalsIgnoreCase(current.getStatus())
+                || "COMPLETED".equalsIgnoreCase(current.getStatus())
+                || "DEPOSITED".equalsIgnoreCase(current.getStatus()))) {
+            throw new IllegalStateException("Không thể hủy đơn hàng đã có thanh toán.");
         }
         return orderDAO.updateStatus(orderId, normalized, employeeId, note);
     }

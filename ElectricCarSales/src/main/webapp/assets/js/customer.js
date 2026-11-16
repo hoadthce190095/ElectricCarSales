@@ -14,6 +14,98 @@
         toastTimer = window.setTimeout(() => toast.classList.remove("visible"), 3600);
     }
 
+    // Modal xác nhận thao tác chung (Confirmation Modal)
+    window.showAppConfirmModal = function({
+        title = "Xác nhận thao tác",
+        message = "Bạn có chắc chắn muốn thực hiện thao tác này?",
+        details = [],
+        confirmText = "Có, xác nhận",
+        cancelText = "Không, quay lại",
+        isDanger = false,
+        onConfirm = null
+    }) {
+        return new Promise((resolve) => {
+            let dialog = document.getElementById("app-confirm-dialog");
+            if (!dialog) {
+                dialog = document.createElement("dialog");
+                dialog.id = "app-confirm-dialog";
+                dialog.className = "app-confirm-dialog";
+                document.body.appendChild(dialog);
+            }
+
+            let detailsHtml = "";
+            if (Array.isArray(details) && details.length > 0) {
+                detailsHtml = `
+                    <div class="app-confirm-details" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;margin-top:12px;font-size:13px;display:flex;flex-direction:column;gap:8px;">
+                        ${details.map(d => `
+                            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+                                <span style="color:#64748b;font-weight:500;">${d.label}:</span>
+                                <span style="color:#0f172a;font-weight:600;text-align:right;">${d.value}</span>
+                            </div>
+                        `).join("")}
+                    </div>
+                `;
+            }
+
+            dialog.innerHTML = `
+                <div style="padding:18px 24px;border-bottom:1px solid #e2e8f0;background:#f8fafc;display:flex;align-items:center;justify-content:space-between;">
+                    <h3 style="margin:0;font-size:16px;font-weight:700;color:#0f172a;">${title}</h3>
+                    <button type="button" class="app-confirm-close" aria-label="Đóng" style="background:transparent;border:none;font-size:22px;line-height:1;color:#64748b;cursor:pointer;padding:2px 6px;border-radius:6px;">&times;</button>
+                </div>
+                <div style="padding:20px 24px;">
+                    <p style="margin:0;font-size:14px;line-height:1.5;color:#334155;">${message}</p>
+                    ${detailsHtml}
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:10px;padding:16px 24px;border-top:1px solid #e2e8f0;background:#f8fafc;">
+                    <button type="button" class="app-confirm-btn-cancel button button-secondary" style="padding:8px 18px;font-size:13px;font-weight:600;border-radius:7px;border:1px solid #cbd5e1;background:#fff;color:#334155;cursor:pointer;">${cancelText}</button>
+                    <button type="button" class="app-confirm-btn-confirm button button-primary" style="padding:8px 20px;font-size:13px;font-weight:600;border-radius:7px;border:none;background:${isDanger ? '#dc2626' : '#1e3a8a'};color:#fff;cursor:pointer;">${confirmText}</button>
+                </div>
+            `;
+
+            const btnCancel = dialog.querySelector(".app-confirm-btn-cancel");
+            const btnConfirm = dialog.querySelector(".app-confirm-btn-confirm");
+            const btnClose = dialog.querySelector(".app-confirm-close");
+
+            const closeDialog = (val) => {
+                dialog.close();
+                resolve(val);
+            };
+
+            btnCancel.onclick = () => closeDialog(false);
+            btnClose.onclick = () => closeDialog(false);
+            dialog.oncancel = (e) => {
+                e.preventDefault();
+                closeDialog(false);
+            };
+
+            btnConfirm.onclick = async () => {
+                // Chống double-click & double-submit
+                btnConfirm.disabled = true;
+                btnCancel.disabled = true;
+                btnClose.disabled = true;
+                const originalText = btnConfirm.textContent;
+                btnConfirm.textContent = "Đang xử lý...";
+
+                if (typeof onConfirm === "function") {
+                    try {
+                        await onConfirm();
+                        closeDialog(true);
+                    } catch (err) {
+                        btnConfirm.disabled = false;
+                        btnCancel.disabled = false;
+                        btnClose.disabled = false;
+                        btnConfirm.textContent = originalText;
+                        closeDialog(false);
+                    }
+                } else {
+                    closeDialog(true);
+                }
+            };
+
+            dialog.showModal();
+        });
+    };
+
     const menuToggle = document.querySelector("[data-menu-toggle]");
     const sidebar = document.querySelector("#customer-sidebar");
     document.querySelectorAll("[data-avatar-image]").forEach((image) => {
@@ -40,14 +132,45 @@
         notify("Trạng thái đơn hàng, thanh toán và hợp đồng được cập nhật trực tiếp từ hệ thống.");
     });
 
-    document.querySelector("[data-profile-edit]")?.addEventListener("click", (event) => {
-        event.preventDefault();
-        const form = document.getElementById("profile-edit-form");
-        if (form) {
-            form.hidden = !form.hidden;
-            if (!form.hidden) form.querySelector("input")?.focus();
+    const profileEditBtn = document.querySelector("[data-profile-edit]");
+    const profileEditForm = document.getElementById("profile-edit-form");
+    const profileDisplayView = document.getElementById("profile-display-view");
+    const cancelEditBtn = document.getElementById("btn-cancel-profile-edit");
+
+    function setProfileEditMode(isEditing) {
+        if (!profileEditForm) return;
+        profileEditForm.hidden = !isEditing;
+        profileEditForm.style.display = isEditing ? "grid" : "none";
+        if (profileDisplayView) {
+            profileDisplayView.hidden = isEditing;
+            profileDisplayView.style.display = isEditing ? "none" : "";
         }
-    });
+        if (profileEditBtn) {
+            profileEditBtn.innerHTML = isEditing ? "✕ Hủy chỉnh sửa" : "Chỉnh sửa <span>↗</span>";
+            profileEditBtn.classList.toggle("is-active", isEditing);
+        }
+        if (isEditing) {
+            profileEditForm.querySelector("input")?.focus();
+        }
+    }
+
+    if (profileEditBtn) {
+        profileEditBtn.addEventListener("click", (event) => {
+            event.preventDefault();
+            const currentlyEditing = !profileEditForm.hidden && profileEditForm.style.display !== "none";
+            setProfileEditMode(!currentlyEditing);
+        });
+    }
+
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener("click", (event) => {
+            event.preventDefault();
+            setProfileEditMode(false);
+        });
+    }
+
+    // Default to view mode on page load
+    setProfileEditMode(false);
 
     const avatarInput = document.querySelector('#profile-edit-form input[name="avatar"]');
     avatarInput?.addEventListener("change", () => {
@@ -194,7 +317,7 @@
         "MB Bank": [{ months: 12, rate: 5.0 }, { months: 24, rate: 5.8 }, { months: 36, rate: 6.5 }, { months: 48, rate: 7.4 }, { months: 60, rate: 8.5 }],
         "VPBank": [{ months: 36, rate: 6.0 }, { months: 48, rate: 7.8 }, { months: 60, rate: 9.5 }]
     };
-    const formatVnd = (amount) => new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(Math.round(amount)) + " ₫";
+    const formatVnd = (amount) => new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(Math.round(amount)) + " VNĐ";
     let popupModelsPromise = null;
 
     function syncConsultationPrice() {
@@ -208,12 +331,37 @@
         if (!calcModel) return;
         if (!popupModelsPromise) {
             popupModelsPromise = (async () => {
-                const response = await fetch(`${contextPath}/api/ai`, {
-                    credentials: "same-origin",
-                    headers: { "Accept": "application/json" }
-                });
-                const data = await readJsonResponse(response);
-                const models = Array.isArray(data.models) ? data.models.filter((model) => model.modelId && model.modelName) : [];
+                let models = [];
+                try {
+                    const response = await fetch(`${contextPath}/api/ai`, {
+                        credentials: "same-origin",
+                        headers: { "Accept": "application/json" }
+                    });
+                    const data = await readJsonResponse(response);
+                    models = Array.isArray(data.models) ? data.models.filter((model) => model.modelId && model.modelName) : [];
+                } catch (e) {
+                    console.warn("Chưa tải được models qua /api/ai, sẽ thử nguồn /consultation?format=json", e);
+                }
+
+                if (!models.length) {
+                    try {
+                        const fallbackRes = await fetch(`${contextPath}/consultation?format=json`, {
+                            credentials: "same-origin",
+                            headers: { "Accept": "application/json" }
+                        });
+                        const fallbackData = await readJsonResponse(fallbackRes);
+                        const rawModels = fallbackData.models || [];
+                        models = rawModels.map((m) => ({
+                            modelId: m.modelID,
+                            modelName: m.modelName,
+                            inventoryMinPrice: 0,
+                            availableCars: 1
+                        }));
+                    } catch (fallbackErr) {
+                        console.warn("Không tải được models fallback từ /consultation", fallbackErr);
+                    }
+                }
+
                 if (!models.length) throw new Error("Danh mục chưa có mẫu xe để tư vấn.");
                 calcModel.innerHTML = models.map((model) => {
                     const price = Number(model.inventoryMinPrice || 0);
@@ -427,6 +575,19 @@
             notify("Vui lòng chờ danh mục xe từ kho tải xong rồi gửi yêu cầu.");
             return;
         }
+
+        const confirmed = await window.showAppConfirmModal({
+            title: "Xác nhận gửi yêu cầu tư vấn & đặt xe",
+            message: "Bạn có chắc chắn muốn gửi yêu cầu tư vấn và đăng ký mẫu xe này tới nhân viên Sales?",
+            details: [
+                { label: "Mẫu xe quan tâm", value: modelName },
+                { label: "Phương án thanh toán", value: pref }
+            ],
+            confirmText: "Có, xác nhận",
+            cancelText: "Không, quay lại"
+        });
+        if (!confirmed) return;
+
         const submitButton = popupForm.querySelector('button[type="submit"]');
         if (!submitButton || submitButton.disabled) return;
         const oldButtonText = submitButton.textContent;
@@ -462,4 +623,131 @@
             submitButton.textContent = oldButtonText;
         }
     });
+
+    // 1. Xác nhận lưu thay đổi thông tin cá nhân
+    if (profileEditForm) {
+        profileEditForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            if (!profileEditForm.reportValidity()) return;
+            const name = profileEditForm.customerName?.value || "";
+            const phone = profileEditForm.phone?.value || "";
+            const address = profileEditForm.address?.value || "";
+
+            const phoneVal = (phone || "").trim();
+            if (!/^0[0-9]{9}$/.test(phoneVal)) {
+                alert("Số điện thoại không hợp lệ. Phải bắt đầu bằng số 0 và có đúng 10 chữ số (ví dụ: 0912345678).");
+                profileEditForm.phone?.focus();
+                return;
+            }
+            const confirmed = await window.showAppConfirmModal({
+                title: "Xác nhận lưu thay đổi thông tin cá nhân",
+                message: "Bạn có chắc chắn muốn cập nhật các thông tin này vào hồ sơ cá nhân?",
+                details: [
+                    { label: "Họ và tên", value: name || "—" },
+                    { label: "Số điện thoại", value: phone || "—" },
+                    { label: "Địa chỉ nhận xe", value: address || "—" }
+                ],
+                confirmText: "Có, xác nhận",
+                cancelText: "Không, quay lại"
+            });
+            if (confirmed) {
+                const submitBtn = profileEditForm.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = "Đang lưu thay đổi...";
+                }
+                profileEditForm.submit();
+            }
+        });
+    }
+
+    // 2. Xác nhận gửi OTP ký hợp đồng
+    document.querySelectorAll(".form-request-contract-otp").forEach((form) => {
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const cid = form.dataset.contractId || form.querySelector('input[name="contractId"]')?.value;
+            const cnum = form.dataset.contractNum || (`#${cid}`);
+            const amount = form.dataset.amount || "";
+            const confirmed = await window.showAppConfirmModal({
+                title: "Xác nhận gửi mã OTP ký hợp đồng",
+                message: "Hệ thống sẽ phát hành mã OTP 6 chữ số gửi đến email của bạn để xác thực ký hợp đồng điện tử.",
+                details: [
+                    { label: "Số hợp đồng", value: cnum },
+                    ...(amount ? [{ label: "Giá trị hợp đồng", value: amount }] : [])
+                ],
+                confirmText: "Có, xác nhận",
+                cancelText: "Không, quay lại"
+            });
+            if (confirmed) {
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = "Đang gửi OTP...";
+                }
+                form.submit();
+            }
+        });
+    });
+
+    // 3. Xác nhận ký hợp đồng bằng OTP
+    document.querySelectorAll(".form-sign-contract-otp").forEach((form) => {
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const otpInput = form.querySelector('input[name="otp"]');
+            if (!otpInput || !otpInput.value || otpInput.value.length !== 6) {
+                return form.reportValidity();
+            }
+            const cid = form.dataset.contractId || form.querySelector('input[name="contractId"]')?.value;
+            const cnum = form.dataset.contractNum || (`#${cid}`);
+            const confirmed = await window.showAppConfirmModal({
+                title: "Xác nhận ký hợp đồng mua bán xe",
+                message: "Sau khi xác thực mã OTP, hợp đồng sẽ chính thức được ký kết (SIGNED) và có giá trị pháp lý ràng buộc.",
+                details: [
+                    { label: "Số hợp đồng", value: cnum },
+                    { label: "Mã OTP", value: otpInput.value }
+                ],
+                confirmText: "Có, xác nhận",
+                cancelText: "Không, quay lại"
+            });
+            if (confirmed) {
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = "Đang ký HĐ...";
+                }
+                form.submit();
+            }
+        });
+    });
+
+    // 4. Xác nhận gửi yêu cầu tư vấn tại checkout.jsp
+    const checkoutPanelForm = document.querySelector(".checkout-panel form.customer-form");
+    if (checkoutPanelForm) {
+        checkoutPanelForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            if (!checkoutPanelForm.reportValidity()) return;
+            const modelSelect = checkoutPanelForm.querySelector('select[name="modelId"]');
+            const modelText = modelSelect?.selectedOptions[0]?.textContent || "";
+            const prefSelect = checkoutPanelForm.querySelector('select[name="paymentPreference"]');
+            const prefText = prefSelect?.selectedOptions[0]?.textContent || "";
+            const confirmed = await window.showAppConfirmModal({
+                title: "Xác nhận gửi yêu cầu tư vấn & đặt xe",
+                message: "Bạn có chắc chắn muốn gửi yêu cầu tư vấn mẫu xe này tới đội ngũ Sales không?",
+                details: [
+                    { label: "Mẫu xe quan tâm", value: modelText },
+                    { label: "Phương án thanh toán", value: prefText }
+                ],
+                confirmText: "Có, xác nhận",
+                cancelText: "Không, quay lại"
+            });
+            if (confirmed) {
+                const submitBtn = checkoutPanelForm.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = "Đang gửi yêu cầu...";
+                }
+                checkoutPanelForm.submit();
+            }
+        });
+    }
 })();

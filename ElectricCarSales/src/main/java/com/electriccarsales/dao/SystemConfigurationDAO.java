@@ -11,7 +11,8 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class SystemConfigurationDAO {
+public class
+SystemConfigurationDAO {
     private static final Map<String, SystemConfiguration> RUNTIME_CONFIGS = new ConcurrentHashMap<>();
 
     public SystemConfiguration findByKey(Connection connection, String key) throws SQLException {

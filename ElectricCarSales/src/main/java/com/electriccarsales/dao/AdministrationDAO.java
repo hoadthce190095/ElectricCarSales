@@ -7,8 +7,8 @@ import com.electriccarsales.model.PromotionRequest;
 import com.electriccarsales.model.UserRequest;
 import com.electriccarsales.model.Employee;
 import com.electriccarsales.model.AdminPromotion;
-import com.electriccarsales.model.SystemLog;
 import com.electriccarsales.model.AdminUser;
+import com.electriccarsales.model.SystemLog;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -18,11 +18,17 @@ import java.util.Map;
 import java.util.LinkedHashMap;
 import java.math.BigDecimal;
 
+/**
+ * DAO xử lý danh mục quản trị, tài khoản, nhân viên và khuyến mãi.
+ * Phần truy vấn và xuất nhật ký hoạt động đã được tách sang SystemLogDAO.
+ */
 public class AdministrationDAO {
-    private static final String USERS = "SELECT"
-        + " u.UserID,u.Username,u.Email,u.Phone,u.RoleID,r.RoleName,u.StatusID,s.StatusName,u.CreatedDate,e.EmployeeID,e.EmployeeName"
-        + " FROM Users u JOIN Roles r ON r.RoleID=u.RoleID JOIN Statuses s ON"
-        + " s.StatusID=u.StatusID LEFT JOIN Employees e ON e.UserID=u.UserID ";
+    private static final String USER_SOURCE = " FROM Users u JOIN Roles r ON r.RoleID=u.RoleID"
+        + " JOIN Statuses s ON s.StatusID=u.StatusID LEFT JOIN Employees e ON e.UserID=u.UserID"
+        + " LEFT JOIN Customers c ON c.UserID=u.UserID";
+    private static final String USERS = "SELECT u.UserID,u.Username,u.Email,u.Phone,u.RoleID,r.RoleName,u.StatusID,"
+        + "s.StatusName,u.CreatedDate,e.EmployeeID,COALESCE(e.EmployeeName,c.CustomerName) AS EmployeeName"
+        + USER_SOURCE;
 
     public AdministrationLookupsDTO lookups(Connection connection) throws SQLException {
         AdministrationLookupsDTO result = new AdministrationLookupsDTO(lookup(connection, "SELECT RoleID,RoleName FROM Roles ORDER BY RoleID"),
@@ -63,8 +69,9 @@ public class AdministrationDAO {
 
     public PageResponse<AdminUser> users(Connection connection, String query, int page, Integer roleId, Integer statusId)
         throws SQLException {
+        // Dùng cùng điều kiện cho tổng số và danh sách để phân trang không bị lệch.
         String where = " WHERE (u.Username LIKE ? ESCAPE '~' OR u.Email LIKE ? ESCAPE '~' OR"
-            + " e.EmployeeName LIKE ? ESCAPE '~')";
+            + " COALESCE(e.EmployeeName,c.CustomerName) LIKE ? ESCAPE '~')";
         if (roleId != null) {
             where += " AND u.RoleID=?";
         }
@@ -74,7 +81,7 @@ public class AdministrationDAO {
         String search = "%" + query.replace("~", "~~").replace("%", "~%").replace("_", "~_").replace("[", "~[") + "%";
         long total;
         try (PreparedStatement statement = connection
-            .prepareStatement("SELECT COUNT(*) FROM Users u LEFT JOIN Employees e ON e.UserID=u.UserID" + where)) {
+            .prepareStatement("SELECT COUNT(*)" + USER_SOURCE + where)) {
             bindUserFilters(statement, search, roleId, statusId);
             try (ResultSet resultSet = statement.executeQuery()) {
                 resultSet.next();
@@ -83,7 +90,7 @@ public class AdministrationDAO {
         }
         List<AdminUser> result = new ArrayList<>();
         try (PreparedStatement statement = connection
-            .prepareStatement(USERS + where + " ORDER BY u.UserID DESC OFFSET ? ROWS FETCH NEXT 20 ROWS ONLY")) {
+            .prepareStatement(USERS + where + " ORDER BY u.UserID DESC OFFSET ? ROWS FETCH NEXT 20 ROWS" + " ONLY")) {
             int nextParameter = bindUserFilters(statement, search, roleId, statusId);
             statement.setInt(nextParameter, (page - 1) * 20);
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -147,7 +154,7 @@ public class AdministrationDAO {
     public int activeAdmins(Connection connection) throws SQLException {
         try (PreparedStatement statement = connection
             .prepareStatement("SELECT COUNT(*) FROM Users u JOIN Roles r ON u.RoleID=r.RoleID"
-                + " JOIN Statuses s ON u.StatusID=s.StatusID WHERE r.RoleName='ADMIN' AND s.StatusName='ACTIVE'");
+                + " JOIN Statuses s ON u.StatusID=s.StatusID WHERE" + " r.RoleName='ADMIN' AND s.StatusName='ACTIVE'");
             ResultSet resultSet = statement.executeQuery()) {
             resultSet.next();
             return resultSet.getInt(1);
@@ -156,7 +163,7 @@ public class AdministrationDAO {
 
     public int createUser(Connection connection, UserRequest input, String hash) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(
-            "INSERT INTO Users(Username,PasswordHash,Email,Phone,RoleID,StatusID) VALUES(?,?,?,?,?,?)",
+            "INSERT INTO Users(Username,PasswordHash,Email,Phone,RoleID,StatusID)" + " VALUES(?,?,?,?,?,?)",
             Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, input.getUsername());
             statement.setString(2, hash);
@@ -172,22 +179,34 @@ public class AdministrationDAO {
         }
     }
 
-    public void updateUser(Connection connection, int id, UserRequest input, String hash) throws SQLException {
-        boolean profile = input.getEmail() != null || input.getPhone() != null;
-        String sql = "UPDATE Users SET RoleID=?,StatusID=?" + (profile ? ",Email=?,Phone=?" : "") + (hash == null ? "" : ",PasswordHash=?")
-            + " WHERE UserID=?";
+    public void updateUser(Connection connection, int id, UserRequest input) throws SQLException {
+        String sql = "UPDATE Users SET RoleID=?,StatusID=?,Email=COALESCE(?,Email),Phone=COALESCE(?,Phone) WHERE UserID=?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, input.getRoleId());
             statement.setInt(2, input.getStatusId());
-            int i = 3;
-            if (profile) {
-                statement.setString(i++, input.getEmail());
-                statement.setString(i++, input.getPhone());
-            }
-            if (hash != null) {
-                statement.setString(i++, hash);
-            }
-            statement.setInt(i, id);
+            statement.setString(3, input.getEmail());
+            statement.setString(4, input.getPhone());
+            statement.setInt(5, id);
+            statement.executeUpdate();
+        }
+    }
+
+    public void assignUserRole(Connection connection, int userId, int roleId) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("UPDATE Users SET RoleID=? WHERE UserID=?")) {
+            statement.setInt(1, roleId);
+            statement.setInt(2, userId);
+            statement.executeUpdate();
+        }
+    }
+
+    public void updateCustomerProfile(Connection connection, int userId, UserRequest input) throws SQLException {
+        String sql = "UPDATE Customers SET CustomerName=COALESCE(?,CustomerName),Phone=COALESCE(?,Phone),"
+            + "Email=COALESCE(?,Email) WHERE UserID=?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setNString(1, input.getEmployeeName());
+            statement.setString(2, input.getPhone());
+            statement.setString(3, input.getEmail());
+            statement.setInt(4, userId);
             statement.executeUpdate();
         }
     }
@@ -195,7 +214,8 @@ public class AdministrationDAO {
     public void saveEmployee(Connection connection, int userId, String name, String phone, String email)
         throws SQLException {
         try (PreparedStatement statement = connection
-            .prepareStatement("UPDATE Employees SET EmployeeName=?,Phone=?,Email=? WHERE UserID=?")) {
+            .prepareStatement("UPDATE Employees SET EmployeeName=COALESCE(?,EmployeeName),Phone=COALESCE(?,Phone),"
+                + "Email=COALESCE(?,Email) WHERE UserID=?")) {
             statement.setNString(1, name);
             statement.setString(2, phone);
             statement.setString(3, email);
@@ -218,7 +238,7 @@ public class AdministrationDAO {
         List<Employee> result = new ArrayList<>();
         try (
             PreparedStatement statement = connection.prepareStatement(
-                "SELECT e.EmployeeID,e.UserID,e.EmployeeName,e.Phone,e.Email,u.Username,r.RoleName,s.StatusName"
+                "SELECT" + " e.EmployeeID,e.UserID,e.EmployeeName,e.Phone,e.Email,u.Username,r.RoleName,s.StatusName"
                     + " FROM Employees e JOIN Users u ON e.UserID=u.UserID JOIN"
                     + " Roles r ON r.RoleID=u.RoleID JOIN Statuses s ON"
                     + " s.StatusID=u.StatusID ORDER BY e.EmployeeName");
@@ -233,10 +253,6 @@ public class AdministrationDAO {
     }
 
     public List<AdminPromotion> promotions(Connection connection) throws SQLException {
-        if (!SchemaTables.exists(connection, "Promotions")) {
-            return List.of();
-        }
-        boolean hasPromotionCars = SchemaTables.exists(connection, "PromotionCars");
         List<AdminPromotion> result = new ArrayList<>();
         try (
             PreparedStatement statement = connection
@@ -245,14 +261,12 @@ public class AdministrationDAO {
             while (resultSet.next()) {
                 List<Integer> ids = new ArrayList<>();
                 int id = resultSet.getInt("PromotionID");
-                if (hasPromotionCars) {
-                    try (PreparedStatement links = connection
-                        .prepareStatement("SELECT ModelID FROM PromotionCars WHERE PromotionID=? ORDER BY ModelID")) {
-                        links.setInt(1, id);
-                        try (ResultSet linkResults = links.executeQuery()) {
-                            while (linkResults.next()) {
-                                ids.add(linkResults.getInt(1));
-                            }
+                try (PreparedStatement links = connection
+                    .prepareStatement("SELECT ModelID FROM PromotionCars WHERE PromotionID=? ORDER BY" + " ModelID")) {
+                    links.setInt(1, id);
+                    try (ResultSet linkResults = links.executeQuery()) {
+                        while (linkResults.next()) {
+                            ids.add(linkResults.getInt(1));
                         }
                     }
                 }
@@ -266,13 +280,13 @@ public class AdministrationDAO {
     }
 
     public int savePromotion(Connection connection, Integer id, PromotionRequest promotion) throws SQLException {
-        if (!SchemaTables.exists(connection, "Promotions") || !SchemaTables.exists(connection, "PromotionCars")) {
-            throw new com.electriccarsales.model.ApiException(503,
-                "Cần có bảng Promotions và PromotionCars để lưu khuyến mãi.");
-        }
         String sql = id == null
-            ? "INSERT INTO Promotions(PromotionName,Description,DiscountType,DiscountValue,StartDate,EndDate,Status) VALUES(?,?,?,?,?,?,?)"
-            : "UPDATE Promotions SET PromotionName=?,Description=?,DiscountType=?,DiscountValue=?,StartDate=?,EndDate=?,Status=? WHERE PromotionID=?";
+            ? "INSERT INTO"
+                + " Promotions(PromotionName,Description,DiscountType,DiscountValue,StartDate,EndDate,Status)"
+                + " VALUES(?,?,?,?,?,?,?)"
+            : "UPDATE Promotions SET"
+                + " PromotionName=?,Description=?,DiscountType=?,DiscountValue=?,StartDate=?,EndDate=?,Status=?"
+                + " WHERE PromotionID=?";
         try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setNString(1, promotion.getPromotionName());
             statement.setNString(2, promotion.getDescription());
@@ -318,159 +332,6 @@ public class AdministrationDAO {
 
     public PageResponse<SystemLog> logs(Connection connection, String action, Integer userId, LocalDate from,
         LocalDate to, int page, int pageSize, String targetType) throws SQLException {
-        if (!SchemaTables.exists(connection, "SystemLogs")) {
-            return readAlternativeLogs(connection, action, userId, from, to, page, pageSize, targetType);
-        }
-        String where = " WHERE (?='' OR l.Action=?) AND (? IS NULL OR l.UserID=?) AND l.CreatedDate>=? AND"
-            + " l.CreatedDate<? AND (?='' OR l.TargetType=?)";
-        long total;
-        try (PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM SystemLogs l" + where)) {
-            bindLogs(statement, action, userId, from, to);
-            statement.setString(7, targetType);
-            statement.setString(8, targetType);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                resultSet.next();
-                total = resultSet.getLong(1);
-            }
-        }
-        List<SystemLog> result = new ArrayList<>();
-        if (pageSize > 20 && total > 50000) {
-            throw new IllegalArgumentException("Nhật ký vượt 50.000 dòng. Thu hẹp bộ lọc trước khi xuất.");
-        }
-        try (PreparedStatement statement = connection
-            .prepareStatement("SELECT l.*,u.Username FROM SystemLogs l LEFT JOIN Users u ON u.UserID=l.UserID"
-                + where + " ORDER BY l.LogID DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY")) {
-            bindLogs(statement, action, userId, from, to);
-            statement.setString(7, targetType);
-            statement.setString(8, targetType);
-            statement.setInt(9, (page - 1) * pageSize);
-            statement.setInt(10, pageSize);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    result.add(new SystemLog(resultSet.getLong("LogID"), resultSet.getObject("UserID", Integer.class),
-                        resultSet.getString("Username"), resultSet.getString("Action"),
-                        resultSet.getString("TargetType"), resultSet.getString("TargetID"),
-                        resultSet.getNString("Detail"), resultSet.getTimestamp("CreatedDate").toLocalDateTime()));
-                }
-            }
-        }
-        return new PageResponse<>(result, page, total, pageSize);
-    }
-
-    private PageResponse<SystemLog> readAlternativeLogs(Connection connection, String action, Integer userId,
-        LocalDate from, LocalDate to, int page, int pageSize, String targetType) throws SQLException {
-        List<SystemLog> allLogs = new ArrayList<>();
-
-        if (SchemaTables.exists(connection, "OrderStatusHistory")) {
-            String sql = """
-                SELECT h.OrderStatusHistoryID, e.UserID, COALESCE(u.Username, e.EmployeeName, N'Khách hàng/Hệ thống') AS Username,
-                    N'ĐƠN HÀNG: ' + COALESCE(os.StatusName, N'CẬP NHẬT') AS ActionName,
-                    'ORDER' AS TargetType, CAST(h.OrderID AS VARCHAR(50)) AS TargetID,
-                    COALESCE(h.Note, N'Cập nhật trạng thái đơn hàng #' + CAST(h.OrderID AS NVARCHAR(20))) AS Detail,
-                    h.ChangedDate AS CreatedDate
-                FROM OrderStatusHistory h
-                LEFT JOIN OrderStatuses os ON os.OrderStatusID = h.OrderStatusID
-                LEFT JOIN Employees e ON e.EmployeeID = h.EmployeeID
-                LEFT JOIN Users u ON u.UserID = e.UserID
-                WHERE h.ChangedDate >= ? AND h.ChangedDate < ?
-                """;
-            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-                stmt.setTimestamp(1, Timestamp.valueOf(from.atStartOfDay()));
-                stmt.setTimestamp(2, Timestamp.valueOf(to.plusDays(1).atStartOfDay()));
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        allLogs.add(new SystemLog(
-                            rs.getLong("OrderStatusHistoryID"),
-                            rs.getObject("UserID", Integer.class),
-                            rs.getString("Username"),
-                            rs.getString("ActionName"),
-                            rs.getString("TargetType"),
-                            rs.getString("TargetID"),
-                            rs.getNString("Detail"),
-                            rs.getTimestamp("CreatedDate").toLocalDateTime()
-                        ));
-                    }
-                }
-            }
-        }
-
-        if (SchemaTables.exists(connection, "InventoryTransactions")) {
-            String sql = """
-                SELECT it.InventoryTransactionID, e.UserID, COALESCE(u.Username, e.EmployeeName, N'Nhân viên kho') AS Username,
-                    N'KHO XE: ' + COALESCE(it.TransactionType, N'GIAO DỊCH') AS ActionName,
-                    'CAR' AS TargetType, CAST(it.CarID AS VARCHAR(50)) AS TargetID,
-                    COALESCE(it.Note, N'Giao dịch kho xe #' + CAST(it.CarID AS NVARCHAR(20))) AS Detail,
-                    it.TransactionDate AS CreatedDate
-                FROM InventoryTransactions it
-                LEFT JOIN Employees e ON e.EmployeeID = it.EmployeeID
-                LEFT JOIN Users u ON u.UserID = e.UserID
-                WHERE it.TransactionDate >= ? AND it.TransactionDate < ?
-                """;
-            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-                stmt.setTimestamp(1, Timestamp.valueOf(from.atStartOfDay()));
-                stmt.setTimestamp(2, Timestamp.valueOf(to.plusDays(1).atStartOfDay()));
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        allLogs.add(new SystemLog(
-                            100000L + rs.getLong("InventoryTransactionID"),
-                            rs.getObject("UserID", Integer.class),
-                            rs.getString("Username"),
-                            rs.getString("ActionName"),
-                            rs.getString("TargetType"),
-                            rs.getString("TargetID"),
-                            rs.getNString("Detail"),
-                            rs.getTimestamp("CreatedDate").toLocalDateTime()
-                        ));
-                    }
-                }
-            }
-        }
-
-        synchronized (SystemLogDAO.RUNTIME_LOGS) {
-            for (SystemLog runtimeLog : SystemLogDAO.RUNTIME_LOGS) {
-                if (!runtimeLog.getCreatedDate().isBefore(from.atStartOfDay())
-                    && runtimeLog.getCreatedDate().isBefore(to.plusDays(1).atStartOfDay())) {
-                    allLogs.add(runtimeLog);
-                }
-            }
-        }
-
-        List<SystemLog> filtered = allLogs.stream().filter(l -> {
-            if (action != null && !action.isBlank()
-                && !l.getAction().equalsIgnoreCase(action.trim())
-                && !l.getAction().toUpperCase().contains(action.trim().toUpperCase())) {
-                return false;
-            }
-            if (userId != null && !userId.equals(l.getUserId())) {
-                return false;
-            }
-            if (targetType != null && !targetType.isBlank()
-                && !l.getTargetType().equalsIgnoreCase(targetType.trim())) {
-                return false;
-            }
-            return true;
-        }).sorted((a, b) -> b.getCreatedDate().compareTo(a.getCreatedDate())).toList();
-
-        long total = filtered.size();
-        int offset = (page - 1) * pageSize;
-        List<SystemLog> pageItems = filtered.stream().skip(Math.max(0, offset)).limit(pageSize).toList();
-        PageResponse<SystemLog> response = new PageResponse<>(pageItems, page, total, pageSize);
-        response.setAvailable(true);
-        return response;
-    }
-
-    private void bindLogs(PreparedStatement statement, String action, Integer userId, LocalDate from, LocalDate to)
-        throws SQLException {
-        statement.setString(1, action);
-        statement.setString(2, action);
-        if (userId == null) {
-            statement.setNull(3, Types.INTEGER);
-            statement.setNull(4, Types.INTEGER);
-        } else {
-            statement.setInt(3, userId);
-            statement.setInt(4, userId);
-        }
-        statement.setTimestamp(5, Timestamp.valueOf(from.atStartOfDay()));
-        statement.setTimestamp(6, Timestamp.valueOf(to.plusDays(1).atStartOfDay()));
+        return new SystemLogDAO().queryLogs(connection, action, userId, from, to, page, pageSize, targetType, true);
     }
 }

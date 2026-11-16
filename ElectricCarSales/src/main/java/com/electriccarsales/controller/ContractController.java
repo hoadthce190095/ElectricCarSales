@@ -59,6 +59,7 @@ public class ContractController extends HttpServlet {
                     FinanceControllerSupport.sendError(request, response, 403, "Bạn không có quyền xem mục này.");
                     return;
                 }
+                new com.electriccarsales.service.BankTransferService().syncCustomerReportedTransfers(customer.getCustomerID());
                 contracts = contractsService.getCustomerContracts(customer.getCustomerID());
                 request.setAttribute("customerOrders", new com.electriccarsales.dao.order.OrderDAO().findByCustomerId(customer.getCustomerID()));
             } else if (List.of("SALES", "ACCOUNTANT", "MANAGER", "ADMIN", "OPERATIONS").contains(role)) {

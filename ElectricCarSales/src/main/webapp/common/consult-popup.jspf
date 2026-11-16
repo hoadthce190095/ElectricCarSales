@@ -44,7 +44,7 @@
                         <label class="ecs-field"><span>Kỳ hạn vay</span><select id="ecs-calc-term"></select></label>
                         <label class="ecs-field"><span>Giá xe theo kho (VND)</span><input id="ecs-calc-price" type="text" readonly placeholder="Tự lấy từ giá xe trong Cars"></label>
                     </div>
-                    <label class="ecs-field" style="margin-top:8px;"><span>Tỷ lệ trả trước (tối thiểu 30%)</span><input id="ecs-calc-down-rate" type="number" min="30" max="100" step="1" value="30"></label>
+                    <input id="ecs-calc-down-rate" type="hidden" value="30">
                 </div>
                 <p style="font-size:11px;color:#64748b;margin:8px 0 0;">Giá xe và điều kiện tài chính do Sales Staff/đối tác xác nhận. Đây là ước tính lãi phẳng theo thông tin tham khảo, không phải lịch trả góp hay phê duyệt của ngân hàng. Theo quy trình hệ thống, đối tác giải ngân khoản còn lại một lần trực tiếp cho đại lý.</p>
                 <div id="ecs-calc-summary" class="ecs-calc-summary"></div>

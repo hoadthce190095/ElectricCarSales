@@ -13,8 +13,12 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ConsultationRequestDAO {
+    private static final Logger LOGGER = Logger.getLogger(ConsultationRequestDAO.class.getName());
+
     @FunctionalInterface
     interface ConnectionProvider {
         Connection open() throws SQLException;
@@ -22,12 +26,13 @@ public class ConsultationRequestDAO {
 
     private static final String SELECT_SQL = """
         SELECT r.ConsultationRequestID, r.CustomerID, r.EmployeeID, r.ModelID,
-               r.RequestContent, r.RequestDate, s.StatusName,
-               c.CustomerName, c.Phone AS CustomerPhone, c.Email AS CustomerEmail,
+               r.RequestContent, r.RequestDate, COALESCE(s.StatusName, 'PENDING') AS StatusName,
+               COALESCE(c.CustomerName, N'Khách hàng') AS CustomerName,
+               c.Phone AS CustomerPhone, c.Email AS CustomerEmail,
                m.ModelName, e.EmployeeName
         FROM ConsultationRequests r
-        JOIN ConsultationStatuses s ON s.ConsultationStatusID = r.ConsultationStatusID
-        JOIN Customers c ON c.CustomerID = r.CustomerID
+        LEFT JOIN ConsultationStatuses s ON s.ConsultationStatusID = r.ConsultationStatusID
+        LEFT JOIN Customers c ON c.CustomerID = r.CustomerID
         LEFT JOIN CarModels m ON m.ModelID = r.ModelID
         LEFT JOIN Employees e ON e.EmployeeID = r.EmployeeID
         """;
@@ -53,7 +58,8 @@ public class ConsultationRequestDAO {
             }
             return requests;
         } catch (SQLException exception) {
-            throw new IllegalStateException("Không thể tải yêu cầu tư vấn.", exception);
+            LOGGER.log(Level.SEVERE, "Không thể tải danh sách yêu cầu tư vấn: " + exception.getMessage(), exception);
+            throw new IllegalStateException("Không thể tải yêu cầu tư vấn: " + exception.getMessage(), exception);
         }
     }
 
@@ -70,7 +76,8 @@ public class ConsultationRequestDAO {
                 return requests;
             }
         } catch (SQLException exception) {
-            throw new IllegalStateException("Không thể tải yêu cầu tư vấn của khách hàng.", exception);
+            LOGGER.log(Level.SEVERE, "Không thể tải yêu cầu tư vấn của khách #" + customerId + ": " + exception.getMessage(), exception);
+            throw new IllegalStateException("Không thể tải yêu cầu tư vấn của khách hàng: " + exception.getMessage(), exception);
         }
     }
 
@@ -83,8 +90,58 @@ public class ConsultationRequestDAO {
                 return rows.next() ? map(rows) : null;
             }
         } catch (SQLException exception) {
-            throw new IllegalStateException("Không thể tải chi tiết yêu cầu tư vấn.", exception);
+            LOGGER.log(Level.SEVERE, "Không thể tải chi tiết yêu cầu tư vấn #" + requestId + ": " + exception.getMessage(), exception);
+            throw new IllegalStateException("Không thể tải chi tiết yêu cầu tư vấn: " + exception.getMessage(), exception);
         }
+    }
+
+    public int resolveStatusId(Connection connection, String statusName) throws SQLException {
+        String target = statusName == null || statusName.isBlank() ? "PENDING" : statusName.trim().toUpperCase(Locale.ROOT);
+        // 1. Kiểm tra khớp chính xác StatusName
+        String query = "SELECT TOP 1 ConsultationStatusID FROM ConsultationStatuses WHERE UPPER(LTRIM(RTRIM(StatusName))) = UPPER(LTRIM(RTRIM(?)))";
+        try (PreparedStatement ps = connection.prepareStatement(query)) {
+            ps.setString(1, target);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        // 2. Kiểm tra khớp gần đúng
+        String likeQuery = "SELECT TOP 1 ConsultationStatusID FROM ConsultationStatuses WHERE UPPER(StatusName) LIKE ? OR UPPER(StatusName) LIKE 'PEND%' OR UPPER(StatusName) LIKE 'CHO%'";
+        try (PreparedStatement ps = connection.prepareStatement(likeQuery)) {
+            ps.setString(1, "%" + target + "%");
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        // 3. Lấy trạng thái đầu tiên có sẵn
+        try (Statement st = connection.createStatement();
+             ResultSet rs = st.executeQuery("SELECT TOP 1 ConsultationStatusID FROM ConsultationStatuses ORDER BY ConsultationStatusID ASC")) {
+            if (rs.next()) return rs.getInt(1);
+        }
+        // 4. Bảng rỗng -> tự động chèn các trạng thái chuẩn theo ElectricCarSalesDB.sql
+        try (Statement st = connection.createStatement()) {
+            st.executeUpdate("INSERT INTO ConsultationStatuses(StatusName) VALUES ('PENDING'), ('IN_PROGRESS'), ('COMPLETED'), ('CANCELLED')");
+        } catch (Exception ex) {
+            LOGGER.log(Level.WARNING, "Không thể tự động chèn dữ liệu mẫu ConsultationStatuses: " + ex.getMessage());
+        }
+        try (Statement st = connection.createStatement();
+             ResultSet rs = st.executeQuery("SELECT TOP 1 ConsultationStatusID FROM ConsultationStatuses ORDER BY ConsultationStatusID ASC")) {
+            if (rs.next()) return rs.getInt(1);
+        }
+        return 1;
+    }
+
+    private Integer validateModelId(Connection connection, Integer modelId) {
+        if (modelId == null || modelId <= 0) return null;
+        try (PreparedStatement ps = connection.prepareStatement("SELECT ModelID FROM CarModels WHERE ModelID = ?")) {
+            ps.setInt(1, modelId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.WARNING, "Không thể kiểm tra ModelID " + modelId + ": " + ex.getMessage());
+        }
+        return null;
     }
 
     public void insert(ConsultationRequest request) {
@@ -95,39 +152,61 @@ public class ConsultationRequestDAO {
         }
         String status = request.getStatus() == null ? "PENDING" : request.getStatus().trim().toUpperCase(Locale.ROOT);
         Timestamp date = request.getCreatedAt() == null ? new Timestamp(System.currentTimeMillis()) : request.getCreatedAt();
+
         String sql = """
-            INSERT INTO ConsultationRequests(CustomerID,EmployeeID,ModelID,ConsultationStatusID,
-                                             RequestContent,RequestDate)
-            VALUES(?,?,?,(SELECT ConsultationStatusID FROM ConsultationStatuses WHERE StatusName=?),?,?)
+            INSERT INTO ConsultationRequests(CustomerID, EmployeeID, ModelID, ConsultationStatusID,
+                                             RequestContent, RequestDate)
+            VALUES(?, ?, ?, ?, ?, ?)
             """;
-        try (Connection connection = connections.open();
-            PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            statement.setInt(1, request.getCustomerId());
-            if (request.getStaffId() == 0) {
-                statement.setNull(2, Types.INTEGER);
-            } else {
-                statement.setInt(2, request.getStaffId());
-            }
-            if (request.getModelId() == null) {
-                statement.setNull(3, Types.INTEGER);
-            } else {
-                statement.setInt(3, request.getModelId());
-            }
-            statement.setString(4, status);
-            statement.setNString(5, request.getContent());
-            statement.setTimestamp(6, date);
-            if (statement.executeUpdate() != 1) {
-                throw new SQLException("Không tạo được yêu cầu tư vấn.");
-            }
-            try (ResultSet keys = statement.getGeneratedKeys()) {
-                if (keys.next()) {
-                    request.setId(keys.getInt(1));
+        try (Connection connection = connections.open()) {
+            int statusId = resolveStatusId(connection, status);
+            Integer safeModelId = validateModelId(connection, request.getModelId());
+
+            try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                statement.setInt(1, request.getCustomerId());
+                if (request.getStaffId() == 0) {
+                    statement.setNull(2, Types.INTEGER);
+                } else {
+                    statement.setInt(2, request.getStaffId());
+                }
+                if (safeModelId == null) {
+                    statement.setNull(3, Types.INTEGER);
+                } else {
+                    statement.setInt(3, safeModelId);
+                }
+                statement.setInt(4, statusId);
+                statement.setNString(5, request.getContent());
+                statement.setTimestamp(6, date);
+
+                int rowsAffected = statement.executeUpdate();
+                if (rowsAffected < 1) {
+                    throw new SQLException("Không thể lưu yêu cầu tư vấn vào database (0 hàng bị ảnh hưởng).");
+                }
+                try (ResultSet keys = statement.getGeneratedKeys()) {
+                    if (keys.next()) {
+                        request.setId(keys.getInt(1));
+                    }
+                }
+                if (request.getId() <= 0) {
+                    try (PreparedStatement ps = connection.prepareStatement(
+                            "SELECT TOP 1 ConsultationRequestID FROM ConsultationRequests WHERE CustomerID = ? ORDER BY ConsultationRequestID DESC")) {
+                        ps.setInt(1, request.getCustomerId());
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                request.setId(rs.getInt(1));
+                            }
+                        }
+                    }
+                }
+                request.setStatus(status);
+                request.setCreatedAt(date);
+                if (safeModelId != null) {
+                    request.setModelId(safeModelId);
                 }
             }
-            request.setStatus(status);
-            request.setCreatedAt(date);
         } catch (SQLException exception) {
-            throw new IllegalStateException("Không thể tạo yêu cầu tư vấn.", exception);
+            LOGGER.log(Level.SEVERE, "Lỗi khi tạo yêu cầu tư vấn trong database: " + exception.getMessage(), exception);
+            throw new IllegalStateException("Không thể tạo yêu cầu tư vấn: " + exception.getMessage(), exception);
         }
     }
 
@@ -161,31 +240,32 @@ public class ConsultationRequestDAO {
         String sql = """
             UPDATE ConsultationRequests
             SET EmployeeID = ?,
-                ConsultationStatusID = (SELECT ConsultationStatusID FROM ConsultationStatuses WHERE StatusName = ?),
+                ConsultationStatusID = ?,
                 RequestContent = ?
             WHERE ConsultationRequestID = ? AND RequestContent = ?
-              AND COALESCE(EmployeeID,0) = ?
-              AND ConsultationStatusID = (SELECT ConsultationStatusID FROM ConsultationStatuses WHERE StatusName = ?)
+              AND COALESCE(EmployeeID, 0) = ?
             """;
-        try (Connection connection = connections.open();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
-            if (staffToSet == null) {
-                ps.setNull(1, Types.INTEGER);
-            } else {
-                ps.setInt(1, staffToSet);
+        try (Connection connection = connections.open()) {
+            int newStatusId = resolveStatusId(connection, status);
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                if (staffToSet == null) {
+                    ps.setNull(1, Types.INTEGER);
+                } else {
+                    ps.setInt(1, staffToSet);
+                }
+                ps.setInt(2, newStatusId);
+                ps.setNString(3, updatedContent);
+                ps.setInt(4, requestId);
+                ps.setNString(5, current.getContent());
+                ps.setInt(6, current.getStaffId());
+                if (ps.executeUpdate() != 1) {
+                    throw new IllegalStateException("Yêu cầu tư vấn vừa thay đổi hoặc không còn tồn tại. Hãy tải lại danh sách.");
+                }
+                return true;
             }
-            ps.setString(2, status);
-            ps.setNString(3, updatedContent);
-            ps.setInt(4, requestId);
-            ps.setNString(5, current.getContent());
-            ps.setInt(6, current.getStaffId());
-            ps.setString(7, current.getStatus());
-            if (ps.executeUpdate() != 1) {
-                throw new IllegalStateException("Yêu cầu tư vấn vừa thay đổi hoặc không còn tồn tại. Hãy tải lại danh sách.");
-            }
-            return true;
         } catch (SQLException e) {
-            throw new IllegalStateException("Không thể cập nhật yêu cầu tư vấn.", e);
+            LOGGER.log(Level.SEVERE, "Lỗi cập nhật yêu cầu tư vấn #" + requestId + ": " + e.getMessage(), e);
+            throw new IllegalStateException("Không thể cập nhật yêu cầu tư vấn: " + e.getMessage(), e);
         }
     }
 

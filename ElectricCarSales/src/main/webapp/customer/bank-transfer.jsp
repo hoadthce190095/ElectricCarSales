@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<fmt:setLocale value="vi_VN"/>
 <% request.setAttribute("customerTitle", "Thanh toán VietQR · SePay + MB Bank"); request.setAttribute("customerEyebrow", "CỔNG CHUYỂN KHOẢN VIETQR · MB BANK"); %>
 <%@ include file="../common/customer-shell.jspf" %>
 <link rel="stylesheet" href="<%= request.getContextPath() %>/assets/css/payment-bank-transfer.css">
@@ -41,7 +42,7 @@
                 <div style="flex: 1; min-width: 290px; max-width: 500px;">
                     <div class="transfer-summary" style="margin-bottom: 16px;">
                         <span>Số tiền cần thanh toán</span>
-                        <strong><fmt:formatNumber value="${transfer.amount}" type="number" groupingUsed="true"/> ₫</strong>
+                        <strong><fmt:formatNumber value="${transfer.amount}" pattern="#,##0"/> VNĐ</strong>
                         <small>Vui lòng chuyển khoản đúng số tiền để hệ thống tự động xác nhận.</small>
                     </div>
 
@@ -79,6 +80,11 @@
                          style="margin-top: 16px; padding: 12px; border-radius: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; font-size: 0.9rem; text-align: center;">
                         ⏳ Đang chờ giao dịch chuyển khoản... Hệ thống sẽ tự động chuyển hướng khi nhận được tiền.
                     </div>
+                    <div style="margin-top: 10px; display: flex; justify-content: center;">
+                        <button type="button" id="btn-recheck-transfer" class="button button-primary" style="font-size: 13px; padding: 7px 16px; width: 100%; border-radius: 6px;">
+                            ⚡ Tôi đã chuyển khoản (Kiểm tra giao dịch ngay)
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -92,13 +98,7 @@
             </div>
 
             <div style="margin-top: 24px; padding-top: 16px; border-top: 1px dashed #e5e7eb; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                <form method="post" action="<%= request.getContextPath() %>/payment/create">
-                    <input type="hidden" name="csrfToken" value="<c:out value='${paymentCsrf}'/>">
-                    <input type="hidden" name="orderId" value="<c:out value='${transfer.orderId}'/>">
-                    <input type="hidden" name="type" value="<c:out value='${transfer.type}'/>">
-                    <input type="hidden" name="method" value="CASH">
-                    <button class="button button-secondary" type="submit">Chuyển sang thanh toán Tiền mặt (CASH) tại showroom</button>
-                </form>
+                <a class="button button-secondary" href="<%= request.getContextPath() %>/payment?orderId=<c:out value='${transfer.orderId}'/>">Quay lại trang thanh toán</a>
                 <a class="button button-secondary" href="<%= request.getContextPath() %>/payment/detail?orderId=<c:out value='${transfer.orderId}'/>">Xem chi tiết đơn &amp; công nợ</a>
             </div>
         </section>
@@ -120,17 +120,11 @@
                     <strong><c:out value="${not empty sepayError ? sepayError : 'Cổng thanh toán SePay + MB Bank chưa sẵn sàng.'}"/></strong>
                 </div>
             </div>
-            <p>Để đảm bảo an toàn tuyệt đối, hệ thống chỉ mở thanh toán trực tuyến khi thông tin tài khoản MB Bank thụ hưởng đã được cấu hình hợp lệ. Quý khách có thể chọn hình thức <strong>Thanh toán tiền mặt (CASH)</strong> tại showroom hoặc quay lại trang đơn hàng.</p>
+            <p>Hệ thống chưa thể mở yêu cầu chuyển khoản lúc này. Quý khách có thể quay lại trang thanh toán để thử lại hoặc xem thông tin đơn hàng.</p>
 
             <c:if test="${not empty resolvedOrderId}">
                 <div style="margin: 24px 0; display:flex; gap:12px; align-items:center; flex-wrap: wrap;">
-                    <form method="post" action="<%= request.getContextPath() %>/payment/create">
-                        <input type="hidden" name="csrfToken" value="<c:out value='${paymentCsrf}'/>">
-                        <input type="hidden" name="orderId" value="<c:out value='${resolvedOrderId}'/>">
-                        <input type="hidden" name="type" value="<c:out value='${resolvedType}'/>">
-                        <input type="hidden" name="method" value="CASH">
-                        <button class="button button-primary" type="submit">Yêu cầu thanh toán Tiền mặt (CASH) tại showroom <span>→</span></button>
-                    </form>
+                    <a class="button button-primary" href="<%= request.getContextPath() %>/payment?orderId=<c:out value='${resolvedOrderId}'/>">Quay lại trang thanh toán</a>
                     <a class="button button-secondary" href="<%= request.getContextPath() %>/payment/detail?orderId=<c:out value='${resolvedOrderId}'/>">Xem chi tiết đơn hàng</a>
                     <a class="button button-secondary" href="<%= request.getContextPath() %>/orders">Quay lại danh sách đơn hàng</a>
                 </div>

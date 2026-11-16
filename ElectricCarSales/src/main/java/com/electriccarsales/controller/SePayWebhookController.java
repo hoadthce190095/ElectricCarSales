@@ -116,13 +116,17 @@ public class SePayWebhookController extends HttpServlet {
 
         String gateway = data.path("gateway").asText("MBBank");
         String content = data.path("content").asText("");
+        // SePay's configured payment-code parser returns the recognized code here.
+        // Keep the bank reference as fallback; the service also scans raw content.
+        String paymentCode = data.path("code").asText("");
         String referenceCode = data.path("referenceCode").asText("");
         String transactionDate = data.path("transactionDate").asText("");
+        String paymentReference = !paymentCode.isBlank() ? paymentCode : referenceCode;
 
         try {
             boolean success = bankTransferService.processSePaySuccess(
                     eventId, gateway, accountNumber, transferType, transferAmount,
-                    content, referenceCode, transactionDate);
+                    content, paymentReference, transactionDate);
 
             if (success) {
                 logMessage("SePay: Xác nhận thanh toán thành công cho GD #" + eventId + ", số tiền " + transferAmount);

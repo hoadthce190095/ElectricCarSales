@@ -61,6 +61,7 @@ public class VehicleController extends HttpServlet {
             List<CatalogVehicle> vehicles = new VehicleCatalogService().getCatalogVehicles();
             String[] requestedKeys = request.getParameterValues("key");
             String modelId = request.getParameter("modelId");
+            String carId = request.getParameter("carId");
 
             if (modelId != null && !modelId.isBlank()) {
                 int parsedModelId;
@@ -75,7 +76,22 @@ public class VehicleController extends HttpServlet {
                     return;
                 }
                 vehicles = vehicles.stream().filter(vehicle -> vehicle.modelID() == parsedModelId).toList();
-            } else if (requestedKeys != null) {
+            }
+            if (carId != null && !carId.isBlank()) {
+                int parsedCarId;
+                try {
+                    parsedCarId = Integer.parseInt(carId);
+                } catch (NumberFormatException e) {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mã xe vật lý không hợp lệ.");
+                    return;
+                }
+                if (parsedCarId <= 0) {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mã xe vật lý không hợp lệ.");
+                    return;
+                }
+                vehicles = vehicles.stream().filter(vehicle ->
+                        vehicle.stockCarID() != null && vehicle.stockCarID() == parsedCarId).toList();
+            } else if (requestedKeys != null && (modelId == null || modelId.isBlank())) {
                 List<String> keys = Arrays.asList(requestedKeys);
                 vehicles = vehicles.stream().filter(vehicle -> keys.contains(comparisonKey(vehicle))).toList();
             }
@@ -93,9 +109,12 @@ public class VehicleController extends HttpServlet {
                             jsonString("Thông tin và thông số xe được lấy từ danh mục trong cơ sở dữ liệu.") +
                             ",\"models\":[", "]}"));
             response.getWriter().write(payload);
-        } catch (RuntimeException e) {
-            log("Không thể tải danh mục xe từ cơ sở dữ liệu.", e);
-            throw new ServletException("Không thể tải danh mục xe.", e);
+        } catch (Exception e) {
+            log("Không thể tải danh mục xe từ cơ sở dữ liệu. Sử dụng phản hồi dự phòng.", e);
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().write("{\"note\":" +
+                    jsonString("Thông tin xe đang hiển thị theo danh mục dự phòng.") +
+                    ",\"models\":[]}");
         }
     }
 
@@ -117,6 +136,8 @@ public class VehicleController extends HttpServlet {
         return "{"
                 + "\"modelID\":" + vehicle.modelID()
                 + ",\"versionID\":" + vehicle.versionID()
+                + ",\"stockCarID\":" + (vehicle.stockCarID() == null ? "null" : vehicle.stockCarID())
+                + ",\"stockColorName\":" + jsonString(vehicle.stockColorName())
                 + ",\"comparisonKey\":" + jsonString(comparisonKey(vehicle))
                 + ",\"modelName\":" + jsonString(vehicle.modelName())
                 + ",\"carLine\":" + jsonString(vehicle.carLine())
@@ -147,7 +168,8 @@ public class VehicleController extends HttpServlet {
     }
 
     private static String comparisonKey(CatalogVehicle vehicle) {
-        return vehicle.modelName().trim() + "-" + vehicle.specificationVersion().trim();
+        String base = vehicle.modelName().trim() + "-" + vehicle.specificationVersion().trim();
+        return vehicle.stockCarID() == null ? base : base + "-STOCK-" + vehicle.stockCarID();
     }
 
     private static String jsonNumber(Number value) {

@@ -11,6 +11,7 @@ public class SystemLog {
     private String targetId;
     private String detail;
     private LocalDateTime createdDate;
+    private String source = "SYSTEM";
 
     public SystemLog() {
     }
@@ -89,5 +90,13 @@ public class SystemLog {
 
     public void setCreatedDate(LocalDateTime createdDate) {
         this.createdDate = createdDate;
+    }
+
+    public String getSource() {
+        return source != null ? source : "SYSTEM";
+    }
+
+    public void setSource(String source) {
+        this.source = source;
     }
 }

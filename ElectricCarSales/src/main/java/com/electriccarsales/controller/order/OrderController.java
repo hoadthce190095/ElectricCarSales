@@ -45,7 +45,8 @@ public class OrderController extends HttpServlet {
                     if ("SALES".equals(role) || "OPERATIONS".equals(role)) {
                         payload.put("csrfToken", ensureCsrf(session));
                     }
-                    if (!"SALES".equals(role)) {
+                    payload.put("currentEmployee", SalesOrderService.findConsultingStaff(0, user.getUserId()));
+                    if (!"SALES".equalsIgnoreCase(role) && !"ADMIN".equalsIgnoreCase(role) && !"MANAGER".equalsIgnoreCase(role)) {
                         payload.remove("customers");
                         payload.remove("cars");
                         payload.remove("paymentMethods");
@@ -60,6 +61,12 @@ public class OrderController extends HttpServlet {
                     return;
                 }
                 String csrfToken = ensureCsrf(session);
+                int initCustId = 0;
+                String cidStr = request.getParameter("customerId");
+                if (cidStr != null && !cidStr.isBlank()) {
+                    try { initCustId = Integer.parseInt(cidStr.trim()); } catch (Exception ignored) {}
+                }
+                request.setAttribute("consultingStaff", SalesOrderService.findConsultingStaff(initCustId, user.getUserId()));
                 request.setAttribute("orderOptions", salesOrders.getOptions());
                 request.setAttribute("paymentCsrf", csrfToken);
                 request.setAttribute("selectedCustomerId", request.getParameter("customerId"));
@@ -91,6 +98,7 @@ public class OrderController extends HttpServlet {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN);
                 return;
             }
+            new com.electriccarsales.service.BankTransferService().syncCustomerReportedTransfers(customerId);
             request.setAttribute("orders", service.getCustomerOrders(customerId));
             request.setAttribute("sepayReady", com.electriccarsales.service.SePayService.isReady());
             String csrfToken = ensureCsrf(session);
@@ -122,14 +130,20 @@ public class OrderController extends HttpServlet {
             int customer = Integer.parseInt(request.getParameter("customerId"));
             int car = Integer.parseInt(request.getParameter("carId"));
             String partnerValue = request.getParameter("companyId");
-            Integer partner = partnerValue == null || partnerValue.isBlank() ? null : Integer.parseInt(partnerValue);
+            String methodVal = request.getParameter("method");
+            Integer partner = null;
+            if ("INSTALLMENT".equalsIgnoreCase(methodVal) && partnerValue != null && !partnerValue.isBlank()) {
+                try {
+                    partner = Integer.parseInt(partnerValue.trim());
+                } catch (NumberFormatException ignored) {}
+            }
             String verifiedName = request.getParameter("customerName");
             String verifiedPhone = request.getParameter("customerPhone");
             String verifiedEmail = request.getParameter("customerEmail");
             String verifiedAddress = request.getParameter("customerAddress");
             String salesNote = request.getParameter("salesNote");
 
-            int orderId = salesOrders.create(user.getUserId(), customer, car, request.getParameter("method"), partner,
+            int orderId = salesOrders.create(user.getUserId(), customer, car, methodVal, partner,
                     verifiedName, verifiedPhone, verifiedEmail, verifiedAddress, salesNote);
             if (jsonRequested(request)) {
                 response.setStatus(HttpServletResponse.SC_CREATED);

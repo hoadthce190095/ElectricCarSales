@@ -16,6 +16,8 @@ boolean customerView = sessionUserObj != null
     ? "CUSTOMER".equalsIgnoreCase(sessionUserObj.getRole())
     : legacyUserId instanceof Number && ((Number) legacyUserId).intValue() > 0
         && "CUSTOMER".equalsIgnoreCase(String.valueOf(session.getAttribute("roleName")));
+boolean isAuthenticated = sessionUserObj != null
+    || (legacyUserId instanceof Number && ((Number) legacyUserId).intValue() > 0);
 %>
 <!doctype html>
 <html lang="vi">
@@ -24,6 +26,7 @@ boolean customerView = sessionUserObj != null
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f7f8fa">
     <meta name="app-context-path" content="<c:out value='${pageContext.request.contextPath}' />">
+    <meta name="user-authenticated" content="<%= isAuthenticated %>">
     <meta name="description" content="Khám phá, tìm kiếm và so sánh các mẫu xe điện VinFast tại ElectricCarSale.">
     <title>VinFast - ElectricCarSale</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -31,11 +34,11 @@ boolean customerView = sessionUserObj != null
 
     <link rel="stylesheet" href="<c:url value='/assets/css/theme.css'><c:param name='v' value='main-blue-20261017' /></c:url>">
     <link rel="stylesheet" href="<c:url value='/assets/css/customer.css'><c:param name='v' value='customer-avatar-navigation-20261112' /></c:url>">
-    <link rel="stylesheet" href="<c:url value='/assets/css/home.css'><c:param name='v' value='home-tweaks-20261112' /></c:url>">
-    <script src="<c:url value='/assets/js/customer.js'><c:param name='v' value='customer-avatar-20261112' /></c:url>" defer></script>
-    <script src="<c:url value='/assets/js/home.js'><c:param name='v' value='home-compare-direct-20261116' /></c:url>" defer></script>
+    <link rel="stylesheet" href="<c:url value='/assets/css/home.css'><c:param name='v' value='home-auth-history-20261116c' /></c:url>">
+    <script src="<c:url value='/assets/js/customer.js'><c:param name='v' value='customer-avatar-20261116c' /></c:url>" defer></script>
+    <script src="<c:url value='/assets/js/home.js'><c:param name='v' value='<%= String.valueOf(System.currentTimeMillis()) %>' /></c:url>" defer></script>
 </head>
-<body class="home-page" data-context-path="<c:out value='${pageContext.request.contextPath}' />">
+<body class="home-page" data-context-path="<c:out value='${pageContext.request.contextPath}' />" data-authenticated="<%= isAuthenticated %>">
 <header class="site-header">
     <div class="header-inner">
         <a class="brand" href="<c:url value='/index.jsp' />" aria-label="VinFast ElectricCarSale - Trang chủ">
@@ -117,7 +120,7 @@ boolean customerView = sessionUserObj != null
             <div class="select-wrap"><span aria-hidden="true">▦</span><select id="model-filter" aria-label="Lọc theo dòng xe"><option value="">Tất cả dòng xe</option></select><b aria-hidden="true">⌄</b></div>
 
             <label class="filter-label" for="price-filter">Mức giá tham khảo</label>
-            <div class="select-wrap"><span aria-hidden="true">₫</span><select id="price-filter"><option value="">Tất cả mức giá</option><option value="500">Dưới 500 triệu</option><option value="800">Dưới 800 triệu</option><option value="1000">Dưới 1 tỷ</option><option value="1500">Dưới 1,5 tỷ</option></select><b aria-hidden="true">⌄</b></div>
+            <div class="select-wrap"><span aria-hidden="true">₫</span><select id="price-filter" aria-label="Lọc theo mức giá"><option value="">Tất cả mức giá</option><option value="under-500">Dưới 500 triệu</option><option value="500-800">500 - 800 triệu</option><option value="800-1000">800 triệu - 1 tỷ</option><option value="1000-1500">1 - 1,5 tỷ</option><option value="over-1500">Trên 1,5 tỷ</option></select><b aria-hidden="true">⌄</b></div>
 
             <label class="filter-label" for="range-filter">Quãng đường công bố</label>
             <div class="select-wrap"><span aria-hidden="true">↗</span><select id="range-filter"><option value="">Mọi mức quãng đường</option><option value="300">Từ 300 km</option><option value="400">Từ 400 km</option><option value="500">Từ 500 km</option></select><b aria-hidden="true">⌄</b></div>
@@ -138,8 +141,27 @@ boolean customerView = sessionUserObj != null
             </form>
 
             <div class="catalog-title-row">
-                <div><span class="eyebrow blue-eyebrow">DANH MỤC XE ĐIỆN</span><h2>Khám phá các mẫu xe VinFast</h2><p id="result-summary" aria-live="polite">Đang tải danh mục xe...</p></div>
-                <label class="sort-control" for="sort-filter"><span>Sắp xếp</span><select id="sort-filter"><option value="recommended">Nổi bật</option><option value="price-asc">Giá thấp đến cao</option><option value="price-desc">Giá cao đến thấp</option><option value="range-desc">Quãng đường xa nhất</option></select></label>
+                <div>
+                    <span class="eyebrow blue-eyebrow">DANH MỤC XE ĐIỆN</span>
+                    <h2>Khám phá các mẫu xe VinFast</h2>
+                    <p id="result-summary" aria-live="polite">Đang tải danh mục xe...</p>
+                </div>
+                <div class="catalog-sort-group">
+                    <% if (isAuthenticated) { %>
+                    <button type="button" class="history-pill-btn" id="open-history-btn" title="Xem lịch sử so sánh xe">
+                        <span aria-hidden="true">🕒</span> Lịch sử so sánh <span class="history-badge" id="history-badge" hidden>0</span>
+                    </button>
+                    <% } %>
+                    <label class="sort-control" for="sort-filter">
+                        <span>Sắp xếp</span>
+                        <select id="sort-filter">
+                            <option value="recommended">Nổi bật</option>
+                            <option value="price-asc">Giá thấp đến cao</option>
+                            <option value="price-desc">Giá cao đến thấp</option>
+                            <option value="range-desc">Quãng đường xa nhất</option>
+                        </select>
+                    </label>
+                </div>
             </div>
 
             <div class="active-filters" id="active-filters" aria-live="polite"></div>
@@ -169,13 +191,36 @@ boolean customerView = sessionUserObj != null
 
 <div class="compare-dock" id="compare-dock" hidden>
     <span class="compare-notice" id="compare-notice" role="status" aria-live="polite" hidden></span>
-    <span><b id="compare-count">0</b> mẫu xe đã chọn để so sánh</span><button id="compare-open" type="button">So sánh xe <span>→</span></button><button class="compare-clear" id="compare-clear" type="button" aria-label="Xóa các xe đã chọn">×</button>
+    <span><b id="compare-count">0</b> mẫu xe đã chọn để so sánh</span>
+    <button id="compare-open" type="button">So sánh xe <span>→</span></button>
+    <% if (isAuthenticated) { %>
+    <button id="compare-dock-history" type="button" class="btn-dock-history" title="Xem lịch sử các xe đã so sánh">🕒 Lịch sử (<b id="dock-history-count">0</b>)</button>
+    <% } %>
+    <button class="compare-clear" id="compare-clear" type="button" aria-label="Xóa các xe đã chọn">×</button>
 </div>
 <dialog class="compare-dialog" id="compare-dialog" aria-labelledby="compare-title">
     <div class="dialog-heading"><div><span class="eyebrow">ĐỐI CHIẾU THÔNG SỐ</span><h2 id="compare-title">So sánh xe</h2></div><button type="button" class="dialog-close" id="compare-close" aria-label="Đóng">×</button></div>
     <div class="compare-table-wrap" id="compare-table-wrap"></div>
     <div class="compare-dialog-actions"><a class="compare-page-link" id="compare-page-link" href="#" hidden>Xem bảng so sánh đầy đủ →</a></div>
 </dialog>
+<% if (isAuthenticated) { %>
+<dialog class="compare-dialog history-dialog" id="compare-history-dialog" aria-labelledby="history-dialog-title">
+    <div class="dialog-heading">
+        <div>
+            <span class="eyebrow">DỮ LIỆU ĐÃ LƯU</span>
+            <h2 id="history-dialog-title">Lịch sử so sánh xe</h2>
+        </div>
+        <button type="button" class="dialog-close" id="history-close-btn" aria-label="Đóng">×</button>
+    </div>
+    <div class="history-content-wrap">
+        <div class="history-list" id="history-dialog-list"></div>
+    </div>
+    <div class="history-dialog-actions">
+        <button type="button" class="btn-clear-history" id="btn-clear-all-history">Xóa tất cả lịch sử</button>
+        <button type="button" class="btn-secondary" id="history-done-btn">Đóng</button>
+    </div>
+</dialog>
+<% } %>
 <footer class="site-footer"><a class="footer-brand" href="<c:url value='/index.jsp' />">VinFast - ElectricCarSale</a><span>© <span id="copyright-year">2026</span> · Thông tin sản phẩm mang tính tham khảo.</span><a href="#" data-open-consult-popup>Tư vấn trực tuyến</a></footer>
 <%@ include file="common/consult-popup.jspf" %>
 <div class="toast" role="status" aria-live="polite" data-toast></div>

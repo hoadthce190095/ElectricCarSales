@@ -124,21 +124,23 @@ async function editUser(user) {
                 choices: statusChoices,
                 required: true
             }),
-            field("password", user ? "Mật khẩu mới (nếu cần)" : "Mật khẩu khởi tạo", "password", "", {
-                required: !user,
-                minlength: 10,
-                maxlength: 128,
-                full: true,
-                autocomplete: "new-password",
-                help: user
-                    ? "Để trống để giữ mật khẩu hiện tại."
-                    : "Tối thiểu 10 ký tự; nên dùng chữ, số và ký tự đặc biệt."
-            })
+            user
+                ? null
+                : field("password", "Mật khẩu khởi tạo", "password", "", {
+                      required: true,
+                      minlength: 10,
+                      maxlength: 128,
+                      full: true,
+                      autocomplete: "new-password",
+                      help: "Tối thiểu 10 ký tự; nên dùng chữ, số và ký tự đặc biệt."
+                  })
         ].filter(Boolean),
         async (input) => {
             input.roleId = Number(input.roleId);
             input.statusId = Number(input.statusId);
-            if (!input.password) {
+            if (user) {
+                delete input.password;
+            } else if (!input.password) {
                 delete input.password;
             }
             await api(user ? `admin/users/${user.userId}` : "admin/users", {

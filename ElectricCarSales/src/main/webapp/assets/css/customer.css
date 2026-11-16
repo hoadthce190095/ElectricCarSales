@@ -966,6 +966,9 @@ h1,h2,p {
     gap: 14px;
     margin-top: 22px;
 }
+.customer-form[hidden], #profile-edit-form[hidden], #profile-edit-form.is-hidden {
+    display: none !important;
+}
 .customer-form label {
     display: grid;
     gap: 6px;
@@ -1119,7 +1122,36 @@ h1,h2,p {
 }
 .table-wrap {
     overflow: auto;
+    max-width: 100%;
+    min-width: 0;
 }
+.customer-contract-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+    white-space: normal;
+}
+.customer-contract-table th,
+.customer-contract-table td {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    vertical-align: top;
+    padding: 10px 8px;
+}
+.customer-contract-table th:nth-child(1), .customer-contract-table td:nth-child(1) { width: 12%; }
+.customer-contract-table th:nth-child(2), .customer-contract-table td:nth-child(2) { width: 6%; }
+.customer-contract-table th:nth-child(3), .customer-contract-table td:nth-child(3) { width: 12%; }
+.customer-contract-table th:nth-child(4), .customer-contract-table td:nth-child(4) { width: 10%; }
+.customer-contract-table th:nth-child(5), .customer-contract-table td:nth-child(5) { width: 19%; }
+.customer-contract-table th:nth-child(6), .customer-contract-table td:nth-child(6) { width: 10%; }
+.customer-contract-table th:nth-child(7), .customer-contract-table td:nth-child(7) { width: 31%; }
+.contract-actions-cell { min-width: 0 !important; }
+.contract-actions-cell form { max-width: 100%; min-width: 0; flex-wrap: wrap; }
+.contract-actions-cell input[type="text"] { min-width: 0; }
+.contract-actions-cell .doc-btn-group { display: flex; flex-wrap: wrap; gap: 6px; }
+.contract-actions-cell .btn-doc { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.contract-terms-cell { line-height: 1.55; }
 table {
     width: 100%;
     border-collapse: collapse;
@@ -1721,9 +1753,213 @@ td {
         align-items: stretch;
     }
 }
+
+/* =========================================================
+   VINFAST CUSTOMER STATUS BADGES & DOCUMENT SYSTEM (SWP391)
+   ========================================================= */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    text-transform: none;
+    letter-spacing: 0.1px;
+}
+.status-badge .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+/* Xanh lá: Hoàn tất, Thành công, Đã đối soát, Đã thanh toán đủ, Đã ký, Đã phát hành */
+.badge-green, .badge-success {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+.badge-green .dot, .badge-success .dot { background: #10b981; }
+
+/* Vàng / Cam: Chờ xử lý, Chờ thanh toán, Chờ đối soát, Chờ ký OTP, Chờ 70% */
+.badge-amber, .badge-warning {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+.badge-amber .dot, .badge-warning .dot { background: #f59e0b; }
+
+/* Đỏ: Thất bại, Đã hủy, Lỗi */
+.badge-red, .badge-danger {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+.badge-red .dot, .badge-danger .dot { background: #ef4444; }
+
+/* Xanh dương: Đã cọc 30%, Đã giữ chỗ xe, Thông tin */
+.badge-blue, .badge-info {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+}
+.badge-blue .dot, .badge-info .dot { background: #3b82f6; }
+
+/* Xám trung tính */
+.badge-neutral {
+    background: #f8fafc;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+.badge-neutral .dot { background: #94a3b8; }
+
+/* Payment Overview Metrics */
+.pay-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.pay-metric-card {
+    background: #fff;
+    border: 1px solid var(--line, #e2e8f0);
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.pay-metric-card.accent-red {
+    border-left: 4px solid var(--red, #e31837);
+}
+.pay-metric-card.accent-blue {
+    border-left: 4px solid #2563eb;
+}
+.pay-metric-card.accent-green {
+    border-left: 4px solid #10b981;
+}
+.pay-metric-card.accent-amber {
+    border-left: 4px solid #f59e0b;
+}
+.pay-metric-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.pay-metric-val {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+    font-family: var(--display, 'Be Vietnam Pro', sans-serif);
+    line-height: 1.2;
+}
+.pay-metric-sub {
+    font-size: 11.5px;
+    color: #64748b;
+    margin-top: 6px;
+}
+
+/* Action Buttons for Documents */
+.doc-btn-group {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.btn-doc {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.15s ease-in-out;
+    border: 1px solid transparent;
+}
+.btn-doc-primary {
+    background: #1456db;
+    color: #fff !important;
+}
+.btn-doc-primary:hover {
+    background: #0f44b0;
+}
+.btn-doc-outline {
+    background: #fff;
+    color: #1e293b !important;
+    border-color: #cbd5e1;
+}
+.btn-doc-outline:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+.btn-doc-success {
+    background: #15803d;
+    color: #fff !important;
+}
+.btn-doc-success:hover {
+    background: #166534;
+}
+.btn-doc-warning {
+    background: #d97706;
+    color: #fff !important;
+}
+.btn-doc-warning:hover {
+    background: #b45309;
+}
+.order-switch-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.order-switch-bar select {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+    background: #fff;
+}
+
 @media(prefers-reduced-motion:reduce) {
     *,*:before,*:after {
         scroll-behavior: auto!important;
         transition: none!important;
     }
+}
+
+/* Confirmation Modal Dialog */
+dialog.app-confirm-dialog {
+    border: none;
+    border-radius: 12px;
+    padding: 0;
+    width: min(500px, calc(100% - 32px));
+    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.3);
+    background: #ffffff;
+    color: #0f172a;
+    font-family: inherit;
+    overflow: hidden;
+}
+dialog.app-confirm-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
 }

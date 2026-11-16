@@ -67,8 +67,20 @@ public class OrderDAO {
 
     public Order findById(int orderId) {
         String sql = "SELECT o.OrderID,o.CustomerID,o.EmployeeID,o.PaymentMethodID,o.TotalAmount,"
-                + "o.DepositAmount,o.RemainingAmount,o.OrderDate,o.Note,s.StatusName "
-                + "FROM Orders o JOIN OrderStatuses s ON s.OrderStatusID=o.OrderStatusID WHERE o.OrderID=?";
+                + "o.DepositAmount,o.RemainingAmount,o.OrderDate,o.Note,s.StatusName,"
+                + "m.ModelName,pm.MethodName,ct.Status AS ContractStatus,"
+                + "o.CompanyID,fc.CompanyName,"
+                + "COALESCE((SELECT SUM(p.PaymentAmount) FROM Payments p "
+                + "          JOIN PaymentStatuses ps ON ps.PaymentStatusID=p.PaymentStatusID "
+                + "          WHERE p.OrderID=o.OrderID AND ps.StatusID='COMPLETED'), 0) AS PaidAmount "
+                + "FROM Orders o JOIN OrderStatuses s ON s.OrderStatusID=o.OrderStatusID "
+                + "JOIN PaymentMethods pm ON pm.PaymentMethodID=o.PaymentMethodID "
+                + "LEFT JOIN FinancialCompanies fc ON fc.CompanyID=o.CompanyID "
+                + "LEFT JOIN Contracts ct ON ct.OrderID=o.OrderID "
+                + "LEFT JOIN OrderDetails d ON d.OrderID=o.OrderID "
+                + "LEFT JOIN Cars c ON c.CarID=d.CarID "
+                + "LEFT JOIN CarModels m ON m.ModelID=c.ModelID "
+                + "WHERE o.OrderID=?";
         try (Connection connection = connections.open();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, orderId);
@@ -85,6 +97,12 @@ public class OrderDAO {
                 order.setStatus(row.getString("StatusName"));
                 order.setOrderDate(row.getTimestamp("OrderDate"));
                 order.setNote(row.getString("Note"));
+                order.setVehicleName(row.getString("ModelName"));
+                order.setPaymentMethodName(row.getString("MethodName"));
+                order.setContractStatus(row.getString("ContractStatus"));
+                order.setCompanyId(row.getObject("CompanyID", Integer.class));
+                order.setCompanyName(row.getString("CompanyName"));
+                order.setPaidAmount(row.getBigDecimal("PaidAmount"));
                 return order;
             }
         } catch (SQLException exception) {
@@ -93,11 +111,23 @@ public class OrderDAO {
     }
 
     public boolean updateStatus(int orderId, String status, Integer employeeId, String note) {
-        String sql = "UPDATE Orders SET OrderStatusID=(SELECT OrderStatusID FROM OrderStatuses WHERE StatusName=?), "
+        String sql = "UPDATE Orders SET OrderStatusID=(SELECT TOP 1 OrderStatusID FROM OrderStatuses WHERE UPPER(LTRIM(RTRIM(StatusName)))=UPPER(LTRIM(RTRIM(?)))), "
                 + "EmployeeID=COALESCE(?,EmployeeID) WHERE OrderID=?";
         try (Connection connection = connections.open()) {
             connection.setAutoCommit(false);
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                if ("CANCELLED".equalsIgnoreCase(status)) {
+                    try (PreparedStatement ensureOrderStatus = connection.prepareStatement(
+                            "IF NOT EXISTS (SELECT 1 FROM OrderStatuses WHERE UPPER(LTRIM(RTRIM(StatusName)))='CANCELLED') "
+                                    + "INSERT INTO OrderStatuses(StatusName, Description) VALUES ('CANCELLED', N'Order has been cancelled')")) {
+                        ensureOrderStatus.executeUpdate();
+                    }
+                    try (PreparedStatement ensureCarStatus = connection.prepareStatement(
+                            "IF NOT EXISTS (SELECT 1 FROM CarStatuses WHERE UPPER(LTRIM(RTRIM(StatusName)))='AVAILABLE') "
+                                    + "INSERT INTO CarStatuses(StatusName, Description) VALUES (N'AVAILABLE', N'Xe sẵn sàng trong kho')")) {
+                        ensureCarStatus.executeUpdate();
+                    }
+                }
                 statement.setString(1, status);
                 if (employeeId == null || employeeId <= 0) {
                     statement.setNull(2, Types.INTEGER);
@@ -109,6 +139,33 @@ public class OrderDAO {
                     connection.rollback();
                     return false;
                 }
+
+                // Khi hủy hợp lệ, đồng bộ Orders, Cars và lịch sử trạng thái theo schema
+                if ("CANCELLED".equalsIgnoreCase(status)) {
+                    Integer carId = null;
+                    try (PreparedStatement findCar = connection.prepareStatement(
+                            "SELECT CarID FROM OrderDetails WHERE OrderID = ?")) {
+                        findCar.setInt(1, orderId);
+                        try (ResultSet rs = findCar.executeQuery()) {
+                            if (rs.next()) {
+                                carId = rs.getInt("CarID");
+                            }
+                        }
+                    }
+                    if (carId != null && carId > 0) {
+                        try (PreparedStatement updateCar = connection.prepareStatement(
+                            "UPDATE Cars SET CarStatusID = (SELECT TOP 1 CarStatusID FROM CarStatuses WHERE UPPER(LTRIM(RTRIM(StatusName)))='AVAILABLE') WHERE CarID = ?")) {
+                            updateCar.setInt(1, carId);
+                            updateCar.executeUpdate();
+                        }
+                        try (PreparedStatement deleteDetail = connection.prepareStatement(
+                                "DELETE FROM OrderDetails WHERE OrderID = ?")) {
+                            deleteDetail.setInt(1, orderId);
+                            deleteDetail.executeUpdate();
+                        }
+                    }
+                }
+
                 OrderStatusHistory history = new OrderStatusHistory();
                 history.setOrderId(orderId);
                 history.setStatus(status);
@@ -131,9 +188,14 @@ public class OrderDAO {
         if (customerId <= 0) throw new IllegalArgumentException("Khách hàng không hợp lệ.");
         String sql = "SELECT o.OrderID,o.CustomerID,o.EmployeeID,o.PaymentMethodID,o.TotalAmount,"
                 + "o.DepositAmount,o.RemainingAmount,o.OrderDate,o.Note,s.StatusName,"
-                + "m.ModelName,pm.MethodName,ct.Status AS ContractStatus "
+                + "m.ModelName,pm.MethodName,ct.Status AS ContractStatus,"
+                + "o.CompanyID,fc.CompanyName,"
+                + "COALESCE((SELECT SUM(p.PaymentAmount) FROM Payments p "
+                + "          JOIN PaymentStatuses ps ON ps.PaymentStatusID=p.PaymentStatusID "
+                + "          WHERE p.OrderID=o.OrderID AND ps.StatusID='COMPLETED'), 0) AS PaidAmount "
                 + "FROM Orders o JOIN OrderStatuses s ON s.OrderStatusID=o.OrderStatusID "
                 + "JOIN PaymentMethods pm ON pm.PaymentMethodID=o.PaymentMethodID "
+                + "LEFT JOIN FinancialCompanies fc ON fc.CompanyID=o.CompanyID "
                 + "LEFT JOIN Contracts ct ON ct.OrderID=o.OrderID "
                 + "LEFT JOIN OrderDetails d ON d.OrderID=o.OrderID "
                 + "LEFT JOIN Cars c ON c.CarID=d.CarID "
@@ -159,6 +221,9 @@ public class OrderDAO {
                     order.setVehicleName(rows.getString("ModelName"));
                     order.setPaymentMethodName(rows.getString("MethodName"));
                     order.setContractStatus(rows.getString("ContractStatus"));
+                    order.setCompanyId(rows.getObject("CompanyID", Integer.class));
+                    order.setCompanyName(rows.getString("CompanyName"));
+                    order.setPaidAmount(rows.getBigDecimal("PaidAmount"));
                     orders.add(order);
                 }
                 return orders;

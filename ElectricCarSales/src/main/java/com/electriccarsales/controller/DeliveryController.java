@@ -9,8 +9,8 @@ import com.electriccarsales.dao.InventoryTransactionDAO;
 import com.electriccarsales.dao.SupplierDAO;
 import com.electriccarsales.model.Car;
 import com.electriccarsales.model.Delivery;
-import com.electriccarsales.model.InventoryTransaction;
 import com.electriccarsales.model.SessionUser;
+import com.electriccarsales.service.CarInventoryService;
 import com.electriccarsales.service.DeliveryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
@@ -19,8 +19,13 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import util.DBContext;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -30,10 +35,12 @@ import java.util.Map;
 public class DeliveryController extends HttpServlet {
     private static final ObjectMapper JSON = new ObjectMapper();
     private DeliveryService deliveryService;
+    private CarInventoryService carInventoryService;
 
     @Override
     public void init() throws ServletException {
         deliveryService = new DeliveryService();
+        carInventoryService = new CarInventoryService();
     }
 
     @Override
@@ -88,7 +95,6 @@ public class DeliveryController extends HttpServlet {
         HttpSession session = request.getSession(false);
         SessionUser user = session == null ? null : (SessionUser) session.getAttribute("user");
         String role = user == null || user.getRole() == null ? "" : user.getRole().trim().toUpperCase(Locale.ROOT);
-        Integer employeeId = session == null ? null : (Integer) session.getAttribute("employeeId");
         String action = request.getParameter("action");
         if (action == null || action.isBlank()) {
             action = "handover";
@@ -112,35 +118,36 @@ public class DeliveryController extends HttpServlet {
                 String origin = request.getParameter("origin");
                 String lotCode = request.getParameter("lotCode");
                 Integer supplierId = FinanceControllerSupport.positiveInt(request.getParameter("supplierId"));
-
-                int availableStatusId = new CarStatusDAO().getAllCarStatuses().stream()
-                        .filter(s -> "AVAILABLE".equalsIgnoreCase(s.getStatusName()))
-                        .map(s -> s.getCarStatusID())
-                        .findFirst().orElse(1);
+                String note = request.getParameter("note");
+                int employeeId = resolveEmployeeId(session, user);
 
                 Car car = new Car(0,
-                        (carCode == null || carCode.isBlank()) ? ("VF-" + (System.currentTimeMillis() % 100000)) : carCode.trim(),
-                        modelId, versionId, colorId, availableStatusId,
+                        (carCode == null || carCode.isBlank()) ? ("VF-" + (System.currentTimeMillis() % 1000000)) : carCode.trim(),
+                        modelId, versionId, colorId, 1,
                         (origin == null || origin.isBlank()) ? "Việt Nam" : origin.trim(),
-                        year, vin.trim().toUpperCase(Locale.ROOT),
-                        (engineNo == null || engineNo.isBlank()) ? ("ENG-" + vin.trim()) : engineNo.trim().toUpperCase(Locale.ROOT),
-                        (lotCode == null || lotCode.isBlank()) ? "LOT-2026" : lotCode.trim(),
+                        year, vin, engineNo,
+                        (lotCode == null || lotCode.isBlank()) ? ("LOT-" + year) : lotCode.trim(),
                         price);
-                CarDAO carDAO = new CarDAO();
-                carDAO.addCar(car);
 
-                List<Car> allCars = carDAO.getAllCars();
-                Car inserted = allCars.stream()
-                        .filter(c -> c.getVin().equalsIgnoreCase(car.getVin()))
-                        .findFirst().orElse(null);
-                if (inserted != null && employeeId != null && employeeId > 0) {
-                    InventoryTransaction tx = new InventoryTransaction(
-                            0, inserted.getCarID(), employeeId, supplierId, "IMPORT", null,
-                            "Nhập kho xe mới VIN " + inserted.getVin() + " (Loại: IMPORT)");
-                    new InventoryTransactionDAO().addTransaction(tx);
-                }
+                Car imported = carInventoryService.importVehicle(car, employeeId, supplierId, note);
                 sendResponse(request, response, jsonRequested, HttpServletResponse.SC_CREATED, true,
-                        "Đã nhập kho xe mới VIN " + car.getVin() + " thành công (Trạng thái: AVAILABLE).");
+                        "Đã nhập kho xe mới VIN " + imported.getVin() + " thành công (Trạng thái: AVAILABLE).");
+                return;
+            }
+
+            if ("exportCar".equalsIgnoreCase(action)) {
+                if (!List.of("OPERATIONS", "ADMIN").contains(role)) {
+                    sendResponse(request, response, jsonRequested, HttpServletResponse.SC_FORBIDDEN, false,
+                            "Theo RDS (UC-09, 10.3), chỉ Operations Officer hoặc Admin mới được xuất kho xe.");
+                    return;
+                }
+                int carId = Integer.parseInt(request.getParameter("carId"));
+                String exportReason = request.getParameter("exportReason");
+                int employeeId = resolveEmployeeId(session, user);
+
+                carInventoryService.exportVehicle(carId, employeeId, exportReason);
+                sendResponse(request, response, jsonRequested, HttpServletResponse.SC_OK, true,
+                        "Đã xuất kho xe #" + carId + " thành công (Ghi nhận giao dịch EXPORT trong kho).");
                 return;
             }
 
@@ -152,7 +159,7 @@ public class DeliveryController extends HttpServlet {
                 }
                 int carId = Integer.parseInt(request.getParameter("carId"));
                 String statusName = request.getParameter("statusName");
-                if (!new CarDAO().updateCarStatus(carId, statusName)) {
+                if (!carInventoryService.updateCarStatus(carId, statusName)) {
                     throw new IllegalStateException("Xe không đủ điều kiện cập nhật trạng thái kho.");
                 }
                 sendResponse(request, response, jsonRequested, HttpServletResponse.SC_OK, true,
@@ -171,6 +178,7 @@ public class DeliveryController extends HttpServlet {
                         "Phiên thao tác không hợp lệ.");
                 return;
             }
+            int employeeId = resolveEmployeeId(session, user);
             int orderId = Integer.parseInt(request.getParameter("orderId"));
             String address = request.getParameter("deliveryAddress");
             String note = request.getParameter("note");
@@ -185,6 +193,37 @@ public class DeliveryController extends HttpServlet {
             sendResponse(request, response, jsonRequested, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, false,
                     "Không thể xử lý nghiệp vụ kho/bàn giao: " + ex.getMessage());
         }
+    }
+
+    private int resolveEmployeeId(HttpSession session, SessionUser user) {
+        Integer empId = session == null ? null : (Integer) session.getAttribute("employeeId");
+        if (empId != null && empId > 0) return empId;
+        if (user != null && user.getUserId() > 0) {
+            String sql = "SELECT EmployeeID FROM Employees WHERE UserID = ?";
+            try (Connection conn = DBContext.openConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, user.getUserId());
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        int id = rs.getInt(1);
+                        if (session != null) session.setAttribute("employeeId", id);
+                        return id;
+                    }
+                }
+            } catch (SQLException ignored) {}
+        }
+        if (user != null && "ADMIN".equalsIgnoreCase(user.getRole())) {
+            try (Connection conn = DBContext.openConnection();
+                 PreparedStatement ps = conn.prepareStatement("SELECT TOP 1 EmployeeID FROM Employees ORDER BY EmployeeID");
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int id = rs.getInt(1);
+                    if (session != null) session.setAttribute("employeeId", id);
+                    return id;
+                }
+            } catch (SQLException ignored) {}
+        }
+        throw new IllegalStateException("Không tìm thấy thông tin nhân viên hợp lệ trong phiên đăng nhập.");
     }
 
     private void sendResponse(HttpServletRequest req, HttpServletResponse resp, boolean jsonRequested,

@@ -41,6 +41,18 @@ public class OrderStatusController extends HttpServlet {
         }
         String role = user.getRole() == null ? "" : user.getRole().trim().toUpperCase(Locale.ROOT);
         Integer employeeId = (Integer) session.getAttribute("employeeId");
+        if (employeeId == null && !"CUSTOMER".equals(role)) {
+            try (var c = com.electriccarsales.dao.FinanceConnection.open();
+                 var ps = c.prepareStatement("SELECT EmployeeID FROM Employees WHERE UserID = ?")) {
+                ps.setInt(1, user.getUserId());
+                try (var rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        employeeId = rs.getInt(1);
+                        session.setAttribute("employeeId", employeeId);
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
 
         try {
             int orderId = Integer.parseInt(request.getParameter("orderId"));
@@ -69,6 +81,27 @@ public class OrderStatusController extends HttpServlet {
             if (!List.of("SALES", "OPERATIONS", "MANAGER", "ADMIN").contains(role)) {
                 sendResponse(request, response, jsonRequested, HttpServletResponse.SC_FORBIDDEN, false,
                         "Bạn không có quyền cập nhật trạng thái đơn hàng.", "/staff/dashboard#transactions");
+                return;
+            }
+
+            if ("CANCELLED".equalsIgnoreCase(status)) {
+                Order order = orderService.getOrderById(orderId);
+                if (order == null) {
+                    sendResponse(request, response, jsonRequested, HttpServletResponse.SC_NOT_FOUND, false,
+                            "Không tìm thấy đơn hàng #" + orderId + ".", "/staff/dashboard#transactions");
+                    return;
+                }
+                if (order.getPaidAmount().signum() > 0
+                        || (!"PENDING".equalsIgnoreCase(order.getStatus()) && !"RESERVED".equalsIgnoreCase(order.getStatus()))) {
+                    sendResponse(request, response, jsonRequested, HttpServletResponse.SC_BAD_REQUEST, false,
+                            "Chỉ có thể hủy đơn PENDING/RESERVED chưa thanh toán. Trạng thái hiện tại: " + order.getStatus(),
+                            "/staff/dashboard#transactions");
+                    return;
+                }
+                String cancelNote = (note != null && !note.isBlank()) ? note.trim() : ("Nhân viên " + role + " hủy đơn hàng trước khi đặt cọc.");
+                service.updateOrderStatus(orderId, "CANCELLED", employeeId, cancelNote);
+                sendResponse(request, response, jsonRequested, HttpServletResponse.SC_OK, true,
+                        "Đã hủy đơn hàng #" + orderId + " thành công và giải phóng xe về kho khả dụng.", "/staff/dashboard#transactions");
                 return;
             }
 

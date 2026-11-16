@@ -1,10 +1,9 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="com.electriccarsales.model.SalesPreviewKind,com.electriccarsales.service.SalesPreviewService" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
-<% request.setAttribute("customerTitle", "Hóa đơn"); request.setAttribute("customerEyebrow", "CHỨNG TỪ THANH TOÁN"); %>
-<%@ include file="../common/customer-shell.jspf" %>
-<% request.setAttribute("wordPreviewEnabled", SalesPreviewService.isAvailable(SalesPreviewKind.INVOICE)); %>
+<%
+    // Theo yêu cầu I: Loại bỏ trang Hóa đơn riêng, chuyển hướng về trang Thanh toán tích hợp hóa đơn
+    response.sendRedirect(request.getContextPath() + "/payment/history#invoices");
+    return;
+%>
 <div class="page-intro">
     <p>Tra cứu hóa đơn chính thức được Kế toán phát hành sau khi đơn hàng hoàn tất thanh toán 100% giá trị xe (RDS 9.3).</p>
 </div>
@@ -56,8 +55,8 @@
                                 <td><strong><c:out value="${inv.invoiceNumber}"/></strong></td>
                                 <td><c:out value="${inv.invoiceDate}"/></td>
                                 <td>#<c:out value="${inv.orderID}"/></td>
-                                <td><fmt:formatNumber value="${inv.subTotal}" pattern="#,###"/> ₫</td>
-                                <td><strong><fmt:formatNumber value="${inv.totalAmount}" pattern="#,###"/> ₫</strong></td>
+                                <td><fmt:formatNumber value="${inv.subTotal}" pattern="#,##0"/> VNĐ</td>
+                                <td><strong><fmt:formatNumber value="${inv.totalAmount}" pattern="#,##0"/> VNĐ</strong></td>
                                 <td><span class="soft-badge"><c:out value="${inv.status}"/></span></td>
                                 <td>
                                     <c:out value="${inv.note}" default="—"/>
@@ -92,7 +91,7 @@
                                             <strong style="font-size:13px;color:#0f172a;display:block;margin-bottom:8px;">Tiến độ các đơn hàng hiện có của bạn:</strong>
                                             <c:forEach var="ord" items="${customerOrders}">
                                                 <div style="font-size:12px;padding:6px 0;border-bottom:1px dashed #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
-                                                    <span><strong>Đơn hàng #${ord.orderID}</strong> · Tổng: <fmt:formatNumber value="${ord.totalAmount}" pattern="#,###"/> ₫ (Còn thiếu: <fmt:formatNumber value="${ord.remainingAmount}" pattern="#,###"/> ₫)</span>
+                                                    <span><strong>Đơn hàng #${ord.orderID}</strong> · Tổng: <fmt:formatNumber value="${ord.totalAmount}" pattern="#,##0"/> VNĐ (Còn thiếu: <fmt:formatNumber value="${ord.remainingAmount}" pattern="#,##0"/> VNĐ)</span>
                                                     <span style="color:#b45309;font-weight:600;">
                                                         <c:choose>
                                                             <c:when test="${ord.remainingAmount le 0}">

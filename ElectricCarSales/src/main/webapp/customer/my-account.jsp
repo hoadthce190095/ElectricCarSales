@@ -64,7 +64,7 @@ request.setAttribute("customerEyebrow", "CHÀO MỪNG TRỞ LẠI");
         <div><span class="section-overline">CÁC MỤC TÀI KHOẢN</span><h2>Truy cập nhanh</h2></div>
     </div>
     <div class="summary-grid">
-        <a class="summary-card" href="<%= customerContext %>/customer/my-invoices.jsp"><span class="summary-icon icon-contracts">▨</span><span class="summary-label">Hóa đơn</span><strong>Mở hóa đơn</strong><span class="summary-foot">Hóa đơn mua xe <b>↗</b></span></a>
+        <a class="summary-card" href="<%= customerContext %>/payment/history#invoices"><span class="summary-icon icon-contracts">▨</span><span class="summary-label">Hóa đơn GTGT</span><strong>Hóa đơn điện tử</strong><span class="summary-foot">Tra cứu trong Thanh toán <b>↗</b></span></a>
         <a class="summary-card" href="<%= customerContext %>/customer/ai-assistant.jsp"><span class="summary-icon icon-payments">✧</span><span class="summary-label">Trợ lý xe</span><strong>Tư vấn xe</strong><span class="summary-foot">Tìm xe phù hợp <b>↗</b></span></a>
         <a class="summary-card" href="<%= customerContext %>/customer/profile?view=profile"><span class="summary-icon icon-contracts">◎</span><span class="summary-label">Hồ sơ cá nhân</span><strong>Thông tin của bạn</strong><span class="summary-foot">Xem và chỉnh sửa <b>↗</b></span></a>
         <a class="summary-card" href="<%= customerContext %>/index.jsp#models"><span class="summary-icon icon-orders">↗</span><span class="summary-label">Khám phá xe</span><strong>Danh mục VinFast</strong><span class="summary-foot">Chọn mẫu xe <b>↗</b></span></a>
@@ -98,8 +98,8 @@ request.setAttribute("customerEyebrow", "CHÀO MỪNG TRỞ LẠI");
                                 <tr>
                                     <td><strong>#<c:out value="${ord.id}"/></strong></td>
                                     <td><c:out value="${ord.modelName}" default="Xe VinFast"/> <small style="display:block;color:#64748b;"><c:out value="${ord.versionName}"/></small></td>
-                                    <td><fmt:formatNumber value="${ord.originalAmount}" pattern="#,###"/> ₫</td>
-                                    <td><fmt:formatNumber value="${ord.remainingAmount}" pattern="#,###"/> ₫</td>
+                                    <td><fmt:formatNumber value="${ord.originalAmount}" pattern="#,##0"/> VNĐ</td>
+                                    <td><fmt:formatNumber value="${ord.remainingAmount}" pattern="#,##0"/> VNĐ</td>
                                     <td><span class="soft-badge"><c:out value="${ord.status}"/></span></td>
                                     <td>
                                         <a class="text-link" href="<%= customerContext %>/orders">Đơn hàng &amp; thanh toán ↗</a>
@@ -118,7 +118,6 @@ request.setAttribute("customerEyebrow", "CHÀO MỪNG TRỞ LẠI");
                     </div>
                     <strong>Chưa có đơn hàng nào</strong>
                     <p>Gửi yêu cầu tư vấn để Sales Staff hỗ trợ lập đơn hàng cho bạn.</p>
-                    <a href="<%= customerContext %>/consultation" class="text-link">Gửi yêu cầu tư vấn <span>→</span></a>
                 </div>
             </c:otherwise>
         </c:choose>
@@ -152,7 +151,7 @@ request.setAttribute("customerEyebrow", "CHÀO MỪNG TRỞ LẠI");
             </div>
             <span class="verified-badge">✓ Đã xác thực</span>
         </div>
-        <div class="profile-fields">
+        <div class="profile-fields" id="profile-display-view">
             <div>
                 <span>Họ và tên</span>
                 <strong><c:out value="${customer.customerName}" default="Chưa cập nhật" /></strong>
@@ -170,23 +169,24 @@ request.setAttribute("customerEyebrow", "CHÀO MỪNG TRỞ LẠI");
                 <strong><c:out value="${customer.address}" default="Chưa cập nhật" /></strong>
             </div>
         </div>
-        <form id="profile-edit-form" class="customer-form" method="post" enctype="multipart/form-data" action="<%= customerContext %>/customer/profile" hidden style="margin-top:14px;padding-top:14px;border-top:1px solid #e2e8f0;">
+        <form id="profile-edit-form" class="customer-form" method="post" enctype="multipart/form-data" action="<%= customerContext %>/customer/profile" hidden style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid #e2e8f0;">
             <label>Họ và tên
                 <input name="customerName" type="text" maxlength="100" value="<c:out value='${customer.customerName}'/>" required>
             </label>
             <label>Số điện thoại
-                <input name="phone" type="tel" pattern="0[0-9]{9,10}" maxlength="11" value="<c:out value='${customer.phone}'/>" required>
+                <input name="phone" type="tel" pattern="0[0-9]{9}" maxlength="10" value="<c:out value='${customer.phone}'/>" title="Số điện thoại phải gồm đúng 10 chữ số và bắt đầu bằng số 0 (ví dụ: 0912345678)" required>
             </label>
-            <label>Email
-                <input name="email" type="email" maxlength="100" value="<c:out value='${customer.email}'/>" required>
+            <label>Email đã xác thực OTP
+                <input type="email" value="<c:out value='${customer.email}'/>" readonly aria-describedby="profile-email-verified-note">
+                <small id="profile-email-verified-note" style="color:#64748b;">Email đã xác thực nên không thể chỉnh sửa.</small>
             </label>
             <label>Địa chỉ bàn giao xe
                 <input name="address" type="text" maxlength="255" value="<c:out value='${customer.address}'/>">
             </label>
-            <label>Ảnh đại diện (JPEG, PNG hoặc WebP · tối đa 2 MB)
-                <input name="avatar" type="file" accept="image/jpeg,image/png,image/webp">
-            </label>
-            <button type="submit" class="button button-primary">Lưu cập nhật hồ sơ →</button>
+            <div style="display:flex;gap:10px;align-items:center;">
+                <button type="submit" class="button button-primary">Lưu cập nhật hồ sơ →</button>
+                <button type="button" class="button button-secondary" id="btn-cancel-profile-edit" style="background:#fff;border:1px solid #cbd5e1;color:#475569;padding:9px 16px;border-radius:6px;font-weight:600;cursor:pointer;">Hủy bỏ</button>
+            </div>
         </form>
     </section>
 </div>

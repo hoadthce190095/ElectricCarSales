@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class CustomerService {
-    private static final Pattern PHONE = Pattern.compile("0[0-9]{9,10}");
-    private static final Pattern EMAIL = Pattern.compile("^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)+$");
+    private static final Pattern PHONE = Pattern.compile("^0[0-9]{9}$");
+    private static final Pattern EMAIL = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     private final CustomerDAO customerDAO = new CustomerDAO();
 
     public Customer getOwnProfile(int userId) {
@@ -32,9 +32,10 @@ public class CustomerService {
         address = clean(address);
         if (userId <= 0 || name.isEmpty() || name.length() > 100)
             throw new IllegalArgumentException("Họ tên không hợp lệ.");
-        if (!PHONE.matcher(phone).matches()) throw new IllegalArgumentException("Số điện thoại không hợp lệ.");
+        if (!PHONE.matcher(phone).matches())
+            throw new IllegalArgumentException("Số điện thoại không hợp lệ (phải bắt đầu bằng số 0 và gồm đúng 10 chữ số, ví dụ: 0912345678).");
         if (email.isEmpty() || email.length() > 100 || !EMAIL.matcher(email).matches())
-            throw new IllegalArgumentException("Email không hợp lệ.");
+            throw new IllegalArgumentException("Email không hợp lệ (ví dụ: example@domain.com).");
         if (address.length() > 255) throw new IllegalArgumentException("Địa chỉ vượt quá giới hạn.");
         return customerDAO.updateOwnedProfile(userId, name, phone, email, address);
     }

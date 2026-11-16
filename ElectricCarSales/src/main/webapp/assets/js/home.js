@@ -13,12 +13,28 @@
     const sortFilter = document.getElementById("sort-filter");
     const summary = document.getElementById("result-summary");
     const activeFilters = document.getElementById("active-filters");
+
+    // Comparison & History elements
     const compareDock = document.getElementById("compare-dock");
     const compareDialog = document.getElementById("compare-dialog");
-    const compareTable = document.getElementById("compare-table-wrap");
     const compareNotice = document.getElementById("compare-notice");
+    const openHistoryBtn = document.getElementById("open-history-btn");
+    const historyBadge = document.getElementById("history-badge");
+    const compareDockHistory = document.getElementById("compare-dock-history");
+    const dockHistoryCount = document.getElementById("dock-history-count");
+    const compareHistoryDialog = document.getElementById("compare-history-dialog");
+    const historyDialogList = document.getElementById("history-dialog-list");
+    const btnClearAllHistory = document.getElementById("btn-clear-all-history");
+    const historyCloseBtn = document.getElementById("history-close-btn");
+    const historyDoneBtn = document.getElementById("history-done-btn");
+
     const selections = new Set();
     const compareSelectionStorageKey = "electriccarsale.compareSelections";
+    const selectedModels = new Set();
+    const selectedPrices = new Set();
+    const isAuthenticated = document.querySelector('meta[name="user-authenticated"]')?.content === "true"
+        || document.body.dataset.authenticated === "true";
+
     let models = [];
     let catalogueMetadata = {};
     let catalogueStatus = "loading";
@@ -26,6 +42,34 @@
     let inventoryByLine = new Map();
     let inventoryByModel = new Map();
     let compareNoticeTimer;
+
+    const PRICE_RANGES = [
+        {
+            key: "under-500",
+            label: "Dưới 500 triệu",
+            match: (vnd) => vnd !== null && vnd < 500_000_000
+        },
+        {
+            key: "500-800",
+            label: "500 - 800 triệu",
+            match: (vnd) => vnd !== null && vnd >= 500_000_000 && vnd <= 800_000_000
+        },
+        {
+            key: "800-1000",
+            label: "800 triệu - 1 tỷ",
+            match: (vnd) => vnd !== null && vnd > 800_000_000 && vnd <= 1_000_000_000
+        },
+        {
+            key: "1000-1500",
+            label: "1 - 1,5 tỷ",
+            match: (vnd) => vnd !== null && vnd > 1_000_000_000 && vnd <= 1_500_000_000
+        },
+        {
+            key: "over-1500",
+            label: "Trên 1,5 tỷ",
+            match: (vnd) => vnd !== null && vnd > 1_500_000_000
+        }
+    ];
 
     try {
         const savedSelections = JSON.parse(sessionStorage.getItem(compareSelectionStorageKey) || "[]");
@@ -135,9 +179,318 @@
         return element;
     };
 
+    // Helper to check if a search term matches any car model line (e.g. "VF3", "VF 6", etc.)
+    function isModelKeyword(value) {
+        if (!value) return false;
+        const normalized = normalizeSearch(value);
+        if (!normalized) return false;
+        if (/^vf\s*[0-9]+/i.test(value.trim())) return true;
+        return models.some((m) => {
+            const ln = normalizeSearch(lineName(m));
+            return ln && (ln === normalized || normalized === normalizeSearch(m.modelName));
+        });
+    }
+
+    // =========================================================================
+    // Comparison History Management (Client & Server Sync - Auth only)
+    // =========================================================================
+    const CompareHistory = {
+        STORAGE_KEY: "electriccarsale.compareHistory",
+        API_URL: `${contextPath}/api/comparison/history`,
+
+        getAll() {
+            if (!isAuthenticated) return [];
+            try {
+                const raw = localStorage.getItem(this.STORAGE_KEY);
+                return raw ? JSON.parse(raw) : [];
+            } catch (_) {
+                return [];
+            }
+        },
+
+        save(vehicles) {
+            if (!isAuthenticated) return null;
+            if (!vehicles || vehicles.length < 2) return null;
+            const history = this.getAll();
+            const keys = vehicles.map((v) => text(v.comparisonKey) || `${text(v.modelName)}-${text(v.specificationVersion)}`);
+
+            // Deduplicate: remove older entry with exact same keys to bring it to top
+            const filtered = history.filter((item) => {
+                if (!item.keys || item.keys.length !== keys.length) return true;
+                return !keys.every((k) => item.keys.includes(k));
+            });
+
+            const now = new Date();
+            const dateStr = now.toLocaleDateString("vi-VN", {
+                day: "2-digit", month: "2-digit", year: "numeric",
+                hour: "2-digit", minute: "2-digit"
+            });
+
+            const newItem = {
+                id: `comp_${Date.now()}`,
+                timestamp: Date.now(),
+                dateStr: dateStr,
+                keys: keys,
+                vehicles: vehicles.map((v) => ({
+                    id: v.modelID || v.id,
+                    modelName: text(v.modelName),
+                    specificationVersion: text(v.specificationVersion),
+                    carLine: lineName(v),
+                    priceVnd: number(v.priceVnd),
+                    priceText: price(v.priceVnd),
+                    imageUrl: safeOfficialUrl(v.imageUrl),
+                    rangeKm: number(v.rangeKm)
+                }))
+            };
+
+            filtered.unshift(newItem);
+            if (filtered.length > 20) filtered.length = 20;
+
+            try {
+                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filtered));
+            } catch (_) {}
+
+            // Background server sync for authenticated users
+            const modelIds = vehicles
+                .map((v) => Number(v.modelID || v.id))
+                .filter((id) => Number.isInteger(id) && id > 0);
+
+            fetch(this.API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Accept": "application/json" },
+                body: JSON.stringify({ modelIds, keys })
+            }).then((res) => res.json()).catch(() => {});
+
+            return newItem;
+        },
+
+        remove(id) {
+            if (!isAuthenticated) return [];
+            const history = this.getAll();
+            const itemToRemove = history.find((item) => item.id === id);
+            const next = history.filter((item) => item.id !== id);
+            try {
+                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(next));
+            } catch (_) {}
+
+            if (itemToRemove && itemToRemove.sessionId) {
+                fetch(`${this.API_URL}?id=${itemToRemove.sessionId}`, { method: "DELETE" }).catch(() => {});
+            }
+            return next;
+        },
+
+        clear() {
+            try {
+                localStorage.removeItem(this.STORAGE_KEY);
+            } catch (_) {}
+        },
+
+        async syncWithServer() {
+            if (!isAuthenticated) {
+                this.clear();
+                return;
+            }
+            try {
+                const res = await fetch(this.API_URL, {
+                    headers: { "Accept": "application/json" }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.authenticated && Array.isArray(data.history)) {
+                        const local = this.getAll();
+                        const merged = [...local];
+                        data.history.forEach((serverItem) => {
+                            const exists = merged.some((m) =>
+                                m.keys && serverItem.keys &&
+                                m.keys.length === serverItem.keys.length &&
+                                m.keys.every((k) => serverItem.keys.includes(k))
+                            );
+                            if (!exists) {
+                                merged.push({
+                                    id: `server_${serverItem.sessionId}`,
+                                    sessionId: serverItem.sessionId,
+                                    timestamp: Date.now(),
+                                    dateStr: serverItem.createDate,
+                                    keys: serverItem.keys,
+                                    vehicles: (serverItem.vehicles || []).map((v) => ({
+                                        id: v.modelID,
+                                        modelName: v.modelName,
+                                        specificationVersion: v.specificationVersion,
+                                        carLine: v.carLine,
+                                        priceVnd: v.priceVnd,
+                                        priceText: price(v.priceVnd),
+                                        imageUrl: safeOfficialUrl(v.imageUrl),
+                                        rangeKm: v.rangeKm
+                                    }))
+                                });
+                            }
+                        });
+                        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(merged));
+                    }
+                }
+            } catch (_) {}
+        }
+    };
+
+    function updateHistoryBadges() {
+        if (!isAuthenticated) return;
+        const history = CompareHistory.getAll();
+        const count = history.length;
+        if (historyBadge) {
+            historyBadge.textContent = String(count);
+            historyBadge.hidden = count === 0;
+        }
+        if (dockHistoryCount) {
+            dockHistoryCount.textContent = String(count);
+        }
+    }
+
+    function renderHistoryDialog() {
+        if (!historyDialogList) return;
+        const history = CompareHistory.getAll();
+        historyDialogList.replaceChildren();
+
+        if (history.length === 0) {
+            const empty = make("div", "history-empty");
+            const icon = make("div", "history-empty-icon", "⚖");
+            const title = make("h3", "", "Chưa có lịch sử so sánh");
+            const msg = make("p", "", "Hãy chọn từ 2 đến 3 xe trong danh mục và bấm So sánh để lưu lịch sử tại đây.");
+            empty.append(icon, title, msg);
+            historyDialogList.append(empty);
+            if (btnClearAllHistory) btnClearAllHistory.hidden = true;
+            return;
+        }
+
+        if (btnClearAllHistory) btnClearAllHistory.hidden = false;
+
+        history.forEach((item) => {
+            const card = make("div", "history-card");
+
+            const top = make("div", "history-card-top");
+            const date = make("span", "history-date", item.dateStr || "Gần đây");
+            const tag = make("span", "history-count-tag", `${item.vehicles?.length || 0} mẫu xe`);
+            top.append(date, tag);
+
+            const gridWrap = make("div", "history-vehicles-grid");
+            (item.vehicles || []).forEach((v, idx) => {
+                if (idx > 0) {
+                    gridWrap.append(make("span", "history-vs", "vs"));
+                }
+                const vItem = make("div", "history-vehicle-item");
+                if (v.imageUrl) {
+                    const img = make("img");
+                    img.src = v.imageUrl;
+                    img.alt = v.modelName;
+                    img.loading = "lazy";
+                    img.addEventListener("error", () => img.remove(), { once: true });
+                    vItem.append(img);
+                }
+                const info = make("div", "history-vehicle-info");
+                info.append(
+                    make("strong", "", v.modelName),
+                    make("small", "", `${v.specificationVersion || ""} · ${v.priceText || ""}`)
+                );
+                vItem.append(info);
+                gridWrap.append(vItem);
+            });
+
+            const bottom = make("div", "history-card-bottom");
+
+            // 1. "Xem lại bảng so sánh"
+            const viewLink = make("a", "btn-view-compare", "Xem bảng so sánh →");
+            const params = new URLSearchParams();
+            (item.keys || []).forEach((k) => params.append("key", k));
+            viewLink.href = `${contextPath}/comparison?${params.toString()}`;
+
+            // 2. "Nạp vào bộ chọn"
+            const loadBtn = make("button", "btn-load-compare", "Nạp vào bộ chọn");
+            loadBtn.type = "button";
+            loadBtn.title = "Đưa các mẫu xe này vào thanh chọn so sánh ở dưới";
+            loadBtn.addEventListener("click", () => {
+                selections.clear();
+                (item.keys || []).forEach((k) => selections.add(k));
+                persistCompareSelections();
+                render();
+                syncCompare();
+                compareHistoryDialog.close();
+                showCompareNotice(`Đã nạp ${selections.size} xe vào thanh so sánh.`);
+            });
+
+            // 3. "Xóa"
+            const deleteBtn = make("button", "btn-delete-history", "Xóa");
+            deleteBtn.type = "button";
+            deleteBtn.title = "Xóa phiên so sánh này khỏi lịch sử";
+            deleteBtn.addEventListener("click", () => {
+                CompareHistory.remove(item.id);
+                updateHistoryBadges();
+                renderHistoryDialog();
+            });
+
+            bottom.append(loadBtn, viewLink, deleteBtn);
+            card.append(top, gridWrap, bottom);
+            historyDialogList.append(card);
+        });
+    }
+
+    // =========================================================================
+    // Native Select Multi-Select Sync (Hãng xe & Mức giá)
+    // =========================================================================
+    function syncModelFilterUI() {
+        if (!modelFilter) return;
+        for (let i = 1; i < modelFilter.options.length; i++) {
+            const opt = modelFilter.options[i];
+            const raw = opt.value;
+            opt.text = selectedModels.has(raw) ? `✓ ${raw}` : raw;
+        }
+
+        if (selectedModels.size === 0) {
+            modelFilter.options[0].value = "";
+            modelFilter.options[0].text = "Tất cả dòng xe";
+            modelFilter.value = "";
+        } else if (selectedModels.size === 1) {
+            const onlyModel = [...selectedModels][0];
+            modelFilter.options[0].value = "";
+            modelFilter.options[0].text = "Tất cả dòng xe (bỏ chọn)";
+            modelFilter.value = onlyModel;
+        } else {
+            modelFilter.options[0].value = "__summary__";
+            modelFilter.options[0].text = `Đã chọn ${selectedModels.size} xe: ${[...selectedModels].join(", ")}`;
+            modelFilter.value = "__summary__";
+        }
+    }
+
+    function syncPriceFilterUI() {
+        if (!priceFilter) return;
+        for (let i = 1; i < priceFilter.options.length; i++) {
+            const opt = priceFilter.options[i];
+            const r = PRICE_RANGES.find((item) => item.key === opt.value);
+            const base = r ? r.label : opt.value;
+            opt.text = selectedPrices.has(opt.value) ? `✓ ${base}` : base;
+        }
+
+        if (selectedPrices.size === 0) {
+            priceFilter.options[0].value = "";
+            priceFilter.options[0].text = "Tất cả mức giá";
+            priceFilter.value = "";
+        } else if (selectedPrices.size === 1) {
+            const onlyKey = [...selectedPrices][0];
+            priceFilter.options[0].value = "";
+            priceFilter.options[0].text = "Tất cả mức giá (bỏ chọn)";
+            priceFilter.value = onlyKey;
+        } else {
+            priceFilter.options[0].value = "__summary__";
+            priceFilter.options[0].text = `Đã chọn ${selectedPrices.size} mức giá`;
+            priceFilter.value = "__summary__";
+        }
+    }
+
     function populateFilters() {
-        const lines = [...new Set(models.map(lineName).filter(Boolean))];
-        lines.forEach((line) => modelFilter.add(new Option(line, line)));
+        const lines = [...new Set(models.map(lineName).filter(Boolean))].sort((a, b) => a.localeCompare(b, "vi"));
+        if (modelFilter) {
+            modelFilter.replaceChildren(new Option("Tất cả dòng xe", ""));
+            lines.forEach((line) => modelFilter.add(new Option(line, line)));
+        }
+
         const colors = [
             ...new Set(
                 models
@@ -146,41 +499,91 @@
                     .filter(Boolean)
             )
         ].sort((a, b) => a.localeCompare(b, "vi"));
-        colors.forEach((color) => colorFilter.add(new Option(color, color)));
+
+        if (colorFilter) {
+            colorFilter.replaceChildren(new Option("Tất cả màu sắc", ""));
+            colors.forEach((color) => colorFilter.add(new Option(color, color)));
+        }
     }
 
+    // =========================================================================
+    // Filter Matching Logic
+    // =========================================================================
     function matches(model) {
-        const searchText = normalizeSearch(search.value);
-        const fields = [
-            model.modelName,
-            model.carLine,
-            model.specificationVersion,
-            model.dimensions,
-            ...(Array.isArray(model.colors) ? model.colors : [])
-        ].map(normalizeSearch);
-        const amount = number(model.priceVnd);
-        const maxPriceMillions = number(priceFilter.value);
-        const minimumRange = number(rangeFilter.value);
-        return (
-            (!searchText || fields.some((value) => value.includes(searchText))) &&
-            (!modelFilter.value || lineName(model) === modelFilter.value) &&
-            (maxPriceMillions === null || amount === null || amount <= maxPriceMillions * 1_000_000) &&
-            (minimumRange === null || number(model.rangeKm) === null || Number(model.rangeKm) >= minimumRange) &&
-            (!colorFilter.value || (Array.isArray(model.colors) && model.colors.some((color) =>
-                colorFamily(color) === colorFamily(colorFilter.value)
-            )))
-        );
+        const rawSearch = search ? search.value.trim() : "";
+        const searchText = normalizeSearch(rawSearch);
+
+        // 1. Model filter: If models selected, must belong to selectedModels
+        if (selectedModels.size > 0 && !selectedModels.has(lineName(model))) {
+            return false;
+        }
+
+        // 2. Price filter: If price ranges selected, must match at least one
+        let amount = number(model.priceVnd);
+        if (Array.isArray(model.promotions) && model.promotions.length > 0 && amount && amount > 0) {
+            const promo = model.promotions[0];
+            const dv = Number(promo.discountValue || 0);
+            if (promo.discountType === "PERCENTAGE" && dv > 0) {
+                amount = Math.max(0, amount - Math.round((amount * dv) / 100));
+            } else if (dv > 0) {
+                amount = Math.max(0, amount - Math.round(dv));
+            }
+        }
+        if (selectedPrices.size > 0) {
+            const matchesAnyPrice = [...selectedPrices].some((key) => {
+                const r = PRICE_RANGES.find((item) => item.key === key);
+                return r ? (r.match(amount) || r.match(number(model.priceVnd))) : false;
+            });
+            if (!matchesAnyPrice) return false;
+        }
+
+        // 3. Range filter
+        const minimumRange = rangeFilter ? number(rangeFilter.value) : null;
+        if (minimumRange !== null && (number(model.rangeKm) === null || Number(model.rangeKm) < minimumRange)) {
+            return false;
+        }
+
+        // 4. Color filter
+        if (colorFilter && colorFilter.value && (!Array.isArray(model.colors) || !model.colors.some((color) =>
+            colorFamily(color) === colorFamily(colorFilter.value)
+        ))) {
+            return false;
+        }
+
+        // 5. Search text filter
+        if (searchText) {
+            // If explicit model filter is active and the search text was just an old car model keyword,
+            // avoid collision (so selecting VF6 doesn't filter for VF3)
+            if (selectedModels.size > 0 && isModelKeyword(rawSearch)) {
+                return true;
+            }
+
+            const fields = [
+                model.modelName,
+                model.carLine,
+                model.specificationVersion,
+                model.dimensions,
+                ...(Array.isArray(model.colors) ? model.colors : [])
+            ].map(normalizeSearch);
+
+            if (!fields.some((value) => value.includes(searchText))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     function sorted(items) {
         const result = [...items];
-        if (sortFilter.value === "price-asc") {
+        const sortVal = sortFilter ? sortFilter.value : "recommended";
+        if (sortVal === "price-asc") {
             result.sort((a, b) => (number(a.priceVnd) ?? Infinity) - (number(b.priceVnd) ?? Infinity));
         }
-        if (sortFilter.value === "price-desc") {
+        if (sortVal === "price-desc") {
             result.sort((a, b) => (number(b.priceVnd) ?? -Infinity) - (number(a.priceVnd) ?? -Infinity));
         }
-        if (sortFilter.value === "range-desc") {
+        if (sortVal === "range-desc") {
             result.sort((a, b) => (number(b.rangeKm) ?? -Infinity) - (number(a.rangeKm) ?? -Infinity));
         }
         return result;
@@ -193,11 +596,12 @@
         const photo = make("div", "vehicle-photo");
         const badge = make("span", "model-badge", className(model));
         const stockColors = inventoryByModel.get(Number(model.modelID)) || [];
-        const selectedColor = (colorFilter.value
+        const selectedColor = (colorFilter && colorFilter.value
             ? stockColors.find(({ color }) => colorFamily(color) === colorFamily(colorFilter.value))?.color
             : "") || stockColors[0]?.color || "";
         const imageUrl = colorImageFor(model, selectedColor) || safeOfficialUrl(model.imageUrl);
         let image = null;
+
         if (imageUrl) {
             image = make("img");
             image.src = imageUrl;
@@ -232,8 +636,49 @@
             item.append(make("span", "", label), make("strong", "", value));
             specs.append(item);
         });
-        const priceLabel = make("span", "vehicle-price-label", "Giá tham khảo · đã gồm pin");
-        const priceValue = make("strong", "vehicle-price", price(model.priceVnd));
+        // Promotion calculation
+        const promos = Array.isArray(model.promotions) ? model.promotions : [];
+        const activePromo = promos.length > 0 ? promos[0] : null;
+        const originalPrice = number(model.priceVnd);
+        let finalPrice = originalPrice;
+        let discountAmount = 0;
+        let discountBadgeText = "";
+
+        if (activePromo && originalPrice && originalPrice > 0) {
+            const discVal = Number(activePromo.discountValue || 0);
+            if (activePromo.discountType === "PERCENTAGE" && discVal > 0) {
+                discountAmount = Math.round((originalPrice * discVal) / 100);
+                finalPrice = Math.max(0, originalPrice - discountAmount);
+                discountBadgeText = `-${discVal}%`;
+            } else if (discVal > 0) {
+                discountAmount = Math.round(discVal);
+                finalPrice = Math.max(0, originalPrice - discountAmount);
+                discountBadgeText = `-${price(discVal)}`;
+            }
+        }
+
+        if (activePromo && discountAmount > 0) {
+            const promoBadge = make("span", "promo-badge", `🎁 ${text(activePromo.name)} ${discountBadgeText}`);
+            photo.append(promoBadge);
+        }
+
+        const priceWrap = make("div", "vehicle-price-wrap");
+        if (activePromo && discountAmount > 0) {
+            const priceLabel = make("span", "vehicle-price-label", "Giá sau ưu đãi · đã gồm pin");
+            const priceRow = make("div", "vehicle-price-row");
+            const priceValue = make("strong", "vehicle-price has-discount", price(finalPrice));
+            const priceOriginal = make("del", "vehicle-price-original", price(originalPrice));
+            const discountPill = make("span", "promo-tag-pill", discountBadgeText);
+            priceRow.append(priceValue, priceOriginal, discountPill);
+
+            const promoCalc = make("div", "vehicle-promo-calc", `🎁 ${text(activePromo.name)}: Trừ ${price(discountAmount)} vào giá xe`);
+            priceWrap.append(priceLabel, priceRow, promoCalc);
+        } else {
+            const priceLabel = make("span", "vehicle-price-label", "Giá tham khảo · đã gồm pin");
+            const priceValue = make("strong", "vehicle-price", price(model.priceVnd));
+            priceWrap.append(priceLabel, priceValue);
+        }
+
         const colorPicker = make("label", "vehicle-color-picker");
         colorPicker.append(make("span", "", "Màu xe"));
         const colorSelect = make("select", "vehicle-color-select");
@@ -283,49 +728,101 @@
         compareButton.setAttribute("aria-pressed", String(selected));
         compareButton.addEventListener("click", () => toggleCompare(id, model));
         footer.append(compareButton);
-        body.append(title, version, specs, colorPicker, stockInfo, priceLabel, priceValue, footer);
+        body.append(title, version, specs, colorPicker, stockInfo, priceWrap, footer);
         article.append(photo, body);
         return article;
     }
 
+    // =========================================================================
+    // Active Filter Chips ("khi KH không chọn nữa thì tự động trừ đi")
+    // =========================================================================
     function filterChips() {
+        if (!activeFilters) return;
         activeFilters.replaceChildren();
-        const values = [
-            ["model", modelFilter.value, modelFilter.options[modelFilter.selectedIndex]?.text],
-            ["price", priceFilter.value, priceFilter.options[priceFilter.selectedIndex]?.text],
-            ["range", rangeFilter.value, rangeFilter.options[rangeFilter.selectedIndex]?.text],
-            ["color", colorFilter.value, colorFilter.options[colorFilter.selectedIndex]?.text],
-            ["search", search.value, search.value ? `Từ khóa: ${search.value}` : ""]
-        ].filter((item) => item[1]);
-        values.forEach(([key, , label]) => {
-            const chip = make("span", "filter-chip", label);
+
+        // 1. Dòng xe chips
+        selectedModels.forEach((model) => {
+            const chip = make("span", "filter-chip", model);
             const remove = make("button", "", "×");
             remove.type = "button";
-            remove.setAttribute("aria-label", `Xóa bộ lọc ${label}`);
+            remove.setAttribute("aria-label", `Bỏ lọc dòng xe ${model}`);
             remove.addEventListener("click", () => {
-                if (key === "model") {
-                    modelFilter.value = "";
-                }
-                if (key === "price") {
-                    priceFilter.value = "";
-                }
-                if (key === "range") {
-                    rangeFilter.value = "";
-                }
-                if (key === "color") {
-                    colorFilter.value = "";
-                }
-                if (key === "search") {
+                selectedModels.delete(model);
+                if (selectedModels.size === 0 && search.value && isModelKeyword(search.value)) {
                     search.value = "";
                 }
+                syncModelFilterUI();
                 render();
             });
             chip.append(remove);
             activeFilters.append(chip);
         });
+
+        // 2. Mức giá chips
+        selectedPrices.forEach((key) => {
+            const r = PRICE_RANGES.find((item) => item.key === key);
+            const label = r ? r.label : key;
+            const chip = make("span", "filter-chip", label);
+            const remove = make("button", "", "×");
+            remove.type = "button";
+            remove.setAttribute("aria-label", `Bỏ lọc mức giá ${label}`);
+            remove.addEventListener("click", () => {
+                selectedPrices.delete(key);
+                syncPriceFilterUI();
+                render();
+            });
+            chip.append(remove);
+            activeFilters.append(chip);
+        });
+
+        // 3. Quãng đường chip
+        if (rangeFilter && rangeFilter.value) {
+            const label = rangeFilter.options[rangeFilter.selectedIndex]?.text;
+            const chip = make("span", "filter-chip", label);
+            const remove = make("button", "", "×");
+            remove.type = "button";
+            remove.setAttribute("aria-label", `Bỏ lọc quãng đường ${label}`);
+            remove.addEventListener("click", () => {
+                rangeFilter.value = "";
+                render();
+            });
+            chip.append(remove);
+            activeFilters.append(chip);
+        }
+
+        // 4. Màu sắc chip
+        if (colorFilter && colorFilter.value) {
+            const label = colorFilter.options[colorFilter.selectedIndex]?.text;
+            const chip = make("span", "filter-chip", `Màu: ${label}`);
+            const remove = make("button", "", "×");
+            remove.type = "button";
+            remove.setAttribute("aria-label", `Bỏ lọc màu ${label}`);
+            remove.addEventListener("click", () => {
+                colorFilter.value = "";
+                render();
+            });
+            chip.append(remove);
+            activeFilters.append(chip);
+        }
+
+        // 5. Từ khóa tìm kiếm chip
+        if (search.value.trim()) {
+            const keyword = search.value.trim();
+            const chip = make("span", "filter-chip", `Từ khóa: ${keyword}`);
+            const remove = make("button", "", "×");
+            remove.type = "button";
+            remove.setAttribute("aria-label", `Xóa từ khóa ${keyword}`);
+            remove.addEventListener("click", () => {
+                search.value = "";
+                render();
+            });
+            chip.append(remove);
+            activeFilters.append(chip);
+        }
     }
 
     function render() {
+        if (!grid) return;
         if (catalogueStatus !== "ready") {
             return;
         }
@@ -337,15 +834,18 @@
         const inStock = inventoryAvailable
             ? visibleLines.reduce((total, key) => total + (inventoryByLine.get(key) || 0), 0)
             : null;
-        summary.textContent = `Có ${visible.length} phiên bản xe trong danh mục${visible.length !== models.length ? ` · tổng ${models.length} phiên bản` : ""}`
-            + (inStock === null ? " · chưa tải được tồn kho" : ` · ${inStock} xe sẵn có trong kho theo các dòng đang hiển thị`)
-            + ".";
+        if (summary) {
+            summary.textContent = `Có ${visible.length} phiên bản xe trong danh mục${visible.length !== models.length ? ` · tổng ${models.length} phiên bản` : ""}`
+                + (inStock === null ? " · chưa tải được tồn kho" : ` · ${inStock} xe sẵn có trong kho theo các dòng đang hiển thị`)
+                + ".";
+        }
         filterChips();
     }
 
     function syncCompare() {
-        document.getElementById("compare-count").textContent = String(selections.size);
-        compareDock.hidden = selections.size === 0;
+        const compareCountEl = document.getElementById("compare-count");
+        if (compareCountEl) compareCountEl.textContent = String(selections.size);
+        if (compareDock) compareDock.hidden = selections.size === 0;
         const pageLink = document.getElementById("compare-page-link");
         if (pageLink) pageLink.hidden = selections.size < 2;
     }
@@ -382,31 +882,40 @@
     }
 
     function openComparison() {
-        const selectedModels = [...selections]
+        const selectedModelsList = [...selections]
             .map((id) => models.find((model) => (text(model.comparisonKey) || `${text(model.modelName)}-${text(model.specificationVersion)}`) === id))
             .filter(Boolean);
-        if (selectedModels.length === 0) {
+        if (selectedModelsList.length === 0) {
             showCompareNotice("Vui lòng chọn xe để so sánh.");
             return;
         }
-        if (selectedModels.length === 1) {
+        if (selectedModelsList.length === 1) {
             showCompareNotice("Vui lòng chọn thêm ít nhất 1 xe nữa để so sánh (tối thiểu 2 xe).");
             return;
         }
         persistCompareSelections();
+
+        // Save to comparison history before redirecting (for logged-in customers only)
+        if (isAuthenticated) {
+            CompareHistory.save(selectedModelsList);
+            updateHistoryBadges();
+        }
+
         const comparisonQuery = new URLSearchParams();
-        selectedModels.forEach((model) => comparisonQuery.append("key", text(model.comparisonKey)
+        selectedModelsList.forEach((model) => comparisonQuery.append("key", text(model.comparisonKey)
             || `${text(model.modelName)}-${text(model.specificationVersion)}`));
         window.location.href = `${contextPath}/comparison?${comparisonQuery.toString()}`;
     }
 
     function resetFilters() {
         search.value = "";
-        modelFilter.value = "";
-        priceFilter.value = "";
+        selectedModels.clear();
+        selectedPrices.clear();
         rangeFilter.value = "";
         colorFilter.value = "";
         sortFilter.value = "recommended";
+        syncModelFilterUI();
+        syncPriceFilterUI();
         if (catalogueStatus === "failed") {
             loadCatalogue();
         } else {
@@ -414,39 +923,269 @@
         }
     }
 
+    const FALLBACK_CATALOGUE = {
+        note: "Thông tin và hình ảnh xe điện VinFast chính hãng (dữ liệu tham khảo).",
+        models: [
+            {
+                modelName: "VF 3",
+                carLine: "VF 3",
+                specificationVersion: "Eco - Tiêu chuẩn 2",
+                priceVnd: 285000000,
+                dimensions: "3190 x 1679 x 1652 mm",
+                batteryKwh: 18.64,
+                rangeKm: 215,
+                maxPowerKw: 30,
+                seats: 4,
+                rangeStandard: "NEDC",
+                imageUrl: "https://static-cms-prod.vinfastauto.com/statics/car/vf3/xe-dien-vinfast-vf3-chon-mau-nen-trang-logo-desktop.webp",
+                colors: ["Trắng", "Xám", "Đỏ", "Vàng", "Xanh dương", "Hồng", "Xanh lá nhạt"]
+            },
+            {
+                modelName: "VF 5 Plus",
+                carLine: "VF 5",
+                specificationVersion: "Plus",
+                priceVnd: 496000000,
+                dimensions: "3967 x 1723 x 1578 mm",
+                batteryKwh: 37.23,
+                rangeKm: 326,
+                maxPowerKw: 100,
+                seats: 5,
+                rangeStandard: "NEDC",
+                imageUrl: "https://static-cms-prod.vinfastauto.com/statics/car/vf5/xe-dien-vinfast-vf5-ngoai-that-mau-xam-toan-canh-desktop.webp",
+                colors: ["Trắng", "Bạc", "Đỏ", "Xanh dương", "Xám"]
+            },
+            {
+                modelName: "VF 6 Eco",
+                carLine: "VF 6",
+                specificationVersion: "Eco",
+                priceVnd: 646000000,
+                dimensions: "4238 x 1820 x 1594 mm",
+                batteryKwh: 59.6,
+                rangeKm: 485,
+                maxPowerKw: 130,
+                seats: 5,
+                rangeStandard: "NEDC",
+                imageUrl: "https://static-cms-prod.vinfastauto.com/statics/car/vf6/hinh-anh-xe-vinfast-vf6-logo-vf6-mau-do-desktop.webp",
+                colors: ["Trắng", "Bạc", "Xám", "Đỏ", "Xanh dương"]
+            },
+            {
+                modelName: "VF 6 Plus",
+                carLine: "VF 6",
+                specificationVersion: "Plus",
+                priceVnd: 699000000,
+                dimensions: "4238 x 1820 x 1594 mm",
+                batteryKwh: 59.6,
+                rangeKm: 460,
+                maxPowerKw: 150,
+                seats: 5,
+                rangeStandard: "NEDC",
+                imageUrl: "https://static-cms-prod.vinfastauto.com/statics/car/vf6/hinh-anh-xe-vinfast-vf6-logo-vf6-mau-xanh-reu-desktop.webp",
+                colors: ["Trắng", "Bạc", "Xám", "Đỏ", "Xanh rêu", "Xanh dương"]
+            },
+            {
+                modelName: "VF 7 Eco",
+                carLine: "VF 7",
+                specificationVersion: "Eco",
+                priceVnd: 740000000,
+                dimensions: "4545 x 1890 x 1636 mm",
+                batteryKwh: 59.6,
+                rangeKm: 440,
+                maxPowerKw: 130,
+                seats: 5,
+                rangeStandard: "WLTP",
+                imageUrl: "https://static-cms-prod.vinfastauto.com/statics/car/vf7/hinh-anh-vinfast-vf7-text-logo-banner-desktop.webp",
+                colors: ["Trắng", "Bạc", "Xám", "Đỏ", "Xanh dương", "Đen"]
+            },
+            {
+                modelName: "VF 7 Plus",
+                carLine: "VF 7",
+                specificationVersion: "Plus",
+                priceVnd: 830000000,
+                dimensions: "4545 x 1890 x 1636 mm",
+                batteryKwh: 75.3,
+                rangeKm: 500.5,
+                maxPowerKw: 260,
+                seats: 5,
+                rangeStandard: "NEDC",
+                imageUrl: "https://static-cms-prod.vinfastauto.com/statics/car/vf7/hinh-anh-vinfast-vf7-plus-text-logo-banner-desktop.webp",
+                colors: ["Trắng", "Bạc", "Xám", "Đỏ", "Xanh dương", "Đen"]
+            },
+            {
+                modelName: "VF 8 Eco",
+                carLine: "VF 8",
+                specificationVersion: "Eco",
+                priceVnd: 898000000,
+                dimensions: "4750 x 1934 x 1667 mm",
+                batteryKwh: 87.7,
+                rangeKm: 635,
+                maxPowerKw: 260,
+                seats: 5,
+                rangeStandard: "NEDC",
+                imageUrl: "https://static-cms-prod.vinfastauto.com/statics/car/vf8/hinh-anh-vinfast-vf8-eco-text-logo-banner-desktop.webp",
+                colors: ["Trắng", "Bạc", "Xám", "Đỏ", "Xanh dương", "Đen"]
+            },
+            {
+                modelName: "VF 8 Plus",
+                carLine: "VF 8",
+                specificationVersion: "Plus",
+                priceVnd: 1079000000,
+                dimensions: "4750 x 1934 x 1667 mm",
+                batteryKwh: 87.7,
+                rangeKm: 475,
+                maxPowerKw: 300,
+                seats: 5,
+                rangeStandard: "WLTP",
+                imageUrl: "https://static-cms-prod.vinfastauto.com/statics/car/VF-8/hinh-anh-xe-VinFast-vf8-ngoai-that-mau-xanh-reu-02.webp",
+                colors: ["Trắng", "Bạc", "Xám", "Đỏ", "Xanh rêu", "Xanh dương", "Đen"]
+            },
+            {
+                modelName: "VF 9 Eco",
+                carLine: "VF 9",
+                specificationVersion: "Eco",
+                priceVnd: 1348000000,
+                dimensions: "5118 x 2254 x 1696 mm",
+                batteryKwh: 123.0,
+                rangeKm: 626,
+                maxPowerKw: 300,
+                seats: 7,
+                rangeStandard: "WLTP",
+                imageUrl: "https://static-cms-prod.vinfastauto.com/statics/car/vf9/hinh-anh-vinfast-vf9-eco-text-logo-banner-desktop.webp",
+                colors: ["Trắng", "Bạc", "Xám", "Đỏ", "Xanh dương", "Đen"]
+            },
+            {
+                modelName: "VF 9 Plus",
+                carLine: "VF 9",
+                specificationVersion: "Plus",
+                priceVnd: 1529000000,
+                dimensions: "5118 x 2254 x 1696 mm",
+                batteryKwh: 123.0,
+                rangeKm: 602,
+                maxPowerKw: 300,
+                seats: 7,
+                rangeStandard: "WLTP",
+                imageUrl: "https://static-cms-prod.vinfastauto.com/statics/car/vf9/hinh-anh-vinfast-vf9-product-summary-desktop.webp",
+                colors: ["Trắng", "Bạc", "Xám", "Đỏ", "Xanh dương", "Đen"]
+            }
+        ]
+    };
+
+    async function fetchWithTimeout(url, options = {}, timeoutMs = 2500) {
+        if (typeof AbortController === "undefined") {
+            return fetch(url, options);
+        }
+        const controller = new AbortController();
+        const timerId = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            const res = await fetch(url, { ...options, signal: controller.signal });
+            clearTimeout(timerId);
+            return res;
+        } catch (err) {
+            clearTimeout(timerId);
+            throw err;
+        }
+    }
+
+    function applyAndRenderModels(rawModels, metadata) {
+        if (!Array.isArray(rawModels) || rawModels.length === 0) return;
+        catalogueMetadata = metadata || catalogueMetadata || {};
+        models = rawModels.map((model) => {
+            const key = lineKey(lineName(model));
+            return {
+                ...model,
+                comparisonKey: text(model.comparisonKey) || `${text(model.modelName)}-${text(model.specificationVersion)}`,
+                inventoryConnected: inventoryAvailable,
+                availableCars: inventoryByLine.get(key) || 0
+            };
+        });
+        const validKeys = new Set(models.map((model) => model.comparisonKey));
+        for (const key of selections) if (!validKeys.has(key)) selections.delete(key);
+        persistCompareSelections();
+        populateFilters();
+        const banners = ["VF 3", "VF 7", "VF 8"];
+        banners.forEach((name, index) => {
+            const model =
+                models.find((item) => lineName(item).toUpperCase() === name) ||
+                models.find((item) => text(item.modelName).toUpperCase().startsWith(name));
+            const image = document.querySelector(`[data-banner="${index}"] img`);
+            const officialImage = safeOfficialUrl(model?.imageUrl);
+            if (image && officialImage) {
+                image.src = officialImage;
+            }
+        });
+        const disclaimerEl = document.getElementById("catalog-disclaimer");
+        if (disclaimerEl) {
+            disclaimerEl.textContent = text(catalogueMetadata.note)
+                || "Giá và thông số hiển thị theo dữ liệu tham khảo của từng cấu hình; vui lòng đối chiếu với VinFast trước khi giao dịch.";
+        }
+        catalogueStatus = "ready";
+        if (grid) grid.setAttribute("aria-busy", "false");
+        render();
+        syncCompare();
+        if (isAuthenticated) {
+            updateHistoryBadges();
+        }
+    }
+
     async function loadCatalogue() {
         catalogueStatus = "loading";
-        grid.hidden = false;
-        grid.setAttribute("aria-busy", "true");
-        const loadingCard = make("div", "loading-card");
-        loadingCard.append(make("span", "loading-orbit"), make("span", "", "Đang tải danh sách xe..."));
-        grid.replaceChildren(loadingCard);
-        summary.textContent = "Đang tải danh mục xe...";
-        try {
-            let referenceCatalogue = {};
-            try {
-                const referenceResponse = await fetch(catalogueUrl, {
-                    credentials: "same-origin",
-                    headers: { Accept: "application/json" }
-                });
-                if (referenceResponse.ok) referenceCatalogue = await referenceResponse.json();
-            } catch (referenceError) {
-                console.warn("Không tải được metadata danh mục dự phòng.", referenceError);
-            }
+        if (grid) {
+            grid.hidden = false;
+            grid.setAttribute("aria-busy", "true");
+        }
+        if (summary) summary.textContent = "Đang tải danh mục xe...";
 
-            let productModels = [];
-            try {
-                const databaseResponse = await fetch(databaseCatalogueUrl, {
+        let referenceCatalogue = null;
+        try {
+            let refRes = await fetchWithTimeout(catalogueUrl, {
+                credentials: "same-origin",
+                headers: { Accept: "application/json" }
+            }, 3000);
+            if (!refRes.ok) {
+                refRes = await fetchWithTimeout("assets/vinfast-catalogue.json", {
                     credentials: "same-origin",
-                    cache: "no-cache",
                     headers: { Accept: "application/json" }
-                });
-                if (!databaseResponse.ok) throw new Error(`Vehicle catalogue request failed: ${databaseResponse.status}`);
-                const databaseCatalogue = await databaseResponse.json();
-                const databaseModels = Array.isArray(databaseCatalogue.models)
-                    ? databaseCatalogue.models.filter((model) => text(model.modelName)) : [];
-                catalogueMetadata = { ...referenceCatalogue, ...databaseCatalogue };
-                productModels = databaseModels.map((databaseModel) => {
+                }, 3000);
+            }
+            if (refRes.ok) {
+                referenceCatalogue = await refRes.json();
+            }
+        } catch (refErr) {
+            console.warn("Không tải được catalogue tĩnh vinfast-catalogue.json:", refErr);
+        }
+
+        if (!referenceCatalogue || !Array.isArray(referenceCatalogue.models) || referenceCatalogue.models.length === 0) {
+            referenceCatalogue = FALLBACK_CATALOGUE;
+        }
+
+        const initialModels = Array.isArray(referenceCatalogue.models)
+            ? referenceCatalogue.models.filter((m) => text(m.modelName)) : [];
+
+        // RENDER NGAY LẬP TỨC: Người dùng thấy ngay danh mục xe trong < 50ms, không bị treo spinner
+        applyAndRenderModels(initialModels, referenceCatalogue);
+
+        // Bổ sung ngầm dữ liệu từ Database & Tồn kho mà không chặn giao diện người dùng
+        enrichCatalogue(referenceCatalogue);
+    }
+
+    async function enrichCatalogue(referenceCatalogue) {
+        let databaseCatalogue = null;
+        try {
+            const dbRes = await fetchWithTimeout(databaseCatalogueUrl, {
+                credentials: "same-origin",
+                cache: "no-cache",
+                headers: { Accept: "application/json" }
+            }, 3000);
+            if (dbRes.ok) {
+                databaseCatalogue = await dbRes.json();
+            }
+        } catch (dbErr) {
+            console.info("Database catalogue unavailable or timed out; using reference catalogue.", dbErr);
+        }
+
+        if (databaseCatalogue && Array.isArray(databaseCatalogue.models) && databaseCatalogue.models.length > 0) {
+            const databaseModels = databaseCatalogue.models.filter((m) => text(m.modelName));
+            if (databaseModels.length > 0) {
+                const mergedModels = databaseModels.map((databaseModel) => {
                     const sameVersion = (referenceCatalogue.models || []).filter((item) =>
                         normalizeSearch(item.specificationVersion) === normalizeSearch(databaseModel.specificationVersion)
                     );
@@ -474,22 +1213,20 @@
                         || `${text(databaseModel.modelName)}-${text(databaseModel.specificationVersion)}`;
                     return merged;
                 });
-            } catch (databaseCatalogueError) {
-                catalogueMetadata = referenceCatalogue;
-                productModels = Array.isArray(referenceCatalogue.models)
-                    ? referenceCatalogue.models.filter((model) => text(model.modelName)) : [];
-                console.error("Không thể tải danh mục xe chính từ database; đang hiển thị dữ liệu tham khảo.", databaseCatalogueError);
+                applyAndRenderModels(mergedModels, { ...referenceCatalogue, ...databaseCatalogue });
             }
-            inventoryAvailable = false;
-            inventoryByLine = new Map();
-            inventoryByModel = new Map();
-            try {
-                const inventoryResponse = await fetch(`${contextPath}/api/ai`, {
-                    credentials: "same-origin",
-                    headers: { Accept: "application/json" }
-                });
-                if (!inventoryResponse.ok) throw new Error(`Inventory request failed: ${inventoryResponse.status}`);
-                const inventoryPayload = await inventoryResponse.json();
+        }
+
+        // Tải tồn kho xe từ /api/ai
+        try {
+            const inventoryRes = await fetchWithTimeout(`${contextPath}/api/ai`, {
+                credentials: "same-origin",
+                headers: { Accept: "application/json" }
+            }, 3000);
+            if (inventoryRes.ok) {
+                const inventoryPayload = await inventoryRes.json();
+                inventoryByLine = new Map();
+                inventoryByModel = new Map();
                 for (const vehicle of (inventoryPayload.models || [])) {
                     const key = lineKey(vehicle.carLineName || vehicle.modelName);
                     if (!key) continue;
@@ -504,112 +1241,197 @@
                     }
                 }
                 inventoryAvailable = true;
-            } catch (inventoryError) {
-                inventoryByModel = new Map();
-                console.error("Không thể tải tồn kho xe từ database.", inventoryError);
+                models.forEach((m) => {
+                    const key = lineKey(lineName(m));
+                    m.inventoryConnected = true;
+                    m.availableCars = inventoryByLine.get(key) || 0;
+                });
+                render();
             }
-            models = productModels.map((model) => {
-                const key = lineKey(lineName(model));
-                return {
-                    ...model,
-                    comparisonKey: text(model.comparisonKey) || `${text(model.modelName)}-${text(model.specificationVersion)}`,
-                    inventoryConnected: inventoryAvailable,
-                    availableCars: inventoryByLine.get(key) || 0
-                };
-            });
-            if (!models.length) {
-                throw new Error("No catalogue models are available");
-            }
-            const validKeys = new Set(models.map((model) => model.comparisonKey));
-            for (const key of selections) if (!validKeys.has(key)) selections.delete(key);
-            persistCompareSelections();
-            populateFilters();
-            const banners = ["VF 3", "VF 7", "VF 8"];
-            banners.forEach((name, index) => {
-                const model =
-                    models.find((item) => lineName(item).toUpperCase() === name) ||
-                    models.find((item) => text(item.modelName).toUpperCase().startsWith(name));
-                const image = document.querySelector(`[data-banner="${index}"] img`);
-                const officialImage = safeOfficialUrl(model?.imageUrl);
-                if (image && officialImage) {
-                    image.src = officialImage;
-                }
-            });
-            const disclaimer = text(catalogueMetadata.note);
-            document.getElementById("catalog-disclaimer").textContent =
-                disclaimer ||
-                "Giá và thông số hiển thị theo dữ liệu tham khảo của từng cấu hình; vui lòng đối chiếu với VinFast trước khi giao dịch.";
-            catalogueStatus = "ready";
-            render();
-            syncCompare();
-        } catch (error) {
-            catalogueStatus = "failed";
-            grid.setAttribute("aria-busy", "false");
-            grid.replaceChildren();
-            grid.hidden = true;
-            summary.textContent = "Danh mục xe hiện chưa sẵn sàng.";
-            console.error("Không thể tải danh mục xe VinFast.", error);
+        } catch (invErr) {
+            console.info("Inventory unavailable or timed out.", invErr);
+        }
+
+        if (isAuthenticated) {
+            CompareHistory.syncWithServer().then(updateHistoryBadges).catch(() => {});
         }
     }
 
-    [modelFilter, priceFilter, rangeFilter, colorFilter, sortFilter].forEach((control) =>
-        control.addEventListener("change", render)
-    );
-    search.addEventListener("input", render);
-    document.getElementById("search-form").addEventListener("submit", (event) => {
-        event.preventDefault();
-        const keyword = normalizeSearch(search.value);
-        const exactMatch = keyword && models.find((model) =>
-            [lineName(model), model.modelName].some((value) => normalizeSearch(value) === keyword)
-        );
-        if (exactMatch) {
-            const params = new URLSearchParams();
-            const modelID = Number(exactMatch.modelID);
-            if (Number.isInteger(modelID) && modelID > 0) params.set("id", String(modelID));
-            else if (text(exactMatch.carLine)) params.set("line", text(exactMatch.carLine));
-            else params.set("name", text(exactMatch.modelName));
-            window.location.href = `${contextPath}/detail?${params.toString()}`;
-            return;
-        }
-        render();
+    // =========================================================================
+    // Filter Change Event Handlers
+    // =========================================================================
+    if (modelFilter) {
+        modelFilter.addEventListener("change", () => {
+            const val = modelFilter.value;
+            // Clear conflicting search keyword if user selects a model
+            if (search.value && isModelKeyword(search.value)) {
+                search.value = "";
+            }
+
+            if (!val) {
+                // If selected "Tất cả dòng xe", clear all model filters
+                selectedModels.clear();
+            } else if (val === "__summary__") {
+                return;
+            } else {
+                // Toggle selection
+                if (selectedModels.has(val)) {
+                    selectedModels.delete(val);
+                } else {
+                    selectedModels.add(val);
+                }
+            }
+            syncModelFilterUI();
+            render();
+        });
+    }
+
+    if (priceFilter) {
+        priceFilter.addEventListener("change", () => {
+            const val = priceFilter.value;
+            if (!val) {
+                selectedPrices.clear();
+            } else if (val === "__summary__") {
+                return;
+            } else {
+                if (selectedPrices.has(val)) {
+                    selectedPrices.delete(val);
+                } else {
+                    selectedPrices.add(val);
+                }
+            }
+            syncPriceFilterUI();
+            render();
+        });
+    }
+
+    [rangeFilter, colorFilter, sortFilter].forEach((control) => {
+        if (control) control.addEventListener("change", render);
     });
-    document.getElementById("reset-filters").addEventListener("click", resetFilters);
+
+    if (search) {
+        search.addEventListener("input", () => {
+            const val = search.value.trim();
+            if (val && isModelKeyword(val) && selectedModels.size > 0) {
+                const norm = normalizeSearch(val);
+                const matchesSelected = [...selectedModels].some((m) => {
+                    const mn = normalizeSearch(m);
+                    return mn.includes(norm) || norm.includes(mn);
+                });
+                if (!matchesSelected) {
+                    // User searched a specific model that conflicts with currently filtered models
+                    selectedModels.clear();
+                    syncModelFilterUI();
+                }
+            }
+            render();
+        });
+    }
+
+    const searchForm = document.getElementById("search-form");
+    if (searchForm) {
+        searchForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            const keyword = normalizeSearch(search ? search.value : "");
+            const exactMatch = keyword && models.find((model) =>
+                [lineName(model), model.modelName].some((value) => normalizeSearch(value) === keyword)
+            );
+            if (exactMatch) {
+                const params = new URLSearchParams();
+                const modelID = Number(exactMatch.modelID);
+                if (Number.isInteger(modelID) && modelID > 0) params.set("id", String(modelID));
+                else if (text(exactMatch.carLine)) params.set("line", text(exactMatch.carLine));
+                else params.set("name", text(exactMatch.modelName));
+                window.location.href = `${contextPath}/detail?${params.toString()}`;
+                return;
+            }
+            render();
+        });
+    }
+
+    const resetBtn = document.getElementById("reset-filters");
+    if (resetBtn) resetBtn.addEventListener("click", resetFilters);
+
+    // Banners: Selecting a banner clears conflicting search and filters to that model
     document.querySelectorAll("[data-banner][data-model]").forEach((banner) => {
         banner.addEventListener("click", (event) => {
             event.preventDefault();
             const model = banner.dataset.model;
-            search.value = model;
-            modelFilter.value = [...modelFilter.options].find((option) => normalizeSearch(option.value) === normalizeSearch(model))?.value || "";
+            if (search) search.value = "";
+            selectedModels.clear();
+            selectedModels.add(model);
+            syncModelFilterUI();
             render();
-            document.getElementById("models").scrollIntoView({ behavior: "smooth", block: "start" });
+            document.getElementById("models")?.scrollIntoView({ behavior: "smooth", block: "start" });
         });
     });
-    document.getElementById("compare-open").addEventListener("click", openComparison);
-    document.getElementById("compare-clear").addEventListener("click", () => {
-        selections.clear();
-        persistCompareSelections();
-        if (compareNotice) compareNotice.hidden = true;
-        render();
-        syncCompare();
-    });
-    document.getElementById("compare-close").addEventListener("click", () => compareDialog.close());
-    compareDialog.addEventListener("click", (event) => {
-        if (event.target === compareDialog) {
-            compareDialog.close();
-        }
-    });
+
+    const compareOpenBtn = document.getElementById("compare-open");
+    if (compareOpenBtn) compareOpenBtn.addEventListener("click", openComparison);
+
+    const compareClearBtn = document.getElementById("compare-clear");
+    if (compareClearBtn) {
+        compareClearBtn.addEventListener("click", () => {
+            selections.clear();
+            persistCompareSelections();
+            if (compareNotice) compareNotice.hidden = true;
+            render();
+            syncCompare();
+        });
+    }
+
+    const compareCloseBtn = document.getElementById("compare-close");
+    if (compareCloseBtn) compareCloseBtn.addEventListener("click", () => compareDialog?.close());
+    if (compareDialog) {
+        compareDialog.addEventListener("click", (event) => {
+            if (event.target === compareDialog) {
+                compareDialog.close();
+            }
+        });
+    }
+
+    // Comparison History Dialog Events
+    function openHistoryModal() {
+        renderHistoryDialog();
+        if (compareHistoryDialog) compareHistoryDialog.showModal();
+    }
+
+    if (openHistoryBtn) openHistoryBtn.addEventListener("click", openHistoryModal);
+    if (compareDockHistory) compareDockHistory.addEventListener("click", openHistoryModal);
+    if (historyCloseBtn) historyCloseBtn.addEventListener("click", () => compareHistoryDialog?.close());
+    if (historyDoneBtn) historyDoneBtn.addEventListener("click", () => compareHistoryDialog?.close());
+    if (compareHistoryDialog) {
+        compareHistoryDialog.addEventListener("click", (e) => {
+            if (e.target === compareHistoryDialog) compareHistoryDialog.close();
+        });
+    }
+
+    if (btnClearAllHistory) {
+        btnClearAllHistory.addEventListener("click", () => {
+            if (confirm("Bạn có chắc chắn muốn xóa tất cả lịch sử so sánh xe?")) {
+                CompareHistory.clear();
+                updateHistoryBadges();
+                renderHistoryDialog();
+            }
+        });
+    }
+
     const menuButton = document.querySelector(".mobile-menu-toggle");
     const nav = document.getElementById("primary-nav");
-    menuButton.addEventListener("click", () => {
-        const expanded = menuButton.getAttribute("aria-expanded") === "true";
-        menuButton.setAttribute("aria-expanded", String(!expanded));
-        nav.classList.toggle("open", !expanded);
-    });
-    nav.addEventListener("click", (event) => {
-        if (event.target.closest("a")) {
-            menuButton.setAttribute("aria-expanded", "false");
-            nav.classList.remove("open");
-        }
-    });
+    if (menuButton && nav) {
+        menuButton.addEventListener("click", () => {
+            const expanded = menuButton.getAttribute("aria-expanded") === "true";
+            menuButton.setAttribute("aria-expanded", String(!expanded));
+            nav.classList.toggle("open", !expanded);
+        });
+        nav.addEventListener("click", (event) => {
+            if (event.target.closest("a")) {
+                menuButton.setAttribute("aria-expanded", "false");
+                nav.classList.remove("open");
+            }
+        });
+    }
+
+    // Tải danh mục ngay khi script nạp xong
     loadCatalogue();
 })();

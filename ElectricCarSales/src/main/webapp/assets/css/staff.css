@@ -1352,3 +1352,20 @@ td {
     font-size: 10px;
 }
 .staff-logout-btn:hover { background: #fff3f5; }
+
+/* Confirmation Modal Dialog */
+dialog.app-confirm-dialog {
+    border: none;
+    border-radius: 12px;
+    padding: 0;
+    width: min(500px, calc(100% - 32px));
+    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.3);
+    background: #ffffff;
+    color: #0f172a;
+    font-family: inherit;
+    overflow: hidden;
+}
+dialog.app-confirm-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+}

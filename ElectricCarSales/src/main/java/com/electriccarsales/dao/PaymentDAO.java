@@ -573,7 +573,7 @@ public class PaymentDAO extends FinanceDAOBase {
         });
     }
 
-    static void requireExactSettlement(Connection connection, int orderId) throws SQLException {
+    public static void requireExactSettlement(Connection connection, int orderId) throws SQLException {
         String sql = """
                 SELECT o.TotalAmount, o.DepositAmount, o.RemainingAmount,
                        COALESCE(SUM(p.PaymentAmount), 0) AS Paid,

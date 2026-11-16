@@ -62,16 +62,29 @@
     <article class="detail-card">
         <div class="gallery" id="vehicle-gallery"
              data-model-id="<c:out value='${car.modelID}'/>"
+             data-stock-car-id="<c:out value='${stockCarID}'/>"
              data-model-name="<c:out value='${car.modelName}'/>"
              aria-label="Hình ảnh xe">
-            <c:forEach var="image" items="${carImages}">
-                <c:if test="${not empty image.imageURL}">
-                    <img src="<c:out value='${image.imageURL}'/>" alt="<c:out value='${car.modelName}'/>" loading="lazy">
-                </c:if>
-            </c:forEach>
-            <c:if test="${empty carImages}">
-                <p class="gallery-message">Đang tải hình ảnh xe…</p>
-            </c:if>
+            <c:choose>
+                <c:when test="${not empty stockCarID}">
+                    <c:if test="${not empty stockVehicleImage}">
+                        <img src="<c:out value='${stockVehicleImage}'/>" alt="<c:out value='${car.modelName}'/> · <c:out value='${stockColorName}'/>" loading="eager">
+                    </c:if>
+                    <c:if test="${empty stockVehicleImage}">
+                        <p class="gallery-message">Đang tải hình ảnh xe…</p>
+                    </c:if>
+                </c:when>
+                <c:otherwise>
+                    <c:forEach var="image" items="${carImages}">
+                        <c:if test="${not empty image.imageURL}">
+                            <img src="<c:out value='${image.imageURL}'/>" alt="<c:out value='${car.modelName}'/>" loading="lazy">
+                        </c:if>
+                    </c:forEach>
+                    <c:if test="${empty carImages}">
+                        <p class="gallery-message">Đang tải hình ảnh xe…</p>
+                    </c:if>
+                </c:otherwise>
+            </c:choose>
         </div>
         <div>
             <span class="eyebrow">THÔNG TIN MẪU XE</span>
@@ -348,7 +361,10 @@
 
         async function loadCatalogue() {
             if (!cataloguePromise) {
-                cataloguePromise = fetch("<c:url value='/api/catalogue'/>?modelId=" + encodeURIComponent(modelID), {
+                const stockCarID = gallery.dataset.stockCarId;
+                const catalogueQuery = "?modelId=" + encodeURIComponent(modelID)
+                    + (stockCarID ? "&carId=" + encodeURIComponent(stockCarID) : "");
+                cataloguePromise = fetch("<c:url value='/api/catalogue'/>" + catalogueQuery, {
                     credentials: "same-origin",
                     cache: "no-cache",
                     headers: { Accept: "application/json" }
@@ -368,7 +384,10 @@
             fallbackRequested = true;
             try {
                 const catalogue = await loadCatalogue();
-                const model = catalogue.models?.find((item) => Number(item.modelID) === Number(modelID));
+                const stockCarID = gallery.dataset.stockCarId;
+                const model = stockCarID
+                    ? catalogue.models?.find((item) => Number(item.stockCarID) === Number(stockCarID))
+                    : catalogue.models?.find((item) => Number(item.modelID) === Number(modelID));
                 if (model) {
                     renderSpecifications(model);
                 } else {
