@@ -78,9 +78,12 @@ public final class SalesPreviewDAO {
             connection.setAutoCommit(false);
             try {
                 Map<String, String> fields;
-                try (var query = connection.prepareStatement(SQL + condition)) {
+                String effectiveSql = userId > 0 ? (SQL + condition) : (SQL.replace("AND cu.UserID=?", "") + condition);
+                try (var query = connection.prepareStatement(effectiveSql)) {
                     query.setInt(1, orderId);
-                    query.setInt(2, userId);
+                    if (userId > 0) {
+                        query.setInt(2, userId);
+                    }
                     try (var rows = query.executeQuery()) {
                         fields = read(rows, kind);
                     }
@@ -138,7 +141,7 @@ public final class SalesPreviewDAO {
     private Map<String, String> read(ResultSet rows, SalesPreviewKind kind) throws SQLException {
         if (!rows.next()) return Map.of();
         BigDecimal total = rows.getBigDecimal("order.totalAmount");
-        BigDecimal deposit = total.multiply(new BigDecimal("0.30")).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal deposit = total.multiply(new BigDecimal("0.30")).setScale(0, RoundingMode.HALF_UP);
         if (deposit.signum() <= 0 || deposit.compareTo(rows.getBigDecimal("order.depositAmount")) != 0) {
             return Map.of();
         }

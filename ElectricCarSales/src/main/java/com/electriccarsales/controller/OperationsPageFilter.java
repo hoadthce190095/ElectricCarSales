@@ -34,7 +34,9 @@ public class OperationsPageFilter implements Filter {
         throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest) rawRequest;
         HttpServletResponse response = (HttpServletResponse) rawResponse;
-        response.setHeader("Cache-Control", "no-store");
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
         response.setHeader("X-Content-Type-Options", "nosniff");
         HttpSession session = request.getSession(false);
         SessionUser user = session == null ? null : (SessionUser) session.getAttribute("user");
@@ -64,6 +66,8 @@ public class OperationsPageFilter implements Filter {
                 }
             } else if (path.startsWith("/admin/")) {
                 allowed = "ADMIN".equals(role);
+            } else if ("/car".equals(path)) {
+                allowed = Set.of("MANAGER", "ADMIN").contains(role);
             } else if (path.startsWith("/staff/inventory")) {
                 allowed = Set.of("OPERATIONS", "MANAGER", "ADMIN").contains(role);
             } else if ("/contract".equals(path) || "/invoice".equals(path)) {

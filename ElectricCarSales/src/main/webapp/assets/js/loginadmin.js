@@ -27,23 +27,23 @@ function createFirstAdmin() {
             }),
             field("username", "Tên đăng nhập", "text", "admin", {
                 required: true,
-                minlength: 3,
-                maxlength: 50,
+                minlength: 5,
+                maxlength: 30,
                 full: true,
                 autocomplete: "username"
             }),
             field("password", "Mật khẩu", "password", "", {
                 required: true,
-                minlength: 10,
-                maxlength: 128,
+                minlength: 8,
+                maxlength: 30,
                 full: true,
                 autocomplete: "new-password",
-                help: "Từ 10 đến 128 ký tự. Nên kết hợp chữ, số và ký tự đặc biệt."
+                help: "8–30 ký tự, gồm chữ hoa, số và ký tự đặc biệt."
             }),
             field("confirmPassword", "Nhập lại mật khẩu", "password", "", {
                 required: true,
-                minlength: 10,
-                maxlength: 128,
+                minlength: 8,
+                maxlength: 30,
                 full: true,
                 autocomplete: "new-password"
             })

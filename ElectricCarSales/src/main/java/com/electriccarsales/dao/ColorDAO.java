@@ -14,7 +14,7 @@ public class ColorDAO extends DBContext {
 
         String sql = "SELECT * FROM Colors";
 
-        try{
+        try (java.sql.Connection conn = getConnection()) {
             PreparedStatement ps = conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
 

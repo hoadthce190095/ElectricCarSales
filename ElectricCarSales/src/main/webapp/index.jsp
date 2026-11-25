@@ -35,7 +35,7 @@ boolean isAuthenticated = sessionUserObj != null
     <link rel="stylesheet" href="<c:url value='/assets/css/theme.css'><c:param name='v' value='main-blue-20261017' /></c:url>">
     <link rel="stylesheet" href="<c:url value='/assets/css/customer.css'><c:param name='v' value='customer-avatar-navigation-20261112' /></c:url>">
     <link rel="stylesheet" href="<c:url value='/assets/css/home.css'><c:param name='v' value='home-auth-history-20261116c' /></c:url>">
-    <script src="<c:url value='/assets/js/customer.js'><c:param name='v' value='customer-avatar-20261116c' /></c:url>" defer></script>
+    <script src="<c:url value='/assets/js/customer.js'><c:param name='v' value='consult-popup-auth-price-20261125' /></c:url>" defer></script>
     <script src="<c:url value='/assets/js/home.js'><c:param name='v' value='<%= String.valueOf(System.currentTimeMillis()) %>' /></c:url>" defer></script>
 </head>
 <body class="home-page" data-context-path="<c:out value='${pageContext.request.contextPath}' />" data-authenticated="<%= isAuthenticated %>">

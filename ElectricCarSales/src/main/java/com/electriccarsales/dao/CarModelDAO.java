@@ -22,11 +22,11 @@ public class CarModelDAO extends DBContext {
                 INNER JOIN CarLines cl ON cl.CarLineID = m.CarLineID
                 INNER JOIN Brands b ON b.BrandID = cl.BrandID
                 LEFT JOIN Specifications s ON s.ModelID = m.ModelID
-                OUTER APPLY (
-                    SELECT MIN(v.CatalogPrice) AS MinPrice
+                LEFT JOIN (
+                    SELECT v.ModelID, MIN(v.CatalogPrice) AS MinPrice
                     FROM CarVersions v
-                    WHERE v.ModelID = m.ModelID
-                ) vehiclePrice
+                    GROUP BY v.ModelID
+                ) vehiclePrice ON vehiclePrice.ModelID = m.ModelID
                 WHERE 1 = 1
                 """);
         List<Object> parameters = new ArrayList<>();
@@ -75,7 +75,8 @@ public class CarModelDAO extends DBContext {
 
         sql.append(" ORDER BY ").append(getSortExpression(sort));
 
-        try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             for (int i = 0; i < parameters.size(); i++) {
                 ps.setObject(i + 1, parameters.get(i));
             }
@@ -119,7 +120,8 @@ public class CarModelDAO extends DBContext {
         List<CarModel> list = new ArrayList<>();
         String sql = "SELECT * FROM CarModels";
 
-        try (PreparedStatement ps = conn.prepareStatement(sql);
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             while(rs.next()){
@@ -139,7 +141,8 @@ public class CarModelDAO extends DBContext {
     public CarModel getById(int modelID) {
         String sql = "SELECT * FROM CarModels WHERE ModelID = ?";
 
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, modelID);
             try (ResultSet rs = ps.executeQuery()) {
                 if(rs.next()){
@@ -160,7 +163,8 @@ public class CarModelDAO extends DBContext {
     public CarModel getByName(String modelName) {
         String sql = "SELECT * FROM CarModels WHERE ModelName = ?";
 
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, modelName);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {

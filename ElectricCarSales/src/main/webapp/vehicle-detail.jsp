@@ -1,5 +1,12 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page import="com.electriccarsales.model.SessionUser" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%
+Object authenticatedUser = session.getAttribute("user");
+Object legacyUserId = session.getAttribute("userID");
+boolean isAuthenticated = authenticatedUser instanceof SessionUser
+    || (legacyUserId instanceof Number && ((Number) legacyUserId).intValue() > 0);
+%>
 <!doctype html>
 <html lang="vi">
 <head>
@@ -7,9 +14,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f3f4f6">
     <meta name="app-context-path" content="<c:out value='${pageContext.request.contextPath}' />">
+    <meta name="user-authenticated" content="<%= isAuthenticated %>">
+    <meta name="csrf-token" content="<c:out value='${sessionScope.csrfToken}'/>">
     <title><c:out value="${car.modelName}"/> | VinFast - ElectricCarSale</title>
     <link rel="stylesheet" href="<c:url value='/assets/css/customer.css'><c:param name='v' value='consult-popup-20261111' /></c:url>">
-    <script src="<c:url value='/assets/js/customer.js'><c:param name='v' value='consult-popup-model-prefill-20261111' /></c:url>" defer></script>
+    <script src="<c:url value='/assets/js/customer.js'><c:param name='v' value='consult-popup-auth-price-20261125' /></c:url>" defer></script>
     <style>
         :root { color-scheme: light; font-family: Arial, sans-serif; color: #263238; background: #f3f4f6; }
         * { box-sizing: border-box; }
@@ -24,6 +33,8 @@
         .gallery-message { min-height: 320px; grid-column: 1 / -1; display: grid; place-items: center; margin: 0; color: #666; font-size: 14px; text-align: center; }
         .eyebrow { color: #555; font-size: 12px; font-weight: 700; }
         h1 { margin: 8px 0; font-size: 30px; }
+        .detail-stock-status { display: inline-block; margin: 0 0 12px; padding: 4px 10px; border: 1px solid #a7f3d0; border-radius: 999px; background: #ecfdf5; color: #166534; font-size: 12px; font-weight: 700; }
+        .detail-stock-status[hidden] { display: none; }
         .description { margin: 0; color: #555; line-height: 1.6; white-space: pre-line; }
         .specs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 18px 0; }
         .spec { padding: 10px; border: 1px solid #ddd; }
@@ -33,11 +44,13 @@
         .color-picker { margin: 18px 0; }
         .color-picker h2 { margin: 0 0 4px; font-size: 16px; }
         .selected-color { margin: 0 0 10px; color: #555; font-size: 14px; }
-        .color-options { display: flex; flex-wrap: wrap; gap: 10px; }
+        .color-options { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px 14px; }
+        .color-option-wrap { min-width: 48px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
         .color-option { width: 38px; height: 38px; display: grid; place-items: center; padding: 3px; border: 1px solid transparent; border-radius: 50%; background: #fff; cursor: pointer; }
         .color-option:disabled { cursor: wait; opacity: .65; }
         .color-option[aria-pressed="true"] { border-color: #24568a; box-shadow: 0 0 0 2px #fff, 0 0 0 3px #24568a; }
         .color-swatch { width: 28px; height: 28px; border: 1px solid rgba(0, 0, 0, .18); border-radius: 50%; }
+        .color-stock-count { color: #667085; font-size: 11px; line-height: 1.2; white-space: nowrap; }
         .color-status { min-height: 18px; margin: 5px 0 0; color: #a12626; font-size: 12px; }
         .specs-title { grid-column: 1 / -1; margin: 0 0 4px; font-size: 18px; }
         .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 20px; }
@@ -53,7 +66,7 @@
         @media (max-width: 700px) { main { margin: 16px auto; } .detail-card { grid-template-columns: 1fr; gap: 18px; padding: 14px; } .gallery { min-height: 0; } .gallery img { height: clamp(230px, 68vw, 310px); } .gallery-message { min-height: 230px; } }
     </style>
 </head>
-<body data-context-path="<c:out value='${pageContext.request.contextPath}' />">
+<body data-context-path="<c:out value='${pageContext.request.contextPath}' />" data-authenticated="<%= isAuthenticated %>">
 <header class="detail-header">
     <a href="<c:url value='/index.jsp'/>">VinFast · ElectricCarSale</a>
     <a href="#" data-open-consult-popup>Tư vấn &amp; Báo giá →</a>
@@ -89,6 +102,7 @@
         <div>
             <span class="eyebrow">THÔNG TIN MẪU XE</span>
             <h1><c:out value="${car.modelName}"/></h1>
+            <p class="detail-stock-status" id="detail-stock-status" <c:if test="${empty stockCarID}">hidden</c:if>>Đang có sẵn</p>
             <p class="description"><c:out value="${car.description}" default="Thông tin mô tả đang được cập nhật."/></p>
 
             <section class="color-picker" id="color-picker" aria-labelledby="color-picker-title" hidden>
@@ -106,7 +120,7 @@
             <c:if test="${promotionLoadFailed}">
                 <p role="status">Chưa thể tải ưu đãi hiện tại.</p>
             </c:if>
-            <c:if test="${not empty activePromotions}">
+            <c:if test="${empty stockCarID and not empty activePromotions}">
                 <section class="promo-box" aria-labelledby="vehicle-promotions">
                     <h2 class="promo-box-title" id="vehicle-promotions">
                         <span aria-hidden="true">🎁</span> Chương trình ưu đãi đang áp dụng
@@ -124,11 +138,6 @@
                             </div>
                             <c:if test="${not empty promotion.description}">
                                 <p class="promo-desc"><c:out value="${promotion.description}"/></p>
-                            </c:if>
-                            <c:if test="${promotion.discountType eq 'PERCENTAGE'}">
-                                <p class="promo-calc-hint" style="margin:4px 0 0;font-size:12px;color:#b91c1c;font-weight:600">
-                                    💡 Công thức: Số tiền giảm = Giá xe × <c:out value="${promotion.discountValue.stripTrailingZeros().toPlainString()}"/>% (trừ trực tiếp vào giá bán)
-                                </p>
                             </c:if>
                             <c:if test="${not empty promotion.endDate}">
                                 <span class="promo-date">Áp dụng đến: <c:out value="${promotion.endDate.toLocalDate()}"/></span>
@@ -152,6 +161,7 @@
         const gallery = document.getElementById("vehicle-gallery");
         const modelName = gallery.dataset.modelName;
         const modelID = gallery.dataset.modelId;
+        const stockCarID = gallery.dataset.stockCarId;
         const colorPicker = document.getElementById("color-picker");
         const colorOptions = document.getElementById("color-options");
         const selectedColorName = document.getElementById("selected-color-name");
@@ -214,13 +224,13 @@
                 ["Phiên bản", valueOrPending(model.specificationVersion)],
                 hasPromo
                     ? ["Giá niêm yết", formatNumber(model.priceVnd, " ₫")]
-                    : ["Giá tham khảo", model.priceVnd == null ? "Liên hệ" : formatNumber(model.priceVnd, " ₫")],
+                    : [stockCarID ? "Giá xe trong kho" : "Giá tham khảo", model.priceVnd == null ? "Liên hệ" : formatNumber(model.priceVnd, " ₫")],
                 ...(hasPromo ? [
                     ["Ưu đãi áp dụng", promo.name + " (-" + (promo.discountType === "PERCENTAGE" ? promo.discountValue + "%" : formatNumber(discount, " ₫")) + ")"],
                     ["Mức giảm tiền", "Trừ " + formatNumber(discount, " ₫") + " vào giá xe"],
                     ["Giá sau ưu đãi", formatNumber(finalPrice, " ₫")]
                 ] : []),
-                ["Đặt cọc 30% (RDS)", model.priceVnd == null ? "Đang cập nhật" : formatNumber(Math.round(model.priceVnd * 0.30), " ₫")],
+                [stockCarID ? "Màu xe trong kho" : "Đặt cọc 30%", stockCarID ? valueOrPending(model.stockColorName || model.colors?.[0]) : (model.priceVnd == null ? "Đang cập nhật" : formatNumber(Math.round((hasPromo ? finalPrice : model.priceVnd) * 0.30), " ₫"))],
                 ["Quãng đường công bố", formatNumber(model.rangeKm, " km")],
                 ["Tiêu chuẩn quãng đường", valueOrPending(model.rangeStandard)],
                 ["Dung lượng pin", formatNumber(model.batteryKwh, " kWh")],
@@ -270,6 +280,10 @@
             return "#d7dce2";
         }
 
+        function colorFamilyKey(colorName) {
+            return swatchBackground(colorName);
+        }
+
         async function setVehicleImage(imageUrl, colorName, sequence) {
             if (!imageUrl) throw new Error("Chưa có ảnh cho màu " + colorName + ".");
             const nextUrl = new URL(imageUrl);
@@ -301,10 +315,24 @@
             return true;
         }
 
-        function renderColorOptions(colors) {
+        function renderColorOptions(colors, inventoryByColor) {
             if (!Array.isArray(colors) || colors.length === 0) return;
             colorOptions.replaceChildren();
-            const buttons = colors.map((colorName) => {
+            const colorGroups = new Map();
+            const hasInventoryCounts = inventoryByColor != null && typeof inventoryByColor === "object";
+            colors.forEach((colorName) => {
+                const family = colorFamilyKey(colorName);
+                if (!colorGroups.has(family)) colorGroups.set(family, { colorName, stock: hasInventoryCounts ? 0 : null });
+            });
+            Object.entries(inventoryByColor || {}).forEach(([inventoryColor, count]) => {
+                const family = colorFamilyKey(inventoryColor);
+                const group = colorGroups.get(family);
+                if (group && group.stock !== null) group.stock += Number(count) || 0;
+            });
+
+            const buttons = [...colorGroups.values()].map(({ colorName }) => {
+                const wrapper = document.createElement("div");
+                wrapper.className = "color-option-wrap";
                 const button = document.createElement("button");
                 button.type = "button";
                 button.className = "color-option";
@@ -320,7 +348,8 @@
                 button.addEventListener("click", () => {
                     selectColor(colorName, button);
                 });
-                colorOptions.append(button);
+                wrapper.append(button);
+                colorOptions.append(wrapper);
                 return button;
             });
             colorPicker.hidden = false;
@@ -361,7 +390,6 @@
 
         async function loadCatalogue() {
             if (!cataloguePromise) {
-                const stockCarID = gallery.dataset.stockCarId;
                 const catalogueQuery = "?modelId=" + encodeURIComponent(modelID)
                     + (stockCarID ? "&carId=" + encodeURIComponent(stockCarID) : "");
                 cataloguePromise = fetch("<c:url value='/api/catalogue'/>" + catalogueQuery, {
@@ -383,10 +411,16 @@
             if (fallbackRequested) return;
             fallbackRequested = true;
             try {
-                const catalogue = await loadCatalogue();
-                const stockCarID = gallery.dataset.stockCarId;
+                const [catalogue, inventoryCatalogue] = await Promise.all([
+                    loadCatalogue(),
+                    fetch("<c:url value='/api/ai'/>", {
+                        credentials: "same-origin",
+                        cache: "no-cache",
+                        headers: { Accept: "application/json" }
+                    }).then((response) => response.ok ? response.json() : null).catch(() => null)
+                ]);
                 const model = stockCarID
-                    ? catalogue.models?.find((item) => Number(item.stockCarID) === Number(stockCarID))
+                    ? catalogue.models?.find((item) => (item.stockCarIDs || [item.stockCarID]).map(Number).includes(Number(stockCarID)))
                     : catalogue.models?.find((item) => Number(item.modelID) === Number(modelID));
                 if (model) {
                     renderSpecifications(model);
@@ -394,7 +428,15 @@
                     showSpecificationError("Chưa có thông số cho mẫu xe này trong danh mục.");
                 }
                 catalogueColorImages = model?.colorImages;
-                if (model?.colors) renderColorOptions(model.colors);
+                const inventoryModel = inventoryCatalogue?.models?.find((item) => Number(item.modelId) === Number(modelID));
+                const detailStockStatus = document.getElementById("detail-stock-status");
+                const isInStock = Boolean(stockCarID)
+                    || Number(inventoryModel?.availableCars || 0) > 0
+                    || (Array.isArray(model?.colors) && model.colors.length > 0);
+                if (detailStockStatus) {
+                    detailStockStatus.hidden = !isInStock;
+                }
+                if (model?.colors) renderColorOptions(model.colors, inventoryModel?.inventoryByColor);
                 if (gallery.querySelector("img")) {
                     fallbackRequested = false;
                     return;

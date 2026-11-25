@@ -11,7 +11,8 @@ import java.util.List;
 public class PromotionCarDAO extends DBContext {
     public List<PromotionCar> getAll() {
         List<PromotionCar> list = new ArrayList<>();
-        try (PreparedStatement check = conn.prepareStatement(
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement check = conn.prepareStatement(
                 "SELECT CASE WHEN OBJECT_ID(N'dbo.PromotionCars', N'U') IS NOT NULL THEN 1 ELSE 0 END");
              ResultSet crs = check.executeQuery()) {
             if (!crs.next() || crs.getInt(1) == 0) {
@@ -22,7 +23,8 @@ public class PromotionCarDAO extends DBContext {
         }
 
         String sql = "SELECT * FROM PromotionCars";
-        try (PreparedStatement ps = conn.prepareStatement(sql);
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 PromotionCar pc = new PromotionCar();

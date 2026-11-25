@@ -98,8 +98,8 @@ request.setAttribute("customerEyebrow", "CHÀO MỪNG TRỞ LẠI");
                                 <tr>
                                     <td><strong>#<c:out value="${ord.id}"/></strong></td>
                                     <td><c:out value="${ord.modelName}" default="Xe VinFast"/> <small style="display:block;color:#64748b;"><c:out value="${ord.versionName}"/></small></td>
-                                    <td><fmt:formatNumber value="${ord.originalAmount}" pattern="#,##0"/> VNĐ</td>
-                                    <td><fmt:formatNumber value="${ord.remainingAmount}" pattern="#,##0"/> VNĐ</td>
+                                    <td><fmt:formatNumber value="${ord.originalAmount}" pattern="#,##0"/> VND</td>
+                                    <td><fmt:formatNumber value="${ord.remainingAmount}" pattern="#,##0"/> VND</td>
                                     <td><span class="soft-badge"><c:out value="${ord.status}"/></span></td>
                                     <td>
                                         <a class="text-link" href="<%= customerContext %>/orders">Đơn hàng &amp; thanh toán ↗</a>
@@ -151,6 +151,20 @@ request.setAttribute("customerEyebrow", "CHÀO MỪNG TRỞ LẠI");
             </div>
             <span class="verified-badge">✓ Đã xác thực</span>
         </div>
+        <form method="post" enctype="multipart/form-data" action="<%= customerContext %>/customer/avatar">
+            <input type="hidden" name="csrfToken" value="<c:out value='${sessionScope.csrfToken}'/>">
+            <label>Ảnh đại diện (tối đa 2 MB) <input name="avatar" type="file" accept="image/png,image/jpeg,image/webp" required></label>
+            <button type="submit">Cập nhật ảnh</button>
+        </form>
+        <details><summary>Đổi mật khẩu</summary>
+            <form id="customer-password-form" class="customer-form">
+                <label>Mật khẩu hiện tại <input type="password" name="currentPassword" autocomplete="current-password" required></label>
+                <label>Mật khẩu mới (8–30 ký tự, gồm chữ hoa, số và ký tự đặc biệt)
+                    <input type="password" name="newPassword" autocomplete="new-password" minlength="8" maxlength="30" required></label>
+                <label>Nhập lại mật khẩu mới <input type="password" name="confirmPassword" autocomplete="new-password" maxlength="30" required></label>
+                <button type="submit">Lưu mật khẩu</button><output aria-live="polite"></output>
+            </form>
+        </details>
         <div class="profile-fields" id="profile-display-view">
             <div>
                 <span>Họ và tên</span>
@@ -170,6 +184,7 @@ request.setAttribute("customerEyebrow", "CHÀO MỪNG TRỞ LẠI");
             </div>
         </div>
         <form id="profile-edit-form" class="customer-form" method="post" enctype="multipart/form-data" action="<%= customerContext %>/customer/profile" hidden style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid #e2e8f0;">
+            <input type="hidden" name="csrfToken" value="<c:out value='${sessionScope.csrfToken}'/>">
             <label>Họ và tên
                 <input name="customerName" type="text" maxlength="100" value="<c:out value='${customer.customerName}'/>" required>
             </label>

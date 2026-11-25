@@ -85,8 +85,23 @@ public class InstallmentPlanDAO extends FinanceDAOBase {
             if (!hasTable(connection)) {
                 return referencePlans(connection);
             }
-            return list(connection, "SELECT " + COLUMNS
-                    + PLAN_FROM + "ORDER BY ip.CompanyID, ip.LoanTermMonths, ip.PlanID");
+            List<InstallmentPlan> list = new ArrayList<>(list(connection, "SELECT " + COLUMNS
+                    + PLAN_FROM + "ORDER BY ip.CompanyID, ip.LoanTermMonths, ip.PlanID"));
+            List<InstallmentPlan> refs = referencePlans(connection);
+            for (InstallmentPlan ref : refs) {
+                boolean exists = list.stream().anyMatch(p ->
+                        (p.getPlanName() != null && p.getPlanName().equalsIgnoreCase(ref.getPlanName())) ||
+                        (p.getLoanTermMonths() == ref.getLoanTermMonths() && p.getCompanyName() != null
+                                && ref.getCompanyName() != null && p.getCompanyName().equalsIgnoreCase(ref.getCompanyName()))
+                );
+                if (!exists) {
+                    list.add(ref);
+                    try {
+                        insert(ref);
+                    } catch (Exception ignore) {}
+                }
+            }
+            return list;
         });
     }
 

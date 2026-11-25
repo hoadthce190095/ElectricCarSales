@@ -28,7 +28,7 @@
         toastTimer = setTimeout(() => toastEl.classList.remove("visible"), 4200);
     }
 
-    const fmtMoney = (v) => new Intl.NumberFormat("vi-VN").format(Math.round(Number(v) || 0)) + " VNĐ";
+    const fmtMoney = (v) => new Intl.NumberFormat("vi-VN").format(Math.round(Number(v) || 0)) + " VND";
     const esc = (s) => String(s ?? "—")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -42,9 +42,10 @@
         confirmText = "Có, xác nhận",
         cancelText = "Không, quay lại",
         isDanger = false,
+        promptInput = null,
         onConfirm = null
     }) {
-        if (typeof window.showAppConfirmModal === "function") {
+        if (!promptInput && typeof window.showAppConfirmModal === "function") {
             return window.showAppConfirmModal({ title, message, details, confirmText, cancelText, isDanger, onConfirm });
         }
         return new Promise((resolve) => {
@@ -70,6 +71,21 @@
                 `;
             }
 
+            let promptHtml = "";
+            if (promptInput) {
+                promptHtml = `
+                    <div style="margin-top:14px;">
+                        <label style="display:block;font-size:12.5px;font-weight:700;color:#0f172a;margin-bottom:6px;">
+                            ${esc(promptInput.label || "Lý do")} ${promptInput.required ? '<span style="color:#dc2626;">*</span>' : ""}
+                        </label>
+                        <textarea class="app-confirm-prompt-input" rows="3" maxlength="${Number(promptInput.maxLength || 300)}"
+                            placeholder="${esc(promptInput.placeholder || "")}"
+                            style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid #cbd5e1;border-radius:7px;font-size:13px;font-family:inherit;resize:vertical;">${esc(promptInput.value || "")}</textarea>
+                        <div class="app-confirm-prompt-error" role="alert" style="display:none;color:#dc2626;font-size:12px;font-weight:600;margin-top:5px;"></div>
+                    </div>
+                `;
+            }
+
             dialog.innerHTML = `
                 <div style="padding:18px 24px;border-bottom:1px solid #e2e8f0;background:#f8fafc;display:flex;align-items:center;justify-content:space-between;">
                     <h3 style="margin:0;font-size:16px;font-weight:700;color:#0f172a;">${esc(title)}</h3>
@@ -78,6 +94,7 @@
                 <div style="padding:20px 24px;">
                     <p style="margin:0;font-size:14px;line-height:1.5;color:#334155;">${message}</p>
                     ${detailsHtml}
+                    ${promptHtml}
                 </div>
                 <div style="display:flex;justify-content:flex-end;gap:10px;padding:16px 24px;border-top:1px solid #e2e8f0;background:#f8fafc;">
                     <button type="button" class="app-confirm-btn-cancel button button-secondary" style="padding:8px 18px;font-size:13px;font-weight:600;border-radius:7px;border:1px solid #cbd5e1;background:#fff;color:#334155;cursor:pointer;">${cancelText}</button>
@@ -88,20 +105,40 @@
             const btnCancel = dialog.querySelector(".app-confirm-btn-cancel");
             const btnConfirm = dialog.querySelector(".app-confirm-btn-confirm");
             const btnClose = dialog.querySelector(".app-confirm-close");
+            const promptEl = dialog.querySelector(".app-confirm-prompt-input");
+            const promptErrEl = dialog.querySelector(".app-confirm-prompt-error");
 
             const closeDialog = (val) => {
                 try { dialog.close(); } catch (_) { dialog.style.display = "none"; }
                 resolve(val);
             };
 
-            btnCancel.onclick = () => closeDialog(false);
-            btnClose.onclick = () => closeDialog(false);
+            btnCancel.onclick = () => closeDialog(promptInput ? { confirmed: false, value: "" } : false);
+            btnClose.onclick = () => closeDialog(promptInput ? { confirmed: false, value: "" } : false);
             dialog.oncancel = (e) => {
                 e.preventDefault();
-                closeDialog(false);
+                closeDialog(promptInput ? { confirmed: false, value: "" } : false);
             };
 
+            promptEl?.addEventListener("input", () => {
+                if (promptErrEl) promptErrEl.style.display = "none";
+                promptEl.style.borderColor = "#cbd5e1";
+            });
+
             btnConfirm.onclick = async () => {
+                let inputValue = "";
+                if (promptInput && promptEl) {
+                    inputValue = (promptEl.value || "").trim();
+                    if (promptInput.required && !inputValue) {
+                        if (promptErrEl) {
+                            promptErrEl.textContent = promptInput.errorMessage || "Vui lòng nhập đầy đủ nội dung bắt buộc.";
+                            promptErrEl.style.display = "block";
+                        }
+                        promptEl.style.borderColor = "#dc2626";
+                        promptEl.focus();
+                        return;
+                    }
+                }
                 btnConfirm.disabled = true;
                 btnCancel.disabled = true;
                 btnClose.disabled = true;
@@ -110,17 +147,17 @@
 
                 if (typeof onConfirm === "function") {
                     try {
-                        await onConfirm();
-                        closeDialog(true);
+                        await onConfirm(inputValue);
+                        closeDialog(promptInput ? { confirmed: true, value: inputValue } : true);
                     } catch (err) {
                         btnConfirm.disabled = false;
                         btnCancel.disabled = false;
                         btnClose.disabled = false;
                         btnConfirm.textContent = originalText;
-                        closeDialog(false);
+                        closeDialog(promptInput ? { confirmed: false, value: "" } : false);
                     }
                 } else {
-                    closeDialog(true);
+                    closeDialog(promptInput ? { confirmed: true, value: inputValue } : true);
                 }
             };
 
@@ -129,57 +166,72 @@
             } else {
                 dialog.style.display = "block";
             }
+            if (promptEl) promptEl.focus();
         });
     }
 
     const menus = {
-        admin: [{ group: "QUẢN TRỊ", items: [["inventory_real", "▦", "Quản lý tồn kho", "", appContext + "/staff/inventory"]] }],
-        sales: [{
-            group: "CÔNG VIỆC", items: [
-                ["dashboard", "⌂", "Tổng quan"],
-                ["consultations", "✧", "Yêu cầu tư vấn"],
-                ["customers", "♙", "Khách hàng"]
-            ]
-        }, {
-            group: "BÁN HÀNG", items: [
-                ["transactions", "▤", "Giao dịch & Lập đơn"],
-                ["deposits", "◉", "Theo dõi Đặt cọc 30%"],
-                ["contracts", "▧", "Hợp đồng mua bán"],
-                ["handover", "↗", "Phối hợp Bàn giao xe"]
-            ]
-        }],
-        operations: [{
-            group: "VẬN HÀNH", items: [
-                ["dashboard", "⌂", "Tổng quan"],
-                ["inventory_real", "▦", "Quản lý tồn kho", "", appContext + "/staff/inventory"],
-                ["vehicle-movements", "⇄", "Nhập / Xuất kho xe"],
-                ["vehicle-status", "◷", "Trạng thái xe vật lý"],
-                ["handover", "↗", "Xác nhận Bàn giao xe"]
-            ]
-        }],
-        accountant: [{
-            group: "TÀI CHÍNH & ĐỐI SOÁT", items: [
-                ["dashboard", "⌂", "Tổng quan"],
-                ["payments", "◉", "Xác nhận Thanh toán"],
-                ["debts", "◷", "Quản lý Công nợ & Giải ngân 70%"],
-                ["installments", "▤", "Đối tác Trả góp"],
-                ["contracts", "▧", "Hợp đồng & Xuất Hóa đơn"]
-            ]
-        }],
-        manager: [{
-            group: "QUẢN LÝ", items: [
-                ["dashboard", "⌂", "Tổng quan"],
-                ["inventory_real", "▦", "Quản lý tồn kho", "", appContext + "/staff/inventory"],
-                ["transactions", "▤", "Bán hàng & Giao dịch"]
-            ]
-        }, {
-            group: "BÁO CÁO KINH DOANH", items: [
-                ["revenue-report", "▥", "Báo cáo doanh thu"],
-                ["vehicle-report", "▧", "Báo cáo xe bán ra"],
-                ["transaction-report", "◷", "Báo cáo giao dịch"],
-                ["inventory-report", "▦", "Báo cáo tồn kho"]
-            ]
-        }]
+        admin: [
+            { group: "", items: [["dashboard", "⌂", "Tổng quan", "", appContext + "/staff/dashboard"]] },
+            { group: "QUẢN TRỊ", items: [["inventory_real", "▦", "Quản lý tồn kho", "", appContext + "/staff/inventory"]] }
+        ],
+        sales: [
+            { group: "", items: [["dashboard", "⌂", "Tổng quan"]] },
+            {
+                group: "CÔNG VIỆC", items: [
+                    ["consultations", "✧", "Yêu cầu tư vấn"],
+                    ["customers", "♙", "Khách hàng"]
+                ]
+            },
+            {
+                group: "BÁN HÀNG", items: [
+                    ["transactions", "▤", "Giao dịch & Lập đơn"],
+                    ["deposits", "◉", "Theo dõi Đặt cọc 30%"],
+                    ["contracts", "▧", "Hợp đồng mua bán"],
+                    ["installments", "▤", "Đối tác Trả góp"],
+                    ["handover", "↗", "Phối hợp Bàn giao xe"]
+                ]
+            }
+        ],
+        operations: [
+            { group: "", items: [["dashboard", "⌂", "Tổng quan"]] },
+            {
+                group: "VẬN HÀNH", items: [
+                    ["inventory_real", "▦", "Quản lý tồn kho", "", appContext + "/staff/inventory"],
+                    ["vehicle-movements", "⇄", "Nhập / Xuất kho xe"],
+                    ["vehicle-status", "◷", "Trạng thái xe vật lý"],
+                    ["handover", "↗", "Xác nhận Bàn giao xe"]
+                ]
+            }
+        ],
+        accountant: [
+            { group: "", items: [["dashboard", "⌂", "Tổng quan"]] },
+            {
+                group: "TÀI CHÍNH & ĐỐI SOÁT", items: [
+                    ["payments", "◉", "Xác nhận Thanh toán"],
+                    ["debts", "◷", "Quản lý Công nợ & Giải ngân 70%"],
+                    ["installments", "▤", "Đối tác Trả góp"],
+                    ["contracts", "▧", "Hợp đồng & Xuất Hóa đơn"]
+                ]
+            }
+        ],
+        manager: [
+            { group: "", items: [["dashboard", "⌂", "Tổng quan"]] },
+            {
+                group: "QUẢN LÝ", items: [
+                    ["inventory_real", "▦", "Quản lý tồn kho", "", appContext + "/staff/inventory"],
+                    ["transactions", "▤", "Bán hàng & Giao dịch"]
+                ]
+            },
+            {
+                group: "BÁO CÁO KINH DOANH", items: [
+                    ["revenue-report", "▥", "Báo cáo doanh thu"],
+                    ["vehicle-report", "▧", "Báo cáo xe bán ra"],
+                    ["transaction-report", "◷", "Báo cáo giao dịch"],
+                    ["inventory-report", "▦", "Báo cáo tồn kho"]
+                ]
+            }
+        ]
     };
 
     const currentRole = (app.dataset.staffRole || "").trim().toLowerCase();
@@ -195,11 +247,11 @@
     }
 
     const roleDashboards = {
-        sales: ["Tổng quan kinh doanh", "Tiếp nhận tư vấn, quản lý khách hàng, lập đơn hàng (cọc 30% / trả 70%), tạo hợp đồng và phối hợp bàn giao xe theo RDS."],
+        sales: ["Tổng quan kinh doanh", "Tiếp nhận tư vấn, quản lý khách hàng, lập đơn hàng (cọc 30% / trả 70%), tạo hợp đồng và phối hợp bàn giao xe."],
         operations: ["Tổng quan vận hành", "Quản lý tồn kho, nhập/xuất xe vật lý, cập nhật trạng thái xe và xác nhận bàn giao xe sau khi có hóa đơn."],
         accountant: ["Tổng quan kế toán", "Đối soát sao kê ngân hàng, xác nhận đặt cọc 30%, xác nhận thanh toán/giải ngân 70%, theo dõi công nợ và phát hành hóa đơn."],
         manager: ["Tổng quan quản lý", "Giám sát toàn bộ giao dịch bán xe, tồn kho và xuất báo cáo doanh thu / xe bán ra theo thời gian thực."],
-        admin: ["Không gian quản trị", "Quản lý tồn kho theo quyền Admin đã được RDS cho phép."]
+        admin: ["Không gian quản trị", "Quản lý tồn kho và điều hành hệ thống."]
     };
 
     const navIds = new Set(menus[currentRole].flatMap(group => group.items.map(item => item[0])));
@@ -222,7 +274,7 @@
     function renderNav() {
         if (!nav) return;
         nav.innerHTML = menus[currentRole].map(group =>
-            `<div class="nav-group-label">${group.group}</div>` + group.items.map(item => {
+            (group.group ? `<div class="nav-group-label">${group.group}</div>` : "") + group.items.map(item => {
                 const [id, icon, label, badge, customLink] = item;
                 const href = customLink || `${appContext}/staff/dashboard#${encodeURIComponent(id)}`;
                 return `<a href="${href}" class="staff-nav-link ${currentView === id ? "active" : ""}" data-view="${id}">
@@ -259,6 +311,10 @@
     }
 
     async function postForm(url, formDataObj) {
+        if (!formDataObj.csrfToken) {
+            const auth = await fetchJson("/api/auth");
+            formDataObj.csrfToken = auth.csrfToken;
+        }
         const params = new URLSearchParams();
         params.set("format", "json");
         for (const [k, v] of Object.entries(formDataObj)) {
@@ -284,8 +340,22 @@
                 <div class="metric-foot">Mở chức năng →</div></a>`).join("")}
             </section>
             <div class="inline-note" style="margin-top:20px;">
-                <strong>Quy trình chuẩn RDS:</strong> Tư vấn (ConsultationRequests) → Sales lập đơn (Orders + OrderDetails, giữ chỗ xe RESERVED) → Khách xem đơn &amp; thanh toán chuyển khoản VietQR (SePay - MB Bank) đặt cọc 30% → Kế toán xác nhận cọc (DEPOSITED) → Sales lập Hợp đồng &amp; Khách ký OTP (SIGNED) → Thanh toán 70% còn lại (hoặc Ngân hàng đối tác giải ngân 70%) → Kế toán xác nhận đủ 100% (PAID) &amp; Xuất Hóa đơn (ISSUED) → Vận hành/Sales xác nhận Xuất kho Bàn giao xe (DELIVERED / COMPLETED).
+                <strong>Quy trình mua xe:</strong> Tư vấn (ConsultationRequests) → Sales lập đơn (Orders + OrderDetails, giữ chỗ xe RESERVED) → Khách đặt cọc 30% → Kế toán xác nhận/đối soát cọc (DEPOSITED) → Sales lập hợp đồng, khách ký OTP (SIGNED) → Đơn trả góp: đối tác giải ngân 70% sau khi ký; đơn trả thẳng: khách thanh toán 70% → Hoàn tất thanh toán (PAID) &amp; xuất hóa đơn (ISSUED) → Vận hành/Sales xác nhận xuất kho, bàn giao xe (DELIVERED / COMPLETED).
             </div>`;
+    }
+
+    function consultStatusBadge(status) {
+        const st = String(status || "PENDING").trim().toUpperCase();
+        if (st === "IN_PROGRESS") {
+            return `<span class="status-pill" style="background:#dbeafe;color:#1e40af;border:1px solid #93c5fd;font-weight:700;">● Đang tư vấn (IN_PROGRESS)</span>`;
+        }
+        if (st === "COMPLETED") {
+            return `<span class="status-pill" style="background:#dcfce7;color:#166534;border:1px solid #86efac;font-weight:700;">✓ Đã tư vấn xong (COMPLETED)</span>`;
+        }
+        if (st === "CANCELLED") {
+            return `<span class="status-pill" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;font-weight:700;">✕ Đã hủy (CANCELLED)</span>`;
+        }
+        return `<span class="status-pill" style="background:#fef3c7;color:#92400e;border:1px solid #fcd34d;font-weight:700;">⏳ Chờ xử lý (PENDING)</span>`;
     }
 
     async function loadConsultationsView() {
@@ -294,10 +364,10 @@
         const list = data.consultations || [];
         content.innerHTML = `
             <div class="page-heading"><div>
-                <div class="eyebrow"><span class="eyebrow-line"></span>UC-06 · QUẢN LÝ TƯ VẤN</div>
+                <div class="eyebrow"><span class="eyebrow-line"></span>QUẢN LÝ TƯ VẤN</div>
                 <h1>Yêu cầu tư vấn khách hàng (${list.length})</h1>
                 <a href="${appContext}/sales-chat">Mở trang trò chuyện</a>
-                <p>Tiếp nhận yêu cầu tư vấn, ghi phản hồi tư vấn giá/phương án trả thẳng - trả góp và chuyển sang lập đơn hàng.</p>
+                <p>Tiếp nhận yêu cầu tư vấn, trả lời khách hàng (tự chuyển sang Đang tư vấn), xác nhận hoàn tất hoặc hủy kèm lý do.</p>
             </div></div>
             <div class="table-responsive bg-white rounded shadow-sm border" style="padding:16px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;">
                 <table class="table" style="width:100%;border-collapse:collapse;font-size:13px;">
@@ -312,7 +382,10 @@
                         </tr>
                     </thead>
                     <tbody>
-                        ${list.length ? list.map(c => `
+                        ${list.length ? list.map(c => {
+                            const st = String(c.status || "PENDING").toUpperCase();
+                            const isClosed = st === "COMPLETED" || st === "CANCELLED";
+                            return `
                             <tr style="border-bottom:1px solid #f1f5f9;vertical-align:top;">
                                 <td style="padding:10px;"><strong>#${c.id}</strong><br><small>${esc(c.createdAt)}</small></td>
                                 <td style="padding:10px;">
@@ -320,28 +393,34 @@
                                     <small>SĐT: ${esc(c.customerPhone)} · ${esc(c.customerEmail)}</small>
                                 </td>
                                 <td style="padding:10px;"><strong>${esc(c.modelName || "Tư vấn chung")}</strong></td>
-                                <td style="padding:10px;">
-                                    <span class="status-pill">${esc(c.status)}</span><br>
-                                    <small>NV: ${esc(c.staffName || "Chưa phân công")}</small>
+                                <td style="padding:10px;min-width:175px;">
+                                    ${consultStatusBadge(st)}<br>
+                                    <small style="display:inline-block;margin-top:4px;color:#64748b;">NV: ${esc(c.staffName || "Chưa phân công")}</small>
                                 </td>
                                 <td style="padding:10px;max-width:340px;white-space:pre-line;">${esc(c.content)}</td>
-                                <td style="padding:10px;min-width:260px;">
-                                    <form class="staff-consult-form" data-req-id="${c.id}" style="display:flex;flex-direction:column;gap:6px;">
-                                        <select name="status" style="padding:6px;border:1px solid #cbd5e1;border-radius:6px;">
-                                            <option value="PENDING" ${c.status === "PENDING" ? "selected" : ""}>PENDING</option>
-                                            <option value="IN_PROGRESS" ${c.status === "IN_PROGRESS" ? "selected" : ""}>IN_PROGRESS (Đang tư vấn)</option>
-                                            <option value="COMPLETED" ${c.status === "COMPLETED" ? "selected" : ""}>COMPLETED (Đã tư vấn xong)</option>
-                                            <option value="CANCELLED" ${c.status === "CANCELLED" ? "selected" : ""}>CANCELLED</option>
-                                        </select>
-                                        <input type="text" name="note" maxlength="300" placeholder="Nhập phản hồi tư vấn giá / trả góp..." style="padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;">
-                                        <div style="display:flex;gap:6px;">
-                                            <button type="submit" class="button button-primary" style="padding:6px 10px;font-size:12px;">Lưu phản hồi</button>
-                                            <button type="button" class="button button-secondary btn-jump-create-order" data-customer-id="${c.customerId}" data-model-id="${c.modelId || ""}" style="padding:6px 10px;font-size:12px;">+ Lập đơn hàng →</button>
+                                <td style="padding:10px;min-width:290px;">
+                                    ${isClosed ? `
+                                        <div style="display:flex;flex-direction:column;gap:6px;">
+                                            <div style="font-size:12px;padding:6px 10px;border-radius:6px;font-weight:600;${st === "COMPLETED" ? "background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;" : "background:#fef2f2;color:#991b1b;border:1px solid #fecaca;"}">
+                                                ${st === "COMPLETED" ? "✓ Yêu cầu đã hoàn tất tư vấn" : "✕ Yêu cầu tư vấn đã hủy"}
+                                            </div>
+                                            ${st === "COMPLETED" ? `<button type="button" class="button button-secondary btn-jump-create-order" data-customer-id="${c.customerId}" data-model-id="${c.modelId || ""}" style="padding:6px 10px;font-size:12px;">+ Lập đơn hàng →</button>` : ""}
+                                        </div>
+                                    ` : `
+                                    <form class="staff-consult-form" data-req-id="${c.id}" data-customer-name="${esc(c.customerName)}" style="display:flex;flex-direction:column;gap:8px;">
+                                        <input type="text" name="note" maxlength="300" placeholder="Nhập phản hồi tư vấn (tự chuyển sang Đang tư vấn)..." style="padding:7px 9px;border:1px solid #cbd5e1;border-radius:6px;font-size:12.5px;">
+                                        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                                            <button type="submit" class="button button-primary" style="padding:6px 11px;font-size:12px;background:#2563eb;border-color:#2563eb;color:#fff;">💬 Gửi phản hồi</button>
+                                            <button type="button" class="button btn-consult-complete" data-req-id="${c.id}" style="padding:6px 11px;font-size:12px;background:#16a34a;border:1px solid #15803d;color:#fff;border-radius:6px;font-weight:600;cursor:pointer;">✓ Completed</button>
+                                            <button type="button" class="button btn-consult-cancel" data-req-id="${c.id}" style="padding:6px 11px;font-size:12px;background:#dc2626;border:1px solid #b91c1c;color:#fff;border-radius:6px;font-weight:600;cursor:pointer;">✕ Cancel</button>
+                                            <button type="button" class="button button-secondary btn-jump-create-order" data-customer-id="${c.customerId}" data-model-id="${c.modelId || ""}" style="padding:6px 10px;font-size:12px;">+ Lập đơn →</button>
                                         </div>
                                     </form>
+                                    `}
                                 </td>
                             </tr>
-                        `).join("") : `<tr><td colspan="6" style="padding:24px;text-align:center;">Chưa có yêu cầu tư vấn nào.</td></tr>`}
+                            `;
+                        }).join("") : `<tr><td colspan="6" style="padding:24px;text-align:center;">Chưa có yêu cầu tư vấn nào.</td></tr>`}
                     </tbody>
                 </table>
             </div>
@@ -349,26 +428,107 @@
         content.querySelectorAll(".staff-consult-form").forEach(form => {
             form.addEventListener("submit", async (e) => {
                 e.preventDefault();
+                const noteVal = (form.note.value || "").trim();
+                if (!noteVal) {
+                    notify("Vui lòng nhập nội dung phản hồi cho khách hàng.");
+                    form.note.focus();
+                    return;
+                }
                 const confirmed = await showAppConfirmModal({
-                    title: "Xác nhận cập nhật yêu cầu tư vấn",
-                    message: "Bạn có chắc chắn muốn lưu cập nhật trạng thái và ghi chú cho yêu cầu tư vấn này?",
+                    title: "Xác nhận gửi phản hồi tư vấn",
+                    message: "Sau khi gửi phản hồi, trạng thái sẽ tự động chuyển sang <strong>Đang tư vấn (IN_PROGRESS)</strong>.",
                     details: [
                         { label: "Mã yêu cầu", value: `#${form.dataset.reqId}` },
-                        { label: "Trạng thái mới", value: form.status.value },
-                        { label: "Ghi chú/Phản hồi", value: form.note.value || "—" }
+                        { label: "Khách hàng", value: form.dataset.customerName || "—" },
+                        { label: "Trạng thái mới", value: "IN_PROGRESS (Đang tư vấn)" },
+                        { label: "Nội dung phản hồi", value: noteVal }
                     ],
-                    confirmText: "Có, xác nhận",
-                    cancelText: "Không, quay lại"
+                    confirmText: "Gửi phản hồi",
+                    cancelText: "Hủy"
                 });
                 if (!confirmed) return;
                 try {
                     const res = await postForm("/consultation", {
                         action: "update",
                         requestId: form.dataset.reqId,
-                        status: form.status.value,
-                        note: form.note.value
+                        status: "IN_PROGRESS",
+                        note: noteVal
                     });
-                    notify(res.message || "Đã cập nhật yêu cầu tư vấn.");
+                    notify(res.message || "Đã gửi phản hồi và chuyển sang Đang tư vấn.");
+                    await loadConsultationsView();
+                } catch (err) {
+                    notify(err.message);
+                }
+            });
+        });
+
+        content.querySelectorAll(".btn-consult-complete").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                const reqId = btn.dataset.reqId;
+                const form = btn.closest(".staff-consult-form");
+                const noteVal = (form?.note?.value || "").trim();
+                const confirmed = await showAppConfirmModal({
+                    title: "Xác nhận đã tư vấn xong",
+                    message: `Bạn có chắc chắn đã tư vấn xong cho yêu cầu <strong>#${esc(reqId)}</strong>?`,
+                    details: [
+                        { label: "Mã yêu cầu", value: `#${reqId}` },
+                        { label: "Khách hàng", value: form?.dataset?.customerName || "—" },
+                        { label: "Trạng thái mới", value: "COMPLETED (Đã tư vấn xong)" },
+                        ...(noteVal ? [{ label: "Ghi chú thêm", value: noteVal }] : [])
+                    ],
+                    confirmText: "Xác nhận đã tư vấn xong",
+                    cancelText: "Quay lại"
+                });
+                if (!confirmed) return;
+                try {
+                    const res = await postForm("/consultation", {
+                        action: "update",
+                        requestId: reqId,
+                        status: "COMPLETED",
+                        note: noteVal
+                    });
+                    notify(res.message || `Đã hoàn tất yêu cầu tư vấn #${reqId}.`);
+                    await loadConsultationsView();
+                } catch (err) {
+                    notify(err.message);
+                }
+            });
+        });
+
+        content.querySelectorAll(".btn-consult-cancel").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                const reqId = btn.dataset.reqId;
+                const form = btn.closest(".staff-consult-form");
+                const prefilledReason = (form?.note?.value || "").trim();
+                const result = await showAppConfirmModal({
+                    title: "Xác nhận hủy yêu cầu tư vấn",
+                    message: `Vui lòng ghi rõ lý do hủy yêu cầu tư vấn <strong>#${esc(reqId)}</strong> trước khi xác nhận:`,
+                    details: [
+                        { label: "Mã yêu cầu", value: `#${reqId}` },
+                        { label: "Khách hàng", value: form?.dataset?.customerName || "—" },
+                        { label: "Trạng thái mới", value: "CANCELLED (Đã hủy)" }
+                    ],
+                    promptInput: {
+                        label: "Lý do hủy tư vấn",
+                        placeholder: "Nhập rõ lý do hủy (ví dụ: Khách ngừng nhu cầu, sai thông tin liên hệ...)",
+                        value: prefilledReason,
+                        required: true,
+                        maxLength: 300,
+                        errorMessage: "Vui lòng ghi rõ lý do hủy yêu cầu tư vấn."
+                    },
+                    confirmText: "Xác nhận hủy tư vấn",
+                    cancelText: "Không, quay lại",
+                    isDanger: true
+                });
+                if (!result || !result.confirmed) return;
+                try {
+                    const res = await postForm("/consultation", {
+                        action: "update",
+                        requestId: reqId,
+                        status: "CANCELLED",
+                        note: result.value
+                    });
+                    notify(res.message || `Đã hủy yêu cầu tư vấn #${reqId}.`);
                     await loadConsultationsView();
                 } catch (err) {
                     notify(err.message);
@@ -377,9 +537,21 @@
         });
         content.querySelectorAll(".btn-jump-create-order").forEach(btn => {
             btn.addEventListener("click", () => {
+                const row = btn.closest("tr");
+                let versionName = "";
+                let colorName = "";
+                if (row) {
+                    const contentText = row.querySelector("td:nth-child(5)")?.textContent || "";
+                    const vMatch = contentText.match(/Bản:\s*([^|\]]+)/i);
+                    const cMatch = contentText.match(/Màu:\s*([^|\]]+)/i);
+                    if (vMatch) versionName = vMatch[1].trim();
+                    if (cMatch) colorName = cMatch[1].trim();
+                }
                 prefillOrderCustomer = {
                     customerId: Number(btn.dataset.customerId),
-                    modelId: Number(btn.dataset.modelId) || null
+                    modelId: Number(btn.dataset.modelId) || null,
+                    versionName: versionName,
+                    colorName: colorName
                 };
                 currentView = "transactions";
                 window.history.replaceState(null, "", `${appContext}/staff/dashboard#transactions`);
@@ -413,7 +585,7 @@
 
         content.innerHTML = `
             <div class="page-heading"><div>
-                <div class="eyebrow"><span class="eyebrow-line"></span>UC-15 · QUẢN LÝ KHÁCH HÀNG (CHẾ ĐỘ XEM)</div>
+                <div class="eyebrow"><span class="eyebrow-line"></span>QUẢN LÝ KHÁCH HÀNG (CHẾ ĐỘ XEM)</div>
                 <h1>Danh sách khách hàng (${customers.length})</h1>
                 <p>Xem và tra cứu thông tin khách hàng phục vụ tư vấn và lập đơn hàng (Nhân viên Sales chỉ có quyền xem).</p>
             </div></div>
@@ -531,31 +703,70 @@
             name: fc.companyName || fc.CompanyName || ""
         }));
         const canCreateOrder = ["sales", "admin"].includes(currentRole);
+        const prefill = prefillOrderCustomer;
+        prefillOrderCustomer = null;
 
         content.innerHTML = `
             <div class="page-heading"><div>
-                <div class="eyebrow"><span class="eyebrow-line"></span>UC-08 &amp; UC-10 · GIAO DỊCH BÁN XE &amp; ĐẶT CỌC 30%</div>
+                <div class="eyebrow"><span class="eyebrow-line"></span>GIAO DỊCH BÁN XE &amp; ĐẶT CỌC 30%</div>
                 <h1>${onlyDeposits ? "Theo dõi Đặt cọc 30% (Deposits)" : "Quản lý Đơn hàng & Lập giao dịch bán xe"}</h1>
                 <p>Hệ thống tự áp dụng khuyến mãi đang hiệu lực (nếu có), sau đó tính 30% tiền đặt cọc và số tiền còn lại từ giá xe trong kho.</p>
             </div></div>
 
             ${canCreateOrder && !onlyDeposits ? `
             <section style="padding:18px;background:#fff;border-radius:12px;border:1px solid #cbd5e1;margin-bottom:20px;">
-                <h3 style="margin:0 0 12px;font-size:16px;">+ Lập đơn hàng bán xe mới (Sales Staff - UC-08)</h3>
+                <h3 style="margin:0 0 12px;font-size:16px;">+ Lập đơn hàng bán xe mới</h3>
                 <form id="staff-create-order-form" style="display:flex;flex-direction:column;gap:14px;">
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:12px;align-items:end;">
-                        <label style="font-size:12px;font-weight:600;">Khách hàng *
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));gap:12px;align-items:end;">
+                        <label style="font-size:12px;font-weight:600;">1. Khách hàng *
                             <select name="customerId" id="so-customer" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
                                 <option value="">-- Chọn khách hàng --</option>
-                                ${customers.map(c => `<option value="${c.customerID}" ${prefillOrderCustomer?.customerId === c.customerID ? "selected" : ""}>#${c.customerID} · ${esc(c.customerName)} (${esc(c.phone)})</option>`).join("")}
+                                ${customers.map(c => `<option value="${c.customerID}" ${prefill?.customerId === c.customerID ? "selected" : ""}>#${c.customerID} · ${esc(c.customerName)} (${esc(c.phone)})</option>`).join("")}
                             </select>
                         </label>
-                        <label style="font-size:12px;font-weight:600;">Xe vật lý có sẵn (AVAILABLE) *
+                        <label style="font-size:12px;font-weight:600;">2. Mẫu xe (Model) *
+                            <select id="so-model" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
+                                <option value="">-- Chọn mẫu xe --</option>
+                            </select>
+                        </label>
+                        <label style="font-size:12px;font-weight:600;">3. Phiên bản (Version) *
+                            <select id="so-version" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
+                                <option value="">-- Chọn phiên bản --</option>
+                            </select>
+                        </label>
+                        <label style="font-size:12px;font-weight:600;">4. Màu sắc (Color) *
+                            <select id="so-color" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
+                                <option value="">-- Chọn màu xe --</option>
+                            </select>
+                        </label>
+                        <label style="font-size:12px;font-weight:600;">5. Xe vật lý / VIN (AVAILABLE) *
                             <select name="carId" id="so-car" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
-                                <option value="">${cars.length ? "-- Chọn xe có sẵn trong kho --" : "-- Kho chưa có xe vật lý khả dụng --"}</option>
-                                ${cars.map(car => `<option value="${car.carID}" data-price="${car.price}" data-original-price="${car.originalPrice ?? car.price}" data-discount="${car.discountAmount || 0}" data-promotion="${esc(car.promotionName || "")}" ${prefillOrderCustomer?.modelId === car.modelID ? "selected" : ""}>${esc(car.modelName)} (${esc(car.versionName)} - ${esc(car.colorName)}) · VIN: ${esc(car.vin)} · ${car.promotionName ? `${fmtMoney(car.price)} · ƯU ĐÃI ${esc(car.promotionName)} (giá gốc ${fmtMoney(car.originalPrice)})` : fmtMoney(car.price)}</option>`).join("")}
+                                <option value="">-- Chọn xe theo VIN --</option>
                             </select>
                         </label>
+                    </div>
+                    <div id="so-price-display-box" style="display:none;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:12px 14px;">
+                        <div style="font-size:12px;font-weight:700;color:#0f172a;margin-bottom:8px;">Thông tin giá xe niêm yết (Cố định theo hệ thống, không thể chỉnh sửa)</div>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:10px;align-items:end;">
+                            <label style="font-size:12px;font-weight:600;color:#475569;">Giá niêm yết (VND)
+                                <input type="text" id="so-listed-price-input" readonly disabled tabindex="-1" style="width:100%;padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;background:#f1f5f9;color:#0f172a;font-weight:700;cursor:not-allowed;">
+                            </label>
+                            <label id="so-promo-field-wrap" style="display:none;font-size:12px;font-weight:600;color:#b91c1c;">Chương trình giảm giá
+                                <input type="text" id="so-promo-name-input" readonly disabled tabindex="-1" style="width:100%;padding:7px 10px;border:1px solid #fecaca;border-radius:6px;margin-top:4px;background:#fef2f2;color:#b91c1c;font-weight:700;cursor:not-allowed;">
+                            </label>
+                            <label id="so-final-price-wrap" style="display:none;font-size:12px;font-weight:600;color:#15803d;">Giá sau ưu đãi (Khách thanh toán)
+                                <input type="text" id="so-final-price-input" readonly disabled tabindex="-1" style="width:100%;padding:7px 10px;border:1px solid #86efac;border-radius:6px;margin-top:4px;background:#f0fdf4;color:#15803d;font-weight:700;cursor:not-allowed;">
+                            </label>
+                        </div>
+                    </div>
+                    <div id="so-stock-alert" style="display:none;margin-top:8px;padding:8px 12px;background:#fef2f2;border:1px solid #f87171;color:#991b1b;border-radius:6px;font-size:13px;font-weight:600;">
+                        ⚠️ Hiện không có xe khả dụng trong kho cho lựa chọn này. Vui lòng chọn màu/phiên bản khác hoặc liên hệ bộ phận Vận hành.
+                    </div>
+                    ${prefill ? `
+                    <div style="margin-top:8px;padding:8px 12px;background:#f0fdf4;border:1px solid #86efac;color:#166534;border-radius:6px;font-size:13px;">
+                        ⚡ Đang điền sẵn thông tin theo yêu cầu tư vấn của khách hàng. Sales có thể đổi lựa chọn nếu khách muốn mua dòng xe khác.
+                    </div>` : ""}
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:12px;align-items:end;margin-top:10px;">
                         <label style="font-size:12px;font-weight:600;">Phương thức thanh toán (Đặt cọc 30%) *
                             <select name="paymentMethodId" id="so-method" required style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
                                 ${methods.map(m => `<option value="${m.id}" data-name="${m.name}" ${m.name === "BANK_TRANSFER" ? "selected" : ""}>${m.name === "BANK_TRANSFER" ? "Thanh toán bằng ngân hàng (Chuyển khoản VietQR SePay - MB Bank)" : "Thanh toán qua nhà tài chính (Trả góp đối tác giải ngân 70%)"}</option>`).join("")}
@@ -616,7 +827,7 @@
                             : "Có xe AVAILABLE nhưng tất cả đã được gắn vào đơn hàng. Vui lòng kiểm tra tồn kho/đơn hàng với Operations."}
                 </div>` : ""}
                 <div id="so-calc-preview" style="margin-top:10px;font-size:13px;color:#1e3a8a;background:#eff6ff;padding:8px 12px;border-radius:6px;">
-                    Chọn xe để xem tự động tính toán Tổng tiền, Đặt cọc 30% và 70% còn lại theo RDS.
+                    Chọn xe để xem tự động tính toán Tổng tiền, Đặt cọc 30% và 70% còn lại.
                 </div>
             </section>
             ` : ""}
@@ -630,7 +841,7 @@
                             <th style="padding:10px;">XE &amp; VIN</th>
                             <th style="padding:10px;">PHƯƠNG THỨC</th>
                             <th style="padding:10px;">TỔNG TIỀN / CỌC 30% / CÒN NỢ</th>
-                            <th style="padding:10px;">TIẾN ĐỘ RDS</th>
+                            <th style="padding:10px;">TIẾN ĐỘ ĐƠN HÀNG</th>
                             <th style="padding:10px;">THAO TÁC</th>
                         </tr>
                     </thead>
@@ -650,7 +861,7 @@
                                 <td style="padding:10px;">
                                     Tổng: <strong>${fmtMoney(o.originalAmount)}</strong><br>
                                     Cọc 30%: <strong>${fmtMoney(o.depositAmount)}</strong><br>
-                                    ${(o.paymentMethodName === "INSTALLMENT" || o.companyName) && (Number(o.remainingAmount) === 0 || Number(o.paidAmount) >= Number(o.depositAmount)) ? `
+                                    ${(o.paymentMethodName === "INSTALLMENT" || o.companyName) && (Number(o.remainingAmount) === 0 && Number(o.paidAmount) >= Number(o.totalAmount)) ? `
                                         Đã thu: <span style="color:#15803d;font-weight:700;">${fmtMoney(o.originalAmount)}</span><br>
                                         Còn lại: <span style="color:#15803d;font-weight:700;">0 ₫</span><br>
                                         <small style="color:#15803d;font-weight:600;">✓ NH ${esc(o.companyName || "đối tác")} giải ngân 70%</small>
@@ -660,7 +871,9 @@
                                     `}
                                 </td>
                                 <td style="padding:10px;">
-                                    <span class="status-pill">${esc(o.status)}</span><br>
+                                    <span class="status-pill">${esc(o.status)}</span>
+                                    ${o.status === "CANCELLED" && o.cancelReason ? `<br><small style="color:#b91c1c;font-weight:600;">Lý do: ${esc(o.cancelReason)}</small>` : ""}
+                                    <br>
                                     <small>HĐ: <strong>${esc(o.contractStatus || "Chưa lập")}</strong></small><br>
                                     <small>HĐơn: <strong>${esc(o.invoiceNumber || "Chưa xuất")}</strong></small><br>
                                     <small>Giao xe: <strong>${esc(o.deliveryStatus || "Chưa giao")}</strong></small>
@@ -668,7 +881,7 @@
                                 <td style="padding:10px;min-width:210px;">
                                     <div style="display:flex;flex-direction:column;gap:6px;">
                                         ${o.status === "DEPOSITED" && !o.contractStatus && currentRole === "sales" ? `
-                                            <button type="button" class="button button-primary btn-quick-contract" data-order-id="${o.id}" style="padding:6px 10px;font-size:12px;">+ Lập Hợp đồng (RDS 9.1)</button>
+                                            <button type="button" class="button button-primary btn-quick-contract" data-order-id="${o.id}" style="padding:6px 10px;font-size:12px;">+ Lập Hợp đồng</button>
                                         ` : ""}
                                         ${o.status === "PAID" && o.invoiceNumber && o.deliveryStatus !== "DELIVERED" && currentRole === "operations" ? `
                                             <button type="button" class="button button-primary btn-quick-handover" data-order-id="${o.id}" style="padding:6px 10px;font-size:12px;">✓ Xác nhận Bàn giao xe</button>
@@ -686,14 +899,173 @@
                 </table>
             </div>
         `;
-        prefillOrderCustomer = null;
-
         const customerSelect = document.getElementById("so-customer");
+        const modelSelect = document.getElementById("so-model");
+        const versionSelect = document.getElementById("so-version");
+        const colorSelect = document.getElementById("so-color");
         const carSelect = document.getElementById("so-car");
+        const stockAlert = document.getElementById("so-stock-alert");
         const methodSelect = document.getElementById("so-method");
         const companyWrap = document.getElementById("so-company-wrap");
         const preview = document.getElementById("so-calc-preview");
         const btnAutofill = document.getElementById("so-btn-autofill");
+
+        const uniqueModels = [];
+        const seenModels = new Set();
+        cars.forEach(c => {
+            const mId = c.modelID ?? c.modelId;
+            if (mId && !seenModels.has(mId)) {
+                seenModels.add(mId);
+                uniqueModels.push({ id: mId, name: c.modelName });
+            }
+        });
+
+        function initModelSelect() {
+            if (!modelSelect) return;
+            modelSelect.innerHTML = `<option value="">-- Chọn mẫu xe (${uniqueModels.length}) --</option>` +
+                uniqueModels.map(m => `<option value="${m.id}">${esc(m.name)}</option>`).join("");
+        }
+
+        function onModelChanged() {
+            const selectedModelId = Number(modelSelect?.value);
+            if (!selectedModelId) {
+                if (versionSelect) {
+                    versionSelect.innerHTML = '<option value="">-- Chọn phiên bản --</option>';
+                    versionSelect.disabled = true;
+                }
+                if (colorSelect) {
+                    colorSelect.innerHTML = '<option value="">-- Chọn màu xe --</option>';
+                    colorSelect.disabled = true;
+                }
+                if (carSelect) {
+                    carSelect.innerHTML = '<option value="">-- Chọn xe theo VIN --</option>';
+                    carSelect.disabled = true;
+                }
+                if (stockAlert) stockAlert.style.display = "none";
+                updateOrderPreview();
+                return;
+            }
+
+            const modelCars = cars.filter(c => (c.modelID ?? c.modelId) === selectedModelId);
+            const uniqueVersions = [];
+            const seenVersions = new Set();
+            modelCars.forEach(c => {
+                if (c.versionName && !seenVersions.has(c.versionName)) {
+                    seenVersions.add(c.versionName);
+                    uniqueVersions.push(c.versionName);
+                }
+            });
+
+            if (versionSelect) {
+                versionSelect.disabled = false;
+                versionSelect.innerHTML = `<option value="">-- Chọn phiên bản (${uniqueVersions.length}) --</option>` +
+                    uniqueVersions.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
+                
+                if (prefill?.versionName && uniqueVersions.includes(prefill.versionName)) {
+                    versionSelect.value = prefill.versionName;
+                } else if (uniqueVersions.length === 1) {
+                    versionSelect.selectedIndex = 1;
+                }
+            }
+            onVersionChanged();
+        }
+
+        function onVersionChanged() {
+            const selectedModelId = Number(modelSelect?.value);
+            const selectedVersionName = versionSelect?.value;
+            if (!selectedModelId || !selectedVersionName) {
+                if (colorSelect) {
+                    colorSelect.innerHTML = '<option value="">-- Chọn màu xe --</option>';
+                    colorSelect.disabled = true;
+                }
+                if (carSelect) {
+                    carSelect.innerHTML = '<option value="">-- Chọn xe theo VIN --</option>';
+                    carSelect.disabled = true;
+                }
+                if (stockAlert) stockAlert.style.display = "none";
+                updateOrderPreview();
+                return;
+            }
+
+            const versionCars = cars.filter(c => (c.modelID ?? c.modelId) === selectedModelId && c.versionName === selectedVersionName);
+            const uniqueColors = [];
+            const seenColors = new Set();
+            versionCars.forEach(c => {
+                if (c.colorName && !seenColors.has(c.colorName)) {
+                    seenColors.add(c.colorName);
+                    uniqueColors.push(c.colorName);
+                }
+            });
+
+            if (colorSelect) {
+                colorSelect.disabled = false;
+                colorSelect.innerHTML = `<option value="">-- Chọn màu xe (${uniqueColors.length}) --</option>` +
+                    uniqueColors.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
+
+                if (prefill?.colorName && uniqueColors.includes(prefill.colorName)) {
+                    colorSelect.value = prefill.colorName;
+                } else if (uniqueColors.length === 1) {
+                    colorSelect.selectedIndex = 1;
+                }
+            }
+            onColorChanged();
+        }
+
+        function onColorChanged() {
+            const selectedModelId = Number(modelSelect?.value);
+            const selectedVersionName = versionSelect?.value;
+            const selectedColorName = colorSelect?.value;
+            const submitBtn = document.querySelector("#staff-create-order-form button[type='submit']");
+
+            if (!selectedModelId || !selectedVersionName || !selectedColorName) {
+                if (carSelect) {
+                    carSelect.innerHTML = '<option value="">-- Chọn xe theo VIN --</option>';
+                    carSelect.disabled = true;
+                }
+                if (stockAlert) stockAlert.style.display = "none";
+                if (submitBtn) submitBtn.disabled = false;
+                updateOrderPreview();
+                return;
+            }
+
+            const matchedCars = cars.filter(c => 
+                (c.modelID ?? c.modelId) === selectedModelId && 
+                c.versionName === selectedVersionName && 
+                c.colorName === selectedColorName
+            );
+
+            if (matchedCars.length === 0) {
+                if (carSelect) {
+                    carSelect.innerHTML = '<option value="">-- Hết xe khả dụng trong kho --</option>';
+                    carSelect.disabled = true;
+                }
+                if (stockAlert) stockAlert.style.display = "block";
+                if (submitBtn) submitBtn.disabled = true;
+            } else {
+                if (stockAlert) stockAlert.style.display = "none";
+                if (submitBtn) submitBtn.disabled = false;
+                if (carSelect) {
+                    carSelect.disabled = false;
+                    carSelect.innerHTML = `<option value="">-- Chọn VIN xe trong kho (${matchedCars.length} xe) --</option>` +
+                        matchedCars.map(car => `<option value="${car.carID}" data-vin="${esc(car.vin)}" data-price="${car.price}" data-original-price="${car.originalPrice ?? car.price}" data-discount="${car.discountAmount || 0}" data-discount-type="${esc(car.discountType || "")}" data-discount-value="${car.discountValue ?? ""}" data-promotion="${esc(car.promotionName || "")}">VIN: ${esc(car.vin)}</option>`).join("");
+                    carSelect.selectedIndex = 1;
+                }
+            }
+            updateOrderPreview();
+        }
+
+        initModelSelect();
+        modelSelect?.addEventListener("change", onModelChanged);
+        versionSelect?.addEventListener("change", onVersionChanged);
+        colorSelect?.addEventListener("change", onColorChanged);
+
+        if (prefill?.modelId) {
+            modelSelect.value = String(prefill.modelId);
+            onModelChanged();
+        } else if (uniqueModels.length === 1) {
+            modelSelect.selectedIndex = 1;
+            onModelChanged();
+        }
 
         function renderConsultingStaff(staff) {
             const box = document.getElementById("so-consulting-staff-box");
@@ -761,11 +1133,42 @@
 
         function updateOrderPreview() {
             if (!carSelect || !preview) return;
+            const priceBox = document.getElementById("so-price-display-box");
+            const listedPriceInput = document.getElementById("so-listed-price-input");
+            const promoFieldWrap = document.getElementById("so-promo-field-wrap");
+            const promoNameInput = document.getElementById("so-promo-name-input");
+            const finalPriceWrap = document.getElementById("so-final-price-wrap");
+            const finalPriceInput = document.getElementById("so-final-price-input");
+            const carVal = carSelect.value;
+            if (!carVal) {
+                if (priceBox) priceBox.style.display = "none";
+                preview.innerHTML = "Chọn đầy đủ Mẫu xe → Phiên bản → Màu sắc → Xe vật lý (VIN) để xem tự động tính toán Đặt cọc 30% và 70% còn lại.";
+                return;
+            }
             const selectedCar = carSelect.selectedOptions[0];
             const price = Number(selectedCar?.dataset?.price || 0);
             const originalPrice = Number(selectedCar?.dataset?.originalPrice || price);
             const discount = Number(selectedCar?.dataset?.discount || 0);
+            const discountType = selectedCar?.dataset?.discountType || "";
+            const discountValue = Number(selectedCar?.dataset?.discountValue || 0);
             const promotionName = selectedCar?.dataset?.promotion || "";
+            const hasPromo = discount > 0 && promotionName;
+            const discountText = discountType.toUpperCase() === "PERCENTAGE" && discountValue > 0
+                ? `Giảm ${discountValue}% (-${fmtMoney(discount)})`
+                : `Giảm ${fmtMoney(discount)}`;
+            if (priceBox && price > 0) {
+                priceBox.style.display = "block";
+                if (listedPriceInput) listedPriceInput.value = fmtMoney(originalPrice);
+                if (hasPromo) {
+                    if (promoFieldWrap) promoFieldWrap.style.display = "block";
+                    if (promoNameInput) promoNameInput.value = `${promotionName} · ${discountText}`;
+                    if (finalPriceWrap) finalPriceWrap.style.display = "block";
+                    if (finalPriceInput) finalPriceInput.value = fmtMoney(price);
+                } else {
+                    if (promoFieldWrap) promoFieldWrap.style.display = "none";
+                    if (finalPriceWrap) finalPriceWrap.style.display = "none";
+                }
+            }
             const mName = methodSelect?.selectedOptions[0]?.dataset?.name || "";
             if (companyWrap) {
                 const isInstallment = (mName === "INSTALLMENT");
@@ -779,7 +1182,7 @@
             if (price > 0) {
                 const dep = Math.round(price * 0.30);
                 const rem = price - dep;
-                preview.innerHTML = `${promotionName ? `<span style="color:#b91c1c;font-weight:700;">🎁 Khuyến mãi ${esc(promotionName)}: giá gốc <del>${fmtMoney(originalPrice)}</del>, giảm ${fmtMoney(discount)}.</span><br>` : ""}Tổng giá trị xe: <strong>${fmtMoney(price)}</strong> · Tiền đặt cọc 30%: <strong>${fmtMoney(dep)}</strong> · Số tiền 70% còn lại: <strong>${fmtMoney(rem)}</strong> ${mName === "INSTALLMENT" ? "<span style='color:#15803d;font-weight:600;'>(Khách hàng thanh toán 30% cọc qua ngân hàng; 70% còn lại do nhà tài chính giải ngân cho showroom sau khi cọc)</span>" : "(Khách hàng thanh toán 30% cọc và 70% còn lại bằng chuyển khoản ngân hàng)"}.`;
+                preview.innerHTML = `${hasPromo ? `<span style="color:#b91c1c;font-weight:700;">🎁 Khuyến mãi ${esc(promotionName)} (${esc(discountText)}): giá niêm yết <del>${fmtMoney(originalPrice)}</del> → Giá sau ưu đãi <strong>${fmtMoney(price)}</strong>.</span><br>` : ""}${hasPromo ? "Số tiền khách thanh toán (sau ưu đãi)" : "Tổng giá trị xe"}: <strong>${fmtMoney(price)}</strong> · Tiền đặt cọc 30%: <strong>${fmtMoney(dep)}</strong> · Số tiền 70% còn lại: <strong>${fmtMoney(rem)}</strong> ${mName === "INSTALLMENT" ? "<span style='color:#15803d;font-weight:600;'>(Kế toán xác nhận đối soát tiền cọc; đối tác giải ngân 70% sau khi khách ký hợp đồng)</span>" : "(Khách hàng thanh toán 30% cọc và 70% còn lại bằng chuyển khoản ngân hàng)"}.`;
             }
         }
         carSelect?.addEventListener("change", updateOrderPreview);
@@ -790,6 +1193,11 @@
         document.getElementById("staff-create-order-form")?.addEventListener("submit", async (e) => {
             e.preventDefault();
             const f = e.currentTarget;
+
+            if (!carSelect?.value) {
+                notify("Vui lòng chọn xe vật lý (VIN) khả dụng trong kho trước khi tạo đơn.");
+                return;
+            }
 
             const phoneVal = (f.customerPhone?.value || "").trim();
             if (!/^0[0-9]{9}$/.test(phoneVal)) {
@@ -816,22 +1224,31 @@
             const price = Number(selectedCar?.dataset?.price || 0);
             const originalPrice = Number(selectedCar?.dataset?.originalPrice || price);
             const discount = Number(selectedCar?.dataset?.discount || 0);
+            const discountType = selectedCar?.dataset?.discountType || "";
+            const discountValue = Number(selectedCar?.dataset?.discountValue || 0);
             const promotionName = selectedCar?.dataset?.promotion || "";
+            const hasPromo = discount > 0 && promotionName;
+            const discountText = discountType.toUpperCase() === "PERCENTAGE" && discountValue > 0
+                ? `Giảm ${discountValue}% (-${fmtMoney(discount)})`
+                : `Giảm ${fmtMoney(discount)}`;
             const dep = Math.round(price * 0.30);
             const rem = price - dep;
             const modalDetails = [
                 { label: "Khách hàng", value: f.customerName?.value || customerSelect?.selectedOptions[0]?.text },
                 { label: "Xe vật lý", value: carSelect?.selectedOptions[0]?.text },
                 { label: "Phương thức thanh toán", value: f.paymentMethodId.selectedOptions[0]?.text },
-                ...(promotionName ? [
-                    { label: "Khuyến mãi", value: `${promotionName} · Giá gốc ${fmtMoney(originalPrice)} · Giảm ${fmtMoney(discount)}` }
-                ] : []),
-                { label: "Tổng giá xe", value: fmtMoney(price) },
+                ...(hasPromo ? [
+                    { label: "Giá niêm yết", value: fmtMoney(originalPrice) },
+                    { label: "Chương trình ưu đãi", value: `${promotionName} · ${discountText}` },
+                    { label: "Giá sau ưu đãi", value: fmtMoney(price) }
+                ] : [
+                    { label: "Tổng giá xe", value: fmtMoney(price) }
+                ]),
                 { label: "Tiền đặt cọc 30%", value: fmtMoney(dep) },
                 { label: "Số tiền 70% còn lại", value: fmtMoney(rem) }
             ];
             if (chosenMethod === "INSTALLMENT") {
-                modalDetails.push({ label: "Quy tắc giải ngân", value: "Khách chỉ cọc 30%. 70% còn lại mặc định do đối tác tài chính giải ngân." });
+                modalDetails.push({ label: "Quy tắc giải ngân", value: "Kế toán đối soát tiền cọc 30%; đối tác giải ngân 70% sau khi khách ký hợp đồng." });
             }
 
             const confirmed = await showAppConfirmModal({
@@ -867,10 +1284,10 @@
             btn.addEventListener("click", async () => {
                 const confirmed = await showAppConfirmModal({
                     title: "Xác nhận lập hợp đồng mua bán",
-                    message: "Bạn có chắc chắn muốn lập hợp đồng mua bán xe điện cho đơn hàng này theo quy chuẩn RDS?",
+                    message: "Bạn có chắc chắn muốn lập hợp đồng mua bán xe điện cho đơn hàng này?",
                     details: [
                         { label: "Mã đơn hàng", value: `#${btn.dataset.orderId}` },
-                        { label: "Quy chuẩn", value: "Hợp đồng mua bán xe điện VinFast (RDS 9.1)" }
+                        { label: "Loại văn bản", value: "Hợp đồng mua bán xe điện VinFast" }
                     ],
                     confirmText: "Có, xác nhận",
                     cancelText: "Không, quay lại"
@@ -881,7 +1298,7 @@
                         action: "create",
                         csrfToken: data.csrfToken,
                         orderId: btn.dataset.orderId,
-                        note: "Hợp đồng mua bán xe điện VinFast theo quy chuẩn RDS."
+                        note: "Hợp đồng mua bán xe điện VinFast."
                     });
                     notify(res.message);
                     await loadTransactionsAndDepositsView(onlyDeposits);
@@ -927,7 +1344,7 @@
                 const customer = btn.dataset.customer || "Khách hàng";
                 const vin = btn.dataset.vin || "";
 
-                const confirmed = await showAppConfirmModal({
+                const result = await showAppConfirmModal({
                     title: "Xác nhận hủy đơn hàng",
                     message: `Bạn có chắc chắn muốn hủy đơn hàng <strong>#${esc(orderId)}</strong> của khách hàng <strong>${esc(customer)}</strong>?<br><br><span style="color:#b91c1c;font-size:13px;line-height:1.5;display:block;">⚠️ Sau khi hủy, xe vật lý (<strong>${esc(model)}</strong>${vin ? ' · VIN: ' + esc(vin) : ''}) sẽ được tự động giải phóng về trạng thái có sẵn (AVAILABLE) để bán cho khách hàng khác. Thao tác này không thể hoàn tác.</span>`,
                     details: [
@@ -936,18 +1353,25 @@
                         { label: "Dòng xe / Mẫu xe", value: model },
                         ...(vin ? [{ label: "Số khung VIN", value: vin }] : [])
                     ],
+                    promptInput: {
+                        label: "Lý do hủy đơn hàng",
+                        placeholder: "Nhập rõ lý do hủy đơn hàng (ví dụ: Khách đổi mẫu xe, sai thông tin đặt xe...)",
+                        required: true,
+                        maxLength: 250,
+                        errorMessage: "Vui lòng ghi rõ lý do hủy đơn hàng."
+                    },
                     confirmText: "Có, hủy đơn hàng",
                     cancelText: "Không, quay lại",
                     isDanger: true
                 });
 
-                if (!confirmed) return;
+                if (!result || !result.confirmed) return;
 
                 try {
                     const res = await postForm("/order-status", {
                         orderId: orderId,
                         status: "CANCELLED",
-                        note: "Sales Staff hủy đơn trước khi thanh toán cọc"
+                        note: result.value
                     });
                     notify(res.message || `Đã hủy thành công đơn hàng #${orderId}.`);
                     await loadTransactionsAndDepositsView(onlyDeposits);
@@ -963,8 +1387,20 @@
         const data = await fetchJson("/staff/payment-review?format=json");
         const pending = data.pendingPayments || [];
         const debts = data.openDebts || [];
+        const lateTransfers = data.lateTransfers || [];
         const csrf = esc(data.csrfToken || "");
         const debtsFirst = mode === "debts";
+        const renderLateTransfers = () => lateTransfers.length ? `
+            <section id="accountant-late-transfers" style="padding:16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:12px;margin:16px 0;">
+                <h2 style="margin:0 0 8px;color:#991b1b;">⚠️ Chuyển khoản phát sinh sau khi đơn hủy (${lateTransfers.length})</h2>
+                <p style="margin:0 0 10px;color:#7f1d1d;font-size:13px;">Khách đã chuyển khoản qua QR cũ sau khi đơn hàng hết hạn. Đơn hàng không được kích hoạt lại; Kế toán cần xử lý đối soát/hoàn tiền thủ công.</p>
+                ${lateTransfers.map(lt => `
+                    <article style="padding:10px 0;border-top:1px solid #fecaca;">
+                        <strong>Khoản #${lt.paymentId} · Đơn ${esc(lt.orderCode || ('ECS' + lt.orderId))} · ${esc(lt.customer)}</strong>
+                        <p style="margin:4px 0;">Số tiền: <strong>${fmtMoney(lt.receivedAmount || lt.amount)}</strong> · Mã: <code>${esc(lt.reference)}</code></p>
+                        <p style="margin:4px 0;font-size:12px;color:#7f1d1d;">${esc(lt.note)}</p>
+                    </article>`).join("")}
+            </section>` : "";
         const renderDebts = () => `
             <section id="accountant-debts" style="padding:16px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;margin:16px 0;">
                 <h2 style="margin:0 0 10px;">Theo dõi công nợ đơn hàng (${debts.length})</h2>
@@ -977,7 +1413,7 @@
                             <form class="accountant-review-form" style="display:inline-flex;" data-action-label="Đã ghi nhận yêu cầu giải ngân 70% cho đơn #${d.orderId}.">
                                 <input type="hidden" name="csrfToken" value="${csrf}"><input type="hidden" name="format" value="json">
                                 <input type="hidden" name="action" value="partner"><input type="hidden" name="orderId" value="${d.orderId}">
-                                <button type="submit" class="button button-primary">Ghi nhận chờ giải ngân 70%</button>
+                                <button type="submit" class="button button-primary">Đồng bộ giải ngân 70% sau ký</button>
                             </form>` : ""}
                     </article>`).join("") : `<p>Không có đơn hàng còn công nợ.</p>`}
             </section>`;
@@ -1015,11 +1451,12 @@
             </section>`;
         content.innerHTML = `
             <div class="page-heading"><div>
-                <div class="eyebrow"><span class="eyebrow-line"></span>UC-10–12 · KẾ TOÁN ĐỐI SOÁT</div>
+                <div class="eyebrow"><span class="eyebrow-line"></span>KẾ TOÁN ĐỐI SOÁT</div>
                 <h1>${debtsFirst ? "Quản lý công nợ & giải ngân 70%" : "Xác nhận & Đối soát thanh toán"}</h1>
                 <p>Chỉ xác nhận sau khi đối chiếu sao kê ngân hàng hoặc chứng từ giải ngân thật. Thao tác được lưu vào database.</p>
             </div></div>
-            <div class="inline-note">Trang kế toán chạy trong dashboard. Giải ngân 70% chỉ được tạo chờ xác nhận sau khi hợp đồng đã ký; không tự kết nối/xác nhận với ngân hàng.</div>
+            <div class="inline-note">Đơn trả góp chỉ được tự động ghi nhận giải ngân 70% sau khi Kế toán đối soát cọc 30% và khách hàng ký hợp đồng; khoản 70% được ghi hoàn tất tại thời điểm ký.</div>
+            ${renderLateTransfers()}
             ${debtsFirst ? renderDebts() + renderPending() : renderPending() + renderDebts()}
             <section id="accountant-completed">
                 <h2>Khoản đã xác nhận &amp; Đối soát (${(data.completedPayments || []).length})</h2>
@@ -1200,7 +1637,7 @@
                 isDanger = true;
             } else if (action === "partner") {
                 confirmTitle = "Xác nhận giải ngân 70% từ đối tác";
-                confirmMsg = "Bạn có chắc chắn muốn ghi nhận chờ giải ngân 70% còn lại cho đơn hàng này?";
+                confirmMsg = "Bạn có chắc chắn muốn đồng bộ khoản giải ngân 70% đã hoàn tất sau khi khách ký hợp đồng không?";
                 details = [
                     { label: "Mã đơn hàng", value: `#${values.orderId}` }
                 ];
@@ -1247,7 +1684,7 @@
 
         content.innerHTML = `
             <div class="page-heading"><div>
-                <div class="eyebrow"><span class="eyebrow-line"></span>UC-13 · HỢP ĐỒNG MUA BÁN &amp; HÓA ĐƠN GTGT</div>
+                <div class="eyebrow"><span class="eyebrow-line"></span>HỢP ĐỒNG MUA BÁN &amp; HÓA ĐƠN GTGT</div>
                 <h1>Quản lý Hợp đồng (${contracts.length}) &amp; Hóa đơn (${invoices.length})</h1>
                 <p>Lập hợp đồng sau khi khách đặt cọc 30% (DEPOSITED), theo dõi trạng thái khách ký OTP (SIGNED), và phát hành hóa đơn sau khi thu đủ 100% (PAID).</p>
             </div></div>
@@ -1301,7 +1738,14 @@
                                 <td style="padding:10px;">${esc(c.modelName)}<br><small>VIN: ${esc(c.vin)}</small></td>
                                 <td style="padding:10px;"><strong>${fmtMoney(c.contractAmount)}</strong></td>
                                 <td style="padding:10px;"><span class="status-pill">${esc(c.status)}</span></td>
-                                <td style="padding:10px;max-width:300px;font-size:12px;">${esc(c.note)}</td>
+                                <td style="padding:10px;max-width:300px;font-size:12px;">
+                                    ${esc(c.note)}
+                                    <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;font-size:12px;">
+                                        <a href="${appContext}/staff/sales-document?kind=contract&amp;orderId=${c.orderID}&amp;view=html" target="_blank" style="color:#0284c7;font-weight:600;">👁️ Xem HĐ</a>
+                                        <a href="${appContext}/staff/sales-document?kind=contract&amp;orderId=${c.orderID}" style="color:#0284c7;">📥 Word</a>
+                                        <a href="${appContext}/staff/sales-document?kind=deposit&amp;orderId=${c.orderID}&amp;view=html" target="_blank" style="color:#059669;font-weight:600;">👁️ Cọc</a>
+                                    </div>
+                                </td>
                             </tr>
                         `).join("") : `<tr><td colspan="7" style="padding:20px;text-align:center;">Chưa có hợp đồng nào.</td></tr>`}
                     </tbody>
@@ -1324,8 +1768,13 @@
                     <tbody>
                         ${invoices.length ? invoices.map(inv => `
                             <tr style="border-bottom:1px solid #f1f5f9;">
-                                <td style="padding:10px;"><strong>${esc(inv.invoiceNumber)}</strong>
-                                ${currentRole === "accountant" && inv.status === "ISSUED" ? `<a href="${appContext}/staff/sales-document?kind=invoice&amp;orderId=${inv.orderID}">Tải Word</a>` : ""}</td>
+                                <td style="padding:10px;">
+                                    <strong>${esc(inv.invoiceNumber)}</strong>
+                                    <div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;font-size:12px;">
+                                        <a href="${appContext}/staff/sales-document?kind=invoice&amp;orderId=${inv.orderID}&amp;view=html" target="_blank" style="color:#7c3aed;font-weight:600;">👁️ Xem HTML</a>
+                                        ${currentRole === "accountant" && inv.status === "ISSUED" ? `<a href="${appContext}/staff/sales-document?kind=invoice&amp;orderId=${inv.orderID}" style="color:#7c3aed;">📥 Tải Word</a>` : ""}
+                                    </div>
+                                </td>
                                 <td style="padding:10px;">#${inv.orderID}</td>
                                 <td style="padding:10px;">${esc(inv.invoiceDate)}</td>
                                 <td style="padding:10px;"><strong>${fmtMoney(inv.totalAmount)}</strong></td>
@@ -1371,7 +1820,7 @@
                     message: "Bạn có chắc chắn muốn phát hành hóa đơn GTGT chính thức cho đơn hàng này?",
                     details: [
                         { label: "Mã đơn hàng", value: `#${btn.dataset.orderId}` },
-                        { label: "Nghiệp vụ", value: "Xuất hóa đơn GTGT theo quy chuẩn RDS (PAID)" }
+                        { label: "Nghiệp vụ", value: "Xuất hóa đơn GTGT (PAID)" }
                     ],
                     confirmText: "Có, xác nhận",
                     cancelText: "Không, quay lại"
@@ -1394,16 +1843,108 @@
 
     async function loadInstallmentsPartnerView() {
         content.innerHTML = `<p>Đang tải danh sách đối tác tài chính (Bảng FinancialCompanies)...</p>`;
-        const data = await fetchJson("/contract?format=json");
+        let data = { financialCompanies: [], installmentPlans: [] };
+        try {
+            data = await fetchJson("/contract?format=json");
+        } catch (err) {
+            console.warn("Could not load /contract?format=json", err);
+        }
         const companies = data.financialCompanies || [];
-        const plans = data.installmentPlans || [];
+        let plans = data.installmentPlans || [];
+
+        const standardTiers = [
+            { key: "shinhan", defaultName: "Shinhan Finance", months: 12, rate: "7.30", desc: "Shinhan Finance - Gói vay ngắn hạn 12 tháng ưu đãi lãi suất cố định, giải ngân 70%." },
+            { key: "shinhan", defaultName: "Shinhan Finance", months: 24, rate: "8.20", desc: "Shinhan Finance - Gói vay trung hạn 24 tháng (2 năm), giải ngân trực tiếp cho đại lý." },
+            { key: "shinhan", defaultName: "Shinhan Finance", months: 36, rate: "9.10", desc: "Shinhan Finance - Gói vay 36 tháng (3 năm), thủ tục phê duyệt hồ sơ trong vòng 4 giờ." },
+            { key: "shinhan", defaultName: "Shinhan Finance", months: 48, rate: "10.40", desc: "Shinhan Finance - Gói vay 48 tháng (4 năm), phương thức thanh toán linh hoạt hàng tháng." },
+            { key: "shinhan", defaultName: "Shinhan Finance", months: 60, rate: "11.80", desc: "Shinhan Finance - Gói vay dài hạn 60 tháng (5 năm), hạn mức hỗ trợ tối đa 70% giá trị hợp đồng." },
+            { key: "techcombank", defaultName: "Techcombank", months: 24, rate: "5.00", desc: "Techcombank - Gói vay mua ô tô điện giải ngân 70%, ưu đãi lãi suất cố định 24 tháng (2 năm)." },
+            { key: "techcombank", defaultName: "Techcombank", months: 36, rate: "5.70", desc: "Techcombank - Gói vay 36 tháng (3 năm), miễn phí thẩm định hồ sơ dành riêng cho khách hàng VinFast." },
+            { key: "techcombank", defaultName: "Techcombank", months: 48, rate: "6.30", desc: "Techcombank - Gói vay 48 tháng (4 năm), bảo lãnh đại lý theo quy trình ngân hàng." },
+            { key: "techcombank", defaultName: "Techcombank", months: 60, rate: "7.00", desc: "Techcombank - Gói vay dài hạn 60 tháng (5 năm), ngân hàng TMCP Kỹ Thương giải ngân trực tiếp." },
+            { key: "mb", defaultName: "MB Bank", months: 12, rate: "5.00", desc: "MB Bank - Gói vay ngắn hạn 12 tháng (1 năm), hỗ trợ thanh toán VietQR động SePay và giải ngân nhanh." },
+            { key: "mb", defaultName: "MB Bank", months: 24, rate: "5.88", desc: "MB Bank - Gói vay 24 tháng (2 năm), phê duyệt tự động trên ứng dụng MB Bank." },
+            { key: "mb", defaultName: "MB Bank", months: 36, rate: "6.75", desc: "MB Bank - Gói vay 36 tháng (3 năm), đối soát sao kê tự động với kế toán đại lý." },
+            { key: "mb", defaultName: "MB Bank", months: 48, rate: "7.63", desc: "MB Bank - Gói vay 48 tháng (4 năm), ân hạn nợ gốc và giảm phí trả trước hạn." },
+            { key: "mb", defaultName: "MB Bank", months: 60, rate: "8.50", desc: "MB Bank - Gói vay 60 tháng (5 năm), thời hạn vay tối đa 5 năm cho cá nhân và doanh nghiệp." },
+            { key: "vpbank", defaultName: "VPBank", months: 36, rate: "6.00", desc: "VPBank - Gói vay mua xe điện trả góp 36 tháng (3 năm), lãi suất cạnh tranh thị trường." },
+            { key: "vpbank", defaultName: "VPBank", months: 48, rate: "7.80", desc: "VPBank - Gói vay 48 tháng (4 năm), giải ngân 70% sau khi khách hoàn tất đặt cọc 30% và ký hợp đồng." },
+            { key: "vpbank", defaultName: "VPBank", months: 60, rate: "9.50", desc: "VPBank - Gói vay dài hạn 60 tháng (5 năm), thời gian xử lý hồ sơ và giải ngân trong 24 giờ làm việc." }
+        ];
+
+        // Đảm bảo MB Bank luôn có đầy đủ trong danh mục companies
+        const mbInfo = {
+            companyID: 7,
+            companyName: "MB Bank",
+            phone: "1900545426",
+            email: "mb247@mbbank.com.vn",
+            address: "Số 18 Lê Văn Lương, Cầu Giấy, Hà Nội",
+            description: "Ngân hàng TMCP Quân Đội - Đối tác thanh toán VietQR và giải ngân trả góp xe điện."
+        };
+        const mbCompanyIndex = companies.findIndex(c => (c.companyName || "").toLowerCase().includes("mb"));
+        if (mbCompanyIndex === -1) {
+            companies.push(mbInfo);
+        } else if (!companies[mbCompanyIndex].companyName) {
+            companies[mbCompanyIndex].companyName = "MB Bank";
+        }
+
+        // Bổ sung đầy đủ các gói vay trả góp nếu thiếu (đặc biệt là MB Bank)
+        if (!plans.length) {
+            plans = standardTiers.map((t, idx) => {
+                const matched = companies.find(c => (c.companyName || "").toLowerCase().includes(t.key));
+                const cName = matched ? matched.companyName : t.defaultName;
+                const cId = matched ? matched.companyID : idx + 1;
+                return {
+                    planID: idx + 1,
+                    companyID: cId,
+                    companyName: cName,
+                    planName: `${cName} - ${t.months} tháng`,
+                    loanTermMonths: t.months,
+                    interestRate: t.rate,
+                    description: t.desc
+                };
+            });
+        } else {
+            // Kiểm tra từng gói trong standardTiers, nếu ngân hàng nào chưa có (ví dụ MB Bank) thì tự động bổ sung
+            for (let i = 0; i < standardTiers.length; i++) {
+                const t = standardTiers[i];
+                const matched = companies.find(c => (c.companyName || "").toLowerCase().includes(t.key));
+                const cName = matched ? matched.companyName : t.defaultName;
+                const cId = matched ? matched.companyID : 700 + i;
+                const exists = plans.some(p => {
+                    const pName = (p.companyName || "").toLowerCase();
+                    return (pName.includes(t.key) || pName === cName.toLowerCase()) && Number(p.loanTermMonths) === Number(t.months);
+                });
+                if (!exists) {
+                    plans.push({
+                        planID: 800 + i,
+                        companyID: cId,
+                        companyName: cName,
+                        planName: `${cName} - ${t.months} tháng`,
+                        loanTermMonths: t.months,
+                        interestRate: t.rate,
+                        description: t.desc
+                    });
+                }
+            }
+        }
+
+        // Sắp xếp danh sách gói vay theo Tên ngân hàng và Kỳ hạn tháng
+        plans.sort((a, b) => {
+            const cmp = (a.companyName || "").localeCompare(b.companyName || "");
+            return cmp !== 0 ? cmp : (a.loanTermMonths - b.loanTermMonths);
+        });
+
+        const bankNames = Array.from(new Set(plans.map(p => p.companyName || "Đối tác khác")));
+        let currentSelectedBank = "ALL";
+
         content.innerHTML = `
             <div class="page-heading"><div>
-                <div class="eyebrow"><span class="eyebrow-line"></span>UC-12 · ĐỐI TÁC TÀI CHÍNH &amp; CHÍNH SÁCH TRẢ GÓP</div>
+                <div class="eyebrow"><span class="eyebrow-line"></span>ĐỐI TÁC TÀI CHÍNH &amp; CHÍNH SÁCH TRẢ GÓP</div>
                 <h1>Danh mục Ngân hàng / Công ty Tài chính Đối tác (${companies.length})</h1>
-                <p>Theo RDS (UC-12, BR2a, EX-08): Khách mua trả góp đóng 30% cọc trên hệ thống; 70% còn lại do ngân hàng đối tác giải ngân trực tiếp cho đại lý.</p>
+                <p>Khách mua trả góp đóng 30% cọc trên hệ thống; 70% còn lại do ngân hàng đối tác giải ngân trực tiếp cho đại lý.</p>
             </div></div>
-            <div style="padding:16px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:20px;">
+            <div style="padding:16px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
                 <table style="width:100%;border-collapse:collapse;font-size:13px;">
                     <thead>
                         <tr style="border-bottom:2px solid #e2e8f0;text-align:left;">
@@ -1427,32 +1968,154 @@
                     </tbody>
                 </table>
             </div>
-            <div style="padding:16px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;">
-                <h3 style="margin:0 0 10px;">Bảng lãi suất tham khảo theo kỳ hạn (RDS BR9–BR10)</h3>
-                <table style="width:100%;border-collapse:collapse;font-size:13px;">
-                    <thead>
-                        <tr style="border-bottom:2px solid #e2e8f0;text-align:left;">
-                            <th style="padding:10px;">ĐƠN VỊ</th>
-                            <th style="padding:10px;">GÓI VAY</th>
-                            <th style="padding:10px;">KỲ HẠN</th>
-                            <th style="padding:10px;">LÃI SUẤT NĂM</th>
-                            <th style="padding:10px;">MÔ TẢ</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${plans.map(p => `
-                            <tr style="border-bottom:1px solid #f1f5f9;">
-                                <td style="padding:10px;"><strong>${esc(p.companyName)}</strong></td>
-                                <td style="padding:10px;">${esc(p.planName)}</td>
-                                <td style="padding:10px;">${p.loanTermMonths} tháng</td>
-                                <td style="padding:10px;"><strong>${p.interestRate}%/năm</strong></td>
-                                <td style="padding:10px;">${esc(p.description)}</td>
+
+            <!-- BẢNG LÃI SUẤT THAM KHẢO THEO KỲ HẠN - LIỆT KÊ THEO NGÂN HÀNG / ĐỐI TÁC -->
+            <div style="padding:20px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+                    <div>
+                        <h3 style="margin:0 0 4px;font-size:16px;color:#0f172a;">Bảng lãi suất tham khảo theo kỳ hạn</h3>
+                        <p style="margin:0;font-size:13px;color:#64748b;">
+                            Dữ liệu gói vay trả góp, kỳ hạn (số tháng &amp; số năm) và lãi suất (%/năm) được phân nhóm chi tiết theo từng ngân hàng / đối tác đối soát.
+                        </p>
+                    </div>
+                    <div>
+                        <input type="text" id="installment-search-input" placeholder="🔍 Tìm kiếm ngân hàng, số năm, lãi suất..."
+                               style="padding:8px 14px;font-size:13px;border:1px solid #cbd5e1;border-radius:8px;width:280px;outline:none;" />
+                    </div>
+                </div>
+
+                <!-- THANH CHỌN / LỌC THEO TỪNG ĐỐI TÁC NGÂN HÀNG -->
+                <div id="installment-bank-tabs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+                    <button type="button" class="installment-filter-btn" data-bank="ALL"
+                            style="padding:6px 14px;font-size:12.5px;font-weight:600;border-radius:8px;border:1px solid #cbd5e1;background:#0f172a;color:#fff;cursor:pointer;">
+                        Tất cả đối tác (${plans.length} gói)
+                    </button>
+                    ${bankNames.map(b => {
+                        const count = plans.filter(p => p.companyName === b).length;
+                        return `
+                            <button type="button" class="installment-filter-btn" data-bank="${esc(b)}"
+                                    style="padding:6px 14px;font-size:12.5px;font-weight:500;border-radius:8px;border:1px solid #cbd5e1;background:#f8fafc;color:#334155;cursor:pointer;">
+                                🏦 ${esc(b)} (${count})
+                            </button>
+                        `;
+                    }).join("")}
+                </div>
+
+                <div class="table-responsive">
+                    <table style="width:100%;border-collapse:collapse;font-size:13px;" id="installment-plans-table">
+                        <thead>
+                            <tr style="border-bottom:2px solid #e2e8f0;background:#f8fafc;text-align:left;color:#475569;font-size:12px;text-transform:uppercase;">
+                                <th style="padding:10px 12px;width:22%;">ĐƠN VỊ / ĐỐI TÁC</th>
+                                <th style="padding:10px 12px;width:24%;">GÓI VAY TRẢ GÓP</th>
+                                <th style="padding:10px 12px;width:18%;">KỲ HẠN VAY</th>
+                                <th style="padding:10px 12px;width:14%;">LÃI SUẤT NĂM</th>
+                                <th style="padding:10px 12px;width:22%;">CHÍNH SÁCH &amp; MÔ TẢ</th>
                             </tr>
-                        `).join("")}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody id="installment-plans-tbody"></tbody>
+                    </table>
+                </div>
             </div>
         `;
+
+        function renderPlans(selectedBank = "ALL", keyword = "") {
+            const kw = (keyword || "").trim().toLowerCase();
+            const filtered = plans.filter(p => {
+                const matchBank = selectedBank === "ALL" || (p.companyName === selectedBank);
+                const years = (p.loanTermMonths / 12).toFixed(p.loanTermMonths % 12 === 0 ? 0 : 1);
+                const text = `${p.companyName} ${p.planName} ${p.loanTermMonths} thang ${years} nam ${p.interestRate}% ${p.description || ""}`.toLowerCase();
+                const matchKw = !kw || text.includes(kw);
+                return matchBank && matchKw;
+            });
+
+            const groups = {};
+            for (const p of filtered) {
+                const cName = p.companyName || "Đối tác khác";
+                if (!groups[cName]) groups[cName] = [];
+                groups[cName].push(p);
+            }
+
+            const tbody = $("#installment-plans-tbody");
+            if (!tbody) return;
+
+            if (Object.keys(groups).length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="padding:28px;text-align:center;color:#64748b;">Không tìm thấy gói vay trả góp nào phù hợp với từ khóa "${esc(kw)}".</td></tr>`;
+                return;
+            }
+
+            let html = "";
+            for (const [cName, list] of Object.entries(groups)) {
+                const minYear = (Math.min(...list.map(x => x.loanTermMonths)) / 12).toFixed(0);
+                const maxYear = (Math.max(...list.map(x => x.loanTermMonths)) / 12).toFixed(0);
+                const yearRangeText = minYear === maxYear ? `${minYear} năm` : `${minYear} - ${maxYear} năm`;
+                html += `
+                    <tr style="background:#f8fafc;border-top:2px solid #cbd5e1;border-bottom:1px solid #cbd5e1;">
+                        <td colspan="5" style="padding:10px 14px;color:#0f172a;font-weight:700;font-size:13.5px;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                                <span>🏦 <span style="color:#0284c7;">${esc(cName)}</span></span>
+                                <span style="font-size:12px;font-weight:600;color:#475569;background:#e2e8f0;padding:3px 10px;border-radius:12px;">
+                                    ${list.length} gói kỳ hạn (${yearRangeText})
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                for (const p of list) {
+                    const years = (p.loanTermMonths / 12).toFixed(p.loanTermMonths % 12 === 0 ? 0 : 1);
+                    html += `
+                        <tr style="border-bottom:1px solid #f1f5f9;transition:background .15s;" onmouseover="this.style.background='#fbfcfd'" onmouseout="this.style.background='transparent'">
+                            <td style="padding:11px 12px;vertical-align:middle;">
+                                <strong style="color:#0f172a;">${esc(p.companyName)}</strong>
+                                ${p.companyID ? `<br><small style="color:#94a3b8;">Mã ĐT: #${p.companyID}</small>` : ""}
+                            </td>
+                            <td style="padding:11px 12px;vertical-align:middle;font-weight:600;color:#1e293b;">
+                                ${esc(p.planName)}
+                            </td>
+                            <td style="padding:11px 12px;vertical-align:middle;">
+                                <span style="font-weight:600;color:#0f172a;">${p.loanTermMonths} tháng</span>
+                                <span style="display:inline-block;margin-left:6px;background:#e0f2fe;color:#0369a1;font-weight:700;padding:2px 8px;border-radius:6px;font-size:11.5px;">
+                                    ${years} năm
+                                </span>
+                            </td>
+                            <td style="padding:11px 12px;vertical-align:middle;">
+                                <span style="display:inline-block;padding:4px 10px;background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;border-radius:6px;font-weight:700;font-size:13px;">
+                                    ${p.interestRate}%/năm
+                                </span>
+                            </td>
+                            <td style="padding:11px 12px;vertical-align:middle;color:#475569;font-size:12.5px;line-height:1.4;">
+                                ${esc(p.description)}
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
+            tbody.innerHTML = html;
+        }
+
+        renderPlans(currentSelectedBank, "");
+
+        const searchInput = $("#installment-search-input");
+        if (searchInput) {
+            searchInput.addEventListener("input", () => {
+                renderPlans(currentSelectedBank, searchInput.value);
+            });
+        }
+
+        const filterBtns = document.querySelectorAll(".installment-filter-btn");
+        filterBtns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                filterBtns.forEach(b => {
+                    b.style.background = "#f8fafc";
+                    b.style.color = "#334155";
+                    b.style.fontWeight = "500";
+                });
+                btn.style.background = "#0f172a";
+                btn.style.color = "#fff";
+                btn.style.fontWeight = "600";
+                currentSelectedBank = btn.dataset.bank || "ALL";
+                renderPlans(currentSelectedBank, searchInput ? searchInput.value : "");
+            });
+        });
     }
 
     async function loadHandoverAndInventoryView(subMode = "handover") {
@@ -1476,14 +2139,14 @@
         if (subMode === "vehicle-movements") {
             content.innerHTML = `
                 <div class="page-heading"><div>
-                    <div class="eyebrow"><span class="eyebrow-line"></span>UC-09 · NHẬP / XUẤT KHO XE VẬT LÝ (RDS 10.2 &amp; 10.3)</div>
+                    <div class="eyebrow"><span class="eyebrow-line"></span>NHẬP / XUẤT KHO XE VẬT LÝ</div>
                     <h1>Quản lý Nhập / Xuất kho xe (${invTxs.length} giao dịch)</h1>
                     <p>Nhập xe vật lý mới vào bảng Cars (AVAILABLE) và xuất kho xe kèm theo dõi lịch sử trong InventoryTransactions.</p>
                 </div></div>
 
-                <!-- FORM NHẬP KHO XE MỚI (RDS 10.2) -->
+                <!-- FORM NHẬP KHO XE MỚI -->
                 <section style="padding:16px;background:#fff;border-radius:12px;border:1px solid #cbd5e1;margin-bottom:20px;">
-                    <h3 style="margin:0 0 12px;font-size:15px;color:#0f172a;">+ Nhập kho xe vật lý mới (Import Vehicle - RDS 10.2)</h3>
+                    <h3 style="margin:0 0 12px;font-size:15px;color:#0f172a;">+ Nhập kho xe vật lý mới</h3>
                     <form id="import-car-form" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;align-items:end;">
                         <label style="font-size:12px;font-weight:600;">Mẫu xe *
                             <select name="modelId" id="import-model-id" required style="width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:6px;margin-top:4px;">
@@ -1522,9 +2185,9 @@
                     </form>
                 </section>
 
-                <!-- FORM XUẤT KHO XE TRỰC TIẾP (RDS 10.3 & 9.3) -->
+                <!-- FORM XUẤT KHO XE TRỰC TIẾP -->
                 <section style="padding:16px;background:#fff;border-radius:12px;border:1px solid #cbd5e1;margin-bottom:20px;">
-                    <h3 style="margin:0 0 8px;font-size:15px;color:#0f172a;">- Xuất kho xe vật lý trực tiếp (Export Vehicle - RDS 10.3)</h3>
+                    <h3 style="margin:0 0 8px;font-size:15px;color:#0f172a;">- Xuất kho xe vật lý trực tiếp</h3>
                     <p style="font-size:12px;color:#64748b;margin:0 0 12px;">Xuất xe vật lý trực tiếp khỏi kho (chuyển kho/showroom, trả nhà cung cấp, kiểm định...). Chỉ xe ở trạng thái AVAILABLE mới được xuất trực tiếp.</p>
                     <form id="export-car-form" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:12px;align-items:end;">
                         <label style="font-size:12px;font-weight:600;">Chọn xe khả dụng trong kho (AVAILABLE) *
@@ -1682,7 +2345,7 @@
                 const f = e.currentTarget;
                 const priceVal = parseFloat(f.price.value);
                 if (isNaN(priceVal) || priceVal < 100000) {
-                    notify("Giá bán xe phải lớn hơn hoặc bằng 100.000 VNĐ.");
+                    notify("Giá bán xe phải lớn hơn hoặc bằng 100.000 VND.");
                     f.price.focus();
                     return;
                 }
@@ -1804,7 +2467,7 @@
         if (subMode === "vehicle-status") {
             content.innerHTML = `
                 <div class="page-heading"><div>
-                    <div class="eyebrow"><span class="eyebrow-line"></span>UC-09 · TRẠNG THÁI XE VẬT LÝ (10.4)</div>
+                    <div class="eyebrow"><span class="eyebrow-line"></span>TRẠNG THÁI XE VẬT LÝ</div>
                     <h1>Danh sách Xe vật lý trong kho (${cars.length} xe)</h1>
                     <p>Quản lý trạng thái từng xe vật lý theo số khung VIN (AVAILABLE → RESERVED → DEPOSITED → SOLD → DELIVERED).</p>
                 </div></div>
@@ -1878,9 +2541,9 @@
         // Default: handover
         content.innerHTML = `
             <div class="page-heading"><div>
-                <div class="eyebrow"><span class="eyebrow-line"></span>UC-14 &amp; 10.3 · XUẤT KHO &amp; BÀN GIAO XE</div>
+                <div class="eyebrow"><span class="eyebrow-line"></span>XUẤT KHO &amp; BÀN GIAO XE</div>
                 <h1>Quản lý Bàn giao xe (${deliveries.length} biên bản bàn giao)</h1>
-                <p>Theo RDS (10.3 BR5): Xe chỉ được xuất kho bàn giao sau khi đơn hàng đã thanh toán đủ 100% (PAID) và đã phát hành Hóa đơn (ISSUED).</p>
+                <p>Xe chỉ được xuất kho bàn giao sau khi đơn hàng đã thanh toán đủ 100% (PAID) và đã phát hành Hóa đơn (ISSUED).</p>
             </div></div>
 
             ${readyOrders.length ? `
@@ -2008,7 +2671,7 @@
                 <div class="metric-card"><div class="metric-head"><span>Tiền thực thu</span><span>PAYMENTS</span></div><strong>${money(sum.revenue)}</strong><div class="metric-foot">${sum.completedPayments || 0} thanh toán hoàn tất</div></div>
                 <div class="metric-card"><div class="metric-head"><span>Giá trị bán hàng</span><span>ORDERS</span></div><strong>${money(sum.salesAmount)}</strong><div class="metric-foot">Đơn PAID/COMPLETED hợp lệ</div></div>
                 <div class="metric-card"><div class="metric-head"><span>Công nợ còn lại</span><span>◷</span></div><strong style="color:#b91c1c;">${money(sum.outstandingAmount)}</strong><div class="metric-foot">Theo đơn hợp lệ trong kỳ</div></div>
-                <div class="metric-card"><div class="metric-head"><span>Giảm giá / thuế</span><span>VNĐ</span></div><strong>${money(sum.discountAmount)}</strong><div class="metric-foot">Thuế: ${money(sum.taxAmount)}</div></div>
+                <div class="metric-card"><div class="metric-head"><span>Giảm giá / thuế</span><span>VND</span></div><strong>${money(sum.discountAmount)}</strong><div class="metric-foot">Thuế: ${money(sum.taxAmount)}</div></div>
             </section>
             <h3>Doanh thu và bán hàng theo tháng</h3>
             <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;margin-bottom:18px;">
@@ -2021,7 +2684,7 @@
                 <div class="metric-card"><div class="metric-head"><span>Tổng xe đã bán</span><span>XE</span></div><strong>${sum.vehiclesSold || 0}</strong><div class="metric-foot">Đơn PAID/COMPLETED hợp lệ</div></div>
                 <div class="metric-card"><div class="metric-head"><span>Mẫu xe có phát sinh</span><span>▧</span></div><strong>${models.length}</strong><div class="metric-foot">Trong kỳ đã chọn</div></div>
                 <div class="metric-card"><div class="metric-head"><span>Đơn bán hợp lệ</span><span>▤</span></div><strong>${validSoldOrders.length}</strong><div class="metric-foot">Không tính đơn hủy/chứng từ sai</div></div>
-                <div class="metric-card"><div class="metric-head"><span>Giá trị xe theo chi tiết đơn</span><span>VNĐ</span></div><strong>${money(models.reduce((total, row) => total + Number(row.salesAmount || 0), 0))}</strong><div class="metric-foot">Từ OrderDetails.SalesPrice</div></div>
+                <div class="metric-card"><div class="metric-head"><span>Giá trị xe theo chi tiết đơn</span><span>VND</span></div><strong>${money(models.reduce((total, row) => total + Number(row.salesAmount || 0), 0))}</strong><div class="metric-foot">Từ OrderDetails.SalesPrice</div></div>
             </section><h3>Số xe và giá trị bán theo mẫu</h3>
             ${table(["Mẫu xe", "Số xe", "Giá trị bán"], models.map(row => `<tr style="border-bottom:1px solid #f1f5f9;"><td style="padding:10px;"><strong>${esc(row.modelName)}</strong></td><td style="padding:10px;">${row.vehiclesSold}</td><td style="padding:10px;">${money(row.salesAmount)}</td></tr>`), "Chưa có xe bán trong kỳ.")}
             <h3>Danh sách xe trong đơn hợp lệ (${soldVehicles.length})</h3>
@@ -2043,7 +2706,7 @@
                 <div class="metric-card"><div class="metric-head"><span>Tổng xe vật lý</span><span>XE</span></div><strong>${totalInventory}</strong><div class="metric-foot">Đang ghi nhận trong Cars</div></div>
                 <div class="metric-card"><div class="metric-head"><span>Xe có sẵn</span><span>AVAILABLE</span></div><strong>${(inventory.find(row => row.status === "AVAILABLE") || {}).count || 0}</strong><div class="metric-foot">Khả dụng để bán</div></div>
                 <div class="metric-card"><div class="metric-head"><span>Xe đã bán</span><span>SOLD</span></div><strong>${(inventory.find(row => row.status === "SOLD") || {}).count || 0}</strong><div class="metric-foot">Theo trạng thái xe hiện tại</div></div>
-                <div class="metric-card"><div class="metric-head"><span>Giá niêm yết tồn kho</span><span>VNĐ</span></div><strong>${money(inventoryValue)}</strong><div class="metric-foot">Tổng giá theo trạng thái hiện tại</div></div>
+                <div class="metric-card"><div class="metric-head"><span>Giá niêm yết tồn kho</span><span>VND</span></div><strong>${money(inventoryValue)}</strong><div class="metric-foot">Tổng giá theo trạng thái hiện tại</div></div>
             </section><h3>Tồn kho theo trạng thái xe</h3>
             ${table(["Trạng thái xe", "Số lượng", "Tổng giá trị niêm yết"], statusRows(inventory, "inventory"), "Chưa có dữ liệu xe trong kho.")}
             <p style="color:#64748b;font-size:12px;">Báo cáo tồn kho là ảnh chụp trạng thái hiện tại; khoảng ngày chỉ áp dụng cho các luồng giao dịch.</p>`;
@@ -2052,7 +2715,7 @@
         const exportParams = new URLSearchParams({ from, to, format: "xlsx" });
         content.innerHTML = `
             <div class="page-heading" style="align-items:flex-start;gap:18px;">
-                <div><div class="eyebrow"><span class="eyebrow-line"></span>UC-18 · BÁO CÁO QUẢN LÝ</div>
+                <div><div class="eyebrow"><span class="eyebrow-line"></span>BÁO CÁO QUẢN LÝ</div>
                     <h1>${config.title}</h1><p>${config.description} Dữ liệu tổng hợp trực tiếp từ các luồng giao dịch trong hệ thống.</p></div>
                 <a class="button button-primary" href="${appContext}/api/reports?${exportParams.toString()}">Xuất Excel (.xlsx) ↗</a>
             </div>
@@ -2166,6 +2829,27 @@
         window.history.replaceState(null, "", `${appContext}/staff/dashboard#${encodeURIComponent(view)}`);
         render();
     });
+
+    // Global logout confirmation for Staff roles (Sales, Operations, Accountant, Manager, Admin)
+    document.addEventListener("submit", async function(e) {
+        const form = e.target;
+        if (!form || !form.action || !form.action.includes("/logout")) return;
+        if (form.dataset.confirmedLogout === "true") return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        const confirmed = await showAppConfirmModal({
+            title: "Xác nhận đăng xuất",
+            message: "Bạn có chắc chắn muốn đăng xuất không?",
+            confirmText: "Đăng xuất",
+            cancelText: "Hủy",
+            isDanger: true
+        });
+        if (confirmed) {
+            form.dataset.confirmedLogout = "true";
+            form.submit();
+        }
+    }, true);
 
     render();
 })();

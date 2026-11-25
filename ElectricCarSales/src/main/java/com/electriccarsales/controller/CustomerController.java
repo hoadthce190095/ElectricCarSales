@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 @WebServlet(urlPatterns = {"/customer/profile", "/customer/avatar"})
-@MultipartConfig(maxFileSize = 2 * 1024 * 1024, maxRequestSize = 2 * 1024 * 1024)
+@MultipartConfig(maxFileSize = 2 * 1024 * 1024, maxRequestSize = 2 * 1024 * 1024 + 16384)
 public class CustomerController extends HttpServlet {
     private static final ObjectMapper JSON = new ObjectMapper();
     private final CustomerService customerService = new CustomerService();
@@ -60,16 +60,22 @@ public class CustomerController extends HttpServlet {
         }
         String roleName = req.getSession(false) == null ? "" : String.valueOf(req.getSession(false).getAttribute("roleName"));
         if ("staff".equalsIgnoreCase(req.getParameter("mode"))) {
-            if (!List.of("SALES", "MANAGER", "ADMIN", "ACCOUNTANT", "OPERATIONS").contains(roleName.toUpperCase())) {
+            if (!List.of("SALES", "MANAGER", "ADMIN").contains(roleName.toUpperCase())) {
                 resp.sendError(HttpServletResponse.SC_FORBIDDEN);
                 return;
             }
             resp.setContentType("application/json;charset=UTF-8");
+            Integer employeeId = (Integer) req.getSession().getAttribute("employeeId");
+            List<Customer> customers = "SALES".equalsIgnoreCase(roleName)
+                    ? customerService.getManagedCustomers(employeeId) : customerService.getAllCustomers();
             String cidParam = req.getParameter("customerId");
             if (cidParam != null && !cidParam.isBlank()) {
                 try {
                     int cid = Integer.parseInt(cidParam.trim());
-                    Customer c = customerService.getCustomerById(cid);
+                    Customer c = null;
+                    for (Customer candidate : customers) {
+                        if (candidate.getCustomerID() == cid) { c = candidate; break; }
+                    }
                     if (c == null) {
                         resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
                         JSON.writeValue(resp.getWriter(), Map.of("error", "Không tìm thấy thông tin khách hàng #" + cid));
@@ -95,7 +101,7 @@ public class CustomerController extends HttpServlet {
                     return;
                 }
             }
-            JSON.writeValue(resp.getWriter(), Map.of("customers", customerService.getAllCustomers()));
+            JSON.writeValue(resp.getWriter(), Map.of("customers", customers));
             return;
         }
 
@@ -116,6 +122,7 @@ public class CustomerController extends HttpServlet {
                 req.setAttribute("customerPayments", new PaymentDAO().findDetailsByCustomerId(customer.getCustomerID()));
                 req.setAttribute("customerContracts", new ContractsDAO().findByCustomerId(customer.getCustomerID()));
             }
+            PaymentController.ensureCsrf(req);
             String profileView = "profile".equals(req.getParameter("view"))
                     ? "/customer/my-profile.jsp" : "/customer/my-account.jsp";
             req.getRequestDispatcher(profileView).forward(req, resp);
@@ -127,6 +134,10 @@ public class CustomerController extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (!com.electriccarsales.controller.PaymentController.validCsrf(req)) {
+            resp.sendError(403, "Phiên thao tác không hợp lệ.");
+            return;
+        }
         req.setCharacterEncoding("UTF-8");
         resp.setCharacterEncoding("UTF-8");
         String roleName = req.getSession(false) == null ? "" : String.valueOf(req.getSession(false).getAttribute("roleName"));
@@ -177,6 +188,18 @@ public class CustomerController extends HttpServlet {
             return;
         }
         try {
+            if ("/customer/avatar".equals(req.getServletPath())) {
+                if (!PaymentController.validCsrf(req)) { resp.sendError(403); return; }
+                Part part = req.getPart("avatar");
+                if (part == null) throw new IllegalArgumentException("Vui lòng chọn ảnh.");
+                byte[] image = readAvatar(part);
+                String type = avatarContentType(image);
+                if (type == null || !type.equalsIgnoreCase(part.getContentType()))
+                    throw new IllegalArgumentException("Ảnh đại diện không hợp lệ.");
+                if (!customerService.updateAvatar(userId, image, type)) throw new IllegalArgumentException("Không tìm thấy hồ sơ.");
+                resp.sendRedirect(req.getContextPath() + "/customer/profile?updated=1");
+                return;
+            }
             String customerName = req.getParameter("customerName");
             String phone = req.getParameter("phone");
             Customer currentProfile = customerService.getOwnProfile(userId);
@@ -203,7 +226,8 @@ public class CustomerController extends HttpServlet {
                     req.setAttribute("customerPayments", new PaymentDAO().findDetailsByCustomerId(customer.getCustomerID()));
                     req.setAttribute("customerContracts", new ContractsDAO().findByCustomerId(customer.getCustomerID()));
                 }
-                String profileView = "profile".equals(req.getParameter("view"))
+                PaymentController.ensureCsrf(req);
+            String profileView = "profile".equals(req.getParameter("view"))
                         ? "/customer/my-profile.jsp" : "/customer/my-account.jsp";
                 req.getRequestDispatcher(profileView).forward(req, resp);
             } catch (RuntimeException loadError) {

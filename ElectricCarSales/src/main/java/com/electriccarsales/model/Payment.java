@@ -19,6 +19,7 @@ public class Payment {
     private String customerName;
     private BigDecimal orderTotalAmount;
     private BigDecimal orderRemainingAmount;
+    private String orderStatus;
 
     public Payment() {
     }
@@ -69,6 +70,8 @@ public class Payment {
     public void setOrderTotalAmount(BigDecimal orderTotalAmount) { this.orderTotalAmount = orderTotalAmount; }
     public BigDecimal getOrderRemainingAmount() { return orderRemainingAmount; }
     public void setOrderRemainingAmount(BigDecimal orderRemainingAmount) { this.orderRemainingAmount = orderRemainingAmount; }
+    public String getOrderStatus() { return orderStatus; }
+    public void setOrderStatus(String orderStatus) { this.orderStatus = orderStatus; }
 
     public String getOrderCode() {
         return "ECS" + orderID;
@@ -94,6 +97,19 @@ public class Payment {
 
     public boolean isReconciled() {
         return note != null && note.contains("RECONCILED=true;");
+    }
+
+    public boolean isAccountantConfirmed() {
+        return isReconciled() || (note != null && note.contains("ACCOUNTANT=") && note.contains("CONFIRMED;"));
+    }
+
+    public boolean isPartnerDisbursement() {
+        return note != null && (note.contains("DISBURSED_BY_PARTNER_AFTER_CONTRACT_SIGN;")
+                || note.contains("DISBURSED_BY_PARTNER;"));
+    }
+
+    public boolean isPaymentFinalized() {
+        return isAccountantConfirmed() || isPartnerDisbursement();
     }
 
     public String getReconciledBy() {

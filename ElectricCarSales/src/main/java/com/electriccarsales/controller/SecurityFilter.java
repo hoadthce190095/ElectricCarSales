@@ -44,7 +44,9 @@ public class SecurityFilter implements Filter {
         throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest) rawRequest;
         HttpServletResponse response = (HttpServletResponse) rawResponse;
-        response.setHeader("Cache-Control", "no-store");
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
         response.setHeader("X-Content-Type-Options", "nosniff");
 
         // Use the mapped path because raw URIs can contain encoded names or matrix parameters.

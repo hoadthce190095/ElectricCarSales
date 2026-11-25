@@ -65,16 +65,16 @@
                     <label class="field-label" for="name">Họ và tên</label>
                     <div class="input-wrap"><input id="name" name="name" type="text" placeholder="HỌ VÀ TÊN" value="<c:out value='${name}'/>" autocomplete="name" maxlength="100" required></div>
                     <div class="field-row">
-                        <div><label class="field-label" for="username">Tên đăng nhập</label><div class="input-wrap"><input id="username" name="username" type="text" placeholder="TÊN ĐĂNG NHẬP" value="<c:out value='${username}'/>" autocomplete="username" minlength="5" maxlength="50" pattern="[A-Za-z0-9_]+" required></div></div>
+                        <div><label class="field-label" for="username">Tên đăng nhập</label><div class="input-wrap"><input id="username" name="username" type="text" placeholder="TÊN ĐĂNG NHẬP" value="<c:out value='${username}'/>" autocomplete="username" minlength="5" maxlength="30" pattern="[A-Za-z0-9_]+" required></div></div>
                         <div><label class="field-label" for="phone">Số điện thoại</label><div class="input-wrap"><input id="phone" name="phone" type="tel" placeholder="SỐ ĐIỆN THOẠI" value="<c:out value='${phone}'/>" autocomplete="tel" pattern="0[0-9]{9}" maxlength="10" title="Số điện thoại phải bắt đầu bằng 0 và gồm đúng 10 chữ số (ví dụ: 0912345678)" required></div></div>
                     </div>
                     <label class="field-label" for="email">Email</label>
-                    <div class="input-wrap"><input id="email" name="email" type="email" placeholder="EMAIL" value="<c:out value='${email}'/>" autocomplete="email" maxlength="100" pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" title="Email phải có định dạng hợp lệ (ví dụ: example@domain.com)" required></div>
+                    <div class="input-wrap"><input id="email" name="email" type="email" placeholder="EMAIL" value="<c:out value='${email}'/>" autocomplete="email" maxlength="30" pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" title="Email phải có định dạng hợp lệ (ví dụ: example@domain.com)" required></div>
                     <label class="field-label" for="address">Địa chỉ (không bắt buộc)</label>
                     <div class="input-wrap"><input id="address" name="address" type="text" placeholder="ĐỊA CHỈ" value="<c:out value='${address}'/>" autocomplete="street-address" maxlength="255"></div>
                     <div class="field-row">
-                        <div><label class="field-label" for="password">Mật khẩu</label><div class="input-wrap"><input id="password" name="password" type="password" placeholder="TỐI THIỂU 8 KÝ TỰ" autocomplete="new-password" minlength="8" maxlength="72" pattern="(?=.*[0-9])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,72}" title="Tối thiểu 8 ký tự, gồm 1 số, 1 chữ in hoa và 1 ký tự đặc biệt." required></div></div>
-                        <div><label class="field-label" for="confirmPassword">Nhập lại mật khẩu</label><div class="input-wrap"><input id="confirmPassword" name="confirmPassword" type="password" placeholder="NHẬP LẠI MẬT KHẨU" autocomplete="new-password" minlength="8" maxlength="72" required></div></div>
+                        <div><label class="field-label" for="password">Mật khẩu</label><div class="input-wrap"><input id="password" name="password" type="password" placeholder="TỐI THIỂU 8 KÝ TỰ" autocomplete="new-password" minlength="8" maxlength="30" pattern="(?=.*[0-9])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,30}" title="Tối thiểu 8 ký tự, gồm 1 số, 1 chữ in hoa và 1 ký tự đặc biệt." required></div></div>
+                        <div><label class="field-label" for="confirmPassword">Nhập lại mật khẩu</label><div class="input-wrap"><input id="confirmPassword" name="confirmPassword" type="password" placeholder="NHẬP LẠI MẬT KHẨU" autocomplete="new-password" minlength="8" maxlength="30" required></div></div>
                     </div>
                     <button class="submit-button" type="submit">Đăng ký tài khoản <span aria-hidden="true">→</span></button>
                 </form>
@@ -115,7 +115,7 @@
         } else if (invalid && invalid.validity.patternMismatch) {
             text = invalid.id === 'phone'
                 ? 'Số điện thoại phải bắt đầu bằng 0 và có đúng 10 chữ số (ví dụ: 0912345678).'
-                : 'Tên đăng nhập phải có 5–50 ký tự, chỉ gồm chữ, số và dấu gạch dưới.';
+                : 'Tên đăng nhập phải có 5–30 ký tự, chỉ gồm chữ, số và dấu gạch dưới.';
         } else if (invalid && invalid.validity.tooShort) {
             text = 'Tên đăng nhập cần có ít nhất 5 ký tự.';
         }

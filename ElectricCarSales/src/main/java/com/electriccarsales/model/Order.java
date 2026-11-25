@@ -24,6 +24,10 @@ public class Order {
     private BigDecimal paidAmount;
     private Integer companyId;
     private String companyName;
+    private String cancelReason;
+
+    public String getCancelReason() { return cancelReason; }
+    public void setCancelReason(String cancelReason) { this.cancelReason = cancelReason; }
 
     public String getPaymentMethodName() { return paymentMethodName; }
     public void setPaymentMethodName(String paymentMethodName) { this.paymentMethodName = paymentMethodName; }
@@ -42,6 +46,8 @@ public class Order {
     public void setPaymentMethodId(int paymentMethodId) { this.paymentMethodId = paymentMethodId; }
     public BigDecimal getOriginalAmount() { return originalAmount; }
     public void setOriginalAmount(BigDecimal originalAmount) { this.originalAmount = originalAmount; }
+    public BigDecimal getTotalAmount() { return originalAmount; }
+    public void setTotalAmount(BigDecimal totalAmount) { this.originalAmount = totalAmount; }
     public BigDecimal getDepositAmount() { return depositAmount; }
     public void setDepositAmount(BigDecimal depositAmount) { this.depositAmount = depositAmount; }
     public BigDecimal getRemainingAmount() { return remainingAmount; }
@@ -66,6 +72,10 @@ public class Order {
     public String getOrderCode() { return "ECS" + id; }
 
     public String getFormattedOriginalAmount() {
+        return FormatUtils.formatMoney(originalAmount);
+    }
+
+    public String getFormattedTotalAmount() {
         return FormatUtils.formatMoney(originalAmount);
     }
 

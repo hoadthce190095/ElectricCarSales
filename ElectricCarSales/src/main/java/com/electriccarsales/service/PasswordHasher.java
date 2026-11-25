@@ -15,8 +15,10 @@ public final class PasswordHasher {
     }
 
     public static void validate(String password) {
-        if (password == null || password.length() < 10 || password.length() > 128) {
-            throw new IllegalArgumentException("Mật khẩu phải từ 10 đến 128 ký tự.");
+        if (password == null || password.length() < 8 || password.length() > 30
+                || !password.matches(".*[A-Z].*") || !password.matches(".*[0-9].*")
+                || !password.matches(".*[^A-Za-z0-9\\s].*")) {
+            throw new IllegalArgumentException("Mật khẩu phải từ 8 đến 30 ký tự, gồm chữ hoa, chữ số và ký tự đặc biệt.");
         }
     }
 

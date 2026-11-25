@@ -14,7 +14,7 @@ public class BrandDAO extends DBContext {
 
         String sql = "SELECT * FROM Brands";
 
-        try {
+        try (java.sql.Connection conn = getConnection()) {
             PreparedStatement ps = conn.prepareStatement(sql);
 
             ResultSet rs = ps.executeQuery();

@@ -13,7 +13,8 @@ public class SpecificationDAO extends DBContext {
     public Specification getByModelId(int modelID) {
         String sql = "SELECT * FROM Specifications WHERE ModelID = ?";
 
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, modelID);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -45,7 +46,8 @@ public class SpecificationDAO extends DBContext {
         String sql = "SELECT * FROM Specifications";
 
         // Sử dụng try-with-resources
-        try (PreparedStatement ps = conn.prepareStatement(sql);
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {

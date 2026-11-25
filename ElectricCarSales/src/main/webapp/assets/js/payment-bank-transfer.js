@@ -61,7 +61,19 @@
                 status.textContent = payment.error || 'Chưa kiểm tra được trạng thái.';
                 return;
             }
-            if (payment.status === 'COMPLETED' || payment.bankReported) {
+            if (payment.orderStatus === 'CANCELLED' || payment.status === 'CANCELLED') {
+                completed = true;
+                status.textContent = 'Đơn hàng đã bị hủy. Mã QR thanh toán không còn hiệu lực.';
+                status.classList.remove('is-reported', 'is-complete');
+                status.style.background = '#fef2f2';
+                status.style.borderColor = '#fecaca';
+                status.style.color = '#991b1b';
+                const qrImage = document.getElementById('sepay-vietqr-image');
+                if (qrImage) qrImage.closest('div').hidden = true;
+                panel.querySelector('.transfer-summary')?.setAttribute('hidden', '');
+                panel.querySelector('.bank-transfer-details')?.setAttribute('hidden', '');
+                if (recheckBtn) recheckBtn.hidden = true;
+            } else if (payment.status === 'COMPLETED' || payment.bankReported) {
                 completed = true;
                 status.textContent = '✓ Giao dịch đã thành công! Đang chuyển hướng...';
                 status.classList.remove('is-reported');

@@ -8,9 +8,9 @@ import java.util.Locale;
 
 /**
  * Tiện ích chuẩn hóa định dạng tiền tệ và số theo chuẩn Việt Nam (vi-VN).
- * - Sử dụng dấu chấm (.) phân tách hàng nghìn: 7.000.000 VNĐ, 75.000.000 VNĐ, 150.000.000 VNĐ.
+ * - Sử dụng dấu chấm (.) phân tách hàng nghìn: 7.000.000 VND, 75.000.000 VND, 150.000.000 VND.
  * - Không hiển thị phần thập phân .00 khi tiền là VND nguyên.
- * - Hậu tố thống nhất: "VNĐ".
+ * - Hậu tố thống nhất: "VND".
  */
 public final class FormatUtils {
 
@@ -24,26 +24,26 @@ public final class FormatUtils {
     private FormatUtils() {}
 
     /**
-     * Định dạng số tiền BigDecimal sang chuỗi hiển thị theo chuẩn vi-VN có hậu tố VNĐ.
-     * Ví dụ: 7000000 -> "7.000.000 VNĐ", 75000000 -> "75.000.000 VNĐ".
+     * Định dạng số tiền BigDecimal sang chuỗi hiển thị theo chuẩn vi-VN có hậu tố VND.
+     * Ví dụ: 7000000 -> "7.000.000 VND", 75000000 -> "75.000.000 VND".
      */
     public static String formatMoney(BigDecimal amount) {
         if (amount == null) {
-            return "0 VNĐ";
+            return "0 VND";
         }
         DecimalFormat df = new DecimalFormat("#,##0", SYMBOLS);
-        return df.format(amount.setScale(0, RoundingMode.HALF_UP).longValue()) + " VNĐ";
+        return df.format(amount.setScale(0, RoundingMode.HALF_UP).longValue()) + " VND";
     }
 
     /**
-     * Định dạng số tiền Number sang chuỗi hiển thị theo chuẩn vi-VN có hậu tố VNĐ.
+     * Định dạng số tiền Number sang chuỗi hiển thị theo chuẩn vi-VN có hậu tố VND.
      */
     public static String formatMoney(Number amount) {
         if (amount == null) {
-            return "0 VNĐ";
+            return "0 VND";
         }
         DecimalFormat df = new DecimalFormat("#,##0", SYMBOLS);
-        return df.format(Math.round(amount.doubleValue())) + " VNĐ";
+        return df.format(Math.round(amount.doubleValue())) + " VND";
     }
 
     /**

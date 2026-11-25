@@ -66,11 +66,35 @@ public class OrderController extends HttpServlet {
                 if (cidStr != null && !cidStr.isBlank()) {
                     try { initCustId = Integer.parseInt(cidStr.trim()); } catch (Exception ignored) {}
                 }
+                String reqIdStr = request.getParameter("requestId");
+                if (reqIdStr != null && !reqIdStr.isBlank()) {
+                    try {
+                        int reqId = Integer.parseInt(reqIdStr.trim());
+                        var cr = new com.electriccarsales.dao.ConsultationRequestDAO().findById(reqId);
+                        if (cr != null) {
+                            request.setAttribute("consultationRequest", cr);
+                            if ((cidStr == null || cidStr.isBlank()) && cr.getCustomerId() > 0) {
+                                initCustId = cr.getCustomerId();
+                                request.setAttribute("selectedCustomerId", String.valueOf(cr.getCustomerId()));
+                            }
+                            if (request.getParameter("modelId") == null && cr.getModelId() != null) {
+                                request.setAttribute("selectedModelId", String.valueOf(cr.getModelId()));
+                            }
+                            request.setAttribute("selectedVersionName", cr.getVersionInfo());
+                            request.setAttribute("selectedColorName", cr.getColorInfo());
+                            request.setAttribute("selectedPaymentPref", cr.getPaymentPreferenceInfo());
+                        }
+                    } catch (Exception ignored) {}
+                }
                 request.setAttribute("consultingStaff", SalesOrderService.findConsultingStaff(initCustId, user.getUserId()));
                 request.setAttribute("orderOptions", salesOrders.getOptions());
                 request.setAttribute("paymentCsrf", csrfToken);
-                request.setAttribute("selectedCustomerId", request.getParameter("customerId"));
-                request.setAttribute("selectedModelId", request.getParameter("modelId"));
+                if (request.getAttribute("selectedCustomerId") == null) {
+                    request.setAttribute("selectedCustomerId", request.getParameter("customerId"));
+                }
+                if (request.getAttribute("selectedModelId") == null) {
+                    request.setAttribute("selectedModelId", request.getParameter("modelId"));
+                }
                 request.getRequestDispatcher("/staff/create-order.jsp").forward(request, response);
             } catch (SQLException e) {
                 getServletContext().log("Cannot load Sales order data", e);
@@ -95,18 +119,34 @@ public class OrderController extends HttpServlet {
         try {
             Integer customerId = new FinanceCustomerDAO().findCustomerIdByUserId(user.getUserId());
             if (customerId == null) {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                request.setAttribute("orders", java.util.List.of());
+                request.setAttribute("customerOrders", java.util.List.of());
+                request.setAttribute("orderCount", 0);
+                request.setAttribute("sepayReady", com.electriccarsales.service.SePayService.isReady());
+                request.setAttribute("paymentCsrf", ensureCsrf(session));
+                request.getRequestDispatcher("/customer/my-orders.jsp").forward(request, response);
                 return;
             }
-            new com.electriccarsales.service.BankTransferService().syncCustomerReportedTransfers(customerId);
-            request.setAttribute("orders", service.getCustomerOrders(customerId));
+            var customerOrders = service.getCustomerOrders(customerId);
+            if (customerOrders == null) {
+                customerOrders = java.util.List.of();
+            }
+            request.setAttribute("orders", customerOrders);
+            request.setAttribute("customerOrders", customerOrders);
+            request.setAttribute("orderCount", customerOrders.size());
             request.setAttribute("sepayReady", com.electriccarsales.service.SePayService.isReady());
             String csrfToken = ensureCsrf(session);
             request.setAttribute("paymentCsrf", csrfToken);
             request.getRequestDispatcher("/customer/my-orders.jsp").forward(request, response);
-        } catch (RuntimeException ex) {
+        } catch (Exception ex) {
             getServletContext().log("Cannot load customer orders", ex);
-            response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Không thể tải đơn hàng của bạn.");
+            request.setAttribute("orders", java.util.List.of());
+            request.setAttribute("customerOrders", java.util.List.of());
+            request.setAttribute("orderCount", 0);
+            request.setAttribute("sepayReady", false);
+            request.setAttribute("paymentCsrf", ensureCsrf(session));
+            request.setAttribute("error", "Không thể tải đơn hàng của bạn.");
+            request.getRequestDispatcher("/customer/my-orders.jsp").forward(request, response);
         }
     }
 

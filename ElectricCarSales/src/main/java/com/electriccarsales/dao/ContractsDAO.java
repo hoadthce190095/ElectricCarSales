@@ -2,6 +2,7 @@ package com.electriccarsales.dao;
 
 import com.electriccarsales.model.Contract;
 import com.electriccarsales.model.OrderStatusHistory;
+import com.electriccarsales.service.BankTransferService;
 import util.DBContext;
 
 import java.math.BigDecimal;
@@ -20,7 +21,16 @@ public class ContractsDAO extends DBContext {
                cu.CustomerName, cu.Phone AS CustomerPhone, cu.Email AS CustomerEmail, cu.Address AS CustomerAddress,
                e.EmployeeName,
                cm.ModelName, cv.VersionName, c.VIN,
-               pm.MethodName AS PaymentMethodName, fc.CompanyName, os.StatusName AS OrderStatus
+               pm.MethodName AS PaymentMethodName, fc.CompanyName, os.StatusName AS OrderStatus,
+               CASE WHEN o.DepositAmount > 0 AND ROUND(o.TotalAmount * 0.30, 2) = o.DepositAmount
+                    AND (SELECT COALESCE(SUM(p.PaymentAmount), 0)
+                         FROM Payments p JOIN PaymentTypes pt ON pt.PaymentTypeID=p.PaymentTypeID
+                         JOIN PaymentStatuses ps ON ps.PaymentStatusID=p.PaymentStatusID
+                         WHERE p.OrderID=o.OrderID AND pt.TypeName='DEPOSIT' AND ps.StatusID='COMPLETED'
+                           AND (CHARINDEX('RECONCILED=true;', COALESCE(p.Note,'')) > 0
+                                OR (CHARINDEX('ACCOUNTANT=', COALESCE(p.Note,'')) > 0
+                                    AND CHARINDEX('CONFIRMED;', COALESCE(p.Note,'')) > 0))) = o.DepositAmount
+                    THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END AS DepositReconciled
         FROM Contracts ct
         JOIN Orders o ON o.OrderID = ct.OrderID
         JOIN OrderStatuses os ON os.OrderStatusID = o.OrderStatusID
@@ -155,7 +165,7 @@ public class ContractsDAO extends DBContext {
                 if (!"DEPOSITED".equalsIgnoreCase(orderStatus)
                         && !"PROCESSING".equalsIgnoreCase(orderStatus)
                         && !"PAID".equalsIgnoreCase(orderStatus)) {
-                    throw new IllegalStateException("Theo RDS (Mục II.9.1 PRE-1), chỉ được tạo hợp đồng sau khi đơn hàng đã được xác nhận đặt cọc 30% (DEPOSITED). Trạng thái hiện tại: " + orderStatus);
+                    throw new IllegalStateException("Chỉ được tạo hợp đồng sau khi đơn hàng đã được xác nhận đặt cọc 30% (DEPOSITED). Trạng thái hiện tại: " + orderStatus);
                 }
 
                 requireCompletedDeposit(connection, orderId);
@@ -175,7 +185,8 @@ public class ContractsDAO extends DBContext {
                 String paymentStructureNote = ("INSTALLMENT".equalsIgnoreCase(paymentMethod) || companyName != null)
                         ? ("Phương thức: Trả góp qua đối tác " + (companyName == null ? "Ngân hàng" : companyName)
                            + " (Khách đã cọc 30%: " + depositAmount.toPlainString()
-                           + " VND; Đối tác giải ngân 70%: " + remainingAmount.toPlainString() + " VND).")
+                           + " VND; sau khi Kế toán đối soát cọc và khách ký hợp đồng, đối tác giải ngân 70%: "
+                           + remainingAmount.toPlainString() + " VND).")
                         : ("Phương thức: Trả thẳng (" + paymentMethod + ") (Khách đã cọc 30%: "
                            + depositAmount.toPlainString() + " VND; Khách thanh toán 70% còn lại: "
                            + remainingAmount.toPlainString() + " VND).");
@@ -290,7 +301,33 @@ public class ContractsDAO extends DBContext {
                 orderId = rs.getInt("OrderID");
             }
         }
-        requireCompletedDeposit(connection, orderId);
+        requireAccountantConfirmedDeposit(connection, orderId);
+    }
+
+    private static void requireAccountantConfirmedDeposit(Connection connection, int orderId) throws SQLException {
+        String sql = """
+                SELECT o.DepositAmount, o.TotalAmount,
+                       (SELECT COALESCE(SUM(p.PaymentAmount), 0)
+                        FROM Payments p JOIN PaymentTypes pt ON p.PaymentTypeID=pt.PaymentTypeID
+                        JOIN PaymentStatuses ps ON ps.PaymentStatusID=p.PaymentStatusID
+                        WHERE p.OrderID=o.OrderID AND pt.TypeName='DEPOSIT' AND ps.StatusID='COMPLETED'
+                          AND (CHARINDEX('RECONCILED=true;', COALESCE(p.Note,'')) > 0
+                               OR (CHARINDEX('ACCOUNTANT=', COALESCE(p.Note,'')) > 0
+                                   AND CHARINDEX('CONFIRMED;', COALESCE(p.Note,'')) > 0))) AS AccountantConfirmed
+                FROM Orders o WHERE o.OrderID=?
+                """;
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    BigDecimal deposit = rs.getBigDecimal("TotalAmount").multiply(new BigDecimal("0.30"))
+                            .setScale(0, java.math.RoundingMode.HALF_UP);
+                    if (deposit.signum() > 0 && deposit.compareTo(rs.getBigDecimal("DepositAmount")) == 0
+                            && deposit.compareTo(rs.getBigDecimal("AccountantConfirmed")) == 0) return;
+                }
+            }
+        }
+        throw new IllegalStateException("Kế toán cần xác nhận đối soát đầy đủ khoản cọc 30% trước khi khách hàng ký hợp đồng.");
     }
 
     private static void requireCompletedDeposit(Connection connection, int orderId) throws SQLException {
@@ -307,7 +344,7 @@ public class ContractsDAO extends DBContext {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     BigDecimal deposit = rs.getBigDecimal("TotalAmount").multiply(new BigDecimal("0.30"))
-                            .setScale(2, java.math.RoundingMode.HALF_UP);
+                            .setScale(0, java.math.RoundingMode.HALF_UP);
                     if (deposit.signum() > 0 && deposit.compareTo(rs.getBigDecimal("DepositAmount")) == 0
                             && deposit.compareTo(rs.getBigDecimal("Confirmed")) == 0) return;
                 }
@@ -346,6 +383,9 @@ public class ContractsDAO extends DBContext {
                 if ("SIGNED".equalsIgnoreCase(currentStatus)) {
                     throw new IllegalStateException("Hợp đồng này đã được ký xác thực trước đó (RDS BR4).");
                 }
+                if ("CANCELLED".equalsIgnoreCase(currentStatus)) {
+                    throw new IllegalStateException("Hợp đồng đã bị hủy; không thể ký lại.");
+                }
                 if (!"PENDING_SIGNATURE".equalsIgnoreCase(currentStatus)) {
                     throw new IllegalStateException("Trạng thái hợp đồng không hợp lệ để ký: " + currentStatus);
                 }
@@ -359,7 +399,7 @@ public class ContractsDAO extends DBContext {
                     ps.executeUpdate();
                 }
 
-                // Transition order when contract is signed (PAID if 0 remaining / INSTALLMENT, else PROCESSING)
+                // A zero balance moves the order to PAID; otherwise it continues in PROCESSING.
                 String orderStatus;
                 java.math.BigDecimal remainingAmount = java.math.BigDecimal.ZERO;
                 try (PreparedStatement ordPs = connection.prepareStatement("""
@@ -447,6 +487,53 @@ public class ContractsDAO extends DBContext {
         throw new SQLException("Không lấy được mã trạng thái đơn hàng " + status);
     }
 
+    /**
+     * Cancels any active or signed contract belonging to an expired/cancelled order.
+     */
+    public void cancelContractForOrder(Connection connection, int orderId, String reason) throws SQLException {
+        String selectSql = "SELECT ContractID, Status, Note FROM Contracts WITH (UPDLOCK, HOLDLOCK) WHERE OrderID = ?";
+        Integer contractId = null;
+        String currentStatus = null;
+        String oldNote = null;
+        try (PreparedStatement ps = connection.prepareStatement(selectSql)) {
+            ps.setInt(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    contractId = rs.getInt("ContractID");
+                    currentStatus = rs.getString("Status");
+                    oldNote = rs.getString("Note");
+                }
+            }
+        }
+        if (contractId == null || "CANCELLED".equalsIgnoreCase(currentStatus)) {
+            return;
+        }
+        String cancelTag = "HỦY HỢP ĐỒNG: " + (reason == null || reason.isBlank() ? "Đơn hàng đã hủy" : reason.trim());
+        String newNote;
+        if (oldNote == null || oldNote.isBlank()) {
+            newNote = cancelTag;
+        } else if (oldNote.contains(cancelTag)) {
+            newNote = oldNote;
+        } else {
+            String combined = oldNote.trim() + " | " + cancelTag;
+            if (combined.length() > 500) {
+                int keep = Math.max(0, 500 - cancelTag.length() - 6);
+                newNote = oldNote.trim().substring(0, Math.min(oldNote.trim().length(), keep)) + "... | " + cancelTag;
+                if (newNote.length() > 500) {
+                    newNote = cancelTag.substring(0, Math.min(cancelTag.length(), 500));
+                }
+            } else {
+                newNote = combined;
+            }
+        }
+        try (PreparedStatement up = connection.prepareStatement(
+                "UPDATE Contracts SET Status = 'CANCELLED', Note = ? WHERE ContractID = ?")) {
+            up.setNString(1, newNote);
+            up.setInt(2, contractId);
+            up.executeUpdate();
+        }
+    }
+
     private int resolveFallbackEmployeeId(Connection connection) throws SQLException {
         try (PreparedStatement ps = connection.prepareStatement("SELECT TOP 1 EmployeeID FROM Employees ORDER BY EmployeeID");
              ResultSet rs = ps.executeQuery()) {
@@ -478,6 +565,7 @@ public class ContractsDAO extends DBContext {
         c.setPaymentMethodName(rs.getString("PaymentMethodName"));
         c.setCompanyName(rs.getString("CompanyName"));
         c.setOrderStatus(rs.getString("OrderStatus"));
+        c.setDepositReconciled(rs.getBoolean("DepositReconciled"));
         return c;
     }
 }

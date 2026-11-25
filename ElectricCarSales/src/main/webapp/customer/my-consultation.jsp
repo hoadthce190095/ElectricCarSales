@@ -43,6 +43,7 @@
     </summary>
     <div style="padding:18px;border-top:1px solid #e2e8f0;background:#fff;">
         <form class="customer-form" method="post" action="<%= customerContext %>/consultation">
+            <input type="hidden" name="csrfToken" value="<c:out value='${sessionScope.csrfToken}'/>">
             <input type="hidden" name="action" value="create">
             <c:if test="${not empty csrfToken}">
                 <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}'/>">
@@ -276,6 +277,11 @@
                                     </div>
 
                                     <c:choose>
+                                        <c:when test="${matchedOrder.status eq 'CANCELLED'}">
+                                            <div style="border-top:1px solid #fecaca;padding-top:10px;color:#991b1b;font-size:13px;font-weight:600;">
+                                                Đơn hàng đã bị hủy. Không thể thanh toán hoặc quét mã QR cho đơn này.
+                                            </div>
+                                        </c:when>
                                         <c:when test="${matchedOrder.status eq 'DEPOSITED' or matchedOrder.status eq 'PAID' or matchedOrder.status eq 'PROCESSING' or matchedOrder.status eq 'DELIVERED'}">
                                             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid #bfdbfe;padding-top:10px;">
                                                 <span style="font-size:13px;color:#166534;font-weight:600;">Website đã ghi nhận khoản cọc qua SePay + MB Bank.</span>
@@ -297,7 +303,7 @@
                                     </c:choose>
 
                                     <%-- Thêm thẻ thanh toán 70% còn lại nếu là Full Payment và đã ký hợp đồng --%>
-                                    <c:if test="${matchedOrder.contractStatus eq 'SIGNED' and matchedOrder.paymentMethodName ne 'INSTALLMENT' and matchedOrder.remainingAmount gt 0}">
+                                    <c:if test="${matchedOrder.status ne 'CANCELLED' and matchedOrder.contractStatus eq 'SIGNED' and matchedOrder.paymentMethodName ne 'INSTALLMENT' and matchedOrder.remainingAmount gt 0}">
                                         <div style="margin-top:14px;padding:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;">
                                             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
                                                 <div>
@@ -320,6 +326,7 @@
                             <c:choose>
                                 <c:when test="${req.status ne 'COMPLETED' and req.status ne 'CANCELLED'}">
                                     <form method="post" action="<%= customerContext %>/consultation" style="display:flex;gap:10px;align-items:flex-end;">
+            <input type="hidden" name="csrfToken" value="<c:out value='${sessionScope.csrfToken}'/>">
                                         <input type="hidden" name="action" value="reply">
                                         <input type="hidden" name="requestId" value="${req.id}">
                                         <c:if test="${not empty csrfToken}">

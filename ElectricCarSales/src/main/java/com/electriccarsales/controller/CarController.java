@@ -15,25 +15,8 @@ import java.util.List;
 @WebServlet(name = "CarController", urlPatterns = {"/car"})
 public class CarController extends HttpServlet {
 
-    private CarInventoryService carService;
-
-    @Override
-    public void init() throws ServletException {
-        carService = new CarInventoryService();
-    }
-
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.setContentType("text/html; charset=UTF-8");
-        request.setCharacterEncoding("UTF-8");
-
-
-        List<Car> cars = carService.getAllCars();
-        List<CarStatus> statuses = carService.getAllCarStatuses();
-
-        request.setAttribute("carList", cars);
-        request.setAttribute("statusList", statuses);
-
-        request.getRequestDispatcher("/car.jsp").forward(request, response);
+        response.sendRedirect(request.getContextPath() + "/staff/inventory");
     }
 }

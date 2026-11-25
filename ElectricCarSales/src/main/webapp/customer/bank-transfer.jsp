@@ -42,7 +42,7 @@
                 <div style="flex: 1; min-width: 290px; max-width: 500px;">
                     <div class="transfer-summary" style="margin-bottom: 16px;">
                         <span>Số tiền cần thanh toán</span>
-                        <strong><fmt:formatNumber value="${transfer.amount}" pattern="#,##0"/> VNĐ</strong>
+                        <strong><fmt:formatNumber value="${transfer.amount}" pattern="#,##0"/> VND</strong>
                         <small>Vui lòng chuyển khoản đúng số tiền để hệ thống tự động xác nhận.</small>
                     </div>
 
@@ -118,6 +118,9 @@
                 <span>!</span>
                 <div>
                     <strong><c:out value="${not empty sepayError ? sepayError : 'Cổng thanh toán SePay + MB Bank chưa sẵn sàng.'}"/></strong>
+                    <c:if test="${not empty cancelReason}">
+                        <p style="margin:6px 0 0;font-size:13px;">Lý do hủy đơn: <strong><c:out value="${cancelReason}"/></strong></p>
+                    </c:if>
                 </div>
             </div>
             <p>Hệ thống chưa thể mở yêu cầu chuyển khoản lúc này. Quý khách có thể quay lại trang thanh toán để thử lại hoặc xem thông tin đơn hàng.</p>

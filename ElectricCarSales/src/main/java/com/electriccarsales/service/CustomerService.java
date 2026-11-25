@@ -21,8 +21,16 @@ public class CustomerService {
         return customerDAO.findById(customerId);
     }
 
+    public List<Customer> getManagedCustomers(Integer employeeId) {
+        return employeeId == null ? List.of() : customerDAO.findManaged(employeeId);
+    }
+
     public List<Customer> getAllCustomers() {
         return customerDAO.findAll();
+    }
+
+    public boolean updateAvatar(int userId, byte[] image, String type) {
+        return customerDAO.updateAvatar(userId, image, type);
     }
 
     public boolean updateOwnProfile(int userId, String name, String phone, String email, String address) {

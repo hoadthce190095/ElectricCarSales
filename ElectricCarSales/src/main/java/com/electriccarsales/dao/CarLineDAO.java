@@ -14,7 +14,7 @@ public class CarLineDAO extends DBContext {
 
         String sql = "SELECT * FROM CarLines";
 
-        try {
+        try (java.sql.Connection conn = getConnection()) {
             PreparedStatement ps = conn.prepareStatement(sql);
 
             ResultSet rs = ps.executeQuery();

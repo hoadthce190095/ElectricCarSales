@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="<%= appContext %>/assets/css/staff.css">
 
     <!-- LƯU Ý: Vẫn giữ staff.js để các nút menu/sidebar hoạt động -->
-    <script src="<%= appContext %>/assets/js/staff.js?v=logout-role-2" defer></script>
+    <script src="<%= appContext %>/assets/js/staff.js?v=staff-consult-cancel-20261125" defer></script>
 </head>
 <body data-context-path="<%= appContext %>">
 <%
@@ -130,7 +130,7 @@
                                         </c:choose>
                                     </td>
                                     <!-- Format giá tiền theo chuẩn 1,290,000,000 -->
-                                    <td><fmt:formatNumber value="${car.price}" pattern="#,###"/> VNĐ</td>
+                                    <td><fmt:formatNumber value="${car.price}" pattern="#,###"/> VND</td>
                                 </tr>
                             </c:forEach>
                         </c:when>

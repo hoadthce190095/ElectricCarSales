@@ -5,7 +5,7 @@
 <div class="checkout-notice">
     <span>i</span>
     <div>
-        <strong>Quy trình Tư vấn &amp; Lập đơn hàng theo RDS</strong>
+        <strong>Quy trình Tư vấn &amp; Lập đơn hàng</strong>
         <p>Khách hàng gửi yêu cầu tư vấn mẫu xe và phương án thanh toán (Trả thẳng hoặc Trả góp qua Ngân hàng đối tác). Sales Staff sẽ tiếp nhận, phản hồi tư vấn và tạo giao dịch đơn hàng chính thức trên hệ thống.</p>
     </div>
 </div>
@@ -31,6 +31,7 @@
             <button type="button" class="button button-secondary" data-open-consult-popup>⛶ Mở Popup Tính giá Toàn màn hình</button>
         </div>
         <form class="customer-form" method="post" action="<%= customerContext %>/consultation">
+            <input type="hidden" name="csrfToken" value="<c:out value='${sessionScope.csrfToken}'/>">
             <input type="hidden" name="action" value="create">
             <div class="form-row">
                 <label>Mẫu xe quan tâm
@@ -62,7 +63,7 @@
         </form>
     </section>
     <aside class="panel next-steps">
-        <span class="section-overline">QUY TRÌNH CHUẨN RDS</span>
+        <span class="section-overline">QUY TRÌNH MUA XE</span>
         <h2>Các bước mua xe</h2>
         <ol class="step-list">
             <li>
@@ -76,7 +77,7 @@
                 <span>2</span>
                 <div>
                     <strong>Đặt cọc 30%</strong>
-                    <p>Khách hàng có thể thanh toán chuyển khoản VietQR tự động qua SePay + MB Bank hoặc tiền mặt tại showroom.</p>
+                    <p>Khách hàng có thể thanh toán chuyển khoản VietQR tự động qua SePay + MB Bank.</p>
                 </div>
             </li>
             <li>
@@ -123,6 +124,7 @@
                                     <div style="white-space:pre-line;font-size:13px;margin-bottom:8px;"><c:out value="${cr.content}"/></div>
                                     <c:if test="${cr.status == 'PENDING' or cr.status == 'IN_PROGRESS'}">
                                         <form method="post" action="<%= customerContext %>/consultation" style="display:flex;gap:6px;">
+            <input type="hidden" name="csrfToken" value="<c:out value='${sessionScope.csrfToken}'/>">
                                             <input type="hidden" name="action" value="reply">
                                             <input type="hidden" name="requestId" value="${cr.id}">
                                             <input type="text" name="message" maxlength="300" placeholder="Gửi phản hồi bổ sung cho Sales..." required style="flex:1;padding:6px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">

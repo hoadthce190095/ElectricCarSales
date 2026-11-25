@@ -5,13 +5,14 @@ import java.sql.DriverManager;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 class ContractWorkflowTest {
- @Test void cashDepositOtpBalanceInvoiceHandover() throws Exception {runWorkflow(false);}
+ @Test void transferDepositOtpBalanceInvoiceHandover() throws Exception {runWorkflow(false);}
  @Test void partnerDisbursementOtpInvoiceHandover() throws Exception {runWorkflow(true);}
  private void runWorkflow(boolean installment) throws Exception {
   String url="jdbc:h2:mem:contractFlow"+installment+";MODE=MSSQLServer;NON_KEYWORDS=YEAR";
-  String[] keys={"DB_URL","DB_USER","DB_PASSWORD"};
+  String[] keys={"DB_URL","DB_USER","DB_PASSWORD","SEPAY_ACCOUNT_NUMBER","SEPAY_ACCOUNT_NAME"};
   String[] old=java.util.Arrays.stream(keys).map(System::getProperty).toArray(String[]::new);
   System.setProperty(keys[0],url);System.setProperty(keys[1],"sa");System.setProperty(keys[2],TestApplication.H2_PASSWORD);
+  System.setProperty(keys[3],"123456"); System.setProperty(keys[4],"Fixture");
   try(var db=DriverManager.getConnection(url,"sa",TestApplication.H2_PASSWORD);var statement=db.createStatement()) {
    TestApplication.initializeSchema(statement);
             statement.execute("""
@@ -33,12 +34,12 @@ class ContractWorkflowTest {
                     VALUES('UNIT1',1,1,1,1,2026,'TEST0000000000001','TESTENGINE1',100);
                     INSERT INTO Orders(CustomerID,OrderStatusID,PaymentMethodID,OrderDate,TotalAmount,DepositAmount,RemainingAmount)
                     SELECT 1,os.OrderStatusID,pm.PaymentMethodID,'2026-11-01',100,30,70
-                    FROM OrderStatuses os CROSS JOIN PaymentMethods pm WHERE os.StatusName='DEPOSITED' AND pm.MethodName='CASH';
+                    FROM OrderStatuses os CROSS JOIN PaymentMethods pm WHERE os.StatusName='DEPOSITED' AND pm.MethodName='BANK_TRANSFER';
                     INSERT INTO OrderDetails(OrderID,CarID,SalesPrice) VALUES(1,1,100);
                     INSERT INTO Payments(OrderID,PaymentMethodID,PaymentTypeID,PaymentStatusID,PaymentAmount)
                     SELECT 1,pm.PaymentMethodID,pt.PaymentTypeID,ps.PaymentStatusID,30
                     FROM PaymentMethods pm CROSS JOIN PaymentTypes pt CROSS JOIN PaymentStatuses ps
-                    WHERE pm.MethodName='CASH' AND pt.TypeName='DEPOSIT' AND ps.StatusID='PENDING';
+                    WHERE pm.MethodName='BANK_TRANSFER' AND pt.TypeName='DEPOSIT' AND ps.StatusID='PENDING';
                     """);
 
    statement.execute("""
@@ -58,7 +59,7 @@ class ContractWorkflowTest {
    statement.execute("UPDATE Cars SET CarStatusID=(SELECT CarStatusID FROM CarStatuses WHERE StatusName='AVAILABLE')");
    bank.decide(1,2,true,"CASH-D",new BigDecimal("30"),"Test deposit");
    if (!installment) {
-       assertThrows(IllegalStateException.class,()->bank.createForCustomer(1,1,"REMAINING","CASH"));
+       assertThrows(IllegalArgumentException.class,()->bank.createForCustomer(1,1,"REMAINING","CASH"));
    }
    assertThrows(IllegalArgumentException.class,()->contracts.createContractForOrder(1,1,"X".repeat(501)));
    var contract=contracts.createContractForOrder(1,1,"Fixture terms");
@@ -69,9 +70,22 @@ class ContractWorkflowTest {
     +ContractsDAO.signingPurpose(contract.getContractID())+"',DATEADD('MINUTE',5,CURRENT_TIMESTAMP),'PENDING')");
    assertEquals("SIGNED",contracts.signContract(contract.getContractID(),1,1,"234567").getStatus());
    assertNotNull(new com.electriccarsales.service.SalesWordService().render(com.electriccarsales.model.SalesPreviewKind.CONTRACT,1,1));
+   if (installment) {
+       assertThrows(IllegalStateException.class,()->invoices.issueInvoice(1,1,"Test invoice"));
+       var disb = bank.createPartnerDisbursement(1);
+       assertEquals("PENDING", disb.status());
+       assertEquals(0, disb.amount().compareTo(new BigDecimal("70")));
+       // Không thể xuất hóa đơn khi đối tác chưa chuyển 70%
+       assertThrows(IllegalStateException.class,()->invoices.issueInvoice(1,1,"Test invoice"));
+       // Kế toán đối soát thực nhận từ đối tác với mã giao dịch ngân hàng
+       assertThrows(IllegalArgumentException.class,()->bank.decide(disb.paymentId(),2,true,"DISB-MB-001",new BigDecimal("69"),"Test"));
+       bank.decide(disb.paymentId(),2,true,"DISB-MB-001",new BigDecimal("70"),"Test partner disbursement");
+       // Chống xác nhận trùng
+       assertThrows(IllegalStateException.class,()->bank.decide(disb.paymentId(),2,true,"DISB-MB-001",new BigDecimal("70"),"Duplicate"));
+   }
    if (!installment) {
        assertThrows(IllegalStateException.class,()->invoices.issueInvoice(1,1,"Test invoice"));
-       var remaining=bank.createForCustomer(1,1,"REMAINING","CASH");
+       var remaining=bank.createForCustomer(1,1,"REMAINING","BANK_TRANSFER");
        assertEquals(0,remaining.amount().compareTo(new BigDecimal("70")));
        assertThrows(IllegalArgumentException.class,()->bank.decide(remaining.paymentId(),2,true,"BALANCE-R",new BigDecimal("69"),"Test"));
        bank.decide(remaining.paymentId(),2,true,"BALANCE-R",new BigDecimal("70"),"Test balance");

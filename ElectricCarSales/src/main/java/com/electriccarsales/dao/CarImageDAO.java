@@ -13,7 +13,8 @@ public class CarImageDAO extends DBContext {
         List<CarImage> list = new ArrayList<>();
         String sql = "SELECT * FROM CarImages WHERE ModelID = ? ORDER BY IsPrimary DESC, DisplayOrder, CarImageID";
 
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, modelID);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -40,7 +41,7 @@ public class CarImageDAO extends DBContext {
 
         String sql = "SELECT * FROM CarImages";
 
-        try{
+        try (java.sql.Connection conn = getConnection()) {
             PreparedStatement ps = conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
             while(rs.next()){

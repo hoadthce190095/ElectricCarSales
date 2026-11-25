@@ -47,7 +47,9 @@ public class PortalPageFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) rawRequest;
         HttpServletResponse response = (HttpServletResponse) rawResponse;
 
-        response.setHeader("Cache-Control", "no-store");
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
 
         String path = request.getServletPath();
         boolean assistant = "/customer/ai-assistant.jsp".equals(path);
@@ -133,6 +135,11 @@ public class PortalPageFilter implements Filter {
 
         if ("/customer/my-account.jsp".equals(path)) {
             response.sendRedirect(request.getContextPath() + "/customer/profile");
+            return;
+        }
+
+        if ("/customer/my-orders.jsp".equals(path)) {
+            response.sendRedirect(request.getContextPath() + "/orders");
             return;
         }
 

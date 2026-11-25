@@ -7,6 +7,7 @@ import com.electriccarsales.model.Customer;
 import com.electriccarsales.model.SessionUser;
 import com.electriccarsales.service.ContractsService;
 import com.electriccarsales.service.InstallmentService;
+import com.electriccarsales.service.OrderExpirationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -82,7 +83,7 @@ public class ContractController extends HttpServlet {
                         payload.put("installmentPlans", List.of());
                     }
                     try {
-                        payload.put("financialCompanies", new FinancialCompanyDAO().findAll());
+                        payload.put("financialCompanies", installmentService.getFinancialCompanies());
                     } catch (Exception ex) {
                         log("Could not load financial companies", ex);
                         payload.put("financialCompanies", List.of());
@@ -164,6 +165,10 @@ public class ContractController extends HttpServlet {
             }
 
             int contractId = Integer.parseInt(request.getParameter("contractId"));
+            try {
+                new OrderExpirationService().expireOrderIfOverdueForContract(contractId);
+            } catch (Exception ignored) {
+            }
             if ("requestOtp".equalsIgnoreCase(action)) {
                 if (!"true".equals(request.getParameter("agreeToSign"))) {
                     throw new IllegalArgumentException("Vui lòng xác nhận đã đọc và đồng ý ký hợp đồng.");

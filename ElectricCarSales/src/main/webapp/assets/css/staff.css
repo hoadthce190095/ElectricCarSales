@@ -108,7 +108,7 @@ button {
 }
 
 .workspace-caption {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
 
 .role-picker-label {
@@ -140,12 +140,12 @@ button {
     flex: 1;
     min-height: 0;
     overflow: auto;
-    margin: 21px -1px 14px;
+    margin: 8px -1px 14px;
     padding: 0 1px;
 }
 
 .nav-group-label {
-    padding: 11px 11px 4px;
+    padding: 14px 11px 4px;
     color: #707279;
     font-size: 8px;
     font-weight: 700;

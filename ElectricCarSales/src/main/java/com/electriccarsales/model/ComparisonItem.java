@@ -5,6 +5,7 @@ public class ComparisonItem {
     private int comparisonItemID;
     private int comparisonSessionID;
     private int modelID;
+    private String comparisonKey;
 
     public ComparisonItem() {
     }
@@ -39,9 +40,17 @@ public class ComparisonItem {
         this.modelID = modelID;
     }
 
+    public String getComparisonKey() {
+        return comparisonKey;
+    }
+
+    public void setComparisonKey(String comparisonKey) {
+        this.comparisonKey = comparisonKey;
+    }
+
     @Override
     public String toString() {
-        return "ComparisonItem{" + "comparisonItemID=" + comparisonItemID + ", comparisonSessionID=" + comparisonSessionID + ", modelID=" + modelID + '}';
+        return "ComparisonItem{" + "comparisonItemID=" + comparisonItemID + ", comparisonSessionID=" + comparisonSessionID + ", modelID=" + modelID + ", comparisonKey='" + comparisonKey + '\'' + '}';
     }
 
 

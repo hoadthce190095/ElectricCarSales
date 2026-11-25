@@ -40,8 +40,8 @@ public class AdministrationService {
             throw new IllegalArgumentException("Thiếu dữ liệu tài khoản.");
         }
         String username = create ? required(raw.getUsername(), "Tên đăng nhập", 50) : raw.getUsername();
-        if (create && !username.matches("[A-Za-z0-9_.-]{3,50}")) {
-            throw new IllegalArgumentException("Tên đăng nhập gồm 3–50 chữ, số, dấu chấm, gạch dưới hoặc gạch ngang.");
+        if (create && !username.matches("[A-Za-z0-9_]{5,30}")) {
+            throw new IllegalArgumentException("Tên đăng nhập gồm 5–30 chữ, số hoặc dấu gạch dưới.");
         }
         if (raw.getRoleId() == null || raw.getRoleId() <= 0 || raw.getStatusId() == null || raw.getStatusId() <= 0) {
             throw new IllegalArgumentException("Chọn vai trò và trạng thái.");
@@ -122,8 +122,8 @@ public class AdministrationService {
     }
 
     private static String email(String value) {
-        String email = required(value, "Email", 100);
-        if (!email.matches("[^\\s@]+@[^\\s@]+\\.[^\\s@]+")) {
+        String email = required(value, "Email", 30);
+        if (!email.matches("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}")) {
             throw new IllegalArgumentException("Email không hợp lệ.");
         }
         return email;
@@ -131,8 +131,8 @@ public class AdministrationService {
 
     private static String phone(String value) {
         String phone = required(value, "Số điện thoại", 20);
-        if (!phone.matches("\\+?[0-9]{8,15}")) {
-            throw new IllegalArgumentException("Số điện thoại gồm 8–15 chữ số, có thể bắt đầu bằng +.");
+        if (!phone.matches("0[0-9]{9}")) {
+            throw new IllegalArgumentException("Số điện thoại gồm 10 chữ số, bắt đầu bằng 0.");
         }
         return phone;
     }
@@ -230,7 +230,7 @@ public class AdministrationService {
                     repository.saveEmployee(connection, id, input.getEmployeeName(), input.getPhone(),
                         input.getEmail());
                 } else if (input.getEmployeeName() != null) {
-                    String newPhone = input.getPhone() == null ? phone(old.getPhone()) : input.getPhone();
+                    String newPhone = input.getPhone() == null ? old.getPhone() : input.getPhone();
                     String newEmail = input.getEmail() == null ? old.getEmail() : input.getEmail();
                     repository.saveEmployee(connection, id, input.getEmployeeName(), newPhone, newEmail);
                 }

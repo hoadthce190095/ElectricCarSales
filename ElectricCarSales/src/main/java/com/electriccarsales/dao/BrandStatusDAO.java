@@ -14,7 +14,7 @@ public class BrandStatusDAO extends DBContext {
 
         String sql = "SELECT * FROM BrandStatuses";
 
-        try{
+        try (java.sql.Connection conn = getConnection()) {
         PreparedStatement ps = conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
             while(rs.next()){
@@ -35,7 +35,7 @@ public class BrandStatusDAO extends DBContext {
     public BrandStatus getById(int brandStatusID){
         String sql  = "SELECT * FROM BrandStatuses WHERE brandStatusID = ?";
 
-        try{
+        try (java.sql.Connection conn = getConnection()) {
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setInt(1, brandStatusID);
             ResultSet rs = ps.executeQuery();

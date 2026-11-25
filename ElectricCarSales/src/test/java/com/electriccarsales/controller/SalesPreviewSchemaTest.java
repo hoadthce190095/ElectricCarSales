@@ -37,14 +37,14 @@ class SalesPreviewSchemaTest {
                     VALUES('UNIT1',1,1,1,1,2026,'TEST0000000000001','TESTENGINE1',100);
                     INSERT INTO Orders(CustomerID,OrderStatusID,PaymentMethodID,OrderDate,TotalAmount,DepositAmount,RemainingAmount)
                     SELECT 1,os.OrderStatusID,pm.PaymentMethodID,'2026-11-01',100,30,70
-                    FROM OrderStatuses os CROSS JOIN PaymentMethods pm WHERE os.StatusName='DEPOSITED' AND pm.MethodName='CASH';
+                    FROM OrderStatuses os CROSS JOIN PaymentMethods pm WHERE os.StatusName='DEPOSITED' AND pm.MethodName='BANK_TRANSFER';
                     INSERT INTO OrderDetails(OrderID,CarID,SalesPrice) VALUES(1,1,100);
                     INSERT INTO Contracts(OrderID,CustomerID,EmployeeID,ContractNumber,ContractAmount,Status)
                     VALUES(1,1,1,'C1',100,'PENDING_SIGNATURE');
                     INSERT INTO Payments(OrderID,PaymentMethodID,PaymentTypeID,PaymentStatusID,PaymentAmount)
                     SELECT 1,pm.PaymentMethodID,pt.PaymentTypeID,ps.PaymentStatusID,30
                     FROM PaymentMethods pm CROSS JOIN PaymentTypes pt CROSS JOIN PaymentStatuses ps
-                    WHERE pm.MethodName='CASH' AND pt.TypeName='DEPOSIT' AND ps.StatusID='COMPLETED';
+                    WHERE pm.MethodName='BANK_TRANSFER' AND pt.TypeName='DEPOSIT' AND ps.StatusID='COMPLETED';
                     """);
             var dao = new SalesPreviewDAO();
             assertTrue(dao.find(SalesPreviewKind.DEPOSIT, 1, 2).isEmpty());
@@ -52,6 +52,7 @@ class SalesPreviewSchemaTest {
             assertEquals("C1", dao.find(SalesPreviewKind.CONTRACT, 1, 1).get("contract.number"));
             assertTrue(dao.find(SalesPreviewKind.INVOICE, 1, 1).isEmpty());
 
+            statement.execute("UPDATE Payments SET Note='RECONCILED=true;' WHERE OrderID=1");
             var contracts = new com.electriccarsales.dao.ContractsDAO();
             assertDoesNotThrow(() -> contracts.requireSigningEligible(1, 1, 1));
             assertThrows(IllegalStateException.class, () -> contracts.requireSigningEligible(1, 1, 2));
@@ -81,7 +82,7 @@ class SalesPreviewSchemaTest {
                     INSERT INTO Payments(OrderID,PaymentMethodID,PaymentTypeID,PaymentStatusID,PaymentAmount)
                     SELECT 1,pm.PaymentMethodID,pt.PaymentTypeID,ps.PaymentStatusID,70
                     FROM PaymentMethods pm CROSS JOIN PaymentTypes pt CROSS JOIN PaymentStatuses ps
-                    WHERE pm.MethodName='CASH' AND pt.TypeName='REMAINING' AND ps.StatusID='COMPLETED';
+                    WHERE pm.MethodName='BANK_TRANSFER' AND pt.TypeName='REMAINING' AND ps.StatusID='COMPLETED';
                     """);
             assertEquals("I1", dao.find(SalesPreviewKind.INVOICE, 1, 1).get("invoice.number"));
         } finally {

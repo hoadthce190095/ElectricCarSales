@@ -30,7 +30,7 @@ class AdminSetupTest {
             TestApplication.initializeSchema(statement);
             statement.execute("DROP TABLE SystemLogs");
             assertDoesNotThrow(() -> new AdminSetupService().create(connection, "baseadmin",
-                "local-chosen-password-123", "Kiểm thử schema cơ sở"));
+                "Local-chosen-password-123", "Kiểm thử schema cơ sở"));
             try (var result = statement.executeQuery("SELECT COUNT(*) FROM Users WHERE Username='baseadmin'")) {
                 result.next();
                 assertEquals(1, result.getInt(1));
@@ -76,12 +76,12 @@ class AdminSetupTest {
                 .build();
             String csrf = JSON.readTree(get(client, application.base, "/api/auth").body()).get("csrfToken").asText();
             assertTrue(JSON.readTree(get(client, application.base, "/api/setup").body()).get("available").asBoolean());
-            String input = "{\"username\":\"chosenadmin\",\"password\":\"local-chosen-password-123\","
-                + "\"confirmPassword\":\"local-chosen-password-123\"}";
+            String input = "{\"username\":\"chosenadmin\",\"password\":\"Local-chosen-password-123\","
+                + "\"confirmPassword\":\"Local-chosen-password-123\"}";
             assertEquals(403, post(client, application.base, "/api/setup", input, null).statusCode());
             assertEquals(400,
                 post(client, application.base, "/api/setup",
-                    input.replace("\"confirmPassword\":\"local-chosen-password-123\"",
+                    input.replace("\"confirmPassword\":\"Local-chosen-password-123\"",
                         "\"confirmPassword\":\"different-password\""),
                     csrf).statusCode());
             assertEquals(201, post(client, application.base, "/api/setup", input, csrf).statusCode());
@@ -93,11 +93,11 @@ class AdminSetupTest {
                 var result = statement
                     .executeQuery("SELECT PasswordHash FROM Users WHERE" + " Username='chosenadmin'")) {
                 assertTrue(result.next());
-                assertTrue(PasswordHasher.verify("local-chosen-password-123", result.getString(1)));
-                assertNotEquals("local-chosen-password-123", result.getString(1));
+                assertTrue(PasswordHasher.verify("Local-chosen-password-123", result.getString(1)));
+                assertNotEquals("Local-chosen-password-123", result.getString(1));
             }
             var loggedIn = post(client, application.base, "/api/auth",
-                "{\"action\":\"login\",\"username\":\"chosenadmin\",\"password\":\"local-chosen-password-123\"}", csrf);
+                "{\"action\":\"login\",\"username\":\"chosenadmin\",\"password\":\"Local-chosen-password-123\"}", csrf);
             assertEquals(200, loggedIn.statusCode(), loggedIn.body());
             assertEquals("ADMIN", JSON.readTree(loggedIn.body()).get("user").get("role").asText());
             assertEquals(200, get(client, application.base, "/api/reports").statusCode());

@@ -5,7 +5,7 @@
     return;
 %>
 <div class="page-intro">
-    <p>Tra cứu hóa đơn chính thức được Kế toán phát hành sau khi đơn hàng hoàn tất thanh toán 100% giá trị xe (RDS 9.3).</p>
+    <p>Tra cứu hóa đơn chính thức được Kế toán phát hành sau khi đơn hàng hoàn tất thanh toán 100% giá trị xe.</p>
 </div>
 <section class="invoice-overview">
     <div class="invoice-metric">
@@ -55,8 +55,8 @@
                                 <td><strong><c:out value="${inv.invoiceNumber}"/></strong></td>
                                 <td><c:out value="${inv.invoiceDate}"/></td>
                                 <td>#<c:out value="${inv.orderID}"/></td>
-                                <td><fmt:formatNumber value="${inv.subTotal}" pattern="#,##0"/> VNĐ</td>
-                                <td><strong><fmt:formatNumber value="${inv.totalAmount}" pattern="#,##0"/> VNĐ</strong></td>
+                                <td><fmt:formatNumber value="${inv.subTotal}" pattern="#,##0"/> VND</td>
+                                <td><strong><fmt:formatNumber value="${inv.totalAmount}" pattern="#,##0"/> VND</strong></td>
                                 <td><span class="soft-badge"><c:out value="${inv.status}"/></span></td>
                                 <td>
                                     <c:out value="${inv.note}" default="—"/>
@@ -85,13 +85,13 @@
                                 <div class="table-empty">
                                     <span>▨</span>
                                     <strong>Chưa có hóa đơn nào được phát hành</strong>
-                                    <p>Theo quy trình chuẩn RDS: Hóa đơn GTGT chỉ được Kế toán phát hành sau khi Hợp đồng đã ký (SIGNED) và đơn hàng hoàn tất 100% nghĩa vụ thanh toán (công nợ = 0).</p>
+                                    <p>Theo quy trình chuẩn: Hóa đơn GTGT chỉ được Kế toán phát hành sau khi Hợp đồng đã ký (SIGNED) và đơn hàng hoàn tất 100% nghĩa vụ thanh toán (công nợ = 0).</p>
                                     <c:if test="${not empty customerOrders}">
                                         <div style="margin-top:16px;text-align:left;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;">
                                             <strong style="font-size:13px;color:#0f172a;display:block;margin-bottom:8px;">Tiến độ các đơn hàng hiện có của bạn:</strong>
                                             <c:forEach var="ord" items="${customerOrders}">
                                                 <div style="font-size:12px;padding:6px 0;border-bottom:1px dashed #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
-                                                    <span><strong>Đơn hàng #${ord.orderID}</strong> · Tổng: <fmt:formatNumber value="${ord.totalAmount}" pattern="#,##0"/> VNĐ (Còn thiếu: <fmt:formatNumber value="${ord.remainingAmount}" pattern="#,##0"/> VNĐ)</span>
+                                                    <span><strong>Đơn hàng #${ord.orderID}</strong> · Tổng: <fmt:formatNumber value="${ord.totalAmount}" pattern="#,##0"/> VND (Còn thiếu: <fmt:formatNumber value="${ord.remainingAmount}" pattern="#,##0"/> VND)</span>
                                                     <span style="color:#b45309;font-weight:600;">
                                                         <c:choose>
                                                             <c:when test="${ord.remainingAmount le 0}">

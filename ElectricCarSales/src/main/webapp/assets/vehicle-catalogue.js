@@ -135,7 +135,7 @@ function sourceInfo(vehicle) {
 function priceNote(vehicle) {
     return (
         vehicleMetadata(vehicle)?.priceNote ||
-        "Giá bán theo dữ liệu showroom; liên hệ nhân viên để đối chiếu trước khi giao dịch."
+        "Giá bán tại showroom; liên hệ nhân viên để đối chiếu trước khi giao dịch."
     );
 }
 

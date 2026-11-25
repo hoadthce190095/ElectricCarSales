@@ -274,7 +274,8 @@ public class ConsultationRequestDAO {
         request.setId(rows.getInt("ConsultationRequestID"));
         request.setCustomerId(rows.getInt("CustomerID"));
         request.setStaffId(rows.getInt("EmployeeID"));
-        request.setModelId(rows.getObject("ModelID", Integer.class));
+        int mid = rows.getInt("ModelID");
+        request.setModelId(rows.wasNull() ? null : mid);
         request.setContent(rows.getString("RequestContent"));
         request.setStatus(rows.getString("StatusName"));
         request.setCreatedAt(rows.getTimestamp("RequestDate"));

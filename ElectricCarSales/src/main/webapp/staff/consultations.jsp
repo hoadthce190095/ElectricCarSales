@@ -11,18 +11,23 @@
     <style>
         .consult-card { border:1px solid #e2e8f0; border-radius:8px; padding:16px; margin-bottom:16px; background:#fff; }
         .consult-card h3 { margin:0 0 8px; font-size:15px; }
-        .status-badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:12px; font-weight:600; }
-        .status-PENDING { background:#fef9c3; color:#854d0e; }
-        .status-IN_PROGRESS { background:#dbeafe; color:#1e40af; }
-        .status-COMPLETED { background:#dcfce7; color:#166534; }
-        .status-CANCELLED { background:#fee2e2; color:#991b1b; }
+        .status-badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:11.5px; font-weight:700; }
+        .status-PENDING { background:#fef3c7; color:#92400e; border:1px solid #fcd34d; }
+        .status-IN_PROGRESS { background:#dbeafe; color:#1e40af; border:1px solid #93c5fd; }
+        .status-COMPLETED { background:#dcfce7; color:#166534; border:1px solid #86efac; }
+        .status-CANCELLED { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; }
         .content-box { background:#f8fafc; border-radius:6px; padding:10px; font-size:13px; white-space:pre-wrap; word-break:break-word; margin:8px 0; }
         .update-form { margin-top:12px; padding-top:12px; border-top:1px dashed #e2e8f0; }
         .update-form label { display:block; font-size:12px; color:#475569; margin-bottom:4px; }
         .update-form select, .update-form textarea { width:100%; box-sizing:border-box; padding:7px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; margin-bottom:10px; }
         .update-form textarea { resize:vertical; height:80px; }
-        .update-form button { background:#1e3a8a; color:#fff; border:none; border-radius:6px; padding:7px 18px; font-size:13px; cursor:pointer; }
-        .update-form button:hover { background:#1e40af; }
+        .btn-consult-action { color:#fff; border:none; border-radius:6px; padding:7px 14px; font-size:12.5px; font-weight:600; cursor:pointer; }
+        .btn-reply-progress { background:#2563eb; }
+        .btn-reply-progress:hover { background:#1d4ed8; }
+        .btn-complete-consult { background:#16a34a; }
+        .btn-complete-consult:hover { background:#15803d; }
+        .btn-cancel-consult { background:#dc2626; }
+        .btn-cancel-consult:hover { background:#b91c1c; }
         .blocked-notice { background:#fffbeb; border:1px solid #fbbf24; border-radius:6px; padding:12px 16px; margin-bottom:20px; color:#78350f; font-size:13px; }
     </style>
 </head>
@@ -104,29 +109,65 @@
                 </div>
 
                 <%-- Form cập nhật trạng thái và ghi chú --%>
+                <c:if test="${req.status ne 'COMPLETED' and req.status ne 'CANCELLED'}">
                 <div class="update-form">
-                    <form method="post" action="<%= request.getContextPath() %>/consultation">
+                    <form method="post" action="<%= request.getContextPath() %>/consultation" class="consult-staff-update-form" data-req-id="${req.id}">
                         <input type="hidden" name="action" value="update">
                         <input type="hidden" name="requestId" value="${req.id}">
                         <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}'/>">
+                        <input type="hidden" name="status" value="IN_PROGRESS" class="consult-status-input">
 
-                        <label for="status_${req.id}">Trạng thái</label>
-                        <select id="status_${req.id}" name="status">
-                            <option value="PENDING"      <c:if test="${req.status == 'PENDING'}">selected</c:if>>PENDING — Chờ xử lý</option>
-                            <option value="IN_PROGRESS"  <c:if test="${req.status == 'IN_PROGRESS'}">selected</c:if>>IN_PROGRESS — Đang xử lý</option>
-                            <option value="COMPLETED"    <c:if test="${req.status == 'COMPLETED'}">selected</c:if>>COMPLETED — Đã hoàn tất</option>
-                            <option value="CANCELLED"    <c:if test="${req.status == 'CANCELLED'}">selected</c:if>>CANCELLED — Đã hủy</option>
-                        </select>
+                        <label for="note_${req.id}">Phản hồi hoặc lý do hủy (bắt buộc nếu chọn Hủy / Cancel)</label>
+                        <textarea id="note_${req.id}" name="note" placeholder="Nhập phản hồi cho khách (tự động chuyển sang Đang tư vấn) hoặc ghi rõ lý do nếu hủy..."></textarea>
 
-                        <label for="note_${req.id}">Ghi chú phản hồi (sẽ được nối vào nội dung)</label>
-                        <textarea id="note_${req.id}" name="note" placeholder="Nhập ghi chú hoặc phản hồi cho khách hàng..."></textarea>
-
-                        <button type="submit">Cập nhật</button>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                            <button type="button" class="btn-consult-action btn-reply-progress" data-target-status="IN_PROGRESS">💬 Gửi phản hồi (Đang tư vấn)</button>
+                            <button type="button" class="btn-consult-action btn-complete-consult" data-target-status="COMPLETED">✓ Completed (Đã tư vấn xong)</button>
+                            <button type="button" class="btn-consult-action btn-cancel-consult" data-target-status="CANCELLED">✕ Cancel (Hủy tư vấn)</button>
+                        </div>
                     </form>
                 </div>
+                </c:if>
             </article>
         </c:forEach>
     </section>
 </main>
+<script>
+document.querySelectorAll(".consult-staff-update-form").forEach(function(form) {
+    var statusInput = form.querySelector(".consult-status-input");
+    var noteInput = form.querySelector("textarea[name='note']");
+    form.querySelectorAll("[data-target-status]").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+            var targetStatus = btn.getAttribute("data-target-status");
+            var noteVal = (noteInput.value || "").trim();
+            if (targetStatus === "IN_PROGRESS") {
+                if (!noteVal) {
+                    alert("Vui lòng nhập nội dung phản hồi cho khách hàng.");
+                    noteInput.focus();
+                    return;
+                }
+                if (!confirm("Xác nhận gửi phản hồi và chuyển yêu cầu #" + form.dataset.reqId + " sang Đang tư vấn?")) return;
+            } else if (targetStatus === "COMPLETED") {
+                if (!confirm("Xác nhận đã tư vấn xong cho yêu cầu #" + form.dataset.reqId + "?")) return;
+            } else if (targetStatus === "CANCELLED") {
+                if (!noteVal) {
+                    var reason = prompt("Vui lòng ghi rõ lý do hủy yêu cầu tư vấn #" + form.dataset.reqId + ":");
+                    if (reason === null) return;
+                    noteVal = reason.trim();
+                    if (!noteVal) {
+                        alert("Bắt buộc phải ghi rõ lý do hủy yêu cầu tư vấn.");
+                        noteInput.focus();
+                        return;
+                    }
+                    noteInput.value = noteVal;
+                }
+                if (!confirm("Xác nhận hủy yêu cầu tư vấn #" + form.dataset.reqId + " với lý do: " + noteVal + "?")) return;
+            }
+            statusInput.value = targetStatus;
+            form.submit();
+        });
+    });
+});
+</script>
 </body>
 </html>

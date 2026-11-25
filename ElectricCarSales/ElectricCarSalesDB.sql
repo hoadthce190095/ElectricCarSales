@@ -198,6 +198,7 @@ GO
 	ComparisonItemID INT IDENTITY(1,1) PRIMARY KEY,
 	ComparisonSessionID INT NOT NULL,
 	ModelID INT NOT NULL,
+	ComparisonKey NVARCHAR(500) NULL,
 
 	CONSTRAINT FK_ComparisonItems_Sessions
 		FOREIGN KEY (ComparisonSessionID)
@@ -205,10 +206,7 @@ GO
 
 	CONSTRAINT FK_ComparisonItems_CarModels
 		FOREIGN KEY (ModelID)
-		REFERENCES CarModels(ModelID),
-
-	CONSTRAINT UQ_ComparisonItems_Session_Model
-		UNIQUE (ComparisonSessionID, ModelID)
+		REFERENCES CarModels(ModelID)
  );
  GO 
 

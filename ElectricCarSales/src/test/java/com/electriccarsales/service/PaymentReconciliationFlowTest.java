@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * 10. Đơn trả góp (Installment) với 70% giải ngân bởi đối tác tài chính.
  * 11. Customer hủy popup trước khi xác nhận (No state change).
  * 12. Kiểm tra tổng tiền thu, số dư và trạng thái cuối cùng (requireExactSettlement).
- * 13. Chuẩn hóa định dạng tiền tệ vi-VN (7.000.000 VNĐ, 75.000.000 VNĐ, 150.000.000 VNĐ).
+ * 13. Chuẩn hóa định dạng tiền tệ vi-VN (7.000.000 VND, 75.000.000 VND, 150.000.000 VND).
  */
 public class PaymentReconciliationFlowTest {
 
@@ -191,7 +191,7 @@ public class PaymentReconciliationFlowTest {
         assertEquals("ECS" + orderId, transfer.getOrderCode());
         assertEquals("DEPOSIT_30", transfer.getFormattedType());
 
-        // 2. Kế toán xác nhận nhận tiền 300.000.000 VNĐ
+        // 2. Kế toán xác nhận nhận tiền 300.000.000 VND
         int accountantId = getAccountantUserId();
         bankService.decide(transfer.paymentId(), accountantId, true, "MB-DEP-001", new BigDecimal("300000000"), "Cọc 30% thành công");
 
@@ -231,10 +231,10 @@ public class PaymentReconciliationFlowTest {
         assertEquals(new BigDecimal("300000000.00"), order.getPaidAmount());
 
         // Kiểm tra định dạng tiền tệ vi-VN
-        assertEquals("1.000.000.000 VNĐ", order.getFormattedOriginalAmount());
-        assertEquals("300.000.000 VNĐ", order.getFormattedDepositAmount());
-        assertEquals("700.000.000 VNĐ", order.getFormattedRemainingAmount());
-        assertEquals("300.000.000 VNĐ", order.getFormattedPaidAmount());
+        assertEquals("1.000.000.000 VND", order.getFormattedOriginalAmount());
+        assertEquals("300.000.000 VND", order.getFormattedDepositAmount());
+        assertEquals("700.000.000 VND", order.getFormattedRemainingAmount());
+        assertEquals("300.000.000 VND", order.getFormattedPaidAmount());
     }
 
     // =========================================================================
@@ -266,7 +266,7 @@ public class PaymentReconciliationFlowTest {
         assertEquals(new BigDecimal("700000000"), remTransfer.amount());
         assertEquals("REMAINING_70", remTransfer.getFormattedType());
 
-        // Bước 7 & 8: Kế toán xác nhận 700.000.000 VNĐ
+        // Bước 7 & 8: Kế toán xác nhận 700.000.000 VND
         bankService.decide(remTransfer.paymentId(), getAccountantUserId(), true, "MB-REM-003", new BigDecimal("700000000"), "Thanh toán 70%");
 
         // Bước 9: Kiểm tra RemainingAmount = 0, OrderStatus = PAID, CarStatus = SOLD
@@ -443,8 +443,8 @@ public class PaymentReconciliationFlowTest {
 
         // Sau khi chuyển 30% cọc, 70% còn lại MẶC ĐỊNH ĐÃ ĐƯỢC THANH TOÁN (đối tác tài chính giải ngân)
         Order afterDepositOrder = orderDAO.findById(orderId);
-        assertEquals(0, afterDepositOrder.getRemainingAmount().compareTo(BigDecimal.ZERO), "Công nợ khách hàng phải bằng 0 sau cọc đơn trả góp");
-        assertEquals(new BigDecimal("1000000000.00"), afterDepositOrder.getPaidAmount(), "Đã thu đủ 100% (30% cọc + 70% giải ngân)");
+        assertEquals(0, afterDepositOrder.getRemainingAmount().compareTo(new BigDecimal("700000000")), "Còn chờ đối tác chuyển 70%");
+        assertEquals(new BigDecimal("300000000.00"), afterDepositOrder.getPaidAmount(), "Đã thu cọc 30%");
 
         // 2. Khách hàng cố thanh toán 70% trên website -> BỊ CHẶN
         var contract = contractsDAO.createContractForOrder(orderId, 1, "Hợp đồng trả góp");
@@ -456,9 +456,9 @@ public class PaymentReconciliationFlowTest {
 
         // 3. Kiểm tra trạng thái đơn: PAID, RemainingAmount = 0
         Order settledOrder = orderDAO.findById(orderId);
-        assertEquals("PAID", settledOrder.getStatus());
-        assertEquals(0, settledOrder.getRemainingAmount().compareTo(BigDecimal.ZERO));
-        assertEquals(new BigDecimal("1000000000.00"), settledOrder.getPaidAmount());
+        assertEquals("PROCESSING", settledOrder.getStatus());
+        assertEquals(0, settledOrder.getRemainingAmount().compareTo(new BigDecimal("700000000")));
+        assertEquals(new BigDecimal("300000000.00"), settledOrder.getPaidAmount());
     }
 
     // =========================================================================
@@ -529,14 +529,14 @@ public class PaymentReconciliationFlowTest {
     // CASE 13: Chuẩn hóa định dạng tiền tệ vi-VN
     // =========================================================================
     @Test
-    @DisplayName("Case 13: Định dạng tiền tệ vi-VN không có .00 và có hậu tố VNĐ")
+    @DisplayName("Case 13: Định dạng tiền tệ vi-VN không có .00 và có hậu tố VND")
     void testCase13_CurrencyFormattingStandard() {
-        assertEquals("7.000.000 VNĐ", FormatUtils.formatMoney(new BigDecimal("7000000")));
-        assertEquals("75.000.000 VNĐ", FormatUtils.formatMoney(new BigDecimal("75000000")));
-        assertEquals("150.000.000 VNĐ", FormatUtils.formatMoney(new BigDecimal("150000000")));
-        assertEquals("1.000.000.000 VNĐ", FormatUtils.formatMoney(new BigDecimal("1000000000")));
-        assertEquals("0 VNĐ", FormatUtils.formatMoney(BigDecimal.ZERO));
-        assertEquals("0 VNĐ", FormatUtils.formatMoney(null));
+        assertEquals("7.000.000 VND", FormatUtils.formatMoney(new BigDecimal("7000000")));
+        assertEquals("75.000.000 VND", FormatUtils.formatMoney(new BigDecimal("75000000")));
+        assertEquals("150.000.000 VND", FormatUtils.formatMoney(new BigDecimal("150000000")));
+        assertEquals("1.000.000.000 VND", FormatUtils.formatMoney(new BigDecimal("1000000000")));
+        assertEquals("0 VND", FormatUtils.formatMoney(BigDecimal.ZERO));
+        assertEquals("0 VND", FormatUtils.formatMoney(null));
 
         // Kiểm tra định dạng số lượng
         assertEquals("1.500", FormatUtils.formatNumber(1500));

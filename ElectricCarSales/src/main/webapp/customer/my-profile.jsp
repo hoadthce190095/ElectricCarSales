@@ -41,6 +41,7 @@ request.setAttribute("customerEyebrow", "THÔNG TIN TÀI KHOẢN");
         <div><span>Địa chỉ</span><strong><c:out value="${customer.address}" default="Chưa cập nhật"/></strong></div>
     </div>
     <form id="profile-edit-form" class="customer-form" method="post" enctype="multipart/form-data" action="<%= customerContext %>/customer/profile?view=profile" hidden style="display:none;margin-top:18px;padding-top:18px;border-top:1px solid #e2e8f0;">
+            <input type="hidden" name="csrfToken" value="<c:out value='${sessionScope.csrfToken}'/>">
         <label>Họ và tên
             <input name="customerName" type="text" maxlength="100" value="<c:out value='${customer.customerName}'/>" required>
         </label>

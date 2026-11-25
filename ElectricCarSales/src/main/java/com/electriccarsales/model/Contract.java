@@ -24,6 +24,7 @@ public class Contract {
     private String paymentMethodName;
     private String companyName;
     private String orderStatus;
+    private boolean depositReconciled;
 
     public Contract() {}
 
@@ -82,4 +83,6 @@ public class Contract {
     public void setCompanyName(String companyName) { this.companyName = companyName; }
     public String getOrderStatus() { return orderStatus; }
     public void setOrderStatus(String orderStatus) { this.orderStatus = orderStatus; }
+    public boolean isDepositReconciled() { return depositReconciled; }
+    public void setDepositReconciled(boolean depositReconciled) { this.depositReconciled = depositReconciled; }
 }

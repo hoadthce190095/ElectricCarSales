@@ -125,10 +125,10 @@ public class InvoiceDAO extends DBContext {
                 }
 
                 if (contractStatus == null || !"SIGNED".equalsIgnoreCase(contractStatus)) {
-                    throw new IllegalStateException("Theo RDS (Mục II.9.3 PRE-1), hợp đồng của đơn hàng phải ở trạng thái đã ký (SIGNED) trước khi xuất hóa đơn.");
+                    throw new IllegalStateException("Hợp đồng của đơn hàng phải ở trạng thái đã ký (SIGNED) trước khi xuất hóa đơn.");
                 }
                 if (remainingAmount == null || remainingAmount.signum() != 0 || !"PAID".equalsIgnoreCase(orderStatus)) {
-                    throw new IllegalStateException("Theo RDS (Mục II.9.3 BR3), chỉ được xuất hóa đơn sau khi đơn hàng đã xác nhận thanh toán đủ 100% (RemainingAmount = 0, trạng thái PAID). Công nợ hiện tại: "
+                    throw new IllegalStateException("Chỉ được xuất hóa đơn sau khi đơn hàng đã xác nhận thanh toán đủ 100% (RemainingAmount = 0, trạng thái PAID). Công nợ hiện tại: "
                             + (remainingAmount == null ? "?" : remainingAmount.toPlainString()) + " VND.");
                 }
 

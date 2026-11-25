@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashSet;
 import java.util.stream.Collectors;
 
 @WebServlet(name = "ComparisonHistoryController", urlPatterns = "/api/comparison/history")
@@ -44,6 +45,8 @@ public class ComparisonHistoryController extends JsonServlet {
         try {
             List<ComparisonSession> sessions = sessionDAO.getByUserId(userId);
             List<CatalogVehicle> allVehicles = catalogService.getCatalogVehicles();
+            Map<String, CatalogVehicle> vehiclesByKey = allVehicles.stream()
+                    .collect(Collectors.toMap(ComparisonHistoryController::comparisonKey, v -> v, (first, ignored) -> first));
             Map<Integer, CatalogVehicle> vehiclesByModelId = allVehicles.stream()
                     .collect(Collectors.toMap(
                             CatalogVehicle::modelID,
@@ -58,7 +61,9 @@ public class ComparisonHistoryController extends JsonServlet {
                 List<String> comparisonKeys = new ArrayList<>();
 
                 for (ComparisonItem item : items) {
-                    CatalogVehicle cv = vehiclesByModelId.get(item.getModelID());
+                    CatalogVehicle cv = item.getComparisonKey() == null || item.getComparisonKey().isBlank()
+                            ? vehiclesByModelId.get(item.getModelID())
+                            : vehiclesByKey.get(item.getComparisonKey());
                     if (cv != null) {
                         Map<String, Object> summary = new LinkedHashMap<>();
                         summary.put("modelID", cv.modelID());
@@ -68,7 +73,12 @@ public class ComparisonHistoryController extends JsonServlet {
                         summary.put("priceVnd", cv.priceVnd());
                         summary.put("imageUrl", cv.imageUrl() != null ? cv.imageUrl() : "");
                         summary.put("rangeKm", cv.rangeKm());
-                        String key = cv.modelName().trim() + "-" + cv.specificationVersion().trim();
+                        if (cv.stockCarID() != null) {
+                            summary.put("stockCarID", cv.stockCarID());
+                            summary.put("stockColorName", cv.stockColorName());
+                            summary.put("colors", cv.colors());
+                        }
+                        String key = comparisonKey(cv);
                         summary.put("comparisonKey", key);
                         comparisonKeys.add(key);
                         vehicleSummaries.add(summary);
@@ -116,25 +126,26 @@ public class ComparisonHistoryController extends JsonServlet {
 
         try {
             SaveHistoryRequest body = readJson(request, SaveHistoryRequest.class);
-            List<Integer> modelIds = body.modelIds();
-
-            // If modelIds is not provided but keys are provided, resolve from catalog
-            if ((modelIds == null || modelIds.isEmpty()) && body.keys() != null && !body.keys().isEmpty()) {
-                List<CatalogVehicle> allVehicles = catalogService.getCatalogVehicles();
-                Map<String, Integer> modelIdByKey = allVehicles.stream()
-                        .collect(Collectors.toMap(
-                                v -> v.modelName().trim() + "-" + v.specificationVersion().trim(),
-                                CatalogVehicle::modelID,
-                                (first, ignored) -> first
-                        ));
-                modelIds = body.keys().stream()
-                        .map(modelIdByKey::get)
-                        .filter(id -> id != null && id > 0)
-                        .distinct()
+            List<CatalogVehicle> allVehicles = catalogService.getCatalogVehicles();
+            Map<String, CatalogVehicle> vehiclesByKey = allVehicles.stream()
+                    .collect(Collectors.toMap(ComparisonHistoryController::comparisonKey, v -> v, (first, ignored) -> first));
+            List<CatalogVehicle> selectedVehicles;
+            if (body.keys() != null && !body.keys().isEmpty()) {
+                selectedVehicles = new ArrayList<>(new LinkedHashSet<>(body.keys())).stream()
+                        .map(vehiclesByKey::get)
+                        .filter(vehicle -> vehicle != null)
+                        .toList();
+            } else {
+                List<Integer> modelIds = body.modelIds();
+                selectedVehicles = (modelIds == null ? List.<Integer>of() : modelIds).stream()
+                        .map(modelId -> modelId == null ? null : allVehicles.stream()
+                                .filter(vehicle -> vehicle.modelID() == modelId && vehicle.stockCarID() == null)
+                                .findFirst().orElse(null))
+                        .filter(vehicle -> vehicle != null)
                         .toList();
             }
 
-            if (modelIds == null || modelIds.size() < 2) {
+            if (selectedVehicles.size() < 2) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 JSON.writeValue(response.getOutputStream(), Map.of(
                         "error", "Cần ít nhất 2 mẫu xe để lưu so sánh."
@@ -142,9 +153,17 @@ public class ComparisonHistoryController extends JsonServlet {
                 return;
             }
 
-            int sessionId = sessionDAO.createSession(userId);
+            List<Integer> modelIds = new ArrayList<>();
+            for (CatalogVehicle vehicle : selectedVehicles) {
+                if (modelIds.contains(vehicle.modelID())) {
+                    response.setStatus(409);
+                    JSON.writeValue(response.getOutputStream(), Map.of("error", "Lịch sử chỉ lưu được mẫu xe. Không thể lưu hai phiên bản của cùng một mẫu xe."));
+                    return;
+                }
+                modelIds.add(vehicle.modelID());
+            }
+            int sessionId = sessionDAO.saveModels(userId, modelIds);
             if (sessionId > 0) {
-                itemDAO.addItems(sessionId, modelIds);
                 response.setStatus(HttpServletResponse.SC_CREATED);
                 JSON.writeValue(response.getOutputStream(), Map.of(
                         "success", true,
@@ -207,6 +226,12 @@ public class ComparisonHistoryController extends JsonServlet {
             return n.intValue();
         }
         return null;
+    }
+
+    private static String comparisonKey(CatalogVehicle vehicle) {
+        String base = vehicle.modelName().trim() + "-" + vehicle.specificationVersion().trim();
+        return vehicle.stockCarID() == null || vehicle.priceVnd() == null
+                ? base : base + "-STOCK-PRICE-" + vehicle.priceVnd().stripTrailingZeros().toPlainString();
     }
 
     private record SaveHistoryRequest(List<Integer> modelIds, List<String> keys) {}

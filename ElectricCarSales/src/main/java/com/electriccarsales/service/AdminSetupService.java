@@ -23,7 +23,7 @@ public class AdminSetupService {
     }
 
     public int create(Connection connection, String username, String password, String origin) throws SQLException {
-        if (username == null || !username.matches("[A-Za-z0-9_.-]{3,50}")) {
+        if (username == null || !username.matches("[A-Za-z0-9_]{5,30}")) {
             throw new ApiException(400, "Tên đăng nhập phải gồm 3–50 chữ, số hoặc ký tự _ . -.");
         }
         PasswordHasher.validate(password);

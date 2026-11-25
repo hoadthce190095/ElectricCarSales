@@ -8,100 +8,106 @@ import java.sql.SQLException;
 
 public class OTPVerificationDAO extends DBContext {
     public boolean verifyRegistrationOtp(int userId, String code) {
-        if (conn == null) throw new IllegalStateException("Không kết nối được cơ sở dữ liệu.");
-        String find = "SELECT TOP 1 OTPVerificationID FROM OTPVerifications WITH (UPDLOCK, HOLDLOCK) " +
-                "WHERE UserID=? AND OTPCode=? AND Purpose='REGISTER' AND Status='PENDING' " +
-                "AND VerifiedDate IS NULL AND ExpiredDate>SYSDATETIME() ORDER BY CreatedDate DESC";
-        boolean oldAutoCommit;
-        try {
-            oldAutoCommit = conn.getAutoCommit();
-            conn.setAutoCommit(false);
-        } catch (SQLException e) {
-            throw new IllegalStateException("Không thể bắt đầu xác thực OTP.", e);
-        }
-        try {
-            try (PreparedStatement ps = conn.prepareStatement("SELECT UserID FROM Users WITH (UPDLOCK, HOLDLOCK) " +
-                    "WHERE UserID=? AND RoleID=(SELECT RoleID FROM Roles WHERE RoleName='CUSTOMER') " +
-                    "AND StatusID=(SELECT StatusID FROM Statuses WHERE StatusName='INACTIVE')")) {
-                ps.setInt(1, userId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (!rs.next()) { conn.rollback(); return false; }
+        try (java.sql.Connection conn = getConnection()) {
+            String find = "SELECT TOP 1 OTPVerificationID FROM OTPVerifications WITH (UPDLOCK, HOLDLOCK) " +
+                    "WHERE UserID=? AND OTPCode=? AND Purpose='REGISTER' AND Status='PENDING' " +
+                    "AND VerifiedDate IS NULL AND ExpiredDate>SYSDATETIME() ORDER BY CreatedDate DESC";
+            boolean oldAutoCommit;
+            try {
+                oldAutoCommit = conn.getAutoCommit();
+                conn.setAutoCommit(false);
+            } catch (SQLException e) {
+                throw new IllegalStateException("Không thể bắt đầu xác thực OTP.", e);
+            }
+            try {
+                try (PreparedStatement ps = conn.prepareStatement("SELECT UserID FROM Users WITH (UPDLOCK, HOLDLOCK) " +
+                        "WHERE UserID=? AND RoleID=(SELECT RoleID FROM Roles WHERE RoleName='CUSTOMER') " +
+                        "AND StatusID=(SELECT StatusID FROM Statuses WHERE StatusName='INACTIVE')")) {
+                    ps.setInt(1, userId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) { conn.rollback(); return false; }
+                    }
                 }
-            }
-            int otpId;
-            try (PreparedStatement ps = conn.prepareStatement(find)) {
-                ps.setInt(1, userId); ps.setString(2, code);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (!rs.next()) { conn.rollback(); return false; }
-                    otpId = rs.getInt(1);
+                int otpId;
+                try (PreparedStatement ps = conn.prepareStatement(find)) {
+                    ps.setInt(1, userId); ps.setString(2, code);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) { conn.rollback(); return false; }
+                        otpId = rs.getInt(1);
+                    }
                 }
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE OTPVerifications SET Status='VERIFIED',VerifiedDate=SYSDATETIME() " +
+                                "WHERE OTPVerificationID=? AND Status='PENDING' AND VerifiedDate IS NULL")) {
+                    ps.setInt(1, otpId);
+                    if (ps.executeUpdate() != 1) { conn.rollback(); return false; }
+                }
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE Users SET StatusID=(SELECT StatusID FROM Statuses WHERE StatusName='ACTIVE') " +
+                                "WHERE UserID=? AND StatusID=(SELECT StatusID FROM Statuses WHERE StatusName='INACTIVE')")) {
+                    ps.setInt(1, userId);
+                    if (ps.executeUpdate() != 1) { conn.rollback(); return false; }
+                }
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE OTPVerifications SET Status='EXPIRED' WHERE UserID=? AND Purpose='REGISTER' " +
+                                "AND OTPVerificationID<>? AND Status='PENDING'")) {
+                    ps.setInt(1, userId); ps.setInt(2, otpId); ps.executeUpdate();
+                }
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                try { conn.rollback(); } catch (SQLException rollbackError) { e.addSuppressed(rollbackError); }
+                throw new IllegalStateException("Không thể xác thực OTP.", e);
+            } finally {
+                try { conn.setAutoCommit(oldAutoCommit); }
+                catch (SQLException e) { throw new IllegalStateException("Không thể khôi phục trạng thái kết nối.", e); }
             }
-            try (PreparedStatement ps = conn.prepareStatement(
-                    "UPDATE OTPVerifications SET Status='VERIFIED',VerifiedDate=SYSDATETIME() " +
-                            "WHERE OTPVerificationID=? AND Status='PENDING' AND VerifiedDate IS NULL")) {
-                ps.setInt(1, otpId);
-                if (ps.executeUpdate() != 1) { conn.rollback(); return false; }
-            }
-            try (PreparedStatement ps = conn.prepareStatement(
-                    "UPDATE Users SET StatusID=(SELECT StatusID FROM Statuses WHERE StatusName='ACTIVE') " +
-                            "WHERE UserID=? AND StatusID=(SELECT StatusID FROM Statuses WHERE StatusName='INACTIVE')")) {
-                ps.setInt(1, userId);
-                if (ps.executeUpdate() != 1) { conn.rollback(); return false; }
-            }
-            try (PreparedStatement ps = conn.prepareStatement(
-                    "UPDATE OTPVerifications SET Status='EXPIRED' WHERE UserID=? AND Purpose='REGISTER' " +
-                            "AND OTPVerificationID<>? AND Status='PENDING'")) {
-                ps.setInt(1, userId); ps.setInt(2, otpId); ps.executeUpdate();
-            }
-            conn.commit();
-            return true;
         } catch (SQLException e) {
-            try { conn.rollback(); } catch (SQLException rollbackError) { e.addSuppressed(rollbackError); }
-            throw new IllegalStateException("Không thể xác thực OTP.", e);
-        } finally {
-            try { conn.setAutoCommit(oldAutoCommit); }
-            catch (SQLException e) { throw new IllegalStateException("Không thể khôi phục trạng thái kết nối.", e); }
+            throw new IllegalStateException("Không thể sử dụng kết nối cơ sở dữ liệu.", e);
         }
     }
 
     public boolean issueRegistrationOtp(int userId, String code) {
-        if (conn == null) throw new IllegalStateException("Không kết nối được cơ sở dữ liệu.");
-        boolean oldAutoCommit;
-        try { oldAutoCommit = conn.getAutoCommit(); conn.setAutoCommit(false); }
-        catch (SQLException e) { throw new IllegalStateException("Không thể bắt đầu phát hành OTP.", e); }
-        try {
-            try (PreparedStatement ps = conn.prepareStatement("SELECT UserID FROM Users WITH (UPDLOCK, HOLDLOCK) " +
-                    "WHERE UserID=? AND RoleID=(SELECT RoleID FROM Roles WHERE RoleName='CUSTOMER') " +
-                    "AND StatusID=(SELECT StatusID FROM Statuses WHERE StatusName='INACTIVE')")) {
-                ps.setInt(1, userId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (!rs.next()) { conn.rollback(); return false; }
+        try (java.sql.Connection conn = getConnection()) {
+            boolean oldAutoCommit;
+            try { oldAutoCommit = conn.getAutoCommit(); conn.setAutoCommit(false); }
+            catch (SQLException e) { throw new IllegalStateException("Không thể bắt đầu phát hành OTP.", e); }
+            try {
+                try (PreparedStatement ps = conn.prepareStatement("SELECT UserID FROM Users WITH (UPDLOCK, HOLDLOCK) " +
+                        "WHERE UserID=? AND RoleID=(SELECT RoleID FROM Roles WHERE RoleName='CUSTOMER') " +
+                        "AND StatusID=(SELECT StatusID FROM Statuses WHERE StatusName='INACTIVE')")) {
+                    ps.setInt(1, userId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) { conn.rollback(); return false; }
+                    }
                 }
+                try (PreparedStatement ps = conn.prepareStatement("UPDATE OTPVerifications SET Status='EXPIRED' " +
+                        "WHERE UserID=? AND Purpose='REGISTER' AND Status='PENDING'")) {
+                    ps.setInt(1, userId); ps.executeUpdate();
+                }
+                try (PreparedStatement ps = conn.prepareStatement("INSERT INTO OTPVerifications" +
+                        "(UserID,OTPCode,Purpose,ExpiredDate,Status) VALUES(?,?,'REGISTER',DATEADD(MINUTE,5,SYSDATETIME()),'PENDING')")) {
+                    ps.setInt(1, userId); ps.setString(2, code); ps.executeUpdate();
+                }
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                try { conn.rollback(); } catch (SQLException rollbackError) { e.addSuppressed(rollbackError); }
+                throw new IllegalStateException("Không thể phát hành OTP.", e);
+            } finally {
+                try { conn.setAutoCommit(oldAutoCommit); }
+                catch (SQLException e) { throw new IllegalStateException("Không thể khôi phục trạng thái kết nối.", e); }
             }
-            try (PreparedStatement ps = conn.prepareStatement("UPDATE OTPVerifications SET Status='EXPIRED' " +
-                    "WHERE UserID=? AND Purpose='REGISTER' AND Status='PENDING'")) {
-                ps.setInt(1, userId); ps.executeUpdate();
-            }
-            try (PreparedStatement ps = conn.prepareStatement("INSERT INTO OTPVerifications" +
-                    "(UserID,OTPCode,Purpose,ExpiredDate,Status) VALUES(?,?,'REGISTER',DATEADD(MINUTE,5,SYSDATETIME()),'PENDING')")) {
-                ps.setInt(1, userId); ps.setString(2, code); ps.executeUpdate();
-            }
-            conn.commit();
-            return true;
         } catch (SQLException e) {
-            try { conn.rollback(); } catch (SQLException rollbackError) { e.addSuppressed(rollbackError); }
-            throw new IllegalStateException("Không thể phát hành OTP.", e);
-        } finally {
-            try { conn.setAutoCommit(oldAutoCommit); }
-            catch (SQLException e) { throw new IllegalStateException("Không thể khôi phục trạng thái kết nối.", e); }
+            throw new IllegalStateException("Không thể sử dụng kết nối cơ sở dữ liệu.", e);
         }
     }
 
     public void expireFailedRegistrationOtp(int userId, String code) {
-        if (conn == null) throw new IllegalStateException("Không kết nối được cơ sở dữ liệu.");
         String sql = "UPDATE OTPVerifications SET Status='EXPIRED' WHERE UserID=? AND OTPCode=? " +
                 "AND Purpose='REGISTER' AND Status='PENDING'";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId); ps.setString(2, code); ps.executeUpdate();
         } catch (SQLException e) {
             throw new IllegalStateException("Không thể cập nhật trạng thái OTP.", e);
@@ -109,11 +115,11 @@ public class OTPVerificationDAO extends DBContext {
     }
 
     public String findPendingRegistrationEmail(int userId) {
-        if (conn == null) throw new IllegalStateException("Không kết nối được cơ sở dữ liệu.");
         String sql = "SELECT u.Email FROM Users u JOIN Roles r ON r.RoleID=u.RoleID " +
                 "JOIN Statuses s ON s.StatusID=u.StatusID JOIN Customers c ON c.UserID=u.UserID " +
                 "WHERE u.UserID=? AND r.RoleName='CUSTOMER' AND s.StatusName='INACTIVE'";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) { return rs.next() ? rs.getString(1) : null; }
         } catch (SQLException e) {
@@ -122,76 +128,83 @@ public class OTPVerificationDAO extends DBContext {
     }
 
     public boolean issuePurposeOtp(int userId, String purpose, String code) {
-        if (conn == null) throw new IllegalStateException("Không kết nối được cơ sở dữ liệu.");
-        boolean oldAutoCommit;
-        try { oldAutoCommit = conn.getAutoCommit(); conn.setAutoCommit(false); }
-        catch (SQLException e) { throw new IllegalStateException("Không thể bắt đầu phát hành OTP.", e); }
-        try {
-            try (PreparedStatement ps = conn.prepareStatement(
-                    "UPDATE OTPVerifications SET Status='EXPIRED' WHERE UserID=? AND Purpose=? AND Status='PENDING'")) {
-                ps.setInt(1, userId);
-                ps.setString(2, purpose);
-                ps.executeUpdate();
+        try (java.sql.Connection conn = getConnection()) {
+            boolean oldAutoCommit;
+            try { oldAutoCommit = conn.getAutoCommit(); conn.setAutoCommit(false); }
+            catch (SQLException e) { throw new IllegalStateException("Không thể bắt đầu phát hành OTP.", e); }
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE OTPVerifications SET Status='EXPIRED' WHERE UserID=? AND Purpose=? AND Status='PENDING'")) {
+                    ps.setInt(1, userId);
+                    ps.setString(2, purpose);
+                    ps.executeUpdate();
+                }
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "INSERT INTO OTPVerifications(UserID,OTPCode,Purpose,ExpiredDate,Status) "
+                        + "VALUES(?,?,?,DATEADD(MINUTE,5,SYSDATETIME()),'PENDING')")) {
+                    ps.setInt(1, userId);
+                    ps.setString(2, code);
+                    ps.setString(3, purpose);
+                    ps.executeUpdate();
+                }
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                try { conn.rollback(); } catch (SQLException rollbackError) { e.addSuppressed(rollbackError); }
+                throw new IllegalStateException("Không thể phát hành mã OTP.", e);
+            } finally {
+                try { conn.setAutoCommit(oldAutoCommit); }
+                catch (SQLException e) { throw new IllegalStateException("Không thể khôi phục trạng thái kết nối.", e); }
             }
-            try (PreparedStatement ps = conn.prepareStatement(
-                    "INSERT INTO OTPVerifications(UserID,OTPCode,Purpose,ExpiredDate,Status) "
-                    + "VALUES(?,?,?,DATEADD(MINUTE,5,SYSDATETIME()),'PENDING')")) {
-                ps.setInt(1, userId);
-                ps.setString(2, code);
-                ps.setString(3, purpose);
-                ps.executeUpdate();
-            }
-            conn.commit();
-            return true;
         } catch (SQLException e) {
-            try { conn.rollback(); } catch (SQLException rollbackError) { e.addSuppressed(rollbackError); }
-            throw new IllegalStateException("Không thể phát hành mã OTP.", e);
-        } finally {
-            try { conn.setAutoCommit(oldAutoCommit); }
-            catch (SQLException e) { throw new IllegalStateException("Không thể khôi phục trạng thái kết nối.", e); }
+            throw new IllegalStateException("Không thể sử dụng kết nối cơ sở dữ liệu.", e);
         }
     }
 
     public boolean verifyPurposeOtp(int userId, String purpose, String code) {
-        if (conn == null) throw new IllegalStateException("Không kết nối được cơ sở dữ liệu.");
-        String find = "SELECT TOP 1 OTPVerificationID FROM OTPVerifications WITH (UPDLOCK, HOLDLOCK) "
-                + "WHERE UserID=? AND OTPCode=? AND Purpose=? AND Status='PENDING' "
-                + "AND VerifiedDate IS NULL AND ExpiredDate>SYSDATETIME() ORDER BY CreatedDate DESC";
-        boolean oldAutoCommit;
-        try { oldAutoCommit = conn.getAutoCommit(); conn.setAutoCommit(false); }
-        catch (SQLException e) { throw new IllegalStateException("Không thể bắt đầu xác thực OTP.", e); }
-        try {
-            int otpId;
-            try (PreparedStatement ps = conn.prepareStatement(find)) {
-                ps.setInt(1, userId);
-                ps.setString(2, code);
-                ps.setString(3, purpose);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (!rs.next()) { conn.rollback(); return false; }
-                    otpId = rs.getInt(1);
+        try (java.sql.Connection conn = getConnection()) {
+            String find = "SELECT TOP 1 OTPVerificationID FROM OTPVerifications WITH (UPDLOCK, HOLDLOCK) "
+                    + "WHERE UserID=? AND OTPCode=? AND Purpose=? AND Status='PENDING' "
+                    + "AND VerifiedDate IS NULL AND ExpiredDate>SYSDATETIME() ORDER BY CreatedDate DESC";
+            boolean oldAutoCommit;
+            try { oldAutoCommit = conn.getAutoCommit(); conn.setAutoCommit(false); }
+            catch (SQLException e) { throw new IllegalStateException("Không thể bắt đầu xác thực OTP.", e); }
+            try {
+                int otpId;
+                try (PreparedStatement ps = conn.prepareStatement(find)) {
+                    ps.setInt(1, userId);
+                    ps.setString(2, code);
+                    ps.setString(3, purpose);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) { conn.rollback(); return false; }
+                        otpId = rs.getInt(1);
+                    }
                 }
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE OTPVerifications SET Status='VERIFIED',VerifiedDate=SYSDATETIME() "
+                        + "WHERE OTPVerificationID=? AND Status='PENDING' AND VerifiedDate IS NULL")) {
+                    ps.setInt(1, otpId);
+                    if (ps.executeUpdate() != 1) { conn.rollback(); return false; }
+                }
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                try { conn.rollback(); } catch (SQLException rollbackError) { e.addSuppressed(rollbackError); }
+                throw new IllegalStateException("Không thể xác thực OTP.", e);
+            } finally {
+                try { conn.setAutoCommit(oldAutoCommit); }
+                catch (SQLException e) { throw new IllegalStateException("Không thể khôi phục trạng thái kết nối.", e); }
             }
-            try (PreparedStatement ps = conn.prepareStatement(
-                    "UPDATE OTPVerifications SET Status='VERIFIED',VerifiedDate=SYSDATETIME() "
-                    + "WHERE OTPVerificationID=? AND Status='PENDING' AND VerifiedDate IS NULL")) {
-                ps.setInt(1, otpId);
-                if (ps.executeUpdate() != 1) { conn.rollback(); return false; }
-            }
-            conn.commit();
-            return true;
         } catch (SQLException e) {
-            try { conn.rollback(); } catch (SQLException rollbackError) { e.addSuppressed(rollbackError); }
-            throw new IllegalStateException("Không thể xác thực OTP.", e);
-        } finally {
-            try { conn.setAutoCommit(oldAutoCommit); }
-            catch (SQLException e) { throw new IllegalStateException("Không thể khôi phục trạng thái kết nối.", e); }
+            throw new IllegalStateException("Không thể sử dụng kết nối cơ sở dữ liệu.", e);
         }
     }
 
     public Integer findUserIdByEmailOrPhone(String identifier) {
-        if (conn == null || identifier == null || identifier.isBlank()) return null;
+        if (identifier == null || identifier.isBlank()) return null;
         String sql = "SELECT TOP 1 UserID FROM Users WHERE LOWER(Email)=LOWER(?) OR Phone=? OR LOWER(Username)=LOWER(?)";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             String trimmed = identifier.trim();
             ps.setString(1, trimmed);
             ps.setString(2, trimmed);
@@ -205,8 +218,8 @@ public class OTPVerificationDAO extends DBContext {
     }
 
     public String findUserEmail(int userId) {
-        if (conn == null) return null;
-        try (PreparedStatement ps = conn.prepareStatement("SELECT Email FROM Users WHERE UserID=?")) {
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT Email FROM Users WHERE UserID=?")) {
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? rs.getString(1) : null;
@@ -217,8 +230,8 @@ public class OTPVerificationDAO extends DBContext {
     }
 
     public boolean updatePasswordHash(int userId, String newPasswordHash) {
-        if (conn == null) throw new IllegalStateException("Không kết nối được cơ sở dữ liệu.");
-        try (PreparedStatement ps = conn.prepareStatement("UPDATE Users SET PasswordHash=? WHERE UserID=?")) {
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement("UPDATE Users SET PasswordHash=? WHERE UserID=?")) {
             ps.setString(1, newPasswordHash);
             ps.setInt(2, userId);
             return ps.executeUpdate() == 1;

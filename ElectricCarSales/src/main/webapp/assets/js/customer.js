@@ -4,6 +4,8 @@
     const toast = document.querySelector("[data-toast]");
     const contextPath = document.body?.dataset?.contextPath
         || document.querySelector('meta[name="app-context-path"]')?.content || "";
+    let isAuthenticated = document.querySelector('meta[name="user-authenticated"]')?.content === "true"
+        || document.body?.dataset?.authenticated === "true";
     let toastTimer;
 
     function notify(message) {
@@ -204,15 +206,37 @@
     const aiForm = document.querySelector("[data-ai-form]");
     const aiMessages = document.querySelector("[data-ai-messages]");
     const aiQuestion = aiForm?.querySelector("textarea");
+    document.getElementById("customer-password-form")?.addEventListener("submit", async event => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        try {
+            const response = await fetch(contextPath + "/api/auth", {method: "POST",
+                headers: {"Content-Type": "application/json", "X-CSRF-Token": await ensureCsrf()},
+                body: JSON.stringify({action: "changePassword", ...Object.fromEntries(new FormData(form))})});
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || result.message || "Không thể đổi mật khẩu.");
+            form.reset();
+            window.location.reload();
+        } catch (error) { form.querySelector("output").textContent = error.message; }
+    });
     let csrfToken = null;
 
     async function ensureCsrf() {
         if (csrfToken) return csrfToken;
-        const res = await fetch(`${contextPath}/api/auth`, { credentials: "same-origin" });
-        if (res.ok) {
-            const data = await res.json();
-            csrfToken = data.csrfToken;
+        const domToken = document.querySelector('input[name="csrfToken"]')?.value
+            || document.querySelector('meta[name="csrf-token"]')?.content
+            || document.getElementById("ecs-consult-csrf")?.value;
+        if (domToken && domToken.trim()) {
+            csrfToken = domToken.trim();
+            return csrfToken;
         }
+        try {
+            const res = await fetch(`${contextPath}/api/auth`, { credentials: "same-origin" });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.csrfToken) csrfToken = data.csrfToken;
+            }
+        } catch (_) {}
         return csrfToken;
     }
 
@@ -303,8 +327,12 @@
     const installmentOptions = document.getElementById("ecs-installment-options");
     const calcTerm = document.getElementById("ecs-calc-term");
     const calcPrice = document.getElementById("ecs-calc-price");
+    const calcPriceLabel = document.getElementById("ecs-calc-price-label");
+    const calcPromoBadge = document.getElementById("ecs-calc-promo-badge");
     const calcDownRate = document.getElementById("ecs-calc-down-rate");
     const calcSummary = document.getElementById("ecs-calc-summary");
+    const calcVersion = document.getElementById("ecs-calc-version");
+    const calcColor = document.getElementById("ecs-calc-color");
     const popupForm = document.getElementById("ecs-popup-consult-form");
     const historyList = document.getElementById("ecs-consult-history-list");
     let consultationRefreshTimer = null;
@@ -317,63 +345,240 @@
         "MB Bank": [{ months: 12, rate: 5.0 }, { months: 24, rate: 5.8 }, { months: 36, rate: 6.5 }, { months: 48, rate: 7.4 }, { months: 60, rate: 8.5 }],
         "VPBank": [{ months: 36, rate: 6.0 }, { months: 48, rate: 7.8 }, { months: 60, rate: 9.5 }]
     };
-    const formatVnd = (amount) => new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(Math.round(amount)) + " VNĐ";
+    const formatVnd = (amount) => new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(Math.round(amount)) + " VND";
     let popupModelsPromise = null;
+    let popupCatalog = {
+        models: [],
+        versions: [],
+        colors: [],
+        modelColors: [],
+        availableCars: [],
+        promotions: {},
+        catalogPricesByVersion: {},
+        catalogPricesByModel: {}
+    };
+
+    function syncVersionsAndColors() {
+        if (!calcModel) return;
+        const modelId = Number(calcModel.value || calcModel.selectedOptions[0]?.dataset?.modelId || 0);
+        
+        // 1. Đồng bộ danh sách Phiên bản (CarVersions) theo ModelID
+        if (calcVersion) {
+            const versionsForModel = (popupCatalog.versions || []).filter(v => Number(v.modelID ?? v.modelId) === modelId);
+            if (versionsForModel.length === 0) {
+                calcVersion.innerHTML = `<option value="" data-name="Tiêu chuẩn">Tiêu chuẩn</option>`;
+            } else {
+                calcVersion.innerHTML = versionsForModel.map(v => {
+                    const vId = Number(v.versionID ?? v.versionId ?? 0);
+                    const vName = v.versionName || "Bản tiêu chuẩn";
+                    return `<option value="${vId}" data-name="${escapeHtml(vName)}">${escapeHtml(vName)}</option>`;
+                }).join("");
+            }
+        }
+
+        syncColorsForSelection();
+        syncConsultationPrice();
+    }
+
+    function syncColorsForSelection() {
+        if (!calcModel || !calcColor) return;
+        const modelId = Number(calcModel.value || calcModel.selectedOptions[0]?.dataset?.modelId || 0);
+        const versionId = Number(calcVersion?.value || 0);
+
+        // Lọc màu sắc catalogue cho mẫu xe này từ ModelColors
+        const allowedColorIds = new Set(
+            (popupCatalog.modelColors || [])
+                .filter(mc => Number(mc.modelID ?? mc.modelId) === modelId)
+                .map(mc => Number(mc.colorID ?? mc.colorId))
+        );
+        let eligibleColors = (popupCatalog.colors || []).filter(col => {
+            const cId = Number(col.colorID ?? col.colorId);
+            return allowedColorIds.size === 0 || allowedColorIds.has(cId);
+        });
+        if (eligibleColors.length === 0) {
+            eligibleColors = popupCatalog.colors || [];
+        }
+
+        if (eligibleColors.length === 0) {
+            calcColor.innerHTML = `<option value="" data-name="Tiêu chuẩn">Màu tiêu chuẩn</option>`;
+        } else {
+            calcColor.innerHTML = eligibleColors.map(col => {
+                const cId = Number(col.colorID ?? col.colorId);
+                const cName = col.colorName || "Tiêu chuẩn";
+                const physicalStock = (popupCatalog.availableCars || []).filter(car => {
+                    const matchModel = Number(car.modelId) === modelId;
+                    const matchVersion = !versionId || Number(car.versionId) === versionId;
+                    const matchColor = Number(car.colorId) === cId;
+                    return matchModel && matchVersion && matchColor;
+                }).length;
+                return `<option value="${cId}" data-name="${escapeHtml(cName)}" data-stock="${physicalStock}">${escapeHtml(cName)}</option>`;
+            }).join("");
+        }
+    }
+
+    function formatDiscountBadge(discountType, discountValue, discountAmount) {
+        if (String(discountType || "").toUpperCase() === "PERCENTAGE" && Number(discountValue) > 0) {
+            const pct = Number(discountValue);
+            return `Giảm ${Number.isInteger(pct) ? pct : pct.toFixed(1).replace(/\.0$/, "")}%`;
+        }
+        return `Giảm ${formatVnd(discountAmount)}`;
+    }
 
     function syncConsultationPrice() {
         if (!calcModel || !calcPrice) return;
-        const option = calcModel.selectedOptions[0];
-        const price = Number(option?.dataset?.price || 0);
-        calcPrice.value = price > 0 ? formatVnd(price) : "";
+        const modelId = Number(calcModel.value || 0);
+        const versionId = Number(calcVersion?.value || 0);
+        const colorId = Number(calcColor?.value || 0);
+
+        // Ưu tiên tìm xe vật lý có sẵn khớp lựa chọn (đủ mẫu + phiên bản + màu, hoặc cùng mẫu + phiên bản)
+        const cars = popupCatalog.availableCars || [];
+        const matchCar = cars.find(car => {
+            const m = Number(car.modelId) === modelId;
+            const v = !versionId || Number(car.versionId) === versionId;
+            const c = !colorId || Number(car.colorId) === colorId;
+            return m && v && c;
+        }) || cars.find(car => {
+            const m = Number(car.modelId) === modelId;
+            const v = !versionId || Number(car.versionId) === versionId;
+            return m && v;
+        });
+
+        let originalPrice = 0;
+        let finalPrice = 0;
+        let discountAmount = 0;
+        let discountType = "";
+        let discountValue = 0;
+        let promotionName = "";
+
+        if (matchCar && Number(matchCar.originalPrice ?? matchCar.price) > 0) {
+            originalPrice = Number(matchCar.originalPrice ?? matchCar.price);
+            discountAmount = Number(matchCar.discountAmount || 0);
+            discountType = matchCar.discountType || "";
+            discountValue = Number(matchCar.discountValue || 0);
+            promotionName = matchCar.promotionName || "";
+            finalPrice = Number(matchCar.price ?? (originalPrice - discountAmount));
+        } else {
+            const modelOpt = calcModel.selectedOptions[0];
+            originalPrice = Number(
+                (versionId && popupCatalog.catalogPricesByVersion?.[versionId])
+                || (modelId && popupCatalog.catalogPricesByModel?.[modelId])
+                || modelOpt?.dataset?.price
+                || 0
+            );
+            const promo = modelId ? popupCatalog.promotions?.[modelId] : null;
+            if (promo && originalPrice > 0) {
+                const dv = Number(promo.discountValue || 0);
+                const dt = String(promo.discountType || "").toUpperCase();
+                if (dv > 0) {
+                    discountAmount = dt === "PERCENTAGE"
+                        ? Math.round((originalPrice * dv) / 100)
+                        : Math.min(originalPrice, Math.round(dv));
+                    if (discountAmount > 0) {
+                        promotionName = promo.name || "";
+                        discountType = dt;
+                        discountValue = dv;
+                    }
+                }
+            }
+            finalPrice = Math.max(0, originalPrice - discountAmount);
+        }
+
+        const hasPromo = discountAmount > 0 && promotionName && originalPrice > 0;
+        calcPrice.value = finalPrice > 0 ? formatVnd(finalPrice) : "Liên hệ";
+        calcPrice.dataset.rawPrice = String(finalPrice || 0);
+        calcPrice.dataset.originalPrice = String(originalPrice || 0);
+        calcPrice.dataset.discountAmount = String(discountAmount || 0);
+        calcPrice.dataset.discountType = discountType || "";
+        calcPrice.dataset.discountValue = String(discountValue || 0);
+        calcPrice.dataset.promotionName = promotionName || "";
+
+        if (calcPriceLabel) {
+            calcPriceLabel.textContent = hasPromo ? "Giá sau ưu đãi (VND)" : "Giá xe niêm yết (VND)";
+        }
+        if (calcPromoBadge) {
+            if (hasPromo) {
+                const badgeText = formatDiscountBadge(discountType, discountValue, discountAmount);
+                calcPromoBadge.hidden = false;
+                calcPromoBadge.innerHTML = `🎁 <strong>${escapeHtml(promotionName)}</strong> · <span style="display:inline-block;background:#dc2626;color:#fff;padding:1px 6px;border-radius:4px;font-weight:700;">${escapeHtml(badgeText)}</span><br>Giá niêm yết: <del>${formatVnd(originalPrice)}</del> → <strong>Giá sau ưu đãi: ${formatVnd(finalPrice)}</strong>`;
+            } else {
+                calcPromoBadge.hidden = true;
+                calcPromoBadge.innerHTML = "";
+            }
+        }
     }
 
     async function loadConsultationModels() {
         if (!calcModel) return;
         if (!popupModelsPromise) {
             popupModelsPromise = (async () => {
-                let models = [];
+                let data = null;
                 try {
-                    const response = await fetch(`${contextPath}/api/ai`, {
+                    const res = await fetch(`${contextPath}/consultation?format=json`, {
                         credentials: "same-origin",
                         headers: { "Accept": "application/json" }
                     });
-                    const data = await readJsonResponse(response);
-                    models = Array.isArray(data.models) ? data.models.filter((model) => model.modelId && model.modelName) : [];
+                    if (res.ok) {
+                        data = await readJsonResponse(res);
+                    }
                 } catch (e) {
-                    console.warn("Chưa tải được models qua /api/ai, sẽ thử nguồn /consultation?format=json", e);
+                    console.warn("Lỗi tải /consultation?format=json", e);
                 }
 
-                if (!models.length) {
+                if (!data || !Array.isArray(data.models) || data.models.length === 0) {
                     try {
-                        const fallbackRes = await fetch(`${contextPath}/consultation?format=json`, {
+                        const aiRes = await fetch(`${contextPath}/api/ai`, {
                             credentials: "same-origin",
                             headers: { "Accept": "application/json" }
                         });
-                        const fallbackData = await readJsonResponse(fallbackRes);
-                        const rawModels = fallbackData.models || [];
-                        models = rawModels.map((m) => ({
-                            modelId: m.modelID,
-                            modelName: m.modelName,
-                            inventoryMinPrice: 0,
-                            availableCars: 1
-                        }));
-                    } catch (fallbackErr) {
-                        console.warn("Không tải được models fallback từ /consultation", fallbackErr);
+                        const aiData = await readJsonResponse(aiRes);
+                        if (Array.isArray(aiData.models) && aiData.models.length > 0) {
+                            data = {
+                                models: aiData.models.map(m => ({ modelID: m.modelId, modelName: m.modelName, basePrice: m.minPrice })),
+                                versions: [],
+                                colors: [],
+                                modelColors: [],
+                                availableCars: []
+                            };
+                        }
+                    } catch (aiErr) {
+                        console.warn("Lỗi tải fallback từ /api/ai", aiErr);
                     }
                 }
 
-                if (!models.length) throw new Error("Danh mục chưa có mẫu xe để tư vấn.");
-                calcModel.innerHTML = models.map((model) => {
-                    const price = Number(model.inventoryMinPrice || 0);
-                    const stock = Number(model.availableCars || 0);
-                    const label = `${model.modelName} · ${stock} xe sẵn có`;
-                    return `<option value="${escapeHtml(model.modelId)}" data-model-id="${escapeHtml(model.modelId)}" data-name="${escapeHtml(model.modelName)}" data-price="${price}" data-available="${stock}">${escapeHtml(label)}</option>`;
+                if (!data || !Array.isArray(data.models) || data.models.length === 0) {
+                    throw new Error("Danh mục chưa có mẫu xe để tư vấn.");
+                }
+
+                if (data && typeof data.authenticated === "boolean") {
+                    isAuthenticated = data.authenticated;
+                }
+                if (data && data.csrfToken) {
+                    csrfToken = data.csrfToken;
+                }
+
+                popupCatalog.models = data.models || [];
+                popupCatalog.versions = data.versions || [];
+                popupCatalog.colors = data.colors || [];
+                popupCatalog.modelColors = data.modelColors || [];
+                popupCatalog.availableCars = data.availableCars || [];
+                popupCatalog.promotions = data.promotions || {};
+                popupCatalog.catalogPricesByVersion = data.catalogPricesByVersion || {};
+                popupCatalog.catalogPricesByModel = data.catalogPricesByModel || {};
+
+                calcModel.innerHTML = popupCatalog.models.map((model) => {
+                    const mId = Number(model.modelID ?? model.modelId);
+                    const mName = model.modelName || "Mẫu xe";
+                    const stock = (popupCatalog.availableCars || []).filter(c => Number(c.modelId) === mId).length;
+                    const minPrice = Number(model.basePrice ?? model.inventoryMinPrice ?? popupCatalog.catalogPricesByModel?.[mId] ?? 0);
+                    return `<option value="${mId}" data-model-id="${mId}" data-name="${escapeHtml(mName)}" data-price="${minPrice}" data-available="${stock}">${escapeHtml(mName)}</option>`;
                 }).join("");
-                const preferred = models.find((model) => /VF\s*8/i.test(model.modelName)) || models[0];
-                calcModel.value = String(preferred.modelId);
-                syncConsultationPrice();
+
+                const preferred = popupCatalog.models.find((m) => /VF\s*8/i.test(m.modelName)) || popupCatalog.models[0];
+                calcModel.value = String(preferred.modelID ?? preferred.modelId);
+
+                syncVersionsAndColors();
                 updatePopupCalculation();
-                return models;
+                return popupCatalog.models;
             })().catch((error) => {
                 popupModelsPromise = null;
                 calcModel.innerHTML = `<option value="">Không tải được danh mục xe</option>`;
@@ -415,10 +620,34 @@
         const installment = mode === "INSTALLMENT";
         if (planWrap) planWrap.hidden = !installment;
         if (installmentOptions) installmentOptions.hidden = !installment;
+
+        const modelName = calcModel.selectedOptions[0]?.dataset?.name || calcModel.selectedOptions[0]?.textContent || "Mẫu xe";
+        const versionName = calcVersion?.selectedOptions[0]?.dataset?.name || "";
+        const colorOpt = calcColor?.selectedOptions[0];
+        const colorName = colorOpt?.dataset?.name || "";
+
+        const vehicleDetailStr = [modelName, versionName, colorName].filter(Boolean).join(" · ");
+
+        const price = Number(calcPrice?.dataset?.rawPrice || 0);
+        const originalPrice = Number(calcPrice?.dataset?.originalPrice || price);
+        const discountAmount = Number(calcPrice?.dataset?.discountAmount || 0);
+        const discountType = calcPrice?.dataset?.discountType || "";
+        const discountValue = Number(calcPrice?.dataset?.discountValue || 0);
+        const promotionName = calcPrice?.dataset?.promotionName || "";
+        const hasPromo = discountAmount > 0 && promotionName && originalPrice > 0;
+        const discountBadge = hasPromo ? formatDiscountBadge(discountType, discountValue, discountAmount) : "";
+        const priceSummaryHtml = hasPromo
+            ? `<div style="margin-top:4px;">Giá niêm yết: <del>${formatVnd(originalPrice)}</del> · <span style="color:#b91c1c;font-weight:700;">${escapeHtml(promotionName)} (${escapeHtml(discountBadge)})</span></div>
+               <div>Giá sau ưu đãi: <strong style="color:#b91c1c;">${formatVnd(price)}</strong></div>`
+            : `<div style="margin-top:4px;">Giá xe: <strong>${price > 0 ? formatVnd(price) : "Liên hệ"}</strong></div>`;
+
         if (mode === "BANK_TRANSFER") {
+            const deposit = price > 0 ? Math.round(price * 0.3) : 0;
+            const remaining = price > 0 ? price - deposit : 0;
             calcSummary.innerHTML = `
-                <div><strong>${escapeHtml(calcModel.selectedOptions[0]?.textContent || "Mẫu xe")}</strong></div>
-                <div>Trả thẳng: đặt cọc 30%; thanh toán trực tiếp 70% còn lại sau khi ký hợp đồng.</div>
+                <div><strong>${escapeHtml(vehicleDetailStr)}</strong></div>
+                ${priceSummaryHtml}
+                <div style="margin-top:4px;">Trả thẳng: đặt cọc 30% (${price > 0 ? formatVnd(deposit) : "theo báo giá"}); thanh toán trực tiếp 70% còn lại (${price > 0 ? formatVnd(remaining) : "theo hợp đồng"}) sau khi ký hợp đồng.</div>
             `;
         } else {
             const opt = calcPlan.selectedOptions[0];
@@ -426,13 +655,11 @@
             const selectedTerm = calcTerm?.selectedOptions[0];
             const months = Number(selectedTerm?.value || 0);
             const annualRate = Number(selectedTerm?.dataset?.rate || 0);
-            const price = Number(calcModel.selectedOptions[0]?.dataset?.price || 0);
-            const stock = Number(calcModel.selectedOptions[0]?.dataset?.available || 0);
             const requestedDownRate = Number(calcDownRate?.value || 30);
             const downRate = Math.min(100, Math.max(30, requestedDownRate)) / 100;
             if (calcDownRate && requestedDownRate < 30) calcDownRate.value = "30";
             const lines = price > 0 && months > 0 ? (() => {
-                const down = price * downRate;
+                const down = Math.round(price * downRate);
                 const principal = price - down;
                 const interest = principal * (annualRate / 100) * (months / 12);
                 const total = principal + interest;
@@ -441,13 +668,13 @@
                     <div>Lãi phẳng toàn kỳ (${months} tháng, ${annualRate}%/năm): <strong>${formatVnd(interest)}</strong></div>
                     <div>Tổng trả cho đối tác (gốc + lãi): <strong>${formatVnd(total)}</strong></div>
                     <div>Mỗi tháng dự kiến: <strong>${formatVnd(total / months)}</strong> · phần lãi ${formatVnd(interest / months)}</div>`;
-            })() : `<div style="margin-top:6px;">${stock > 0 ? "Xe này chưa có giá tồn kho hợp lệ để tính." : "Mẫu xe hiện không có xe AVAILABLE chưa gắn đơn trong kho, nên chưa thể tính tiền tự động."}</div>`;
+            })() : `<div style="margin-top:6px;">Vui lòng chọn mẫu xe và phiên bản để xem bảng tính trả góp tham khảo.</div>`;
             calcSummary.innerHTML = `
-                <div><strong>${escapeHtml(calcModel.selectedOptions[0]?.textContent || "Mẫu xe")}</strong></div>
-                <div>Phương án tham khảo: ${escapeHtml(bank)} · ${months} tháng · ${annualRate}%/năm.</div>
-                <div>Tồn kho khả dụng: ${stock} xe · Giá lấy tự động từ Cars.Price.</div>
+                <div><strong>${escapeHtml(vehicleDetailStr)}</strong></div>
+                ${priceSummaryHtml}
+                <div style="margin-top:4px;">Phương án tham khảo: ${escapeHtml(bank)} · ${months} tháng · ${annualRate}%/năm.</div>
                 ${lines}
-                <div style="font-size:11px;color:#475569;margin-top:6px;">Ước tính lãi phẳng theo bảng tham khảo bạn cung cấp. Sales/đối tác cần xác nhận giá, lãi suất và khoản vay thực tế.</div>
+                <div style="font-size:11px;color:#475569;margin-top:6px;">Ước tính lãi phẳng theo thông tin tham khảo. Sales/đối tác sẽ xác nhận giá, lãi suất và khoản vay thực tế.</div>
             `;
         }
     }
@@ -460,16 +687,35 @@
                 headers: { "Accept": "application/json" }
             });
             const data = await readJsonResponse(res);
+            if (typeof data.authenticated === "boolean") {
+                isAuthenticated = data.authenticated;
+            }
+            if (data.csrfToken) {
+                csrfToken = data.csrfToken;
+            }
+            const guestNotice = document.getElementById("ecs-guest-consult-notice");
+            if (!isAuthenticated) {
+                historyList.innerHTML = `<div style="color:#64748b;">Vui lòng đăng nhập để xem yêu cầu tư vấn.</div>`;
+                return;
+            }
+            if (guestNotice) guestNotice.hidden = true;
             const items = data.consultations || [];
             if (!items.length) {
                 historyList.innerHTML = `<div style="color:#64748b;">Bạn chưa có yêu cầu tư vấn nào. Hãy gửi câu hỏi ở trên để Sales Staff hỗ trợ!</div>`;
                 return;
             }
+            const consultBadge = (status) => {
+                const st = String(status || "PENDING").toUpperCase();
+                if (st === "IN_PROGRESS") return `<span style="background:#dbeafe;color:#1e40af;border:1px solid #93c5fd;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;">ĐANG TƯ VẤN</span>`;
+                if (st === "COMPLETED") return `<span style="background:#dcfce7;color:#166534;border:1px solid #86efac;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;">HOÀN TẤT</span>`;
+                if (st === "CANCELLED") return `<span style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;">ĐÃ HỦY</span>`;
+                return `<span style="background:#fef3c7;color:#92400e;border:1px solid #fcd34d;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;">CHỜ XỬ LÝ</span>`;
+            };
             historyList.innerHTML = items.map(c => `
                 <div class="ecs-consult-Popup-item">
-                    <div style="display:flex;justify-content:space-between;font-weight:700;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700;">
                         <span>#${escapeHtml(c.id)} · ${escapeHtml(c.modelName || "Tư vấn chung")}</span>
-                        <span style="color:#1456db;">${escapeHtml(c.status)}</span>
+                        ${consultBadge(c.status)}
                     </div>
                     <div style="white-space:pre-line;margin-top:4px;color:#1e293b;">${escapeHtml(c.content || "")}</div>
                     <div style="font-size:11px;color:#64748b;margin-top:4px;">NV phụ trách: ${escapeHtml(c.staffName || "Đang phân công")}</div>
@@ -497,7 +743,7 @@
                         });
                         const response = await fetch(`${contextPath}/consultation`, {
                             method: "POST", credentials: "same-origin",
-                            headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8", "Accept": "application/json" },
+                            headers: { "X-CSRF-Token": await ensureCsrf(), "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8", "Accept": "application/json" },
                             body: body.toString()
                         });
                         const result = await readJsonResponse(response);
@@ -526,7 +772,7 @@
             loadConsultationModels().then(() => {
                 if (preferredModelId && calcModel && [...calcModel.options].some((option) => option.value === preferredModelId)) {
                     calcModel.value = preferredModelId;
-                    syncConsultationPrice();
+                    syncVersionsAndColors();
                     updatePopupCalculation();
                 }
             }).catch((error) => notify(error.message || "Không tải được danh mục tồn kho."));
@@ -552,7 +798,9 @@
     });
 
     calcPlan?.addEventListener("change", () => { updateFinanceTerms(); updatePopupCalculation(); });
-    calcModel?.addEventListener("change", () => { syncConsultationPrice(); updatePopupCalculation(); });
+    calcModel?.addEventListener("change", () => { syncVersionsAndColors(); updatePopupCalculation(); });
+    calcVersion?.addEventListener("change", () => { syncColorsForSelection(); syncConsultationPrice(); updatePopupCalculation(); });
+    calcColor?.addEventListener("change", () => { syncConsultationPrice(); updatePopupCalculation(); });
     [calcMode, calcTerm].forEach((el) => el?.addEventListener("change", updatePopupCalculation));
     calcDownRate?.addEventListener("input", updatePopupCalculation);
     updateFinanceTerms();
@@ -560,8 +808,38 @@
 
     popupForm?.addEventListener("submit", async (event) => {
         event.preventDefault();
-        const modelName = calcModel?.selectedOptions[0]?.dataset?.name || "";
-        const modelId = calcModel?.selectedOptions[0]?.dataset?.modelId || "";
+        const guestNotice = document.getElementById("ecs-guest-consult-notice");
+        const feedbackEl = document.getElementById("ecs-consult-popup-feedback");
+        if (feedbackEl) {
+            feedbackEl.style.display = "none";
+            feedbackEl.textContent = "";
+        }
+        if (!isAuthenticated) {
+            try {
+                const authRes = await fetch(`${contextPath}/api/auth`, {
+                    credentials: "same-origin",
+                    headers: { "Accept": "application/json" }
+                });
+                if (authRes.ok) {
+                    const authData = await readJsonResponse(authRes);
+                    if (authData && authData.user) {
+                        isAuthenticated = true;
+                        if (authData.csrfToken) csrfToken = authData.csrfToken;
+                    }
+                }
+            } catch (_) {}
+        }
+        if (!isAuthenticated) {
+            if (guestNotice) guestNotice.hidden = false;
+            return;
+        }
+        if (guestNotice) guestNotice.hidden = true;
+        const modelName = calcModel?.selectedOptions[0]?.dataset?.name || calcModel?.selectedOptions[0]?.textContent || "";
+        const modelId = calcModel?.value || calcModel?.selectedOptions[0]?.dataset?.modelId || "";
+        const versionName = calcVersion?.selectedOptions[0]?.dataset?.name || "";
+        const versionId = calcVersion?.value || "";
+        const colorName = calcColor?.selectedOptions[0]?.dataset?.name || "";
+        const colorId = calcColor?.value || "";
         const mode = calcMode?.value || "BANK_TRANSFER";
         const bank = calcPlan?.selectedOptions[0]?.dataset?.bank || "";
         const term = calcTerm?.selectedOptions[0];
@@ -576,11 +854,29 @@
             return;
         }
 
+        const rawPrice = Number(calcPrice?.dataset?.rawPrice || 0);
+        const origPrice = Number(calcPrice?.dataset?.originalPrice || rawPrice);
+        const discAmount = Number(calcPrice?.dataset?.discountAmount || 0);
+        const discType = calcPrice?.dataset?.discountType || "";
+        const discValue = Number(calcPrice?.dataset?.discountValue || 0);
+        const promoName = calcPrice?.dataset?.promotionName || "";
+        const hasPromo = discAmount > 0 && promoName && origPrice > 0;
+        const priceDetails = hasPromo
+            ? [
+                { label: "Giá niêm yết", value: formatVnd(origPrice) },
+                { label: "Ưu đãi áp dụng", value: `${promoName} (${formatDiscountBadge(discType, discValue, discAmount)})` },
+                { label: "Giá sau ưu đãi", value: formatVnd(rawPrice) }
+            ]
+            : (rawPrice > 0 ? [{ label: "Giá xe", value: formatVnd(rawPrice) }] : []);
+
         const confirmed = await window.showAppConfirmModal({
             title: "Xác nhận gửi yêu cầu tư vấn & đặt xe",
             message: "Bạn có chắc chắn muốn gửi yêu cầu tư vấn và đăng ký mẫu xe này tới nhân viên Sales?",
             details: [
                 { label: "Mẫu xe quan tâm", value: modelName },
+                { label: "Phiên bản", value: versionName || "Tiêu chuẩn" },
+                { label: "Màu sắc", value: colorName || "Tiêu chuẩn" },
+                ...priceDetails,
                 { label: "Phương án thanh toán", value: pref }
             ],
             confirmText: "Có, xác nhận",
@@ -594,30 +890,56 @@
         submitButton.disabled = true;
         submitButton.textContent = "Đang gửi yêu cầu...";
 
+        const token = await ensureCsrf();
         const body = new URLSearchParams();
         body.set("action", "create");
         body.set("format", "json");
         body.set("model", modelName);
         body.set("modelId", modelId);
+        if (versionName) body.set("version", versionName);
+        if (versionId) body.set("versionId", versionId);
+        if (colorName) body.set("color", colorName);
+        if (colorId) body.set("colorId", colorId);
         body.set("paymentPreference", pref);
         body.set("message", message);
+        if (token) {
+            body.set("csrfToken", token);
+        }
 
         try {
             const res = await fetch(`${contextPath}/consultation`, {
                 method: "POST",
                 credentials: "same-origin",
-                headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8", "Accept": "application/json" },
+                headers: {
+                    "X-CSRF-Token": token || "",
+                    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                    "Accept": "application/json"
+                },
                 body: body.toString()
             });
             const data = await readJsonResponse(res);
             if (!data.success) throw new Error(data.message || "Không gửi được yêu cầu tư vấn.");
-            notify(data.message || "Đã gửi yêu cầu tư vấn.");
+            notify(data.message || "Đã gửi yêu cầu tư vấn thành công.");
+            if (feedbackEl) {
+                feedbackEl.style.display = "block";
+                feedbackEl.style.background = "#ecfdf5";
+                feedbackEl.style.color = "#065f46";
+                feedbackEl.style.border = "1px solid #a7f3d0";
+                feedbackEl.textContent = "✓ " + (data.message || "Đã gửi yêu cầu tư vấn thành công tới Sales Staff!");
+            }
             if (data.success) {
                 msgInput.value = "";
                 await loadPopupConsultations();
             }
         } catch (error) {
             notify(error.message || "Không thể gửi yêu cầu tư vấn. Vui lòng thử lại.");
+            if (feedbackEl) {
+                feedbackEl.style.display = "block";
+                feedbackEl.style.background = "#fef2f2";
+                feedbackEl.style.color = "#991b1b";
+                feedbackEl.style.border = "1px solid #fecaca";
+                feedbackEl.textContent = "✕ " + (error.message || "Không thể gửi yêu cầu tư vấn. Vui lòng thử lại.");
+            }
         } finally {
             submitButton.disabled = false;
             submitButton.textContent = oldButtonText;
@@ -750,4 +1072,25 @@
             }
         });
     }
+
+    // Global logout confirmation for Customer and Guest views
+    document.addEventListener("submit", async function(e) {
+        const form = e.target;
+        if (!form || !form.action || !form.action.includes("/logout")) return;
+        if (form.dataset.confirmedLogout === "true") return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        const confirmed = await window.showAppConfirmModal({
+            title: "Xác nhận đăng xuất",
+            message: "Bạn có chắc chắn muốn đăng xuất không?",
+            confirmText: "Đăng xuất",
+            cancelText: "Hủy",
+            isDanger: true
+        });
+        if (confirmed) {
+            form.dataset.confirmedLogout = "true";
+            form.submit();
+        }
+    }, true);
 })();

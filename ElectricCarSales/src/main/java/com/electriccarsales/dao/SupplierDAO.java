@@ -15,7 +15,8 @@ public class SupplierDAO extends DBContext {
         String sql = "SELECT * FROM Suppliers";
 
 
-        try (PreparedStatement ps = conn.prepareStatement(sql);
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
@@ -39,7 +40,8 @@ public class SupplierDAO extends DBContext {
     public boolean addSupplier(Supplier s) {
         String sql = "INSERT INTO Suppliers (SupplierName, Phone, Email, Address, Description) VALUES (?, ?, ?, ?, ?)";
 
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, s.getSupplierName());
             ps.setString(2, s.getPhone());

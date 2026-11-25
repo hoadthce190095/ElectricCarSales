@@ -24,14 +24,17 @@ if (customerEyebrow == null) customerEyebrow = "VINFAST · ELECTRIC CAR SALE";
         <% if ("ai-assistant.jsp".equals(customerPage)) { %>
         <link rel="stylesheet" href="<%= customerContext %>/assets/css/theme.css">
         <% } %>
+        <meta name="app-context-path" content="<%= customerContext %>">
+        <meta name="user-authenticated" content="<%= session.getAttribute("user") != null %>">
+        <meta name="csrf-token" content="<c:out value='${sessionScope.csrfToken}'/>">
         <link rel="stylesheet" href="<%= customerContext %>/assets/css/customer.css?v=customer-profile-route-20261116c">
         <% if ("ai-assistant.jsp".equals(customerPage)) { %>
         <link rel="stylesheet" href="<%= customerContext %>/assets/css/customer-ai.css?v=customer-ai-20261028">
         <% } %>
-        <script src="<%= customerContext %>/assets/js/customer.js?v=customer-profile-email-lock-20261117a" defer>
+        <script src="<%= customerContext %>/assets/js/customer.js?v=consult-popup-auth-price-20261125" defer>
         </script>
     </head>
-    <body data-context-path="<%= customerContext %>">
+    <body data-context-path="<%= customerContext %>" data-authenticated="<%= session.getAttribute("user") != null %>">
         <div class="customer-app">
             <aside class="customer-sidebar" id="customer-sidebar">
                 <a class="vf-brand" href="<%= customerContext %>/customer/profile" aria-label="VinFast ElectricCarSale">

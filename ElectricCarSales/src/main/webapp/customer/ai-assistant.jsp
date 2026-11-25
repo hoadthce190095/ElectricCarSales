@@ -61,7 +61,7 @@
                         <textarea id="ai-question" name="message" rows="2" maxlength="2000" placeholder="Ví dụ: Tôi cần xe đi làm, ngân sách khoảng 700 triệu…" required></textarea>
                         <button id="ai-send" class="ai-button" type="submit" disabled>Gửi <span aria-hidden="true">↑</span></button>
                     </form>
-                    <p class="ai-compose-note">Enter để gửi · Shift + Enter để xuống dòng. Tư vấn theo dữ liệu danh mục xe.</p>
+                    <p class="ai-compose-note">Enter để gửi · Shift + Enter để xuống dòng. Tư vấn danh mục xe.</p>
                 </div>
             </section>
             <aside class="ai-aside">

@@ -11,6 +11,20 @@
     <p>Chỉ xác nhận sau khi kiểm tra sao kê ngân hàng hoặc chứng từ giải ngân từ đối tác tài chính. Mã tham chiếu và số tiền phải trùng khớp thực tế.</p>
     <c:if test="${param.updated eq '1'}"><p role="status" style="color:#166534;font-weight:700;background:#dcfce7;border:1px solid #86efac;padding:8px 12px;border-radius:6px;">✓ Thao tác đã được lưu vào cơ sở dữ liệu.</p></c:if>
 
+    <c:if test="${not empty lateTransfers}">
+    <section class="finance-panel" style="border-color:#fca5a5;background:#fef2f2;">
+        <h2 style="color:#991b1b;">⚠️ Giao dịch chuyển khoản phát sinh sau khi đơn đã hủy (<c:out value="${lateTransfers.size()}"/>)</h2>
+        <p style="color:#7f1d1d;">Khách hàng đã quét mã QR cũ sau khi đơn bị hủy. Đơn hàng không được tự động kích hoạt lại; Kế toán cần kiểm tra và xử lý hoàn/đối soát thủ công.</p>
+        <c:forEach var="lt" items="${lateTransfers}">
+            <article style="border-top:1px solid #fecaca;padding:10px 0;">
+                <strong>Khoản #<c:out value="${lt.paymentId}"/> · Đơn <c:out value="${lt.orderCode}"/> (#<c:out value="${lt.orderId}"/>) · <c:out value="${lt.customer}"/></strong>
+                <p>Số tiền: <strong><c:out value="${lt.formattedReceivedAmount}"/></strong> · Mã tham chiếu: <code><c:out value="${lt.reference}"/></code></p>
+                <p style="font-size:12px;color:#7f1d1d;"><c:out value="${lt.note}"/></p>
+            </article>
+        </c:forEach>
+    </section>
+    </c:if>
+
     <section class="finance-panel">
         <h2>Theo dõi công nợ đơn hàng (<c:out value="${openDebts.size()}"/>)</h2>
         <c:if test="${empty openDebts}"><p>Không có đơn hàng còn công nợ.</p></c:if>
@@ -19,12 +33,24 @@
             <strong>Đơn <c:out value="${debt.orderCode}"/> (#<c:out value="${debt.orderId}"/>) · <c:out value="${debt.customer}"/></strong>
             <p>Tổng: <strong><c:out value="${debt.formattedTotalAmount}"/></strong> · Cọc 30%: <strong><c:out value="${debt.formattedDepositAmount}"/></strong> · Còn nợ: <strong style="color:#b91c1c;"><c:out value="${debt.formattedRemainingAmount}"/></strong></p>
             <p>Phương thức: <strong><c:out value="${debt.paymentMethod}"/></strong> <c:if test="${not empty debt.company}">· Đối tác: <strong style="color:#0284c7;"><c:out value="${debt.company}"/></strong></c:if> · Trạng thái đơn: <c:out value="${debt.orderStatus}"/> · Hợp đồng: <c:out value="${debt.contractStatus}" default="Chưa ký"/></p>
+            <div style="margin:6px 0;display:flex;gap:12px;flex-wrap:wrap;font-size:12px;">
+              <a href="${pageContext.request.contextPath}/staff/sales-document?kind=contract&amp;orderId=${debt.orderId}&amp;view=html" target="_blank" style="color:#0284c7;font-weight:600;">👁️ Xem Hợp đồng</a>
+              <a href="${pageContext.request.contextPath}/staff/sales-document?kind=contract&amp;orderId=${debt.orderId}" style="color:#0284c7;">📥 Tải HĐ (Word)</a>
+              <c:if test="${debt.orderStatus eq 'DEPOSITED' or debt.orderStatus eq 'PROCESSING' or debt.orderStatus eq 'PAID' or debt.orderStatus eq 'COMPLETED'}">
+                <a href="${pageContext.request.contextPath}/staff/sales-document?kind=deposit&amp;orderId=${debt.orderId}&amp;view=html" target="_blank" style="color:#059669;font-weight:600;">👁️ Xem Biên nhận cọc</a>
+                <a href="${pageContext.request.contextPath}/staff/sales-document?kind=deposit&amp;orderId=${debt.orderId}" style="color:#059669;">📥 Tải BN cọc (Word)</a>
+              </c:if>
+              <c:if test="${debt.orderStatus eq 'PAID' or debt.orderStatus eq 'COMPLETED'}">
+                <a href="${pageContext.request.contextPath}/staff/sales-document?kind=invoice&amp;orderId=${debt.orderId}&amp;view=html" target="_blank" style="color:#7c3aed;font-weight:600;">👁️ Xem Hóa đơn</a>
+                <a href="${pageContext.request.contextPath}/staff/sales-document?kind=invoice&amp;orderId=${debt.orderId}" style="color:#7c3aed;">📥 Tải HĐơn (Word)</a>
+              </c:if>
+            </div>
             <c:if test="${debt.paymentMethod eq 'INSTALLMENT' and debt.contractStatus eq 'SIGNED' and (debt.orderStatus eq 'DEPOSITED' or debt.orderStatus eq 'PROCESSING')}">
               <form method="post" action="<%= request.getContextPath() %>/staff/payment-review">
                 <input type="hidden" name="csrfToken" value="<c:out value='${csrfTokenForPayment}'/>">
                 <input type="hidden" name="action" value="partner">
                 <input type="hidden" name="orderId" value="<c:out value='${debt.orderId}'/>">
-                <button type="submit">Ghi nhận chờ giải ngân 70% từ <c:out value="${debt.company}" default="ngân hàng"/></button>
+                <button type="submit">Đồng bộ giải ngân 70% sau khi ký</button>
               </form>
             </c:if>
           </article>
@@ -40,6 +66,12 @@
         <p>Số tiền yêu cầu: <strong style="color:#0284c7;font-size:16px;"><c:out value="${p.formattedAmount}"/></strong></p>
         <p>Mã thanh toán SePay / Nội dung chuyển khoản: <code><c:out value="${p.reference}"/></code></p>
         <p>Trạng thái tự động: <c:choose><c:when test="${p.bankReported}"><strong style="color:#166534;">Đã nhận giao dịch đối soát SePay / ngân hàng.</strong> <small><c:out value="${p.note}"/></small></c:when><c:otherwise>Kiểm tra chứng từ/sao kê thủ công trước khi quyết định.</c:otherwise></c:choose></p>
+        <div style="margin:4px 0 8px;font-size:12px;color:#64748b;">
+            <span>📄 Chứng từ: </span>
+            <a href="${pageContext.request.contextPath}/staff/sales-document?kind=contract&amp;orderId=${p.orderId}&amp;view=html" target="_blank" style="color:#0284c7;font-weight:600;">👁️ HĐ mua bán</a>
+            · <a href="${pageContext.request.contextPath}/staff/sales-document?kind=contract&amp;orderId=${p.orderId}" style="color:#0284c7;">📥 HĐ Word</a>
+            · <span style="color:#94a3b8;font-style:italic;">Biên nhận cọc: Chưa phát hành (chờ xác nhận tiền)</span>
+        </div>
         <form method="post" action="<%= request.getContextPath() %>/staff/payment-review" style="margin-top:12px;background:#f8fafc;padding:12px;border-radius:8px;border:1px solid #e2e8f0;">
             <input type="hidden" name="csrfToken" value="<c:out value='${csrfTokenForPayment}'/>">
             <input type="hidden" name="paymentId" value="<c:out value='${p.paymentId}'/>">
@@ -74,7 +106,16 @@
             <p style="margin:6px 0;">Phương thức: <strong><c:out value="${p.methodName}"/></strong> · Loại: <strong><c:out value="${p.formattedType}"/></strong> · Mã thanh toán SePay / Nội dung chuyển khoản: <code><c:out value="${p.reference}"/></code></p>
             <p style="margin:4px 0;">Số tiền thực nhận: <strong style="color:#166534;font-size:15px;"><c:out value="${p.formattedReceivedAmount}"/></strong> · Thời gian: <c:out value="${p.formattedDate}"/></p>
 
-            <c:if test="${p.type eq 'DEPOSIT'}"><p><a href="${pageContext.request.contextPath}/staff/sales-document?kind=deposit&amp;orderId=${p.orderId}" style="font-size:12px;color:#0284c7;">📥 Tải biên nhận cọc (Word)</a></p></c:if>
+            <div style="margin:6px 0;display:flex;gap:12px;flex-wrap:wrap;font-size:12px;">
+                <c:if test="${p.type eq 'DEPOSIT'}">
+                    <a href="${pageContext.request.contextPath}/staff/sales-document?kind=deposit&amp;orderId=${p.orderId}&amp;view=html" target="_blank" style="color:#0284c7;font-weight:600;">👁️ Xem biên nhận cọc</a>
+                    <a href="${pageContext.request.contextPath}/staff/sales-document?kind=deposit&amp;orderId=${p.orderId}" style="color:#0284c7;">📥 Tải BN cọc (Word)</a>
+                </c:if>
+                <a href="${pageContext.request.contextPath}/staff/sales-document?kind=contract&amp;orderId=${p.orderId}&amp;view=html" target="_blank" style="color:#475569;font-weight:600;">👁️ Xem HĐ mua bán</a>
+                <a href="${pageContext.request.contextPath}/staff/sales-document?kind=contract&amp;orderId=${p.orderId}" style="color:#475569;">📥 Tải HĐ (Word)</a>
+                <a href="${pageContext.request.contextPath}/staff/sales-document?kind=invoice&amp;orderId=${p.orderId}&amp;view=html" target="_blank" style="color:#7c3aed;font-weight:600;">👁️ Xem Hóa đơn</a>
+                <a href="${pageContext.request.contextPath}/staff/sales-document?kind=invoice&amp;orderId=${p.orderId}" style="color:#7c3aed;">📥 Tải HĐơn (Word)</a>
+            </div>
             <c:if test="${not empty p.sePayEvidence}">
                 <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:6px;padding:6px 10px;margin:6px 0;font-size:12px;color:#166534;">
                     Mã GD SePay: <strong>#<c:out value="${p.sePayEvidence.eventId}"/></strong>

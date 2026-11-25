@@ -110,9 +110,11 @@
                 <td>
                   <span class="status-badge status-${o.contractStatus}"><c:out value="${o.contractStatus}" default="—"/></span>
                   <c:if test="${o.contractStatus eq 'SIGNED'}">
-                    <br><a class="btn-link" href="<%= request.getContextPath() %>/staff/sales-document?kind=contract&amp;orderId=<c:out value='${o.orderId}'/>">HĐ Word</a>
+                    <br><a class="btn-link" target="_blank" href="<%= request.getContextPath() %>/staff/sales-document?kind=contract&amp;orderId=<c:out value='${o.orderId}'/>&amp;view=html">👁️ Xem HĐ</a>
+                    · <a class="btn-link" href="<%= request.getContextPath() %>/staff/sales-document?kind=contract&amp;orderId=<c:out value='${o.orderId}'/>">HĐ Word</a>
                   </c:if>
-                  <br><a class="btn-link" href="<%= request.getContextPath() %>/staff/sales-document?kind=deposit&amp;orderId=<c:out value='${o.orderId}'/>">Cọc Word</a>
+                  <br><a class="btn-link" target="_blank" href="<%= request.getContextPath() %>/staff/sales-document?kind=deposit&amp;orderId=<c:out value='${o.orderId}'/>&amp;view=html">👁️ Xem Cọc</a>
+                  · <a class="btn-link" href="<%= request.getContextPath() %>/staff/sales-document?kind=deposit&amp;orderId=<c:out value='${o.orderId}'/>">Cọc Word</a>
                 </td>
                 <c:if test="${isAccountant}">
                   <td>
@@ -181,9 +183,34 @@
                 <td><span class="status-badge status-ISSUED"><c:out value="${inv.status}"/></span></td>
                 <td><c:out value="${inv.note}" default="—"/></td>
                 <td>
+                  <a class="btn-link" target="_blank"
+                     href="<%= request.getContextPath() %>/staff/sales-document?kind=invoice&amp;orderId=<c:out value='${inv.orderID}'/>&amp;view=html">
+                    👁️ Xem HTML
+                  </a>
+                  ·
                   <a class="btn-link"
                      href="<%= request.getContextPath() %>/staff/sales-document?kind=invoice&amp;orderId=<c:out value='${inv.orderID}'/>">
                     ⬇ Tải Word
+                  </a>
+                  <br>
+                  <a class="btn-link" target="_blank"
+                     href="<%= request.getContextPath() %>/staff/sales-document?kind=contract&amp;orderId=<c:out value='${inv.orderID}'/>&amp;view=html">
+                    👁️ HĐ
+                  </a>
+                  ·
+                  <a class="btn-link"
+                     href="<%= request.getContextPath() %>/staff/sales-document?kind=contract&amp;orderId=<c:out value='${inv.orderID}'/>">
+                    HĐ Word
+                  </a>
+                  ·
+                  <a class="btn-link" target="_blank"
+                     href="<%= request.getContextPath() %>/staff/sales-document?kind=deposit&amp;orderId=<c:out value='${inv.orderID}'/>&amp;view=html">
+                    👁️ Cọc
+                  </a>
+                  ·
+                  <a class="btn-link"
+                     href="<%= request.getContextPath() %>/staff/sales-document?kind=deposit&amp;orderId=<c:out value='${inv.orderID}'/>">
+                    Cọc Word
                   </a>
                 </td>
               </tr>
@@ -220,7 +247,7 @@
               <th>Còn nợ</th>
               <th>TT Đơn</th>
               <th>Hợp đồng</th>
-              <th>Hóa đơn</th>
+              <th>Hóa đơn / Chứng từ</th>
             </tr>
           </thead>
           <tbody>
@@ -251,20 +278,23 @@
                 <td><span class="status-badge status-${o.orderStatus}"><c:out value="${o.orderStatus}"/></span></td>
                 <td>
                   <span class="status-badge status-${o.contractStatus}"><c:out value="${o.contractStatus}" default="Chưa có"/></span>
-                  <c:if test="${o.contractStatus eq 'SIGNED'}">
-                    <br><a class="btn-link" href="<%= request.getContextPath() %>/staff/sales-document?kind=contract&amp;orderId=<c:out value='${o.orderId}'/>">HĐ Word</a>
+                  <c:if test="${o.contractStatus eq 'SIGNED' or o.contractStatus eq 'PENDING_SIGNATURE'}">
+                    <br><a class="btn-link" target="_blank" href="<%= request.getContextPath() %>/staff/sales-document?kind=contract&amp;orderId=<c:out value='${o.orderId}'/>&amp;view=html">👁️ Xem HĐ</a>
+                    · <a class="btn-link" href="<%= request.getContextPath() %>/staff/sales-document?kind=contract&amp;orderId=<c:out value='${o.orderId}'/>">HĐ Word</a>
                   </c:if>
                 </td>
                 <td>
                   <c:choose>
                     <c:when test="${not empty o.invoiceId}">
                       <span class="status-badge status-ISSUED">ĐÃ PHÁT HÀNH</span>
-                      <a class="btn-link" href="<%= request.getContextPath() %>/staff/sales-document?kind=invoice&amp;orderId=<c:out value='${o.orderId}'/>">HĐơn Word</a>
+                      <br><a class="btn-link" target="_blank" href="<%= request.getContextPath() %>/staff/sales-document?kind=invoice&amp;orderId=<c:out value='${o.orderId}'/>&amp;view=html">👁️ Xem HĐơn</a>
+                      · <a class="btn-link" href="<%= request.getContextPath() %>/staff/sales-document?kind=invoice&amp;orderId=<c:out value='${o.orderId}'/>">HĐơn Word</a>
                     </c:when>
-                    <c:otherwise><span style="color:#94a3b8;">Chưa có</span></c:otherwise>
+                    <c:otherwise><span style="color:#94a3b8;">Chưa phát hành</span></c:otherwise>
                   </c:choose>
                   <c:if test="${o.orderStatus eq 'DEPOSITED' or o.orderStatus eq 'PROCESSING' or o.orderStatus eq 'PAID' or o.orderStatus eq 'COMPLETED'}">
-                    <br><a class="btn-link" href="<%= request.getContextPath() %>/staff/sales-document?kind=deposit&amp;orderId=<c:out value='${o.orderId}'/>">Cọc Word</a>
+                    <br><a class="btn-link" target="_blank" href="<%= request.getContextPath() %>/staff/sales-document?kind=deposit&amp;orderId=<c:out value='${o.orderId}'/>&amp;view=html">👁️ Xem Cọc</a>
+                    · <a class="btn-link" href="<%= request.getContextPath() %>/staff/sales-document?kind=deposit&amp;orderId=<c:out value='${o.orderId}'/>">Cọc Word</a>
                   </c:if>
                 </td>
               </tr>

@@ -6,6 +6,7 @@ import com.electriccarsales.dao.InvoiceDAO;
 import com.electriccarsales.dao.order.OrderDAO;
 import com.electriccarsales.model.Order;
 import com.electriccarsales.service.BankTransferService;
+import com.electriccarsales.service.OrderExpirationService;
 import com.electriccarsales.service.PaymentService;
 import com.electriccarsales.service.SePayService;
 import jakarta.servlet.ServletException;
@@ -30,6 +31,7 @@ import java.util.UUID;
 public class PaymentController extends HttpServlet {
     private PaymentService paymentService;
     private final BankTransferService bankTransferService = new BankTransferService();
+    private final OrderExpirationService orderExpirationService = new OrderExpirationService();
 
     public PaymentController() {
         this(new PaymentService());
@@ -53,10 +55,12 @@ public class PaymentController extends HttpServlet {
         if (customerId == null) return;
 
         try {
-            bankTransferService.syncCustomerReportedTransfers(customerId);
-
             if ("check".equals(action)) {
                 Integer paymentId = FinanceControllerSupport.positiveInt(request.getParameter("paymentId"));
+                if (paymentId != null) {
+                    orderExpirationService.expireOrderIfOverdueForPayment(paymentId);
+                }
+                bankTransferService.syncCustomerReportedTransfers(customerId);
                 BankTransferService.Transfer transfer = paymentId == null ? null
                         : bankTransferService.checkAndAutoCompleteTransfer(paymentId, customerId);
                 if (transfer == null) {
@@ -65,8 +69,10 @@ public class PaymentController extends HttpServlet {
                 }
                 response.setHeader("Cache-Control", "no-store");
                 response.setContentType("application/json;charset=UTF-8");
-                response.getWriter().write("{\"status\":\"" + transfer.status()
-                        + "\",\"bankReported\":" + transfer.bankReported()
+                String transferStatus = transfer.isOrderCancelled() ? "CANCELLED" : transfer.status();
+                response.getWriter().write("{\"status\":\"" + transferStatus
+                        + "\",\"bankReported\":" + (!transfer.isOrderCancelled() && transfer.bankReported())
+                        + ",\"orderStatus\":\"" + (transfer.orderStatus() == null ? "" : transfer.orderStatus()) + "\""
                         + ",\"orderId\":" + transfer.orderId() + "}");
                 return;
             }
@@ -74,9 +80,17 @@ public class PaymentController extends HttpServlet {
             String token = ensureCsrf(request);
             request.setAttribute("paymentCsrf", token);
             Integer orderId = FinanceControllerSupport.positiveInt(request.getParameter("orderId"));
+            if (orderId != null) {
+                orderExpirationService.expireOrderIfOverdue(orderId);
+            }
+
+            bankTransferService.syncCustomerReportedTransfers(customerId);
 
             if ("transfer".equals(action)) {
                 Integer requestedPaymentId = FinanceControllerSupport.positiveInt(request.getParameter("paymentId"));
+                if (requestedPaymentId != null && orderId == null) {
+                    orderExpirationService.expireOrderIfOverdueForPayment(requestedPaymentId);
+                }
                 String requestedType = request.getParameter("type");
                 BankTransferService.Transfer transfer = null;
                 if (requestedPaymentId != null) {
@@ -88,7 +102,28 @@ public class PaymentController extends HttpServlet {
                     transfer = bankTransferService.findPendingCustomerTransferByOrder(orderId, customerId, requestedType);
                 }
 
+                if (transfer != null && transfer.isOrderCancelled()) {
+                    Order cancelledOrder = new OrderDAO().findById(transfer.orderId());
+                    request.setAttribute("sepayError", "Đơn hàng đã bị hủy. Bạn không thể tạo hoặc quét mã thanh toán cho đơn này.");
+                    if (cancelledOrder != null) {
+                        request.setAttribute("cancelReason", cancelledOrder.getCancelReason());
+                    }
+                    request.setAttribute("orderId", transfer.orderId());
+                    request.getRequestDispatcher("/customer/bank-transfer.jsp").forward(request, response);
+                    return;
+                }
+
                 if (transfer == null && orderId != null) {
+                    Order existingOrder = new OrderDAO().findById(orderId);
+                    if (existingOrder != null && existingOrder.getCustomerId() == customerId
+                            && "CANCELLED".equalsIgnoreCase(existingOrder.getStatus())) {
+                        request.setAttribute("sepayError", "Đơn hàng đã bị hủy. Bạn không thể tạo hoặc quét mã thanh toán cho đơn này.");
+                        request.setAttribute("cancelReason", existingOrder.getCancelReason());
+                        request.setAttribute("orderId", orderId);
+                        request.setAttribute("type", requestedType != null ? requestedType : "DEPOSIT");
+                        request.getRequestDispatcher("/customer/bank-transfer.jsp").forward(request, response);
+                        return;
+                    }
                     try {
                         transfer = bankTransferService.createForCustomer(
                                 orderId, customerId, requestedType != null ? requestedType : "DEPOSIT", "BANK_TRANSFER");
@@ -239,6 +274,7 @@ public class PaymentController extends HttpServlet {
         }
 
         try {
+            orderExpirationService.expireOrderIfOverdue(orderId);
             BankTransferService.Transfer transfer = bankTransferService.createForCustomer(
                     orderId, customerId, type, method);
             if ("CASH".equals(transfer.methodName())) {
@@ -265,7 +301,7 @@ public class PaymentController extends HttpServlet {
         }
     }
 
-    static String ensureCsrf(HttpServletRequest request) {
+    public static String ensureCsrf(HttpServletRequest request) {
         HttpSession session = request.getSession();
         Object token = session.getAttribute("csrfToken");
         if (!(token instanceof String value) || value.isBlank()) {
@@ -276,10 +312,11 @@ public class PaymentController extends HttpServlet {
         return (String) token;
     }
 
-    static boolean validCsrf(HttpServletRequest request) {
+    public static boolean validCsrf(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         String expected = session == null ? null : (String) session.getAttribute("csrfToken");
         String actual = request.getParameter("csrfToken");
+        if (actual == null) actual = request.getHeader("X-CSRF-Token");
         return expected != null && actual != null && MessageDigest.isEqual(
                 expected.getBytes(StandardCharsets.UTF_8), actual.getBytes(StandardCharsets.UTF_8));
     }

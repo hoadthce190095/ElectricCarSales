@@ -33,7 +33,7 @@
     <link rel="stylesheet" href="<%= appContext %>/assets/css/staff.css">
 
     <!-- Nạp staff.js để chạy menu bên trái và các phân hệ dashboard -->
-    <script src="<%= appContext %>/assets/js/staff.js?v=sales-order-actions-20261117c" defer></script>
+    <script src="<%= appContext %>/assets/js/staff.js?v=staff-consult-cancel-20261125" defer></script>
 </head>
 <body data-context-path="<%= appContext %>">
 <div class="staff-app" data-staff-app data-staff-role="<c:out value='${sessionScope.roleName}' />">
@@ -102,7 +102,7 @@
           <% if (inventoryPage) { %>
             <div class="page-heading" style="margin-bottom:20px;">
                 <div>
-                    <div class="eyebrow"><span class="eyebrow-line"></span>RDS 9.1 &amp; 10.5 · QUẢN LÝ TỒN KHO XE VẬT LÝ</div>
+                    <div class="eyebrow"><span class="eyebrow-line"></span>QUẢN LÝ TỒN KHO XE VẬT LÝ</div>
                     <h1 style="font-size:24px;margin:4px 0 8px;">Quản lý tồn kho xe điện VinFast</h1>
                     <p style="color:#64748b;font-size:14px;margin:0;">Theo dõi chi tiết từng xe vật lý theo số khung VIN, số máy, màu sắc, phiên bản và trạng thái thực tế trong kho.</p>
                 </div>
@@ -153,7 +153,7 @@
                 </div>
             </div>
 
-            <!-- THANH TÌM KIẾM VÀ LỌC TRẠNG THÁI (RDS 9.1.3 & 9.1.4) -->
+            <!-- THANH TÌM KIẾM VÀ LỌC TRẠNG THÁI -->
             <section style="background:#fff;padding:16px;border-radius:12px;border:1px solid #cbd5e1;margin-bottom:20px;">
                 <form method="get" action="<%= appContext %>/staff/inventory" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
                     <div style="flex:1;min-width:240px;">
@@ -181,7 +181,7 @@
                 </form>
             </section>
 
-            <!-- DANH SÁCH XE VẬT LÝ TRONG KHO (RDS 9.1 & 10.4) -->
+            <!-- DANH SÁCH XE VẬT LÝ TRONG KHO -->
             <div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow-x:auto;box-shadow:0 1px 3px rgba(0,0,0,0.05);margin-bottom:24px;">
                 <table style="width:100%;border-collapse:collapse;font-size:13px;text-align:left;">
                     <thead>
@@ -220,7 +220,7 @@
                                         <code style="background:#f8fafc;padding:3px 6px;border-radius:4px;color:#334155;"><c:out value="${car.engineNumber}" /></code>
                                     </td>
                                     <td style="padding:12px 14px;font-weight:600;">
-                                        <fmt:formatNumber value="${car.price}" pattern="#,###" /> VNĐ
+                                        <fmt:formatNumber value="${car.price}" pattern="#,###" /> VND
                                     </td>
                                     <td style="padding:12px 14px;color:#64748b;">
                                         <c:choose>
@@ -281,10 +281,10 @@
                 </table>
             </div>
 
-            <!-- BẢNG TỔNG QUAN THEO MẪU XE (RDS 10.5) -->
+            <!-- BẢNG TỔNG QUAN THEO MẪU XE -->
             <c:if test="${not empty inventoryList}">
                 <div style="margin-top:20px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                    <h3 style="font-size:15px;margin:0 0 12px;color:#0f172a;">Tổng quan số lượng tồn kho theo mẫu xe &amp; màu sắc (RDS 10.5)</h3>
+                    <h3 style="font-size:15px;margin:0 0 12px;color:#0f172a;">Tổng quan số lượng tồn kho theo mẫu xe &amp; màu sắc</h3>
                     <div style="overflow-x:auto;">
                         <table style="width:100%;border-collapse:collapse;font-size:13px;text-align:left;">
                             <thead>

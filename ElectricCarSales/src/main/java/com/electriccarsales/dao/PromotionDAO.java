@@ -70,7 +70,8 @@ public class PromotionDAO extends DBContext {
 
     public List<Promotion> getAll() {
         List<Promotion> list = new ArrayList<>();
-        try (PreparedStatement check = conn.prepareStatement(
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement check = conn.prepareStatement(
                 "SELECT CASE WHEN OBJECT_ID(N'dbo.Promotions', N'U') IS NOT NULL THEN 1 ELSE 0 END");
              ResultSet crs = check.executeQuery()) {
             if (!crs.next() || crs.getInt(1) == 0) {
@@ -81,7 +82,8 @@ public class PromotionDAO extends DBContext {
         }
 
         String sql = "SELECT * FROM Promotions";
-        try (PreparedStatement ps = conn.prepareStatement(sql);
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 Promotion p = new Promotion();

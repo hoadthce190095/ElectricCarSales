@@ -97,9 +97,9 @@ async function editUser(user) {
                 ])
                 : field("username", "Tên đăng nhập", "text", "", {
                     required: true,
-                    minlength: 3,
-                    maxlength: 50,
-                    help: "3–50 ký tự: chữ, số, dấu chấm, gạch dưới hoặc gạch ngang."
+                    minlength: 5,
+                    maxlength: 30,
+                    help: "5–30 ký tự: chữ, số và gạch dưới."
                 }),
             user?.role === "CUSTOMER"
                 ? null
@@ -107,11 +107,11 @@ async function editUser(user) {
                     required: true,
                     maxlength: 100
                 }),
-            field("email", "Email", "email", user?.email || "", { required: true, maxlength: 100 }),
+            field("email", "Email", "email", user?.email || "", { required: true, maxlength: 30 }),
             field("phone", "Số điện thoại", "tel", user?.phone || "", {
                 required: true,
-                maxlength: 20,
-                help: "8–15 chữ số; có thể bắt đầu bằng +."
+                maxlength: 10, pattern: "0[0-9]{9}",
+                help: "10 chữ số, bắt đầu bằng 0."
             }),
             field(
                 "roleId",
@@ -128,11 +128,11 @@ async function editUser(user) {
                 ? null
                 : field("password", "Mật khẩu khởi tạo", "password", "", {
                       required: true,
-                      minlength: 10,
-                      maxlength: 128,
+                      minlength: 8,
+                      maxlength: 30,
                       full: true,
                       autocomplete: "new-password",
-                      help: "Tối thiểu 10 ký tự; nên dùng chữ, số và ký tự đặc biệt."
+                      help: "8–30 ký tự, gồm chữ hoa, số và ký tự đặc biệt."
                   })
         ].filter(Boolean),
         async (input) => {
@@ -235,7 +235,7 @@ function editEmployee(employee) {
                 full: true,
                 maxlength: 100
             }),
-            field("email", "Email", "email", employee.email || "", { required: true, maxlength: 100 }),
+            field("email", "Email", "email", employee.email || "", { required: true, maxlength: 30 }),
             field("phone", "Số điện thoại", "tel", employee.phone || "", {
                 required: true,
                 maxlength: 20

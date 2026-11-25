@@ -15,7 +15,8 @@ public class CarVersionDAO extends DBContext {
         String sql = "SELECT * FROM CarVersions";
 
 
-        try (PreparedStatement ps = conn.prepareStatement(sql);
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {

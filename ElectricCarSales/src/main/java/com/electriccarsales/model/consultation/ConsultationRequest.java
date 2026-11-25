@@ -40,4 +40,30 @@ public class ConsultationRequest {
     public void setModelName(String modelName) { this.modelName = modelName; }
     public String getStaffName() { return staffName; }
     public void setStaffName(String staffName) { this.staffName = staffName; }
+
+    public String getVersionInfo() {
+        if (content == null) return "";
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\[(?:Mẫu|Xe):.*?(?:\\| Bản:|\\| Phiên bản:)\\s*([^|\\]]+)").matcher(content);
+        return m.find() ? m.group(1).trim() : "";
+    }
+
+    public String getColorInfo() {
+        if (content == null) return "";
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\[(?:Mẫu|Xe):.*?(?:\\| Màu:)\\s*([^|\\]]+)").matcher(content);
+        return m.find() ? m.group(1).trim() : "";
+    }
+
+    public String getPaymentPreferenceInfo() {
+        if (content == null) return "";
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\[Phương án:\\s*([^|\\]]+)\\]").matcher(content);
+        return m.find() ? m.group(1).trim() : "";
+    }
+
+    public String getCleanMessage() {
+        if (content == null) return "";
+        String cleaned = content;
+        cleaned = cleaned.replaceAll("\\[(?:Mẫu|Xe):[^\\]]+\\]\\s*", "");
+        cleaned = cleaned.replaceAll("\\[Phương án:[^\\]]+\\]\\s*", "");
+        return cleaned.trim();
+    }
 }

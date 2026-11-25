@@ -45,44 +45,9 @@ public class InstallmentController extends HttpServlet {
                         "Chức năng trả góp không tồn tại.");
                 return;
             }
-            request.setAttribute("installmentPlans", installmentService.getPlans());
             request.setAttribute("financialCompanies", installmentService.getFinancialCompanies());
             request.setAttribute("contractList", new ContractsDAO().findByCustomerId(customerId));
 
-            Integer contractId = FinanceControllerSupport.positiveInt(request.getParameter("contractId"));
-            Integer orderId = FinanceControllerSupport.positiveInt(request.getParameter("orderId"));
-            InstallmentContract contract = null;
-
-            if (contractId != null) {
-                contract = installmentService.getContractDetails(contractId);
-                if (contract == null || !installmentService.contractBelongsToCustomer(contractId, customerId)) {
-                    FinanceControllerSupport.sendError(response, HttpServletResponse.SC_NOT_FOUND,
-                            "Không tìm thấy hợp đồng trả góp.");
-                    return;
-                }
-            } else if (orderId != null) {
-                if (!installmentService.orderBelongsToCustomer(orderId, customerId)) {
-                    FinanceControllerSupport.sendError(response, HttpServletResponse.SC_NOT_FOUND,
-                            "Không tìm thấy đơn hàng.");
-                    return;
-                }
-                contract = installmentService.getContractForOrder(orderId);
-                if (contract != null) {
-                    contract = installmentService.getContractDetails(contract.getInstallmentContractID());
-                }
-            }
-
-            if (contract != null) {
-                request.setAttribute("installmentContract", contract);
-                request.setAttribute("installmentCompany",
-                        installmentService.getFinancialCompany(contract.getCompanyID()));
-                request.setAttribute("installmentSchedule",
-                        installmentService.getSchedule(contract.getInstallmentContractID()));
-                request.setAttribute("installmentPaymentHistory",
-                        installmentService.getPaymentHistory(contract.getInstallmentContractID()));
-                request.setAttribute("outstandingDebt",
-                        installmentService.getOutstandingDebt(contract.getInstallmentContractID()));
-            }
             request.getRequestDispatcher("/customer/my-contracts.jsp").forward(request, response);
         } catch (IllegalArgumentException e) {
             FinanceControllerSupport.sendError(response, HttpServletResponse.SC_BAD_REQUEST,
@@ -110,7 +75,7 @@ public class InstallmentController extends HttpServlet {
         }
         // Per RDS EX-08 & BR-05, periodic installment collection is handled by the partner bank outside the website.
         FinanceControllerSupport.sendError(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,
-                "Theo RDS (EX-08 & BR-05), website chỉ thu 30% tiền đặt cọc và ghi nhận ngân hàng đối tác giải ngân 70% còn lại; không thu tiền trả góp định kỳ hàng tháng trên website.");
+                "Website thu 30% tiền đặt cọc; sau khi Kế toán đối soát khoản cọc và khách ký hợp đồng, đại lý chờ nhận khoản giải ngân 70% còn lại. Các kỳ trả góp hàng tháng được thanh toán trực tiếp với đối tác.");
     }
 
     private static String action(HttpServletRequest request) {

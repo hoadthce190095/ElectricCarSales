@@ -36,7 +36,8 @@
                 </tr>
             </thead>
             <tbody>
-                <c:forEach var="order" items="${orders}">
+                <c:set var="orderList" value="${not empty orders ? orders : customerOrders}"/>
+                <c:forEach var="order" items="${orderList}">
                     <tr>
                         <td><strong><c:out value="${order.orderCode}"/></strong><br><small style="color:#64748b;">#<c:out value="${order.id}"/></small></td>
                         <td><c:out value="${order.orderDate}"/></td>
@@ -45,7 +46,7 @@
                         <td><c:out value="${order.formattedDepositAmount}"/></td>
                         <td>
                             <c:choose>
-                                <c:when test="${order.isInstallment() and (order.isDepositPaid() or (not empty order.remainingAmount and order.remainingAmount le 0))}">
+                                <c:when test="${order.installment and not empty order.remainingAmount and order.remainingAmount le 0}">
                                     <span style="color:#15803d;font-weight:700;">0 ₫</span>
                                     <div style="font-size:11px;color:#0369a1;font-weight:600;">(Đã giải ngân 70%)</div>
                                 </c:when>
@@ -56,7 +57,7 @@
                         </td>
                         <td>
                             <c:choose>
-                                <c:when test="${order.isInstallment() and (order.isDepositPaid() or (not empty order.remainingAmount and order.remainingAmount le 0))}">
+                                <c:when test="${order.installment and not empty order.remainingAmount and order.remainingAmount le 0}">
                                     <span style="color:#15803d;font-weight:700;"><c:out value="${order.formattedOriginalAmount}"/></span>
                                 </c:when>
                                 <c:otherwise>
@@ -92,6 +93,9 @@
                                         <c:when test="${order.contractStatus eq 'SIGNED'}">
                                             <span style="color:#15803d;font-weight:700;">SIGNED</span>
                                         </c:when>
+                                        <c:when test="${order.contractStatus eq 'CANCELLED'}">
+                                            <span style="color:#b91c1c;font-weight:700;">CANCELLED</span>
+                                        </c:when>
                                         <c:otherwise>
                                             <span style="color:#b45309;font-weight:700;"><c:out value="${order.contractStatus}"/></span>
                                         </c:otherwise>
@@ -101,11 +105,14 @@
                         </td>
                         <td>
                             <div style="margin-bottom:6px;font-size:12px;">
-                                <a href="<%= request.getContextPath() %>/payment/history?orderId=<c:out value='${order.id}'/>">Thanh toán</a>
+                                <a href="<%= request.getContextPath() %>/payment/detail?orderId=<c:out value='${order.id}'/>">Chi tiết</a>
+                                <c:if test="${order.status ne 'CANCELLED'}">
+                                    | <a href="<%= request.getContextPath() %>/payment/history?orderId=<c:out value='${order.id}'/>">Thanh toán</a>
+                                </c:if>
                                 <c:if test="${order.status eq 'DEPOSITED' or order.status eq 'PROCESSING' or order.status eq 'PAID' or order.status eq 'COMPLETED'}">
                                     | <a href="<%= request.getContextPath() %>/customer/sales-document?kind=deposit&amp;orderId=<c:out value='${order.id}'/>&amp;view=html">Biên nhận</a>
                                 </c:if>
-                                <c:if test="${order.contractStatus eq 'PENDING_SIGNATURE'}">
+                                <c:if test="${order.contractStatus eq 'PENDING_SIGNATURE' and order.status ne 'CANCELLED'}">
                                     | <a href="<%= request.getContextPath() %>/contract" style="color:#b45309;font-weight:700;">✍️ Ký HĐ</a>
                                 </c:if>
                                 <c:if test="${order.contractStatus eq 'SIGNED'}">
@@ -118,11 +125,19 @@
 
                             <%-- NÚT THANH TOÁN THEO HÌNH THỨC VÀ TIẾN ĐỘ --%>
                             <c:choose>
+                                <%-- 0. ĐƠN ĐÃ HỦY: KHÔNG THỂ THANH TOÁN MỚI --%>
+                                <c:when test="${order.status eq 'CANCELLED'}">
+                                    <div style="color:#991b1b;font-size:12px;font-weight:700;">Đơn hàng đã hủy</div>
+                                    <c:if test="${not empty order.cancelReason}">
+                                        <div style="color:#7f1d1d;font-size:11.5px;margin-top:2px;">Lý do: <c:out value="${order.cancelReason}"/></div>
+                                    </c:if>
+                                </c:when>
+
                                 <%-- 1. HÌNH THỨC TRẢ GÓP (INSTALLMENT) --%>
-                                <c:when test="${order.isInstallment()}">
+                                <c:when test="${order.installment}">
                                     <c:choose>
                                         <%-- Chưa cọc 30% --%>
-                                        <c:when test="${not order.isDepositPaid() and (order.status eq 'PENDING' or order.status eq 'RESERVED')}">
+                                        <c:when test="${not order.depositPaid and (order.status eq 'PENDING' or order.status eq 'RESERVED')}">
                                             <button type="button" class="button button-primary btn-open-payment-modal"
                                                     data-order-id="${order.id}"
                                                     data-order-code="${order.orderCode}"
@@ -136,14 +151,18 @@
                                                     data-order-id="${order.id}"
                                                     data-order-code="${order.orderCode}"
                                                     data-vehicle="${order.vehicleName}"
-                                                    data-amount="${order.formattedTotalAmount}"
+                                                    data-amount="${order.formattedOriginalAmount}"
                                                     style="margin-left:6px;color:#dc2626;border-color:#fca5a5;font-size:12px;padding:6px 12px;">Hủy đơn hàng</button>
                                         </c:when>
-                                        <%-- Đã cọc 30% xong: 70% còn lại mặc định đã được thanh toán (đối tác tài chính giải ngân) --%>
+                                        <c:when test="${order.remainingAmount gt 0}">
+                                            <div style="font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:6px 8px;line-height:1.4;">
+                                                ✓ Đã xác nhận cọc 30%. Kế toán cần đối soát khoản cọc và khách hàng ký hợp đồng trước khi đối tác <strong><c:out value="${order.companyName}" default="Ngân hàng đối tác"/></strong> giải ngân 70%.
+                                                <a href="<%= request.getContextPath() %>/contract" style="font-weight:700;text-decoration:underline;color:#92400e;">Xem hợp đồng</a>
+                                            </div>
+                                        </c:when>
                                         <c:otherwise>
                                             <div style="font-size:12px;color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:6px 8px;line-height:1.4;">
-                                                ✓ <strong>Đã thanh toán cọc 30%</strong><br>
-                                                🏦 <strong>70% còn lại</strong> mặc định đã được đối tác tài chính <strong><c:out value="${order.companyName}" default="Ngân hàng đối tác"/></strong> giải ngân.
+                                                ✓ Đã thanh toán cọc 30%. Đối tác tài chính <strong><c:out value="${order.companyName}" default="Ngân hàng đối tác"/></strong> đã giải ngân 70% sau khi hợp đồng được ký.
                                             </div>
                                         </c:otherwise>
                                     </c:choose>
@@ -153,7 +172,7 @@
                                 <c:otherwise>
                                     <c:choose>
                                         <%-- Bước 3: Chưa cọc 30% --%>
-                                        <c:when test="${not order.isDepositPaid() and (order.status eq 'PENDING' or order.status eq 'RESERVED')}">
+                                        <c:when test="${not order.depositPaid and (order.status eq 'PENDING' or order.status eq 'RESERVED')}">
                                             <button type="button" class="button button-primary btn-open-payment-modal"
                                                     data-order-id="${order.id}"
                                                     data-order-code="${order.orderCode}"
@@ -165,7 +184,7 @@
                                                     data-order-id="${order.id}"
                                                     data-order-code="${order.orderCode}"
                                                     data-vehicle="${order.vehicleName}"
-                                                    data-amount="${order.formattedTotalAmount}"
+                                                    data-amount="${order.formattedOriginalAmount}"
                                                     style="margin-left:6px;color:#dc2626;border-color:#fca5a5;font-size:12px;padding:6px 12px;">Hủy đơn hàng</button>
                                         </c:when>
 
@@ -194,13 +213,16 @@
                                         <c:when test="${order.remainingAmount le 0 or order.status eq 'PAID' or order.status eq 'COMPLETED'}">
                                             <span style="color:#166534;font-weight:700;font-size:12px;">✓ Đã thanh toán đủ 100% (Hoàn tất)</span>
                                         </c:when>
+                                        <c:otherwise>
+                                            <span style="color:#64748b;font-size:12px;">—</span>
+                                        </c:otherwise>
                                     </c:choose>
                                 </c:otherwise>
                             </c:choose>
                         </td>
                     </tr>
                 </c:forEach>
-                <c:if test="${empty orders}">
+                <c:if test="${empty orderList}">
                     <tr><td colspan="9"><div class="table-empty"><strong>Chưa có giao dịch</strong>
                         <p>Đơn hàng được Sales Staff lập sẽ xuất hiện tại đây.</p></div></td></tr>
                 </c:if>
@@ -208,7 +230,7 @@
         </table>
     </div>
     <div class="table-foot">
-        <span>Đang hiển thị <strong><c:out value="${orders.size()}"/></strong> giao dịch</span>
+        <span>Đang hiển thị <strong><c:out value="${not empty orderCount ? orderCount : (not empty orderList ? orderList.size() : 0)}"/></strong> giao dịch</span>
         <div class="pagination">
             <button disabled aria-label="Trang trước">←</button>
             <span>1</span>
@@ -217,7 +239,7 @@
     </div>
 </section>
 
-<%-- CONFIRMATION MODAL CHO BƯỚC 6 THEO RDS & USER_REQUEST --%>
+<%-- CONFIRMATION MODAL THANH TOÁN ĐƠN HÀNG --%>
 <div id="paymentConfirmationModal" class="modal-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.6);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;">
     <div class="modal-container" style="background:#fff;border-radius:14px;max-width:520px;width:92%;padding:24px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1),0 8px 10px -6px rgba(0,0,0,0.1);position:relative;">
         <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e2e8f0;padding-bottom:12px;margin-bottom:16px;">
@@ -225,7 +247,7 @@
             <button type="button" id="btnCancelModalX" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;">✕</button>
         </div>
         <div id="modalInstallmentNotice" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;font-size:12px;color:#166534;margin-bottom:14px;line-height:1.4;">
-            🏦 <strong>Đơn hàng trả góp:</strong> Quý khách chỉ thanh toán 30% tiền đặt cọc. 70% số tiền còn lại mặc định đã được nhà tài chính đối tác bảo lãnh và giải ngân cho showroom sau khi hoàn tất tiền cọc.
+            🏦 <strong>Đơn hàng trả góp:</strong> Sau khi Kế toán đối soát tiền cọc 30% và Quý khách ký hợp đồng, đối tác tài chính mới giải ngân 70% còn lại cho showroom.
         </div>
         <div style="margin-bottom:16px;">
             <table style="width:100%;font-size:14px;border-collapse:collapse;">
@@ -248,13 +270,6 @@
                         <div>
                             <strong>Chuyển khoản VietQR tự động qua SePay + MB Bank</strong>
                             <div style="font-size:12px;color:#64748b;">Quét mã QR MB Bank, hệ thống tự động ghi nhận ngay lập tức</div>
-                        </div>
-                    </label>
-                    <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer;">
-                        <input type="radio" name="method" value="CASH">
-                        <div>
-                            <strong>Thanh toán tiền mặt (CASH) tại Showroom</strong>
-                            <div style="font-size:12px;color:#64748b;">Nộp tiền tại quầy thu ngân và kế toán đối soát xác nhận</div>
                         </div>
                     </label>
                 </div>
@@ -330,7 +345,7 @@ document.addEventListener("DOMContentLoaded", function() {
             if (instNotice) {
                 if (isInst) {
                     instNotice.style.display = "block";
-                    instNotice.innerHTML = "🏦 <strong>Đơn hàng trả góp:</strong> Quý khách chỉ thanh toán 30% tiền đặt cọc. 70% số tiền còn lại mặc định sẽ do đối tác tài chính <strong>" + partner + "</strong> bảo lãnh và giải ngân cho showroom sau khi hoàn tất tiền cọc.";
+                    instNotice.innerHTML = "🏦 <strong>Đơn hàng trả góp:</strong> Sau khi Kế toán đối soát tiền cọc 30% và Quý khách ký hợp đồng, đối tác tài chính <strong>" + partner + "</strong> mới giải ngân 70% còn lại cho showroom.";
                 } else {
                     instNotice.style.display = "none";
                 }
@@ -354,18 +369,23 @@ document.addEventListener("DOMContentLoaded", function() {
             var orderCode = btn.getAttribute("data-order-code") || ("ECS" + orderId);
             var vehicle = btn.getAttribute("data-vehicle") || "—";
             var amount = btn.getAttribute("data-amount") || "—";
-            var confirmed = await window.showAppConfirmModal({
-                title: "Xác nhận hủy đơn hàng",
-                message: "Bạn có chắc chắn muốn hủy đơn hàng này không? Xe đang giữ chỗ sẽ được giải phóng lại kho để khách hàng khác có thể đặt.",
-                details: [
-                    { label: "Mã đơn hàng", value: orderCode + " (#" + orderId + ")" },
-                    { label: "Mẫu xe", value: vehicle },
-                    { label: "Tổng tiền", value: amount }
-                ],
-                confirmText: "Có, xác nhận",
-                cancelText: "Không, quay lại",
-                isDanger: true
-            });
+            var confirmed = false;
+            if (typeof window.showAppConfirmModal === "function") {
+                confirmed = await window.showAppConfirmModal({
+                    title: "Xác nhận hủy đơn hàng",
+                    message: "Bạn có chắc chắn muốn hủy đơn hàng này không? Xe đang giữ chỗ sẽ được giải phóng lại kho để khách hàng khác có thể đặt.",
+                    details: [
+                        { label: "Mã đơn hàng", value: orderCode + " (#" + orderId + ")" },
+                        { label: "Mẫu xe", value: vehicle },
+                        { label: "Tổng tiền", value: amount }
+                    ],
+                    confirmText: "Có, xác nhận",
+                    cancelText: "Không, quay lại",
+                    isDanger: true
+                });
+            } else {
+                confirmed = window.confirm("Bạn có chắc chắn muốn hủy đơn hàng " + orderCode + " (" + vehicle + ")?");
+            }
             if (!confirmed) return;
             try {
                 var params = new URLSearchParams();
@@ -375,7 +395,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 var res = await fetch("<%= request.getContextPath() %>/order-status", {
                     method: "POST",
                     credentials: "same-origin",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8", "Accept": "application/json" },
+                    headers: { "X-CSRF-Token": "<c:out value='${sessionScope.csrfToken}'/>", "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8", "Accept": "application/json" },
                     body: params.toString()
                 });
                 var data = await res.json();

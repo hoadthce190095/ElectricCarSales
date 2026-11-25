@@ -34,7 +34,7 @@ class AdminFeedbackWebTest {
         client = HttpClient.newBuilder().cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL)).build();
         csrf = JSON.readTree(get("/api/auth").body()).get("csrfToken").asText();
         var response = send("POST", "/api/auth", Map.of("action", "login", "username", "webadmin",
-            "password", "web-test-password-123"));
+            "password", "Web-test-password-123"));
         assertEquals(200, response.statusCode(), response.body());
         csrf = JSON.readTree(response.body()).get("csrfToken").asText();
     }
@@ -86,7 +86,7 @@ class AdminFeedbackWebTest {
     void accessChangesPreserveProfileAndEmployeeEditsStayInSync() throws Exception {
         int role = lookupId("roles", "SALES"), active = lookupId("statuses", "ACTIVE");
         var created = send("POST", "/api/admin/users", Map.of("username", "feedbackstaff", "password",
-            "feedback-password-123", "employeeName", "Nhân viên kiểm thử", "email", "feedback@test.local",
+            "Feedback-password-123", "employeeName", "Nhân viên kiểm thử", "email", "feedback@test.local",
             "phone", "0900000971", "roleId", role, "statusId", active));
         assertEquals(201, created.statusCode(), created.body());
         JsonNode user = JSON.readTree(created.body());

@@ -31,6 +31,7 @@ public class AccountantPaymentController extends HttpServlet {
             var pendingPayments = service.pendingPayments();
             var openDebts = service.openDebts();
             var completedPayments = service.completedPayments();
+            var lateTransfers = service.lateTransfersAfterCancel();
             String csrfToken = PaymentController.ensureCsrf(request);
             if (jsonRequested) {
                 response.setContentType("application/json;charset=UTF-8");
@@ -38,6 +39,7 @@ public class AccountantPaymentController extends HttpServlet {
                 payload.put("pendingPayments", pendingPayments);
                 payload.put("completedPayments", completedPayments);
                 payload.put("openDebts", openDebts);
+                payload.put("lateTransfers", lateTransfers);
                 payload.put("csrfToken", csrfToken);
                 JSON.writeValue(response.getWriter(), payload);
                 return;
@@ -45,6 +47,7 @@ public class AccountantPaymentController extends HttpServlet {
             request.setAttribute("pendingPayments", pendingPayments);
             request.setAttribute("openDebts", openDebts);
             request.setAttribute("completedPayments", completedPayments);
+            request.setAttribute("lateTransfers", lateTransfers);
             request.setAttribute("csrfTokenForPayment", csrfToken);
             request.getRequestDispatcher("/staff/payment-review.jsp").forward(request, response);
         } catch (SQLException e) {

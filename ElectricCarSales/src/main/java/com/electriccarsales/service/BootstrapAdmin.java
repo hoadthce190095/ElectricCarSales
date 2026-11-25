@@ -14,7 +14,7 @@ public final class BootstrapAdmin {
 
     public static void main(String[] args) throws Exception {
         String username = System.getenv().getOrDefault("ADMIN_USERNAME", "admin");
-        if (!username.matches("[A-Za-z0-9_.-]{3,50}")) {
+        if (!username.matches("[A-Za-z0-9_]{5,30}")) {
             throw new IllegalArgumentException("ADMIN_USERNAME must contain 3-50 valid characters");
         }
         String password = System.getenv("ADMIN_PASSWORD");

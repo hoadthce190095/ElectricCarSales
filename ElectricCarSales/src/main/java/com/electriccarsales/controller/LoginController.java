@@ -48,7 +48,8 @@ public class LoginController extends HttpServlet {
             Account account = new Account(user.getUserID(), user.getUsername(), user.getPasswordHash(),
                 user.getRoleID(), roleName, "ACTIVE");
             try (Connection connection = DBContext.openConnection()) {
-                AuthenticationController.createLoginSession(req, account, List.of(), connection);
+                AuthenticationController.createLoginSession(req, account,
+                    com.electriccarsales.service.AuthorizationService.permissions(connection, user.getRoleID(), roleName), connection);
             }
             String role = roleName.toUpperCase(java.util.Locale.ROOT);
 

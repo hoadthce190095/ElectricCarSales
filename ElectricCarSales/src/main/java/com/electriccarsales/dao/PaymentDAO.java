@@ -19,12 +19,14 @@ public class PaymentDAO extends FinanceDAOBase {
             + "p.PaymentStatusID, p.PaymentAmount, p.PaymentDate, p.ReferenceCode, p.Note";
     private static final String DETAIL_COLUMNS = COLUMNS + ", pm.MethodName AS PaymentMethodName, "
             + "pt.TypeName AS PaymentTypeName, ps.StatusID AS PaymentStatusCode, "
-            + "cu.CustomerName, o.TotalAmount AS OrderTotalAmount, o.RemainingAmount AS OrderRemainingAmount";
+            + "cu.CustomerName, o.TotalAmount AS OrderTotalAmount, o.RemainingAmount AS OrderRemainingAmount, "
+            + "os.StatusName AS OrderStatusName";
     private static final String DETAIL_FROM = " FROM Payments p "
             + "JOIN PaymentMethods pm ON pm.PaymentMethodID = p.PaymentMethodID "
             + "JOIN PaymentTypes pt ON pt.PaymentTypeID = p.PaymentTypeID "
             + "JOIN PaymentStatuses ps ON ps.PaymentStatusID = p.PaymentStatusID "
             + "JOIN Orders o ON o.OrderID = p.OrderID "
+            + "JOIN OrderStatuses os ON os.OrderStatusID = o.OrderStatusID "
             + "JOIN Customers cu ON cu.CustomerID = o.CustomerID ";
 
     public PaymentDAO() { super(); }
@@ -188,7 +190,7 @@ public class PaymentDAO extends FinanceDAOBase {
     public int insert(Payment payment) {
         return withConnection(connection -> {
             String sql = "INSERT INTO Payments (OrderID, PaymentMethodID, PaymentTypeID, PaymentStatusID, "
-                    + "PaymentAmount, PaymentDate, ReferenceCode, Note) VALUES (?, ?, ?, ?, ?, "
+                    + "PaymentAmount, PaymentDate, ReferenceCode, Note) VALUES (?,  (SELECT PaymentMethodID FROM PaymentMethods WHERE PaymentMethodID=? AND MethodName='BANK_TRANSFER'), ?, ?, ?, "
                     + "COALESCE(?, SYSDATETIME()), ?, ?)";
             try (PreparedStatement statement = FinanceJDBC.insertStatement(connection, sql)) {
                 statement.setInt(1, payment.getOrderID());
@@ -220,7 +222,7 @@ public class PaymentDAO extends FinanceDAOBase {
             int pendingStatusId = lookupId(connection,
                     "SELECT PaymentStatusID FROM PaymentStatuses WHERE StatusID = ?", "PENDING", "payment status");
             String sql = "INSERT INTO Payments (OrderID, PaymentMethodID, PaymentTypeID, PaymentStatusID, "
-                    + "PaymentAmount, ReferenceCode, Note) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                    + "PaymentAmount, ReferenceCode, Note) VALUES (?,  (SELECT PaymentMethodID FROM PaymentMethods WHERE PaymentMethodID=? AND MethodName='BANK_TRANSFER'), ?, ?, ?, ?, ?)";
             int paymentId;
             try (PreparedStatement statement = FinanceJDBC.insertStatement(connection, sql)) {
                 statement.setInt(1, orderId);
@@ -365,7 +367,7 @@ public class PaymentDAO extends FinanceDAOBase {
                 }
 
                 if ("COMPLETED".equalsIgnoreCase(currentPaymentStatus)) {
-                    throw new IllegalStateException("Giao dịch #" + paymentId + " đã được xác nhận thành công trước đó (chống xác nhận trùng theo RDS BR5).");
+                    throw new IllegalStateException("Giao dịch #" + paymentId + " đã được xác nhận thành công trước đó (chống xác nhận trùng).");
                 }
                 if (!"PENDING".equalsIgnoreCase(currentPaymentStatus)) {
                     throw new IllegalStateException("Giao dịch #" + paymentId + " đang ở trạng thái " + currentPaymentStatus + ", không thể xác nhận.");
@@ -395,10 +397,10 @@ public class PaymentDAO extends FinanceDAOBase {
                     throw new IllegalArgumentException("Số tiền thực nhận phải lớn hơn 0.");
                 }
 
-                // RDS II.7.2 EX-1 & Prompt E.5: If received amount < obligation, record honestly & flag for review, NEVER mark order paid!
+                // If received amount < obligation, record honestly & flag for review, NEVER mark order paid!
                 if (received.compareTo(expectedAmount) < 0) {
                     String mismatchNote = buildAuditNote(currentNote, "AMOUNT_MISMATCH", accountantEmployeeId, verificationRef,
-                            "CẢNH BÁO CHÊNH LỆCH (RDS EX-1): Thực nhận " + received.toPlainString()
+                            "CẢNH BÁO CHÊNH LỆCH: Thực nhận " + received.toPlainString()
                             + " VND < Nghĩa vụ " + expectedAmount.toPlainString()
                             + " VND. Giữ trạng thái PENDING, KHÔNG đánh dấu đơn hàng đã đặt cọc/thanh toán đủ. "
                             + (note == null ? "" : note));
@@ -411,8 +413,8 @@ public class PaymentDAO extends FinanceDAOBase {
                     if (localTx) connection.commit();
                     return new ConfirmationResult(false, true,
                             "Đã ghi nhận trung thực số tiền thực nhận (" + received.toPlainString()
-                            + " ₫), nhỏ hơn nghĩa vụ theo RDS (" + expectedAmount.toPlainString()
-                            + " ₫). Theo RDS (Mục II.7.2 EX-1 & BR1), giao dịch được gắn cờ đối soát và KHÔNG đánh dấu đơn hàng đã hoàn tất nghĩa vụ.",
+                            + " VND), nhỏ hơn nghĩa vụ (" + expectedAmount.toPlainString()
+                            + " VND). Giao dịch được gắn cờ đối soát và KHÔNG đánh dấu đơn hàng đã hoàn tất nghĩa vụ.",
                             findDetailsById(paymentId));
                 }
 
@@ -425,8 +427,8 @@ public class PaymentDAO extends FinanceDAOBase {
                         : currentRef;
 
                 try (PreparedStatement ps = connection.prepareStatement(
-                        "UPDATE Payments SET PaymentStatusID = ?, PaymentAmount = ?, ReferenceCode = ?, Note = ? "
-                        + "WHERE PaymentID = ? AND PaymentStatusID <> ?")) {
+                        "UPDATE Payments SET PaymentStatusID = ?, PaymentAmount = ?, PaymentDate = SYSDATETIME(), "
+                        + "ReferenceCode = ?, Note = ? WHERE PaymentID = ? AND PaymentStatusID <> ?")) {
                     ps.setInt(1, completedStatusId);
                     ps.setBigDecimal(2, expectedAmount);
                     ps.setString(3, updatedRef);
@@ -442,9 +444,11 @@ public class PaymentDAO extends FinanceDAOBase {
                 BigDecimal orderTotal;
                 BigDecimal orderDeposit;
                 Integer carId = null;
+                String currentOrderStatus;
                 try (PreparedStatement ordPs = connection.prepareStatement("""
-                        SELECT o.TotalAmount, o.DepositAmount, od.CarID
+                        SELECT o.TotalAmount, o.DepositAmount, od.CarID, os.StatusName AS OrderStatusName
                         FROM Orders o WITH (UPDLOCK, HOLDLOCK)
+                        JOIN OrderStatuses os ON os.OrderStatusID = o.OrderStatusID
                         LEFT JOIN OrderDetails od ON od.OrderID = o.OrderID
                         WHERE o.OrderID = ?
                         """)) {
@@ -454,7 +458,14 @@ public class PaymentDAO extends FinanceDAOBase {
                         orderTotal = rs.getBigDecimal("TotalAmount").setScale(2, RoundingMode.HALF_UP);
                         orderDeposit = rs.getBigDecimal("DepositAmount").setScale(2, RoundingMode.HALF_UP);
                         carId = rs.getObject("CarID", Integer.class);
+                        currentOrderStatus = rs.getString("OrderStatusName");
                     }
+                }
+                if ("CANCELLED".equalsIgnoreCase(currentOrderStatus)
+                        || "PAID".equalsIgnoreCase(currentOrderStatus)
+                        || "COMPLETED".equalsIgnoreCase(currentOrderStatus)) {
+                    throw new IllegalStateException("Đơn hàng #" + orderId + " đang ở trạng thái "
+                            + currentOrderStatus + ", không thể xác nhận thanh toán.");
                 }
 
                 String newOrderStatus;
@@ -592,7 +603,7 @@ public class PaymentDAO extends FinanceDAOBase {
                 if (rs.next()) {
                     BigDecimal total = rs.getBigDecimal("TotalAmount");
                     BigDecimal requiredDeposit = total.multiply(new BigDecimal("0.30"))
-                            .setScale(2, java.math.RoundingMode.HALF_UP);
+                            .setScale(0, java.math.RoundingMode.HALF_UP);
                     if (total.signum() > 0 && rs.getBigDecimal("RemainingAmount").signum() == 0
                             && requiredDeposit.compareTo(rs.getBigDecimal("DepositAmount")) == 0
                             && requiredDeposit.compareTo(rs.getBigDecimal("DepositPaid")) == 0
@@ -644,6 +655,7 @@ public class PaymentDAO extends FinanceDAOBase {
         payment.setCustomerName(rs.getString("CustomerName"));
         payment.setOrderTotalAmount(rs.getBigDecimal("OrderTotalAmount"));
         payment.setOrderRemainingAmount(rs.getBigDecimal("OrderRemainingAmount"));
+        payment.setOrderStatus(rs.getString("OrderStatusName"));
         return payment;
     }
 

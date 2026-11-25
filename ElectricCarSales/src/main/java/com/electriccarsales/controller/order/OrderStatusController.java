@@ -28,6 +28,10 @@ public class OrderStatusController extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        if (!com.electriccarsales.controller.PaymentController.validCsrf(request)) {
+            response.sendError(403, "Phiên thao tác không hợp lệ.");
+            return;
+        }
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
         boolean jsonRequested = "json".equalsIgnoreCase(request.getParameter("format"))
@@ -98,7 +102,13 @@ public class OrderStatusController extends HttpServlet {
                             "/staff/dashboard#transactions");
                     return;
                 }
-                String cancelNote = (note != null && !note.isBlank()) ? note.trim() : ("Nhân viên " + role + " hủy đơn hàng trước khi đặt cọc.");
+                if (note == null || note.isBlank()) {
+                    sendResponse(request, response, jsonRequested, HttpServletResponse.SC_BAD_REQUEST, false,
+                            "Vui lòng nhập rõ lý do hủy đơn hàng.",
+                            "/staff/dashboard#transactions");
+                    return;
+                }
+                String cancelNote = note.trim();
                 service.updateOrderStatus(orderId, "CANCELLED", employeeId, cancelNote);
                 sendResponse(request, response, jsonRequested, HttpServletResponse.SC_OK, true,
                         "Đã hủy đơn hàng #" + orderId + " thành công và giải phóng xe về kho khả dụng.", "/staff/dashboard#transactions");

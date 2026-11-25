@@ -46,7 +46,7 @@ class SalesOrderServiceTest {
                 INSERT INTO Colors(ColorName) VALUES('Trắng');
                 INSERT INTO CarStatuses(StatusName) VALUES('AVAILABLE');
                 INSERT INTO Cars(CarCode,ModelID,VersionID,ColorID,CarStatusID,Year,VIN,EngineNumber,Price)
-                VALUES('VF8-01',1,1,1,(SELECT CarStatusID FROM CarStatuses WHERE StatusName='AVAILABLE'),2026,'VINVF800000001','ENG001',1000000000),
+                VALUES('VF8-01',1,1,1,(SELECT CarStatusID FROM CarStatuses WHERE StatusName='AVAILABLE'),2026,'VINVF800000001','ENG001',1234567891),
                       ('VF8-02',1,1,1,(SELECT CarStatusID FROM CarStatuses WHERE StatusName='AVAILABLE'),2026,'VINVF800000002','ENG002',1200000000);
 
                 INSERT INTO FinancialCompanies(CompanyName,Phone,Email,Address,Description)
@@ -81,6 +81,14 @@ class SalesOrderServiceTest {
             int order1 = service.create(salesUserId, customerId, 1, "BANK_TRANSFER", 1);
             assertTrue(order1 > 0, "Đơn thanh toán ngân hàng phải tạo thành công");
 
+            try (var rows = s.executeQuery("SELECT TotalAmount, DepositAmount, RemainingAmount FROM Orders WHERE OrderID=" + order1)) {
+                assertTrue(rows.next());
+                assertEquals(1234567891L, rows.getLong(1));
+                assertEquals(370370367L, rows.getLong(2));
+                assertEquals(864197524L, rows.getLong(3));
+            }
+            assertThrows(IllegalStateException.class, () -> service.create(salesUserId, customerId, 1, "BANK_TRANSFER", null));
+
             // 4. Thanh toán qua nhà tài chính (INSTALLMENT) thiếu đối tác sẽ báo lỗi rõ ràng
             IllegalArgumentException exIns = assertThrows(IllegalArgumentException.class, () ->
                     service.create(salesUserId, customerId, 2, "INSTALLMENT", null));
@@ -94,6 +102,36 @@ class SalesOrderServiceTest {
             IllegalArgumentException exCash = assertThrows(IllegalArgumentException.class, () ->
                     service.create(salesUserId, customerId, 1, "CASH", null));
             assertTrue(exCash.getMessage().contains("không áp dụng tiền mặt"));
+
+            // 7. Khuyến mãi phần trăm áp dụng vào dashboardData() và đơn hàng (khách thanh toán theo giá sau ưu đãi)
+            s.execute("""
+                INSERT INTO Cars(CarCode,ModelID,VersionID,ColorID,CarStatusID,Year,VIN,EngineNumber,Price)
+                VALUES('VF8-03',1,1,1,(SELECT CarStatusID FROM CarStatuses WHERE StatusName='AVAILABLE'),2026,'VINVF800000003','ENG003',500000000);
+                INSERT INTO Promotions(PromotionName,Description,DiscountType,DiscountValue,StartDate,EndDate,Status)
+                VALUES(N'SIÊU SALE',N'Giảm 10%', 'PERCENTAGE', 10, DATEADD(day, -1, SYSDATETIME()), DATEADD(day, 5, SYSDATETIME()), 'ACTIVE');
+                INSERT INTO PromotionCars(PromotionID,ModelID) SELECT MAX(PromotionID), 1 FROM Promotions;
+            """);
+            Map<String, Object> promoDash = service.dashboardData();
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> promoCars = (List<Map<String, Object>>) promoDash.get("cars");
+            Map<String, Object> car3 = promoCars.stream()
+                    .filter(m -> "VINVF800000003".equals(m.get("vin")))
+                    .findFirst().orElseThrow();
+            assertEquals(500_000_000L, ((Number) car3.get("originalPrice")).longValue());
+            assertEquals(50_000_000L, ((Number) car3.get("discountAmount")).longValue());
+            assertEquals(450_000_000L, ((Number) car3.get("price")).longValue());
+            assertEquals("SIÊU SALE", car3.get("promotionName"));
+            assertEquals("PERCENTAGE", car3.get("discountType"));
+            assertEquals(10, ((Number) car3.get("discountValue")).intValue());
+
+            int car3Id = ((Number) car3.get("carID")).intValue();
+            int promoOrder = service.create(salesUserId, customerId, car3Id, "BANK_TRANSFER", null);
+            try (var rows = s.executeQuery("SELECT TotalAmount, DepositAmount, RemainingAmount FROM Orders WHERE OrderID=" + promoOrder)) {
+                assertTrue(rows.next());
+                assertEquals(450_000_000L, rows.getLong(1));
+                assertEquals(135_000_000L, rows.getLong(2));
+                assertEquals(315_000_000L, rows.getLong(3));
+            }
         }
     }
 }

@@ -78,6 +78,12 @@ public final class TestApplication implements AutoCloseable {
         context.addServletMappingDecoded("/api/reports", "reports");
         Tomcat.addServlet(context, "ai", new AIController());
         context.addServletMappingDecoded("/api/ai", "ai");
+        Tomcat.addServlet(context, "comparisonHistory", new ComparisonHistoryController());
+        context.addServletMappingDecoded("/api/comparison/history", "comparisonHistory");
+        Tomcat.addServlet(context, "consultation", new ConsultationController());
+        context.addServletMappingDecoded("/consultation", "consultation");
+        Tomcat.addServlet(context, "logout", new LogoutController());
+        context.addServletMappingDecoded("/logout", "logout");
         Tomcat.addServlet(context, "default", "org.apache.catalina.servlets.DefaultServlet");
         context.addServletMappingDecoded("/", "default");
         Tomcat.addServlet(context, "jsp", new JspServlet()).setLoadOnStartup(1);
@@ -130,7 +136,7 @@ public final class TestApplication implements AutoCloseable {
                 + " SELECT ?,?,?,?,r.RoleID,t.StatusID FROM Roles r CROSS JOIN Statuses"
                 + " t WHERE r.RoleName=? AND t.StatusName='ACTIVE'")) {
             s.setString(1, name);
-            s.setString(2, PasswordHasher.hash("web-test-password-123"));
+            s.setString(2, PasswordHasher.hash("Web-test-password-123"));
             s.setString(3, email);
             s.setString(4, phone);
             s.setString(5, role);

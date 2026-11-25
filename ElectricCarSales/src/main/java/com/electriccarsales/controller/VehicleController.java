@@ -90,7 +90,7 @@ public class VehicleController extends HttpServlet {
                     return;
                 }
                 vehicles = vehicles.stream().filter(vehicle ->
-                        vehicle.stockCarID() != null && vehicle.stockCarID() == parsedCarId).toList();
+                        vehicle.stockCarID() != null && vehicle.stockCarIDs().contains(parsedCarId)).toList();
             } else if (requestedKeys != null && (modelId == null || modelId.isBlank())) {
                 List<String> keys = Arrays.asList(requestedKeys);
                 vehicles = vehicles.stream().filter(vehicle -> keys.contains(comparisonKey(vehicle))).toList();
@@ -123,7 +123,7 @@ public class VehicleController extends HttpServlet {
     }
 
     private static String toJson(CatalogVehicle vehicle, List<com.electriccarsales.model.AdminPromotion> promotions) {
-        String promoJson = (promotions == null || promotions.isEmpty()) ? "[]" :
+        String promoJson = (vehicle.stockCarID() != null || promotions == null || promotions.isEmpty()) ? "[]" :
                 promotions.stream().map(p -> "{"
                         + "\"id\":" + p.getPromotionId()
                         + ",\"name\":" + jsonString(p.getPromotionName())
@@ -137,6 +137,8 @@ public class VehicleController extends HttpServlet {
                 + "\"modelID\":" + vehicle.modelID()
                 + ",\"versionID\":" + vehicle.versionID()
                 + ",\"stockCarID\":" + (vehicle.stockCarID() == null ? "null" : vehicle.stockCarID())
+                + ",\"stockCarIDs\":" + vehicle.stockCarIDs().stream().map(String::valueOf)
+                        .collect(Collectors.joining(",", "[", "]"))
                 + ",\"stockColorName\":" + jsonString(vehicle.stockColorName())
                 + ",\"comparisonKey\":" + jsonString(comparisonKey(vehicle))
                 + ",\"modelName\":" + jsonString(vehicle.modelName())
@@ -169,7 +171,8 @@ public class VehicleController extends HttpServlet {
 
     private static String comparisonKey(CatalogVehicle vehicle) {
         String base = vehicle.modelName().trim() + "-" + vehicle.specificationVersion().trim();
-        return vehicle.stockCarID() == null ? base : base + "-STOCK-" + vehicle.stockCarID();
+        return vehicle.stockCarID() == null || vehicle.priceVnd() == null
+                ? base : base + "-STOCK-PRICE-" + vehicle.priceVnd().stripTrailingZeros().toPlainString();
     }
 
     private static String jsonNumber(Number value) {

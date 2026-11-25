@@ -603,6 +603,14 @@ function login() {
                 ])
             ],
             async () => {
+                const confirmed = await window.showAppConfirmModal({
+                    title: "Xác nhận đăng xuất",
+                    message: "Bạn có chắc chắn muốn đăng xuất không?",
+                    confirmText: "Đăng xuất",
+                    cancelText: "Hủy",
+                    isDanger: true
+                });
+                if (!confirmed) return;
                 const result = await api("auth", { method: "POST", body: { action: "logout" } });
                 applySession(result);
                 clearPrivateState();
@@ -652,16 +660,16 @@ function changePassword() {
             field("newPassword", "Mật khẩu mới", "password", "", {
                 required: true,
                 full: true,
-                minlength: 10,
-                maxlength: 128,
+                minlength: 8,
+                maxlength: 30,
                 autocomplete: "new-password",
-                help: "10–128 ký tự và khác mật khẩu hiện tại."
+                help: "8–30 ký tự và khác mật khẩu hiện tại."
             }),
             field("confirmPassword", "Nhập lại mật khẩu mới", "password", "", {
                 required: true,
                 full: true,
-                minlength: 10,
-                maxlength: 128,
+                minlength: 8,
+                maxlength: 30,
                 autocomplete: "new-password"
             }),
             el("p", {
@@ -771,3 +779,24 @@ async function showView(name, options = {}) {
         );
     }
 }
+
+// Global logout confirmation for Admin portal
+document.addEventListener("submit", async function(e) {
+    const form = e.target;
+    if (!form || !form.action || !form.action.includes("/logout")) return;
+    if (form.dataset.confirmedLogout === "true") return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const confirmed = await window.showAppConfirmModal({
+        title: "Xác nhận đăng xuất",
+        message: "Bạn có chắc chắn muốn đăng xuất không?",
+        confirmText: "Đăng xuất",
+        cancelText: "Hủy",
+        isDanger: true
+    });
+    if (confirmed) {
+        form.dataset.confirmedLogout = "true";
+        form.submit();
+    }
+}, true);

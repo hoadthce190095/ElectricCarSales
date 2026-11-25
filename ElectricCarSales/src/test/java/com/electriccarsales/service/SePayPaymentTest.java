@@ -288,11 +288,11 @@ public class SePayPaymentTest {
             s.execute("UPDATE Payments SET Note = Note + ' SEPAY_ID=99999; GATEWAY=MBBank;' WHERE PaymentID=" + transfer2.paymentId());
             BankTransferService.Transfer autoCompleted = bankService.checkAndAutoCompleteTransfer(transfer2.paymentId(), 1);
             assertNotNull(autoCompleted);
-            assertEquals("COMPLETED", autoCompleted.status(), "Giao dịch ngân hàng đã ghi nhận phải tự động chuyển COMPLETED");
+            assertEquals("PENDING", autoCompleted.status(), "Ghi chú không phải bằng chứng nhận tiền");
 
             try (var rs = s.executeQuery("SELECT os.StatusName FROM Orders o JOIN OrderStatuses os ON os.OrderStatusID=o.OrderStatusID WHERE o.OrderID=2")) {
                 assertTrue(rs.next());
-                assertEquals("DEPOSITED", rs.getString("StatusName"), "Đơn hàng phải tự động cập nhật sang DEPOSITED");
+                assertEquals("PENDING", rs.getString("StatusName"));
             }
         }
     }

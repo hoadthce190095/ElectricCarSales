@@ -62,7 +62,7 @@ public class PaymentService {
 
     public BigDecimal calculateDeposit(BigDecimal vehiclePrice) {
         requirePositiveMoney(vehiclePrice, "vehiclePrice");
-        return vehiclePrice.multiply(DEPOSIT_RATE).setScale(2, RoundingMode.HALF_UP);
+        return vehiclePrice.multiply(DEPOSIT_RATE).setScale(0, RoundingMode.HALF_UP);
     }
 
     public BigDecimal calculateRemaining(BigDecimal vehiclePrice) {

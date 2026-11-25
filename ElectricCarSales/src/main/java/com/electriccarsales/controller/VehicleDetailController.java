@@ -74,7 +74,7 @@ public class VehicleDetailController extends HttpServlet {
                 }
                 int selectedModelID = modelID;
                 var stockVehicle = service.getCatalogVehicles().stream()
-                        .filter(vehicle -> vehicle.stockCarID() != null && vehicle.stockCarID() == carId
+                        .filter(vehicle -> vehicle.stockCarID() != null && vehicle.stockCarIDs().contains(carId)
                                 && vehicle.modelID() == selectedModelID)
                         .findFirst().orElse(null);
                 if (stockVehicle == null) {

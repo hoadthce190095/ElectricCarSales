@@ -145,8 +145,11 @@ boolean isAuthenticated = authenticatedUser instanceof SessionUser
                                         </c:if>
                                         <span class="vehicle-name"><c:out value="${vehicle.modelName}"/></span>
                                         <span class="vehicle-version"><c:out value="${vehicle.specificationVersion}"/></span>
+                                        <c:if test="${vehicle.stockVehicle}">
+                                            <span class="vehicle-version">Xe nhập kho · <c:out value="${vehicle.stockColorName}"/></span>
+                                        </c:if>
                                         <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:4px;">
-                                            <a href="<c:url value='/detail'><c:param name='id' value='${vehicle.modelID}'/></c:url>">Xem chi tiết ↗</a>
+                                            <a href="<c:url value='/detail'><c:param name='id' value='${vehicle.modelID}'/><c:if test='${not empty vehicle.stockCarID}'><c:param name='carId' value='${vehicle.stockCarID}'/></c:if></c:url>">Xem chi tiết ↗</a>
                                             <button type="button" class="btn-remove-compare" data-key="<c:out value='${vehicle.comparisonKey}'/>" title="Bỏ xe này khỏi bảng so sánh" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;font-weight:600;">✕ Bỏ</button>
                                         </div>
                                     </div>
@@ -200,17 +203,7 @@ boolean isAuthenticated = authenticatedUser instanceof SessionUser
 
 <c:if test="${not empty comparisonColumns}">
 <script id="current-comparison-vehicles" type="application/json">
-[
-    <c:forEach var="v" items="${comparisonColumns}" varStatus="loop">
-    {
-        "id": <c:out value="${v.modelID != null ? v.modelID : 0}"/>,
-        "modelName": "<c:out value='${v.modelName}'/>",
-        "specificationVersion": "<c:out value='${v.specificationVersion}'/>",
-        "imageUrl": "<c:out value='${v.imageUrl}'/>",
-        "comparisonKey": "<c:out value='${v.comparisonKey}'/>"
-    }<c:if test="${not loop.last}">,</c:if>
-    </c:forEach>
-]
+${comparisonJson}
 </script>
 </c:if>
 
@@ -253,86 +246,25 @@ boolean isAuthenticated = authenticatedUser instanceof SessionUser
         return;
     }
 
-    const CompareHistory = {
-        STORAGE_KEY: "electriccarsale.compareHistory",
-        API_URL: contextPath + "/api/comparison/history",
-
-        getAll() {
-            try {
-                const raw = localStorage.getItem(this.STORAGE_KEY);
-                return raw ? JSON.parse(raw) : [];
-            } catch (_) {
-                return [];
-            }
-        },
-
-        save(vehicles) {
-            if (!vehicles || vehicles.length < 2) return null;
-            const history = this.getAll();
-            const keys = vehicles.map(v => v.comparisonKey || (v.modelName + "-" + v.specificationVersion));
-
-            const filtered = history.filter(item => {
-                if (!item.keys || item.keys.length !== keys.length) return true;
-                return !keys.every(k => item.keys.includes(k));
-            });
-
-            const now = new Date();
-            const dateStr = now.toLocaleDateString("vi-VN", {
-                day: "2-digit", month: "2-digit", year: "numeric",
-                hour: "2-digit", minute: "2-digit"
-            });
-
-            const newItem = {
-                id: "comp_" + Date.now(),
-                timestamp: Date.now(),
-                dateStr: dateStr,
-                keys: keys,
-                vehicles: vehicles.map(v => ({
-                    id: v.modelID || v.id,
-                    modelName: v.modelName || "",
-                    specificationVersion: v.specificationVersion || "",
-                    imageUrl: v.imageUrl || "",
-                    comparisonKey: v.comparisonKey || (v.modelName + "-" + v.specificationVersion)
-                }))
-            };
-
-            filtered.unshift(newItem);
-            if (filtered.length > 20) filtered.length = 20;
-
-            try {
-                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filtered));
-            } catch (_) {}
-
-            const modelIds = vehicles.map(v => Number(v.modelID || v.id)).filter(id => Number.isInteger(id) && id > 0);
-            fetch(this.API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Accept": "application/json" },
-                body: JSON.stringify({ modelIds: modelIds, keys: keys })
-            }).then(r => r.json()).catch(() => {});
-
-            return newItem;
-        },
-
-        remove(id) {
-            const history = this.getAll();
-            const itemToRemove = history.find(item => item.id === id);
-            const next = history.filter(item => item.id !== id);
-            try {
-                localStorage.setItem(this.STORAGE_KEY, JSON.stringify(next));
-            } catch (_) {}
-
-            if (itemToRemove && itemToRemove.sessionId) {
-                fetch(this.API_URL + "?id=" + itemToRemove.sessionId, { method: "DELETE" }).catch(() => {});
-            }
-            return next;
-        },
-
-        clear() {
-            try {
-                localStorage.removeItem(this.STORAGE_KEY);
-            } catch (_) {}
-        }
-    };
+    const api = contextPath + "/api/comparison/history";
+    const token = "<c:out value='${sessionScope.csrfToken}'/>";
+    let history = [];
+    async function historyRequest(url, options) {
+        const response = await fetch(url, options);
+        const data = await response.json();
+        if (!response.ok || data.authenticated === false || data.success === false)
+            throw new Error(data.error || "Không thể đồng bộ lịch sử so sánh.");
+        return data;
+    }
+    async function refresh() {
+        history = (await historyRequest(api)).history;
+        updateBadge();
+        renderHistory();
+    }
+    async function removeEntry(id) {
+        await historyRequest(api + "?id=" + encodeURIComponent(id), {method: "DELETE", headers: {"X-CSRF-Token": token}});
+    }
+    function showError(error) { alert(error.message || "Không thể đồng bộ lịch sử so sánh."); }
 
     const historyBadge = document.getElementById("history-badge");
     const historyDialog = document.getElementById("compare-history-dialog");
@@ -344,7 +276,7 @@ boolean isAuthenticated = authenticatedUser instanceof SessionUser
     const historyDoneBtn = document.getElementById("history-done-btn");
 
     function updateBadge() {
-        const count = CompareHistory.getAll().length;
+        const count = history.length;
         if (historyBadge) {
             historyBadge.textContent = String(count);
             historyBadge.hidden = count === 0;
@@ -353,39 +285,23 @@ boolean isAuthenticated = authenticatedUser instanceof SessionUser
 
     // Auto-save current comparison if loaded
     const currentVehiclesEl = document.getElementById("current-comparison-vehicles");
-    if (currentVehiclesEl) {
-        try {
-            const currentVehicles = JSON.parse(currentVehiclesEl.textContent);
-            if (Array.isArray(currentVehicles) && currentVehicles.length >= 2) {
-                CompareHistory.save(currentVehicles);
-                if (btnSaveComparison) {
-                    btnSaveComparison.classList.add("btn-saved");
-                    btnSaveComparison.textContent = "✓ Đã lưu vào lịch sử";
-                }
-            }
-        } catch (e) {
-            console.error("Lỗi khi lưu dữ liệu so sánh vào lịch sử:", e);
+    async function saveCurrent() {
+        if (!currentVehiclesEl) return;
+        const vehicles = JSON.parse(currentVehiclesEl.textContent);
+        if (vehicles.length < 2) return;
+        const keys = vehicles.map(v => v.comparisonKey);
+        if (!history.some(h => h.keys.length === keys.length && keys.every(k => h.keys.includes(k)))) {
+            await historyRequest(api, {method: "POST", headers: {"Content-Type": "application/json", "X-CSRF-Token": token},
+                body: JSON.stringify({keys, modelIds: vehicles.map(v => v.id)})});
+            await refresh();
         }
+        if (btnSaveComparison) btnSaveComparison.textContent = "✓ Đã lưu vào lịch sử";
     }
-
-    if (btnSaveComparison) {
-        btnSaveComparison.addEventListener("click", () => {
-            if (currentVehiclesEl) {
-                try {
-                    const currentVehicles = JSON.parse(currentVehiclesEl.textContent);
-                    CompareHistory.save(currentVehicles);
-                    btnSaveComparison.classList.add("btn-saved");
-                    btnSaveComparison.textContent = "✓ Đã lưu vào lịch sử";
-                    updateBadge();
-                    alert("Đã lưu bảng so sánh này vào lịch sử so sánh xe của bạn!");
-                } catch (_) {}
-            }
-        });
-    }
+    refresh().then(() => saveCurrent().catch(err => console.warn("Tự động lưu lịch sử so sánh:", err))).catch(showError);
+    if (btnSaveComparison) btnSaveComparison.addEventListener("click", () => saveCurrent().catch(showError));
 
     function renderHistory() {
         if (!historyList) return;
-        const history = CompareHistory.getAll();
         historyList.innerHTML = "";
 
         if (history.length === 0) {
@@ -404,7 +320,7 @@ boolean isAuthenticated = authenticatedUser instanceof SessionUser
             top.className = "history-card-top";
             const date = document.createElement("span");
             date.className = "history-date";
-            date.textContent = item.dateStr || "Gần đây";
+            date.textContent = item.createDate || "Gần đây";
             const tag = document.createElement("span");
             tag.className = "history-count-tag";
             tag.textContent = (item.vehicles ? item.vehicles.length : 0) + " mẫu xe";
@@ -457,9 +373,7 @@ boolean isAuthenticated = authenticatedUser instanceof SessionUser
             deleteBtn.className = "btn-delete-history";
             deleteBtn.textContent = "Xóa";
             deleteBtn.addEventListener("click", () => {
-                CompareHistory.remove(item.id);
-                updateBadge();
-                renderHistory();
+                removeEntry(item.sessionId).then(refresh).catch(showError);
             });
 
             bottom.appendChild(viewLink);
@@ -487,11 +401,12 @@ boolean isAuthenticated = authenticatedUser instanceof SessionUser
     }
 
     if (btnClearAllHistory) {
-        btnClearAllHistory.addEventListener("click", () => {
+        btnClearAllHistory.addEventListener("click", async () => {
             if (confirm("Bạn có chắc chắn muốn xóa tất cả lịch sử so sánh xe?")) {
-                CompareHistory.clear();
-                updateBadge();
-                renderHistory();
+                try {
+                    for (const item of history) await removeEntry(item.sessionId);
+                } catch (error) { showError(error); }
+                refresh().catch(showError);
             }
         });
     }

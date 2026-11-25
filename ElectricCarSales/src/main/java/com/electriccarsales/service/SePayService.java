@@ -10,6 +10,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Properties;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,8 +28,8 @@ public class SePayService {
 
     public static final String DEFAULT_BANK_CODE = "MB";
     public static final String DEFAULT_BANK_NAME = "MB Bank (Ngân hàng TMCP Quân đội)";
-    public static final String DEFAULT_ACCOUNT_NUMBER = "0917231548";
-    public static final String DEFAULT_ACCOUNT_NAME = "Do Tan Dat";
+    public static final String DEFAULT_ACCOUNT_NUMBER = "";
+    public static final String DEFAULT_ACCOUNT_NAME = "";
     public static final String DEFAULT_TEMPLATE = "compact";
     public static final String SEPAY_QR_BASE_URL = "https://qr.sepay.vn/img";
 
@@ -157,6 +160,16 @@ public class SePayService {
      * @return true nếu ghi nhận thành công từ SePay
      */
     public boolean checkAndRecordPaymentFromApi(String referenceCode, BigDecimal expectedAmount) {
+        return checkAndRecordPaymentFromApiBefore(referenceCode, expectedAmount, null);
+    }
+
+    /**
+     * Queries SePay User API for an incoming transfer matching {@code referenceCode}.
+     * When {@code deadline} is provided, only confirms transactions whose bank timestamp
+     * is on or before {@code deadline} (Rule 1 / Rule 2 grace safeguard).
+     */
+    public boolean checkAndRecordPaymentFromApiBefore(String referenceCode, BigDecimal expectedAmount,
+                                                      LocalDateTime deadline) {
         String apiKey = getWebhookKey();
         if (apiKey == null || apiKey.isBlank()) return false;
         String accountNumber = getAccountNumber();
@@ -193,6 +206,12 @@ public class SePayService {
                     String txDate = tx.path("transaction_date").asText("");
 
                     if (content.toUpperCase(Locale.ROOT).contains(upperRef) && txId > 0 && amountIn != null && amountIn.signum() > 0) {
+                        if (deadline != null) {
+                            LocalDateTime parsed = parseTransactionDate(txDate);
+                            if (parsed != null && parsed.isAfter(deadline)) {
+                                continue;
+                            }
+                        }
                         BankTransferService bts = new BankTransferService();
                         return bts.processSePaySuccess(txId, gateway, accountNumber, "in", amountIn, content, referenceCode, txDate);
                     }
@@ -201,6 +220,30 @@ public class SePayService {
         } catch (Exception ignored) {
         }
         return false;
+    }
+
+    public static LocalDateTime parseTransactionDate(String txDate) {
+        if (txDate == null || txDate.isBlank()) {
+            return null;
+        }
+        String trimmed = txDate.trim();
+        DateTimeFormatter[] formatters = new DateTimeFormatter[]{
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
+                DateTimeFormatter.ofPattern("yyyyMMddHHmmss"),
+                DateTimeFormatter.ISO_LOCAL_DATE_TIME
+        };
+        for (DateTimeFormatter fmt : formatters) {
+            try {
+                return LocalDateTime.parse(trimmed, fmt);
+            } catch (Exception ignored) {
+            }
+        }
+        try {
+            return OffsetDateTime.parse(trimmed).toLocalDateTime();
+        } catch (Exception ignored) {
+        }
+        return null;
     }
 
     private static String configured(String key, String fallback) {

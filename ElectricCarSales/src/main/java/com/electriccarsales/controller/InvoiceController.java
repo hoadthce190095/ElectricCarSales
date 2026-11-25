@@ -54,8 +54,8 @@ public class InvoiceController extends HttpServlet {
                 req.setAttribute("customerOrders", new com.electriccarsales.dao.order.OrderDAO().findByCustomerId(customer.getCustomerID()));
                 req.setAttribute("customerContracts", new com.electriccarsales.dao.ContractsDAO().findByCustomerId(customer.getCustomerID()));
             } else if ("SALES".equals(role)) {
-                invoices = invoiceService.getAllInvoices();
-            } else if (List.of("ACCOUNTANT", "MANAGER", "ADMIN", "OPERATIONS").contains(role)) {
+                invoices = invoiceService.getEmployeeInvoices(user.getUserId());
+            } else if (List.of("ACCOUNTANT", "MANAGER", "ADMIN").contains(role)) {
                 invoices = invoiceService.getAllInvoices();
             } else {
                 FinanceControllerSupport.sendError(req, resp, 403, "Bạn không có quyền xem mục này.");
@@ -84,6 +84,7 @@ public class InvoiceController extends HttpServlet {
                 java.util.List<java.util.Map<String, Object>> eligibleOrders = new java.util.ArrayList<>();
                 java.util.List<java.util.Map<String, Object>> issuedOrders = new java.util.ArrayList<>();
                 for (java.util.Map<String, Object> row : allOrders) {
+                    if ("SALES".equals(role) && invoices.stream().noneMatch(i -> java.util.Objects.equals(i.getInvoiceID(), row.get("invoiceId")))) continue;
                     if (row.get("invoiceId") != null) {
                         issuedOrders.add(row);
                     } else if ("SIGNED".equalsIgnoreCase(String.valueOf(row.get("contractStatus")))
@@ -118,7 +119,7 @@ public class InvoiceController extends HttpServlet {
                 resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 resp.setContentType("application/json;charset=UTF-8");
                 JSON.writeValue(resp.getWriter(), Map.of("success", false,
-                        "error", "Theo RDS (Mục 2.3 & II.9.3), chỉ Kế toán (Accountant) mới có thẩm quyền xuất hóa đơn."));
+                        "error", "Chỉ Kế toán (Accountant) mới có thẩm quyền xuất hóa đơn."));
             } else {
                 resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Chỉ Kế toán mới có quyền xuất hóa đơn.");
             }

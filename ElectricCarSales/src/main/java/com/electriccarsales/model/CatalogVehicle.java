@@ -29,5 +29,6 @@ public record CatalogVehicle(
         String priceNote,
         String specificationNote,
         Integer stockCarID,
-        String stockColorName) {
+        String stockColorName,
+        List<Integer> stockCarIDs) {
 }

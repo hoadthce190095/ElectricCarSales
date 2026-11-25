@@ -169,8 +169,10 @@ public class OtpController extends HttpServlet {
         }
         String newPassword = req.getParameter("newPassword");
         String confirmPassword = req.getParameter("confirmPassword");
-        if (newPassword == null || newPassword.length() < 8 || newPassword.length() > 72) {
-            req.setAttribute("error", "Mật khẩu mới phải có từ 8 đến 72 ký tự.");
+        try {
+            com.electriccarsales.service.PasswordHasher.validate(newPassword);
+        } catch (IllegalArgumentException e) {
+            req.setAttribute("error", e.getMessage());
             req.getRequestDispatcher("/auth/reset-password.jsp").forward(req, resp);
             return;
         }

@@ -61,7 +61,10 @@ public class ComparisonController extends HttpServlet {
                 if (vehicles.size() != comparisonKeys.size()) {
                     request.setAttribute("comparisonNotice", "Một số lựa chọn không còn trong danh mục; bảng hiển thị các xe tìm thấy.");
                 }
-                request.setAttribute("comparisonColumns", createColumns(vehicles));
+                List<Map<String, Object>> columns = createColumns(vehicles);
+                request.setAttribute("comparisonColumns", columns);
+                request.setAttribute("comparisonJson", JsonServlet.JSON.writeValueAsString(columns).replace("<", "\\u003c"));
+                PaymentController.ensureCsrf(request);
                 request.setAttribute("comparisonRows", createRows(vehicles));
                 request.setAttribute("comparisonSummary", "Đang đối chiếu " + vehicles.size() + " mẫu xe.");
             }
@@ -72,12 +75,23 @@ public class ComparisonController extends HttpServlet {
         }
     }
 
-    private static List<Map<String, Object>> createRows(List<CatalogVehicle> vehicles) {
+    static List<Map<String, Object>> createRows(List<CatalogVehicle> vehicles) {
         List<ComparisonRow> rows = List.of(
                 new ComparisonRow("Dòng xe", CatalogVehicle::carLine),
                 new ComparisonRow("Phiên bản", CatalogVehicle::specificationVersion),
-                new ComparisonRow("Giá tham khảo", vehicle -> vehicle.priceVnd() == null
+                new ComparisonRow("Giá xe trong kho / giá tham khảo", vehicle -> vehicle.priceVnd() == null
                         ? "Liên hệ" : formatNumber(vehicle.priceVnd(), " ₫")),
+                new ComparisonRow("Màu xe", vehicle -> {
+                    if (vehicle.colors() == null || vehicle.colors().isEmpty()) {
+                        return null;
+                    }
+                    List<String> distinctColors = vehicle.colors().stream()
+                            .filter(color -> color != null && !color.isBlank())
+                            .map(String::trim)
+                            .distinct()
+                            .toList();
+                    return distinctColors.isEmpty() ? null : String.join(", ", distinctColors);
+                }),
                 new ComparisonRow("Quãng đường công bố", vehicle -> formatNumber(vehicle.rangeKm(), " km")),
                 new ComparisonRow("Tiêu chuẩn quãng đường", CatalogVehicle::rangeStandard),
                 new ComparisonRow("Dung lượng pin", vehicle -> formatNumber(vehicle.batteryKwh(), " kWh")),
@@ -106,17 +120,23 @@ public class ComparisonController extends HttpServlet {
                 .map(vehicle -> {
                     Map<String, Object> map = new LinkedHashMap<>();
                     map.put("modelID", vehicle.modelID());
+                    map.put("id", vehicle.modelID());
                     map.put("modelName", valueOrPending(vehicle.modelName()));
                     map.put("specificationVersion", valueOrPending(vehicle.specificationVersion()));
                     map.put("imageUrl", vehicle.imageUrl() == null ? "" : vehicle.imageUrl());
                     map.put("comparisonKey", comparisonKey(vehicle));
+                    map.put("stockCarID", vehicle.stockCarID());
+                    map.put("stockColorName", vehicle.stockColorName());
+                    map.put("stockVehicle", vehicle.stockCarID() != null);
                     return map;
                 })
                 .toList();
     }
 
     private static String comparisonKey(CatalogVehicle vehicle) {
-        return vehicle.modelName().trim() + "-" + vehicle.specificationVersion().trim();
+        String base = vehicle.modelName().trim() + "-" + vehicle.specificationVersion().trim();
+        return vehicle.stockCarID() == null || vehicle.priceVnd() == null
+                ? base : base + "-STOCK-PRICE-" + vehicle.priceVnd().stripTrailingZeros().toPlainString();
     }
 
     private static String formatNumber(Number value, String suffix) {

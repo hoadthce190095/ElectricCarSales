@@ -107,7 +107,7 @@ class PackagedWarIT {
         assertEquals(302, get("/customer/word-preview?kind=deposit&orderId=1").statusCode());
         int orderId;
         try (var db = fixture.connection(); var stmt = db.createStatement()) {
-            String hash = com.electriccarsales.service.PasswordHasher.hash("preview-test-password-123");
+            String hash = com.electriccarsales.service.PasswordHasher.hash("Preview-test-password-123");
             try (var user = db.prepareStatement("""
                     INSERT INTO Users(Username,PasswordHash,RoleID,StatusID)
                     SELECT 'previewowner',?,r.RoleID,s.StatusID FROM Roles r CROSS JOIN Statuses s
@@ -123,7 +123,7 @@ class PackagedWarIT {
                     SELECT c.CustomerID,os.OrderStatusID,pm.PaymentMethodID,'2026-11-01',100,30,70
                     FROM Customers c JOIN Users u ON u.UserID=c.UserID
                     CROSS JOIN OrderStatuses os CROSS JOIN PaymentMethods pm
-                    WHERE u.Username='previewowner' AND os.StatusName='DEPOSITED' AND pm.MethodName='CASH';
+                    WHERE u.Username='previewowner' AND os.StatusName='DEPOSITED' AND pm.MethodName='BANK_TRANSFER';
                     """);
             try (var rows = stmt.executeQuery("""
                     SELECT o.OrderID FROM Orders o JOIN Customers c ON c.CustomerID=o.CustomerID
@@ -157,7 +157,7 @@ class PackagedWarIT {
         System.setProperty("ECS_WORD_PREVIEW_DIR", templates.toString());
         try {
             assertEquals(200, post("/api/auth",
-                    "{\"action\":\"login\",\"username\":\"previewowner\",\"password\":\"preview-test-password-123\"}").statusCode());
+                    "{\"action\":\"login\",\"username\":\"previewowner\",\"password\":\"Preview-test-password-123\"}").statusCode());
             assertEquals(403,get("/staff/sales-document?kind=deposit&orderId="+orderId).statusCode());
             assertEquals(404,get("/customer/sales-document?kind=invoice&orderId="+orderId).statusCode());
             assertEquals(404,get("/customer/sales-document?kind=deposit&orderId="+(orderId+1000)).statusCode());
@@ -231,12 +231,12 @@ class PackagedWarIT {
         assertEquals(302, get("/admin.jsp").statusCode(), "Guest must authenticate before opening Admin");
         assertEquals(302, get("/admin/admin.html").statusCode());
         assertEquals(200, post("/api/auth",
-            "{\"action\":\"login\",\"username\":\"websales\",\"password\":\"web-test-password-123\"}").statusCode());
+            "{\"action\":\"login\",\"username\":\"websales\",\"password\":\"Web-test-password-123\"}").statusCode());
         assertEquals(403, get("/admin.jsp").statusCode(), "Sales must use the staff portal");
         assertEquals(403, get("/api/admin/users").statusCode());
         session();
         assertEquals(200, post("/api/auth",
-            "{\"action\":\"login\",\"username\":\"webadmin\",\"password\":\"web-test-password-123\"}").statusCode());
+            "{\"action\":\"login\",\"username\":\"webadmin\",\"password\":\"Web-test-password-123\"}").statusCode());
         var workspace = get("/admin.jsp");
         assertEquals(200, workspace.statusCode(), workspace.body());
         assertWorkspaceLinks(workspace.body(), "/ElectricCarSales");
@@ -298,7 +298,7 @@ class PackagedWarIT {
             HttpRequest.newBuilder(URI.create(showroomBase + "/api/auth")).header("Content-Type", "application/json")
                 .header("X-CSRF-Token", showroomCsrf)
                 .POST(HttpRequest.BodyPublishers.ofString(
-                    "{\"action\":\"login\",\"username\":\"webadmin\",\"password\":\"web-test-password-123\"}"))
+                    "{\"action\":\"login\",\"username\":\"webadmin\",\"password\":\"Web-test-password-123\"}"))
                 .build(),
             HttpResponse.BodyHandlers.ofString());
         assertEquals(200, login.statusCode(), login.body());
@@ -364,7 +364,7 @@ class PackagedWarIT {
 
             var valid = browser.send(HttpRequest.newBuilder(target)
                 .header("Content-Type", "application/x-www-form-urlencoded")
-                .POST(HttpRequest.BodyPublishers.ofString("username=webadmin&password=web-test-password-123")).build(),
+                .POST(HttpRequest.BodyPublishers.ofString("username=webadmin&password=Web-test-password-123")).build(),
                 HttpResponse.BodyHandlers.ofString());
             assertEquals(302, valid.statusCode(), valid.body());
             assertTrue(valid.headers().firstValue("Location").orElse("")
@@ -407,9 +407,13 @@ class PackagedWarIT {
         while (resources.find()) {
             URI resource = URI.create(resources.group(1));
             if (expectedPath.equals(resource.getPath())) {
+                if (expectedPath.endsWith("/js/home.js")) {
+                    assertTrue(resource.getQuery().matches("v=[0-9]+"));
+                    return;
+                }
                 String version = expectedPath.endsWith("/admin-dashboard.css") ? "v=dashboard-20261028"
                     : expectedPath.endsWith("/js/home.js") || expectedPath.endsWith("/css/home.css")
-                        ? "v=home-tweaks-20261112" : UI_VERSION;
+                        ? "v=home-auth-history-20261116c" : UI_VERSION;
                 assertEquals(version, resource.getQuery(), "Asset cache version: " + expectedPath);
                 return;
             }
@@ -427,7 +431,7 @@ class PackagedWarIT {
     @Test
     void packagedLoginDatabaseQueriesAndReportsWork() throws Exception {
         var login = post("/api/auth",
-            "{\"action\":\"login\",\"username\":\"webadmin\",\"password\":\"web-test-password-123\"}");
+            "{\"action\":\"login\",\"username\":\"webadmin\",\"password\":\"Web-test-password-123\"}");
         assertEquals(200, login.statusCode(), login.body());
         csrf = JSON.readTree(login.body()).get("csrfToken").asText();
         var users = get("/api/admin/users");
@@ -520,7 +524,7 @@ class PackagedWarIT {
                     HttpResponse.BodyHandlers.ofString());
                 String token = JSON.readTree(auth.body()).get("csrfToken").asText();
                 var login = assistantPost(browser, deployment, token, "/api/auth",
-                    "{\"action\":\"login\",\"username\":\"websales\",\"password\":\"web-test-password-123\"}");
+                    "{\"action\":\"login\",\"username\":\"websales\",\"password\":\"Web-test-password-123\"}");
                 assertEquals("CUSTOMER", login.get("user").get("role").asText());
                 token = login.get("csrfToken").asText();
                 var response = assistantPost(browser, deployment, token, "/api/ai",

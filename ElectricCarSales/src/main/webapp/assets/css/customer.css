@@ -1473,7 +1473,7 @@ td {
 }
 .toast {
     position: fixed;
-    z-index: 30;
+    z-index: 10001;
     right: 25px;
     bottom: 25px;
     max-width: min(380px,calc(100vw - 32px));

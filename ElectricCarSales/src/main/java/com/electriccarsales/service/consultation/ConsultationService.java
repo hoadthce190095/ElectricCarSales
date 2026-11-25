@@ -37,16 +37,29 @@ public class ConsultationService {
                 || (assigned.getStaffId() != 0 && assigned.getStaffId() != employeeId)) {
             throw new IllegalArgumentException("Bạn không được phân công cuộc trò chuyện này.");
         }
+        String currentStatus = assigned.getStatus() == null ? "PENDING" : assigned.getStatus().trim().toUpperCase(Locale.ROOT);
+        if ("COMPLETED".equals(currentStatus) || "CANCELLED".equals(currentStatus)) {
+            throw new IllegalStateException("Yêu cầu tư vấn #" + requestId + " đã kết thúc (" + currentStatus + ").");
+        }
         String normalizedStatus = newStatus == null || newStatus.isBlank()
                 ? "IN_PROGRESS"
                 : newStatus.trim().toUpperCase(Locale.ROOT);
         if (!VALID_STATUSES.contains(normalizedStatus)) {
             throw new IllegalArgumentException("Trạng thái tư vấn không hợp lệ: " + normalizedStatus);
         }
+        boolean hasNote = responseNote != null && !responseNote.isBlank();
+        if ("CANCELLED".equals(normalizedStatus) && !hasNote) {
+            throw new IllegalArgumentException("Vui lòng nhập rõ lý do hủy yêu cầu tư vấn.");
+        }
+        if (hasNote && "PENDING".equals(normalizedStatus)) {
+            normalizedStatus = "IN_PROGRESS";
+        }
         String formattedNote = null;
-        if (responseNote != null && !responseNote.isBlank()) {
+        if (hasNote) {
             String label = (staffName == null || staffName.isBlank()) ? "NV Tư vấn" : staffName.trim();
-            formattedNote = "[" + label + "]: " + responseNote.trim();
+            formattedNote = "CANCELLED".equals(normalizedStatus)
+                    ? "[" + label + "]: [Lý do hủy] " + responseNote.trim()
+                    : "[" + label + "]: " + responseNote.trim();
         }
         return dao.updateRequest(requestId, employeeId, normalizedStatus, formattedNote);
     }

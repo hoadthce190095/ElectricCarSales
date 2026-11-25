@@ -18,7 +18,7 @@ function chatMessage(message) {
         bubble.append(
             el("div", {
                 class: "chat-meta",
-                text: `Tư vấn theo dữ liệu danh mục · ${date(message.response.generatedAt)}`
+                text: `Tư vấn danh mục · ${date(message.response.generatedAt)}`
             })
         );
     }
@@ -131,7 +131,7 @@ async function loadAI() {
             el("div", { class: "chat-input-row" }, [textarea, send]),
             el("p", {
                 class: "chat-disclaimer",
-                text: "Tư vấn theo dữ liệu danh mục. Trợ lý hỗ trợ thông tin xe; nhân viên showroom tiếp nhận các yêu cầu giao dịch."
+                text: "Tư vấn danh mục. Trợ lý hỗ trợ thông tin xe; nhân viên showroom tiếp nhận các yêu cầu giao dịch."
             })
         ]
     );

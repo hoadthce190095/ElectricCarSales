@@ -14,15 +14,16 @@ public final class CustomerSalesDocumentController extends HttpServlet {
     @Override protected void doGet(HttpServletRequest req,HttpServletResponse resp) throws IOException {
         var session=req.getSession(false);
         if(session==null || !(session.getAttribute("user") instanceof SessionUser user)) {resp.sendError(403);return;}
-        // Nếu gọi từ /staff/ thì chấp nhận các role nhân viên
-        boolean isStaff = req.getServletPath().startsWith("/staff/");
+        // Chấp nhận role nhân viên nếu gọi từ /staff/ hoặc người dùng đang đăng nhập là nhân viên
+        String userRole = user.getRole() == null ? "" : user.getRole().trim().toUpperCase(Locale.ROOT);
+        boolean isStaffRole = java.util.List.of("ACCOUNTANT","SALES","MANAGER","ADMIN","OPERATIONS").contains(userRole);
+        boolean isStaff = req.getServletPath().startsWith("/staff/") || isStaffRole;
         if (isStaff) {
-            String r = user.getRole() == null ? "" : user.getRole().trim().toUpperCase();
-            if (!java.util.List.of("ACCOUNTANT","SALES","MANAGER","ADMIN","OPERATIONS").contains(r)) {
+            if (!isStaffRole) {
                 resp.sendError(403); return;
             }
         } else {
-            if (!"CUSTOMER".equalsIgnoreCase(user.getRole())) { resp.sendError(403); return; }
+            if (!"CUSTOMER".equalsIgnoreCase(userRole)) { resp.sendError(403); return; }
         }
         Integer orderId=FinanceControllerSupport.positiveInt(req.getParameter("orderId"));
         SalesPreviewKind kind;

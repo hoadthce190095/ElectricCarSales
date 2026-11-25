@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 
 @WebServlet("/register")
 public class RegisterController extends HttpServlet {
-    private static final Pattern USERNAME = Pattern.compile("[A-Za-z0-9_]{5,50}");
+    private static final Pattern USERNAME = Pattern.compile("[A-Za-z0-9_]{5,30}");
     private static final Pattern PHONE = Pattern.compile("^0[0-9]{9}$");
     private static final Pattern EMAIL = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
@@ -99,11 +99,11 @@ public class RegisterController extends HttpServlet {
 
     private String validate(String name, String username, String phone, String email, String password, String confirm) {
         if (name.isBlank() || name.length() > 100) return "Vui lòng nhập họ tên hợp lệ.";
-        if (!USERNAME.matcher(username).matches()) return "Tên đăng nhập phải có 5–50 ký tự, chỉ gồm chữ, số và dấu gạch dưới.";
+        if (!USERNAME.matcher(username).matches()) return "Tên đăng nhập phải có 5–30 ký tự, chỉ gồm chữ, số và dấu gạch dưới.";
         if (!PHONE.matcher(phone).matches()) return "Số điện thoại phải bắt đầu bằng 0 và có đúng 10 chữ số (ví dụ: 0912345678).";
-        if (email.isBlank() || email.length() > 100 || !EMAIL.matcher(email).matches()) return "Email không hợp lệ.";
-        if (password == null || password.length() < 8 || password.length() > 72)
-            return "Mật khẩu phải có từ 8 đến 72 ký tự.";
+        if (email.isBlank() || email.length() > 30 || !EMAIL.matcher(email).matches()) return "Email không hợp lệ.";
+        if (password == null || password.length() < 8 || password.length() > 30)
+            return "Mật khẩu phải có từ 8 đến 30 ký tự.";
         if (!password.matches(".*[0-9].*")) return "Mật khẩu phải có ít nhất 1 chữ số.";
         if (!password.matches(".*[A-Z].*")) return "Mật khẩu phải có ít nhất 1 chữ in hoa.";
         if (!password.matches(".*[^A-Za-z0-9].*")) return "Mật khẩu phải có ít nhất 1 ký tự đặc biệt.";

@@ -16,9 +16,9 @@
 <div class="page-intro" style="margin-bottom:20px;">
     <div>
         <p style="margin:0 0 6px;font-size:13.5px;color:#334155;line-height:1.5;">
-            Xem hợp đồng mua bán xe điện của bạn, kiểm tra thông tin pháp lý, thực hiện <strong>ký hợp đồng điện tử bằng mã OTP (RDS 9.2)</strong> và tra cứu chính sách trả góp ngân hàng đối tác.
+            Xem hợp đồng mua bán xe điện của bạn, kiểm tra thông tin pháp lý, thực hiện <strong>ký hợp đồng điện tử bằng mã OTP</strong> và tra cứu chính sách trả góp ngân hàng đối tác.
         </p>
-        <small style="color:#64748b;">Hợp đồng được khởi tạo bởi chuyên viên Sales sau khi đơn hàng đã thanh toán đặt cọc 30% (DEPOSITED).</small>
+        <small style="color:#64748b;">Khách hàng chỉ nhận OTP và ký hợp đồng sau khi Kế toán xác nhận đối soát đầy đủ khoản cọc 30%.</small>
     </div>
     <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;">
         <a class="button button-secondary" href="<%= customerContext %>/orders" style="padding:7px 14px;font-size:12.5px;">Xem đơn hàng <span>→</span></a>
@@ -35,7 +35,7 @@
 <c:if test="${not empty param.signed}">
     <div class="info-note" style="margin-bottom:16px;border-color:#86efac;background:#f0fdf4;color:#166534;">
         <span>✓</span>
-        <p>Hợp đồng #<c:out value="${param.signed}"/> đã được ký xác nhận OTP thành công (Trạng thái: <strong>SIGNED</strong>)! Bạn có thể tiếp tục bước thanh toán 70% còn lại.</p>
+        <p>Hợp đồng #<c:out value="${param.signed}"/> đã được ký xác nhận OTP thành công (Trạng thái: <strong>SIGNED</strong>). Với đơn trả góp, đối tác giải ngân 70% sau bước này; với đơn trả thẳng, bạn tiếp tục thanh toán 70% trong mục Thanh toán.</p>
     </div>
 </c:if>
 <c:if test="${not empty contractError}">
@@ -68,7 +68,7 @@
                             <th>GIÁ TRỊ HỢP ĐỒNG</th>
                             <th>CẤU TRÚC THANH TOÁN &amp; ĐIỀU KHOẢN</th>
                             <th>TRẠNG THÁI</th>
-                            <th>THAO TÁC &amp; KÝ OTP (RDS 9.2)</th>
+                            <th>THAO TÁC &amp; KÝ OTP</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -88,7 +88,7 @@
                                     <small style="display:block;color:#64748b;font-size:11.5px;"><c:out value="${ct.versionName}"/> · VIN: <c:out value="${ct.vin}" default="Đang gán VIN"/></small>
                                 </td>
                                 <td>
-                                    <strong style="color:#0f172a;font-size:14px;"><fmt:formatNumber value="${ct.contractAmount}" pattern="#,##0"/> VNĐ</strong>
+                                    <strong style="color:#0f172a;font-size:14px;"><fmt:formatNumber value="${ct.contractAmount}" pattern="#,##0"/> VND</strong>
                                 </td>
                                 <td class="contract-terms-cell">
                                     <c:out value="${ct.note}"/>
@@ -100,6 +100,9 @@
                                         </c:when>
                                         <c:when test="${ct.status eq 'PENDING_SIGNATURE'}">
                                             <span class="status-badge badge-amber"><span class="dot"></span> CHỜ KÝ OTP</span>
+                                        </c:when>
+                                        <c:when test="${ct.status eq 'CANCELLED'}">
+                                            <span class="status-badge badge-red"><span class="dot"></span> ĐÃ HỦY</span>
                                         </c:when>
                                         <c:otherwise>
                                             <span class="status-badge badge-neutral"><span class="dot"></span> <c:out value="${ct.status}"/></span>
@@ -134,8 +137,10 @@
                                                 <small style="color:#64748b;display:block;margin-top:4px;">Nếu thông tin chưa chính xác, vui lòng liên hệ Sales trước khi ký.</small>
                                             </div>
 
-                                            <!-- Form ký hợp đồng bằng OTP (RDS 9.2) -->
-                                            <form method="post" action="<%= customerContext %>/contract" class="form-request-contract-otp" style="margin-bottom:8px;" data-contract-id="${ct.contractID}" data-contract-num="${ct.contractNumber}" data-amount="<fmt:formatNumber value='${ct.contractAmount}' pattern='#,##0'/> VNĐ">
+                                            <c:choose>
+                                                <c:when test="${ct.depositReconciled}">
+                                            <!-- Form ký hợp đồng bằng OTP -->
+                                            <form method="post" action="<%= customerContext %>/contract" class="form-request-contract-otp" style="margin-bottom:8px;" data-contract-id="${ct.contractID}" data-contract-num="${ct.contractNumber}" data-amount="<fmt:formatNumber value='${ct.contractAmount}' pattern='#,##0'/> VND">
                                                 <input type="hidden" name="action" value="requestOtp">
                                                 <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#1e293b;cursor:pointer;">
                                                     <input type="checkbox" name="agreeToSign" value="true" required> 
@@ -156,6 +161,13 @@
                                                     2. Ký HĐ
                                                 </button>
                                             </form>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <div style="border:1px solid #fde68a;background:#fffbeb;color:#92400e;border-radius:6px;padding:9px 11px;font-size:12px;line-height:1.5;">
+                                                        Chức năng ký hợp đồng sẽ mở sau khi Kế toán xác nhận đối soát đầy đủ khoản cọc 30%.
+                                                    </div>
+                                                </c:otherwise>
+                                            </c:choose>
                                         </c:when>
 
                                         <c:when test="${ct.status == 'SIGNED'}">
@@ -176,10 +188,21 @@
                                                     <a class="btn-doc btn-doc-primary" href="<c:out value='${viewSignedHtml}'/>">👁️ Xem hợp đồng</a>
                                                     <a class="btn-doc btn-doc-outline" href="<c:out value='${downloadSignedDoc}'/>">📥 Tải Word</a>
                                                 </div>
-                                                <a class="text-link" style="display:block;margin-top:4px;font-size:12px;font-weight:600;" href="<%= customerContext %>/payment/history?orderId=${ct.orderID}">
-                                                    Chuyển tới thanh toán 70% còn lại →
-                                                </a>
+                                                <c:choose>
+                                                    <c:when test="${ct.paymentMethodName eq 'INSTALLMENT'}">
+                                                        <small style="color:#166534;">Khoản 70% được ghi nhận khi đại lý nhận được tiền từ đối tác.</small>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <a class="text-link" style="display:block;margin-top:4px;font-size:12px;font-weight:600;" href="<%= customerContext %>/payment/history?orderId=${ct.orderID}">
+                                                            Chuyển tới thanh toán 70% còn lại →
+                                                        </a>
+                                                    </c:otherwise>
+                                                </c:choose>
                                             </div>
+                                        </c:when>
+
+                                        <c:when test="${ct.status == 'CANCELLED'}">
+                                            <span class="status-badge badge-red"><span class="dot"></span> Hợp đồng đã hủy</span>
                                         </c:when>
 
                                         <c:otherwise>
@@ -198,25 +221,28 @@
                 <span style="font-size:32px;display:block;margin-bottom:8px;">📑</span>
                 <strong style="font-size:15px;color:#0f172a;display:block;">Chưa có hợp đồng mua bán xe</strong>
                 <p style="color:#64748b;font-size:13px;max-width:520px;margin:6px auto 16px;line-height:1.6;">
-                    Theo quy trình nghiệp vụ RDS (Mục II.9.1 PRE-1): Hợp đồng mua bán chỉ được chuyên viên Sales khởi tạo sau khi đơn hàng của bạn đã hoàn tất đặt cọc 30% (DEPOSITED).
+                    Theo quy trình nghiệp vụ: Hợp đồng mua bán chỉ được chuyên viên Sales khởi tạo sau khi đơn hàng của bạn đã hoàn tất đặt cọc 30% (DEPOSITED).
                 </p>
                 <c:if test="${not empty customerOrders}">
                     <div style="max-width:620px;margin:0 auto;text-align:left;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 18px;">
                         <strong style="font-size:12.5px;color:#0f172a;display:block;margin-bottom:8px;text-transform:uppercase;">Tiến độ các đơn hàng hiện tại của bạn:</strong>
-                        <c:forEach var="ord" items="${customerOrders}">
+                                <c:forEach var="ord" items="${customerOrders}">
                             <div style="font-size:12px;padding:8px 0;border-bottom:1px dashed #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
                                 <span>
-                                    <strong>Đơn hàng #${ord.orderID}</strong> 
-                                    · Tổng tiền: <fmt:formatNumber value="${ord.totalAmount}" pattern="#,##0"/> VNĐ 
-                                    (Đã cọc: <fmt:formatNumber value="${ord.depositAmount}" pattern="#,##0"/> VNĐ)
+                                    <strong>Đơn hàng #<c:out value="${ord.id}"/></strong> 
+                                    · Tổng tiền: <fmt:formatNumber value="${ord.originalAmount}" pattern="#,##0"/> VND 
+                                    (Cọc 30%: <fmt:formatNumber value="${ord.depositAmount}" pattern="#,##0"/> VND)
                                 </span>
                                 <span>
                                     <c:choose>
-                                        <c:when test="${ord.orderStatusID eq 3 or ord.depositAmount gt 0}">
+                                        <c:when test="${ord.status eq 'CANCELLED'}">
+                                            <span class="status-badge badge-red"><span class="dot"></span> Đã hủy<c:if test="${not empty ord.cancelReason}"> · <c:out value="${ord.cancelReason}"/></c:if></span>
+                                        </c:when>
+                                        <c:when test="${ord.depositPaid}">
                                             <span class="status-badge badge-blue"><span class="dot"></span> Đã cọc 30% · Chờ Sales tạo hợp đồng</span>
                                         </c:when>
                                         <c:otherwise>
-                                            <a class="btn-doc btn-doc-warning" href="<%= customerContext %>/payment/transfer?orderId=${ord.orderID}&type=DEPOSIT">
+                                            <a class="btn-doc btn-doc-warning" href="<%= customerContext %>/payment/transfer?orderId=${ord.id}&type=DEPOSIT">
                                                 Thanh toán cọc 30% ngay →
                                             </a>
                                         </c:otherwise>
@@ -234,36 +260,36 @@
     </c:choose>
 </section>
 
-<c:if test="${not empty installmentPlans}">
+<c:if test="${financialCompanies ne null}">
 <section class="panel document-panel" style="margin-bottom:24px;">
     <div class="panel-heading" style="padding:18px 22px;border-bottom:1px solid #f1f5f9;">
         <div>
-            <span class="section-overline" style="color:#059669;font-weight:700;font-size:11px;">THAM KHẢO ĐỐI TÁC TÀI CHÍNH (RDS UC-12 &amp; BR9–BR10)</span>
-            <h2 style="font-size:17px;margin:3px 0 0;color:#0f172a;">Bảng lãi suất và kỳ hạn trả góp tham khảo</h2>
+            <span class="section-overline" style="color:#059669;font-weight:700;font-size:11px;">THAM KHẢO ĐỐI TÁC TÀI CHÍNH</span>
+            <h2 style="font-size:17px;margin:3px 0 0;color:#0f172a;">Đối tác tài chính</h2>
         </div>
     </div>
     <div style="padding:16px 22px;">
         <p style="font-size:13px;color:#475569;margin:0 0 14px;line-height:1.6;">
-            Theo RDS (BR2a &amp; EX-08): Khi chọn mua trả góp, khách hàng đóng <strong>30% tiền đặt cọc</strong> qua hệ thống/đại lý; phần <strong>70% còn lại</strong> do ngân hàng đối tác giải ngân một lần trực tiếp cho đại lý. Các kỳ trả góp hàng tháng được khách hàng thanh toán trực tiếp với ngân hàng đối tác.
+            Khi chọn mua trả góp, khách hàng đóng <strong>30% tiền đặt cọc</strong>; Kế toán cần xác nhận đối soát khoản cọc trước khi khách ký hợp đồng OTP. Sau khi ký, đối tác tài chính chuyển khoản giải ngân <strong>70% còn lại</strong> cho đại lý. Các kỳ trả góp hàng tháng được khách hàng thanh toán trực tiếp với ngân hàng đối tác.
         </p>
         <div class="table-wrap">
             <table>
                 <thead>
                     <tr>
                         <th>ĐƠN VỊ TÀI CHÍNH</th>
-                        <th>GÓI THAM KHẢO</th>
-                        <th>KỲ HẠN VAY</th>
-                        <th>LÃI SUẤT NĂM (BR10)</th>
+                        <th>ĐIỆN THOẠI</th>
+                        <th>EMAIL</th>
+                        <th>ĐỊA CHỈ</th>
                         <th>GHI CHÚ CHÍNH SÁCH</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <c:forEach var="plan" items="${installmentPlans}">
+                    <c:forEach var="plan" items="${financialCompanies}">
                         <tr>
                             <td><strong><c:out value="${plan.companyName}"/></strong></td>
-                            <td><c:out value="${plan.planName}"/></td>
-                            <td><c:out value="${plan.loanTermMonths}"/> tháng</td>
-                            <td><strong style="color:#15803d;"><c:out value="${plan.interestRate}"/>%/năm</strong></td>
+                            <td><c:out value="${plan.phone}"/></td>
+                            <td><c:out value="${plan.email}"/></td>
+                            <td><strong style="color:#15803d;"><c:out value="${plan.address}"/></strong></td>
                             <td style="color:#64748b;font-size:12px;"><c:out value="${plan.description}" default="—"/></td>
                         </tr>
                     </c:forEach>

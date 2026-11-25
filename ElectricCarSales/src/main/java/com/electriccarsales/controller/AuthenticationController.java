@@ -36,7 +36,7 @@ public class AuthenticationController extends JsonServlet {
     private static final Logger LOGGER = Logger.getLogger(AuthenticationController.class.getName());
     private static final ConcurrentHashMap<String, Attempts> ATTEMPTS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, Attempts> PASSWORD_ATTEMPTS = new ConcurrentHashMap<>();
-    private static final String DUMMY_PASSWORD_HASH = PasswordHasher.hash("invalid-account-password");
+    private static final String DUMMY_PASSWORD_HASH = PasswordHasher.hash("Invalid-account-password1");
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final AuthenticationDAO authenticationDAO;
@@ -188,6 +188,7 @@ public class AuthenticationController extends JsonServlet {
             previous.invalidate();
         }
         HttpSession session = request.getSession();
+        PaymentController.ensureCsrf(request);
         session.setAttribute("user", new SessionUser(account.getUserId(), account.getUsername(), account.getRole()));
         session.setAttribute(PasswordSession.ATTRIBUTE, PasswordSession.fingerprint(account.getPasswordHash()));
         session.setAttribute("userID", account.getUserId());
@@ -234,7 +235,11 @@ public class AuthenticationController extends JsonServlet {
                 auditWarning = "Đã đăng xuất; chưa thể ghi nhật ký do cơ sở dữ liệu không khả dụng.";
             }
         }
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
         Map<String, Object> result = state(request);
+        result.put("redirect", request.getContextPath() + "/index.jsp");
         if (auditWarning != null) {
             result.put("warning", auditWarning);
         }

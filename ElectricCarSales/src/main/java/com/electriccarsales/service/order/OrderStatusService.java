@@ -22,10 +22,10 @@ public class OrderStatusService {
         String normalized = newStatus.trim().toUpperCase(Locale.ROOT);
         if ("DEPOSITED".equals(normalized) || "PAID".equals(normalized)) {
             throw new IllegalStateException("Trạng thái " + normalized
-                    + " chỉ được cập nhật tự động sau khi Kế toán hoặc Cổng thanh toán xác nhận đủ tiền thật theo RDS.");
+                    + " chỉ được cập nhật tự động sau khi Kế toán hoặc Cổng thanh toán xác nhận đủ tiền thật.");
         }
         if ("COMPLETED".equals(normalized)) {
-            throw new IllegalStateException("Trạng thái COMPLETED chỉ được cập nhật sau khi xuất hóa đơn và xác nhận bàn giao xe theo RDS.");
+            throw new IllegalStateException("Trạng thái COMPLETED chỉ được cập nhật sau khi xuất hóa đơn và xác nhận bàn giao xe.");
         }
         if (!ALLOWED_MANUAL_STATUSES.contains(normalized)) {
             throw new IllegalArgumentException("Trạng thái đơn hàng không hợp lệ: " + normalized);
@@ -34,6 +34,8 @@ public class OrderStatusService {
         if (current == null) {
             throw new IllegalArgumentException("Không tìm thấy đơn hàng #" + orderId);
         }
+        if ("PROCESSING".equalsIgnoreCase(current.getStatus()) && "PENDING".equals(normalized))
+            throw new IllegalStateException("Đơn đang xử lý không thể quay lại chờ đặt cọc.");
         if ("CANCELLED".equals(normalized)
                 && (current.getPaidAmount().signum() > 0
                 || "PAID".equalsIgnoreCase(current.getStatus())

@@ -46,7 +46,7 @@ class AdminUserFilterWebTest {
         HttpRequest request = HttpRequest.newBuilder(URI.create(application.base + "/api/auth"))
             .header("Content-Type", "application/json").header("X-CSRF-Token", csrf)
             .POST(HttpRequest.BodyPublishers.ofString(
-                "{\"action\":\"login\",\"username\":\"" + username + "\",\"password\":\"web-test-password-123\"}"))
+                "{\"action\":\"login\",\"username\":\"" + username + "\",\"password\":\"Web-test-password-123\"}"))
             .build();
         assertEquals(200, client.send(request, HttpResponse.BodyHandlers.ofString()).statusCode());
     }

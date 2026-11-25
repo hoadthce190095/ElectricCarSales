@@ -32,14 +32,33 @@ public class SalesOrderService {
         public String getAddress() { return address != null ? address : ""; }
     }
     public record CarChoice(int id, String label, BigDecimal originalPrice, BigDecimal salePrice,
-                            String promotionName, BigDecimal discountAmount) {
+                            String promotionName, String discountType, BigDecimal discountValue,
+                            BigDecimal discountAmount,
+                            int modelId, String modelName, int versionId, String versionName,
+                            int colorId, String colorName, String vin) {
+        public CarChoice(int id, String label, BigDecimal originalPrice, BigDecimal salePrice,
+                         String promotionName, BigDecimal discountAmount,
+                         int modelId, String modelName, int versionId, String versionName,
+                         int colorId, String colorName, String vin) {
+            this(id, label, originalPrice, salePrice, promotionName, null, null, discountAmount,
+                    modelId, modelName, versionId, versionName, colorId, colorName, vin);
+        }
         public int getId() { return id; }
         public String getLabel() { return label; }
         public BigDecimal getOriginalPrice() { return originalPrice; }
         public BigDecimal getSalePrice() { return salePrice; }
         public String getPromotionName() { return promotionName; }
+        public String getDiscountType() { return discountType; }
+        public BigDecimal getDiscountValue() { return discountValue; }
         public BigDecimal getDiscountAmount() { return discountAmount; }
         public boolean isDiscounted() { return discountAmount != null && discountAmount.signum() > 0; }
+        public int getModelId() { return modelId; }
+        public String getModelName() { return modelName; }
+        public int getVersionId() { return versionId; }
+        public String getVersionName() { return versionName; }
+        public int getColorId() { return colorId; }
+        public String getColorName() { return colorName; }
+        public String getVin() { return vin; }
     }
     public record Options(List<CustomerChoice> customers, List<CarChoice> cars, List<Choice> partners) {
         public List<CustomerChoice> getCustomers() { return customers; }
@@ -121,47 +140,56 @@ public class SalesOrderService {
             }
             List<CarChoice> cars = carChoices(c);
             List<Choice> partners = choices(c, "SELECT CompanyID,CompanyName FROM FinancialCompanies ORDER BY CompanyID");
-            if (partners.isEmpty()) {
-                try (Statement st = c.createStatement()) {
-                    st.executeUpdate("""
-                        INSERT INTO FinancialCompanies (CompanyName, Phone, Email, Address, Description)
-                        VALUES
-                        (N'Shinhan Finance', '19001577', 'support@shinhanfinance.com.vn', N'Tầng 17, Centec Tower, 72-74 Nguyễn Thị Minh Khai, Q.3, TP.HCM', N'Công ty Tài chính Shinhan Việt Nam - Tài trợ mua xe điện VinFast ưu đãi.'),
-                        (N'Techcombank', '1800588822', 'call_center@techcombank.com.vn', N'Số 6 Quang Trung, Hoàn Kiếm, Hà Nội', N'Ngân hàng TMCP Kỹ Thương Việt Nam - Gói vay mua ô tô điện giải ngân 70%.'),
-                        (N'MB Bank', '1900545426', 'mb247@mbbank.com.vn', N'Số 18 Lê Văn Lương, Cầu Giấy, Hà Nội', N'Ngân hàng TMCP Quân Đội - Đối tác thanh toán VietQR và giải ngân trả góp xe điện.'),
-                        (N'VPBank', '1900545415', 'chamsockhachhang@vpbank.com.vn', N'Số 89 Láng Hạ, Đống Đa, Hà Nội', N'Ngân hàng TMCP Việt Nam Thịnh Vượng - Hỗ trợ vay mua xe điện trả góp.')
-                    """);
-                } catch (Exception ignored) {}
-                partners = choices(c, "SELECT CompanyID,CompanyName FROM FinancialCompanies ORDER BY CompanyID");
-            }
             return new Options(customers, cars, partners);
         }
     }
 
     private static List<CarChoice> carChoices(Connection c) throws SQLException {
-        String baseSql = "SELECT c.CarID,c.CarCode,m.ModelName,c.Price FROM Cars c "
-                + "JOIN CarStatuses s ON s.CarStatusID=c.CarStatusID JOIN CarModels m ON m.ModelID=c.ModelID "
-                + "WHERE UPPER(LTRIM(RTRIM(s.StatusName))) IN (N'AVAILABLE',N'IN_STOCK',N'FOR_SALE',N'READY_FOR_SALE',N'CÓ SẴN',N'CO SAN') "
-                + "AND NOT EXISTS (SELECT 1 FROM OrderDetails d WHERE d.CarID=c.CarID) ORDER BY c.CarID";
+        String baseSql = """
+            SELECT c.CarID, c.CarCode, c.Price, c.VIN,
+                   c.ModelID, m.ModelName,
+                   c.VersionID, COALESCE(v.VersionName, N'Tiêu chuẩn') AS VersionName,
+                   c.ColorID, COALESCE(col.ColorName, N'Tiêu chuẩn') AS ColorName
+            FROM Cars c
+            JOIN CarStatuses s ON s.CarStatusID = c.CarStatusID
+            JOIN CarModels m ON m.ModelID = c.ModelID
+            LEFT JOIN CarVersions v ON v.VersionID = c.VersionID
+            LEFT JOIN Colors col ON col.ColorID = c.ColorID
+            WHERE UPPER(LTRIM(RTRIM(s.StatusName))) IN (N'AVAILABLE', N'IN_STOCK', N'FOR_SALE', N'READY_FOR_SALE', N'CÓ SẴN', N'CO SAN')
+              AND NOT EXISTS (SELECT 1 FROM OrderDetails d WHERE d.CarID = c.CarID)
+            ORDER BY m.ModelName, v.VersionName, col.ColorName, c.CarID
+            """;
         List<CarChoice> result = new ArrayList<>();
         try (PreparedStatement ps = c.prepareStatement(baseSql); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
+                int carId = rs.getInt("CarID");
                 BigDecimal price = rs.getBigDecimal("Price");
-                PromoPrice promo = activePromotion(c, rs.getInt("CarID"));
+                PromoPrice promo = activePromotion(c, carId);
                 BigDecimal discount = promo == null ? BigDecimal.ZERO : promo.discount().min(price).setScale(0, RoundingMode.HALF_UP);
                 BigDecimal salePrice = price.subtract(discount);
-                String label = rs.getString("CarCode") + " - " + rs.getString("ModelName") + " - "
+                String mName = rs.getString("ModelName");
+                String vName = rs.getString("VersionName");
+                String cName = rs.getString("ColorName");
+                String vin = rs.getString("VIN");
+                String label = rs.getString("CarCode") + " - " + mName + " (" + vName + " - " + cName + ") - "
                         + (discount.signum() > 0 ? salePrice.toPlainString() + " VND (" + promo.name()
                         + ", giá gốc " + price.toPlainString() + " VND)"
                         : price.toPlainString() + " VND");
-                result.add(new CarChoice(rs.getInt("CarID"), label, price, salePrice,
-                        discount.signum() > 0 ? promo.name() : null, discount));
+                result.add(new CarChoice(carId, label, price, salePrice,
+                        discount.signum() > 0 ? promo.name() : null,
+                        discount.signum() > 0 ? promo.discountType() : null,
+                        discount.signum() > 0 ? promo.discountValue() : null,
+                        discount,
+                        rs.getInt("ModelID"), mName,
+                        rs.getInt("VersionID"), vName,
+                        rs.getInt("ColorID"), cName,
+                        vin));
             }
         }
         return result;
     }
 
-    private record PromoPrice(String name, BigDecimal discount) {}
+    private record PromoPrice(String name, String discountType, BigDecimal discountValue, BigDecimal discount) {}
 
     private static PromoPrice activePromotion(Connection c, int carId) throws SQLException {
         String sql = "SELECT TOP (1) p.PromotionName,p.DiscountType,p.DiscountValue,c.Price "
@@ -175,10 +203,13 @@ public class SalesOrderService {
                 if (!rs.next()) return null;
                 BigDecimal price = rs.getBigDecimal("Price");
                 BigDecimal value = rs.getBigDecimal("DiscountValue");
+                String type = rs.getString("DiscountType");
+                if (value == null || value.signum() <= 0
+                        || !("PERCENTAGE".equalsIgnoreCase(type) || "FIXED".equalsIgnoreCase(type))) return null;
                 BigDecimal discount = "PERCENTAGE".equalsIgnoreCase(rs.getString("DiscountType"))
                         ? price.multiply(value).divide(new BigDecimal("100"), 0, RoundingMode.HALF_UP)
                         : value;
-                return new PromoPrice(rs.getString("PromotionName"), discount.min(price));
+                return new PromoPrice(rs.getString("PromotionName"), type, value, discount.min(price));
             }
         } catch (SQLException e) {
             if (!SchemaTables.exists(c, "Promotions") || !SchemaTables.exists(c, "PromotionCars")) return null;
@@ -190,7 +221,7 @@ public class SalesOrderService {
     public Map<String, Object> dashboardData() throws SQLException {
         try (Connection c = FinanceConnection.open()) {
             Map<String, Object> data = new LinkedHashMap<>();
-            data.put("orders", query(c, """
+            List<Map<String, Object>> ordersList = query(c, """
                 SELECT o.OrderID AS id,o.OrderDate AS orderDate,cu.CustomerID AS customerID,
                        cu.CustomerName AS customerName,cu.Phone AS customerPhone,
                        cm.ModelID AS modelID,cm.ModelName AS modelName,cv.VersionName AS versionName,
@@ -198,7 +229,12 @@ public class SalesOrderService {
                        o.TotalAmount AS originalAmount,o.DepositAmount AS depositAmount,
                        COALESCE(paid.PaidAmount,0) AS paidAmount,o.RemainingAmount AS remainingAmount,
                        os.StatusName AS status,ct.Status AS contractStatus,
-                       inv.InvoiceNumber AS invoiceNumber,d.DeliveryStatus AS deliveryStatus
+                       inv.InvoiceNumber AS invoiceNumber,d.DeliveryStatus AS deliveryStatus,
+                       o.Note AS note,
+                       (SELECT TOP 1 h.Note FROM OrderStatusHistory h
+                        JOIN OrderStatuses hs ON hs.OrderStatusID=h.OrderStatusID
+                        WHERE h.OrderID=o.OrderID AND UPPER(LTRIM(RTRIM(hs.StatusName)))='CANCELLED'
+                        ORDER BY h.ChangedDate DESC, h.OrderStatusHistoryID DESC) AS cancelReason
                 FROM Orders o
                 JOIN Customers cu ON cu.CustomerID=o.CustomerID
                 JOIN OrderStatuses os ON os.OrderStatusID=o.OrderStatusID
@@ -219,10 +255,32 @@ public class SalesOrderService {
                     GROUP BY p.OrderID
                 ) paid ON paid.OrderID=o.OrderID
                 ORDER BY o.OrderDate DESC,o.OrderID DESC
-                """));
+                """);
+            for (Map<String, Object> row : ordersList) {
+                Object mName = row.get("modelName");
+                Object noteObj = row.get("note");
+                String noteStr = noteObj == null ? null : String.valueOf(noteObj);
+                if ((mName == null || String.valueOf(mName).isBlank()) && noteStr != null && noteStr.contains("Mẫu xe:")) {
+                    int idx = noteStr.indexOf("Mẫu xe:") + 7;
+                    int end = noteStr.indexOf(",", idx);
+                    if (end < 0) end = noteStr.indexOf("|", idx);
+                    if (end < 0) end = noteStr.length();
+                    row.put("modelName", noteStr.substring(idx, end).trim());
+                }
+                Object vinObj = row.get("vin");
+                if ((vinObj == null || String.valueOf(vinObj).isBlank()) && noteStr != null && noteStr.contains("VIN:")) {
+                    int idx = noteStr.indexOf("VIN:") + 4;
+                    int end = noteStr.indexOf(",", idx);
+                    if (end < 0) end = noteStr.indexOf("|", idx);
+                    if (end < 0) end = noteStr.length();
+                    row.put("vin", noteStr.substring(idx, end).trim());
+                }
+            }
+            data.put("orders", ordersList);
             data.put("customers", query(c, "SELECT CustomerID AS customerID,CustomerName AS customerName,Phone AS phone,COALESCE(Email,'') AS email,COALESCE(Address,'') AS address FROM Customers ORDER BY CustomerName"));
             List<Map<String, Object>> cars = query(c, """
-                SELECT car.CarID AS carID,car.ModelID AS modelID,car.Price AS price,car.VIN AS vin,
+                SELECT car.CarID AS carID,car.ModelID AS modelID,car.VersionID AS versionID,car.ColorID AS colorID,
+                       car.Price AS price,car.VIN AS vin,
                        cm.ModelName AS modelName,cv.VersionName AS versionName,co.ColorName AS colorName
                 FROM Cars car
                 JOIN CarStatuses cs ON cs.CarStatusID=car.CarStatusID
@@ -246,6 +304,8 @@ public class SalesOrderService {
                 car.put("originalPrice", originalPrice);
                 car.put("discountAmount", discount);
                 car.put("promotionName", discount.signum() > 0 ? promo.name() : null);
+                car.put("discountType", discount.signum() > 0 ? promo.discountType() : null);
+                car.put("discountValue", discount.signum() > 0 ? promo.discountValue() : null);
                 car.put("price", originalPrice.subtract(discount));
             }
             data.put("cars", cars);
@@ -257,13 +317,8 @@ public class SalesOrderService {
                         WHERE UPPER(LTRIM(RTRIM(cs.StatusName))) IN (N'AVAILABLE',N'IN_STOCK',N'FOR_SALE',N'READY_FOR_SALE',N'CÓ SẴN',N'CO SAN')
                           AND NOT EXISTS (SELECT 1 FROM OrderDetails od WHERE od.CarID=car.CarID)) AS availableUnassignedCars
                 """));
-            List<Map<String, Object>> pms = query(c, "SELECT PaymentMethodID AS paymentMethodID,MethodName AS methodName,Description AS description FROM PaymentMethods WHERE UPPER(MethodName) <> 'CASH' ORDER BY PaymentMethodID");
-            if (pms == null || pms.isEmpty()) {
-                pms = List.of(
-                    Map.of("paymentMethodID", 2, "methodName", "BANK_TRANSFER", "description", "Thanh toán bằng ngân hàng (Chuyển khoản VietQR SePay - MB Bank)"),
-                    Map.of("paymentMethodID", 3, "methodName", "INSTALLMENT", "description", "Thanh toán qua nhà tài chính (Trả góp đối tác giải ngân 70%)")
-                );
-            } else {
+            List<Map<String, Object>> pms = query(c, "SELECT PaymentMethodID AS paymentMethodID,MethodName AS methodName,Description AS description FROM PaymentMethods WHERE UPPER(MethodName) IN ('BANK_TRANSFER','INSTALLMENT') ORDER BY PaymentMethodID");
+            {
                 for (Map<String, Object> pm : pms) {
                     Object nameObj = pm.get("methodName") != null ? pm.get("methodName") : pm.get("METHODNAME");
                     String mName = String.valueOf(nameObj).toUpperCase(Locale.ROOT);
@@ -277,19 +332,6 @@ public class SalesOrderService {
             data.put("paymentMethods", pms);
 
             List<Map<String, Object>> fcs = query(c, "SELECT CompanyID AS companyID,CompanyName AS companyName,Phone AS phone,Email AS email,Address AS address,Description AS description FROM FinancialCompanies ORDER BY CompanyID");
-            if (fcs == null || fcs.isEmpty()) {
-                try (Statement st = c.createStatement()) {
-                    st.executeUpdate("""
-                        INSERT INTO FinancialCompanies (CompanyName, Phone, Email, Address, Description)
-                        VALUES
-                        (N'Shinhan Finance', '19001577', 'support@shinhanfinance.com.vn', N'Tầng 17, Centec Tower, 72-74 Nguyễn Thị Minh Khai, Q.3, TP.HCM', N'Công ty Tài chính Shinhan Việt Nam - Tài trợ mua xe điện VinFast ưu đãi.'),
-                        (N'Techcombank', '1800588822', 'call_center@techcombank.com.vn', N'Số 6 Quang Trung, Hoàn Kiếm, Hà Nội', N'Ngân hàng TMCP Kỹ Thương Việt Nam - Gói vay mua ô tô điện giải ngân 70%.'),
-                        (N'MB Bank', '1900545426', 'mb247@mbbank.com.vn', N'Số 18 Lê Văn Lương, Cầu Giấy, Hà Nội', N'Ngân hàng TMCP Quân Đội - Đối tác thanh toán VietQR và giải ngân trả góp xe điện.'),
-                        (N'VPBank', '1900545415', 'chamsockhachhang@vpbank.com.vn', N'Số 89 Láng Hạ, Đống Đa, Hà Nội', N'Ngân hàng TMCP Việt Nam Thịnh Vượng - Hỗ trợ vay mua xe điện trả góp.')
-                    """);
-                } catch (Exception ignored) {}
-                fcs = query(c, "SELECT CompanyID AS companyID,CompanyName AS companyName,Phone AS phone,Email AS email,Address AS address,Description AS description FROM FinancialCompanies ORDER BY CompanyID");
-            }
             data.put("financialCompanies", fcs);
             return data;
         }
@@ -362,7 +404,7 @@ public class SalesOrderService {
                     }
                 }
                 if (cleanEmail != null) {
-                    if (!cleanEmail.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$") || cleanEmail.length() > 100) {
+                    if (!cleanEmail.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$") || cleanEmail.length() > 30) {
                         throw new IllegalArgumentException("Email không đúng định dạng (ví dụ: example@domain.com) hoặc vượt quá 100 ký tự.");
                     }
                 }
@@ -416,9 +458,8 @@ public class SalesOrderService {
                 BigDecimal discount = promotion == null ? BigDecimal.ZERO
                         : promotion.discount().min(originalPrice).setScale(0, RoundingMode.HALF_UP);
                 BigDecimal price = originalPrice.subtract(discount);
-                BigDecimal deposit = price.multiply(new BigDecimal("0.30")).setScale(2, RoundingMode.HALF_UP);
-                try { deposit.setScale(0, RoundingMode.UNNECESSARY); }
-                catch (ArithmeticException e) { throw new IllegalStateException("30% tiền cọc cần quy tắc làm tròn VND được duyệt."); }
+                if (price.signum() <= 0) throw new IllegalStateException("Giá sau khuyến mãi phải lớn hơn 0.");
+                BigDecimal deposit = price.multiply(new BigDecimal("0.30")).setScale(0, RoundingMode.HALF_UP);
                 BigDecimal remaining = price.subtract(deposit);
                 int statusId = ensureOrderStatus(c, "PENDING", "Đơn hàng mới tạo");
                 int methodId = ensurePaymentMethod(c, method);
@@ -519,6 +560,10 @@ public class SalesOrderService {
                     else if (lower.equals("companyname")) row.put("companyName", val);
                     else if (lower.equals("carid")) row.put("carID", val);
                     else if (lower.equals("modelid")) row.put("modelID", val);
+                    else if (lower.equals("versionid")) row.put("versionID", val);
+                    else if (lower.equals("colorid")) row.put("colorID", val);
+                    else if (lower.equals("price")) row.put("price", val);
+                    else if (lower.equals("vin")) row.put("vin", val);
                     else if (lower.equals("modelname")) row.put("modelName", val);
                     else if (lower.equals("versionname")) row.put("versionName", val);
                     else if (lower.equals("colorname")) row.put("colorName", val);

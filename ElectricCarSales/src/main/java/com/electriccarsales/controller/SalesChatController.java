@@ -34,10 +34,23 @@ public class SalesChatController extends HttpServlet {
                 if (owner == null) { resp.sendError(403); return; }
                 req.setAttribute("threads", service.getCustomerRequests(owner.getCustomerID()));
             } else {
-                var employee = (Integer) req.getSession().getAttribute("employeeId");
+                Integer employee = (Integer) req.getSession().getAttribute("employeeId");
+                if (employee == null || employee <= 0) {
+                    try (var c = util.DBContext.openConnection();
+                         var ps = c.prepareStatement("SELECT EmployeeID FROM Employees WHERE UserID = ?")) {
+                        ps.setInt(1, user.getUserId());
+                        try (var rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                employee = rs.getInt(1);
+                                req.getSession().setAttribute("employeeId", employee);
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
                 if (employee == null || employee <= 0) { resp.sendError(403); return; }
+                final int currentEmp = employee;
                 req.setAttribute("threads", service.getAllRequests().stream()
-                        .filter(t -> t.getStaffId() == 0 || t.getStaffId() == employee).toList());
+                        .filter(t -> t.getStaffId() == 0 || t.getStaffId() == currentEmp).toList());
             }
             req.setAttribute("isCustomer", customer);
             req.setAttribute("chatCsrf", PaymentController.ensureCsrf(req));
@@ -64,6 +77,18 @@ public class SalesChatController extends HttpServlet {
                 service.appendCustomerNote(id, owner.getCustomerID(), message);
             } else {
                 Integer employee = (Integer) req.getSession().getAttribute("employeeId");
+                if (employee == null || employee <= 0) {
+                    try (var c = util.DBContext.openConnection();
+                         var ps = c.prepareStatement("SELECT EmployeeID FROM Employees WHERE UserID = ?")) {
+                        ps.setInt(1, user.getUserId());
+                        try (var rs = ps.executeQuery()) {
+                            if (rs.next()) {
+                                employee = rs.getInt(1);
+                                req.getSession().setAttribute("employeeId", employee);
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
                 if (employee == null || employee <= 0) { resp.sendError(403); return; }
                 var thread = service.getRequest(id);
                 if (thread == null || (thread.getStaffId() != 0 && thread.getStaffId() != employee)) {
@@ -71,7 +96,11 @@ public class SalesChatController extends HttpServlet {
                 }
                 if ("COMPLETED".equals(thread.getStatus()) || "CANCELLED".equals(thread.getStatus()))
                     throw new IllegalStateException("Cuộc trò chuyện đã kết thúc.");
-                service.updateByStaff(id, employee, "Sales", "IN_PROGRESS", message);
+                String staffName = (String) req.getSession().getAttribute("displayName");
+                if (staffName == null || staffName.isBlank()) {
+                    staffName = user.getUsername() != null ? user.getUsername() : "Sales Staff";
+                }
+                service.updateByStaff(id, employee, staffName, "IN_PROGRESS", message);
             }
             resp.sendRedirect(req.getContextPath() + "/sales-chat#thread-" + id);
         } catch (IllegalArgumentException | IllegalStateException ex) {

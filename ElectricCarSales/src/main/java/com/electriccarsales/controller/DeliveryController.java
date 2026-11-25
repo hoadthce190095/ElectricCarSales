@@ -104,7 +104,7 @@ public class DeliveryController extends HttpServlet {
             if ("importCar".equalsIgnoreCase(action)) {
                 if (!List.of("OPERATIONS", "ADMIN").contains(role)) {
                     sendResponse(request, response, jsonRequested, HttpServletResponse.SC_FORBIDDEN, false,
-                            "Theo RDS (UC-09, 10.2), chỉ Operations Officer hoặc Admin mới được nhập xe vào kho.");
+                            "Chỉ Operations Officer hoặc Admin mới được nhập xe vào kho.");
                     return;
                 }
                 int modelId = Integer.parseInt(request.getParameter("modelId"));
@@ -138,7 +138,7 @@ public class DeliveryController extends HttpServlet {
             if ("exportCar".equalsIgnoreCase(action)) {
                 if (!List.of("OPERATIONS", "ADMIN").contains(role)) {
                     sendResponse(request, response, jsonRequested, HttpServletResponse.SC_FORBIDDEN, false,
-                            "Theo RDS (UC-09, 10.3), chỉ Operations Officer hoặc Admin mới được xuất kho xe.");
+                            "Chỉ Operations Officer hoặc Admin mới được xuất kho xe.");
                     return;
                 }
                 int carId = Integer.parseInt(request.getParameter("carId"));

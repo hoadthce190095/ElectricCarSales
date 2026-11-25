@@ -16,7 +16,8 @@ public class InventoryTransactionDAO extends DBContext {
         String sql = "SELECT * FROM InventoryTransactions";
 
         // Sử dụng trực tiếp biến 'conn' từ lớp cha DBContext
-        try (PreparedStatement ps = conn.prepareStatement(sql);
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
@@ -47,7 +48,8 @@ public class InventoryTransactionDAO extends DBContext {
     public boolean addTransaction(InventoryTransaction it) {
         String sql = "INSERT INTO InventoryTransactions (CarID, EmployeeID, SupplierID, TransactionType, Note) VALUES (?, ?, ?, ?, ?)";
 
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (java.sql.Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, it.getCarID());
             ps.setInt(2, it.getEmployeeID());

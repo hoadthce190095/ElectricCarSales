@@ -47,13 +47,13 @@
                 </c:if>
                 <form class="auth-form reset-form" action="${pageContext.request.contextPath}/verify-otp" method="post">
                     <input type="hidden" name="action" value="resetPassword">
-                    <label class="field-label" for="newPassword">Mật khẩu mới (8–72 ký tự)</label>
+                    <label class="field-label" for="newPassword">Mật khẩu mới (8–30 ký tự, gồm chữ hoa, số và ký tự đặc biệt)</label>
                     <div class="input-wrap">
-                        <input id="newPassword" name="newPassword" type="password" minlength="8" maxlength="72" autocomplete="new-password" placeholder="Nhập mật khẩu mới" required autofocus>
+                        <input id="newPassword" name="newPassword" type="password" minlength="8" maxlength="30" autocomplete="new-password" placeholder="Nhập mật khẩu mới" required autofocus>
                     </div>
                     <label class="field-label" for="confirmPassword">Nhập lại mật khẩu mới</label>
                     <div class="input-wrap">
-                        <input id="confirmPassword" name="confirmPassword" type="password" minlength="8" maxlength="72" autocomplete="new-password" placeholder="Xác nhận mật khẩu mới" required>
+                        <input id="confirmPassword" name="confirmPassword" type="password" minlength="8" maxlength="30" autocomplete="new-password" placeholder="Xác nhận mật khẩu mới" required>
                     </div>
                     <button class="submit-button" type="submit">Cập nhật mật khẩu <span aria-hidden="true">→</span></button>
                 </form>

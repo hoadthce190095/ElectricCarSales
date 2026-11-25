@@ -62,7 +62,7 @@ class AIConversationTest {
         HttpClient first = browser();
         String csrf = state(first).get("csrfToken").asText();
         HttpResponse<String> login = post(first, "/api/auth", csrf,
-            "{\"action\":\"login\",\"username\":\"websales\"," + "\"password\":\"web-test-password-123\"}");
+            "{\"action\":\"login\",\"username\":\"websales\"," + "\"password\":\"Web-test-password-123\"}");
         assertEquals(200, login.statusCode());
         csrf = JSON.readTree(login.body()).get("csrfToken").asText();
         JsonNode old = ask(first, csrf, "Gợi ý xe dưới 600 triệu", "RECOMMEND");

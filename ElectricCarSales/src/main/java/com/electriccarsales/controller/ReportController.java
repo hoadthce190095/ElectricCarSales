@@ -38,6 +38,36 @@ public class ReportController extends JsonServlet {
             validateReportDays(filter);
             ReportData report = reportService.generate(filter);
             SessionUser user = (SessionUser) request.getSession().getAttribute("user");
+            String role = user.getRole();
+            if (!java.util.Set.of("MANAGER", "ADMIN").contains(role)) {
+                boolean sales = "SALES".equals(role);
+                boolean accountant = "ACCOUNTANT".equals(role);
+                if ((!sales && !accountant && !"OPERATIONS".equals(role))
+                        || (!accountant && format != null && !format.isBlank() && !"json".equalsIgnoreCase(format))) {
+                    response.sendError(403);
+                    return;
+                }
+                report.setSales(java.util.List.of());
+                if (!sales) {
+                    report.setModels(java.util.List.of());
+                    report.setEmployees(java.util.List.of());
+                }
+                if (!"OPERATIONS".equals(role)) report.setInventory(java.util.List.of());
+                if (!accountant) {
+                    var summary = new com.electriccarsales.model.ReportSummary();
+                    if (sales) {
+                        summary.setSalesAmount(report.getSummary().getSalesAmount());
+                        summary.setVehiclesSold(report.getSummary().getVehiclesSold());
+                    }
+                    report.setSummary(summary);
+                    if (sales) {
+                        for (var month : report.getMonthly()) month.setRevenue(null);
+                    } else report.setMonthly(java.util.List.of());
+                } else {
+                    for (var month : report.getMonthly()) month.setSalesAmount(null);
+                    report.getSummary().setSalesAmount(null);
+                }
+            }
             recordReportLog(user, filter, format);
             writeReport(response, report, filter, format);
         } catch (SQLException ex) {
